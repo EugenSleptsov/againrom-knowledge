@@ -1,74 +1,98 @@
 # Againrom knowledge
 
-Public, derived research about **Rage of Mages 1** file formats and engine behaviour:
-clean-room claims and specifications, exported one-way from a private research
-repository. This repository publishes conclusions and their evidence citations. It
-carries no research narrative, no raw evidence, and no game data.
+Research-derived documentation of **Rage of Mages 1** and selected **Rage of
+Mages II** file formats, interfaces and engine behaviour, with a small claim-reading
+tool. The project studies compatibility with independently obtained installations;
+this repository is not a distribution of either game or a decoder SDK.
 
-## Clean room and interoperability
+## Sources and publication boundary
 
-Every claim here was derived by observing a lawfully owned install and reading its
-compiled code, never by consulting another implementation, a third-party
-specification, or a reverse-engineering write-up of Rage of Mages. The
-interoperability purpose is exact: understanding the file formats and behaviour a
-legally obtained copy of the game already exhibits, so that independent, clean-room
-software can read and reproduce them. No game asset, executable, or install byte is
-committed anywhere in this repository.
+The research source policy permits the owner's game installations, their runtime
+observations, project probes, and documented general knowledge of standard formats
+and platform interfaces. It excludes other game reimplementations and their derived
+specifications as factual authorities. The exact research snapshot is recorded in
+[SOURCE.md](SOURCE.md).
 
-## What is here
+That is a source policy and provenance trail, **not proof that no contributor has
+previously encountered outside material**, and not legal clearance for every finding.
+Hashes establish the exported bytes; reproducing a result does not by itself establish
+its historical independence. A separate repository does not establish personnel
+separation or retroactively change how an earlier result was obtained.
 
-- `claims/` — one ledger per format or subsystem. Each row is a stable, permanent ID, a
-  claim, a confidence level, a status, and an evidence citation.
-- `formats/` — one folder per format or subsystem, holding the specification distilled
-  from claims that survived promotion. Only promoted, evidence-backed facts land here.
-- `tools/claim/` — the reader. `go run ./tools/claim <ID>` prints one claim row, and its
-  retraction state if any, instead of a whole ledger.
-- `SOURCE.md` — which private-repository commit this snapshot was exported from, and
-  the counts that describe it.
+The k1-derived corpus still contains legacy instruction excerpts, quoted technical
+strings and internal research references. This editorial pass removes selected
+unnecessary reproduction; it does **not** certify the remaining corpus or Git history
+as free of original expression. See [the change record](PUBLICATION-CHANGES.md),
+[publication policy](PUBLICATION.md) and [component/source distinctions](THIRD_PARTY.md).
 
-## Reading a claim
+## Contents
 
-Read one claim at a time, for example `go run ./tools/claim SAV-SACKENTRY-590`. This
-prints the row from its ledger, marked if a later row in `claims/retracted.md`
-overturned it. Ledgers run to hundreds of rows; the reader exists so that a one-claim
-question never costs opening a whole file.
+- `claims/`: permanent IDs, findings, confidence, status and evidence references.
+- `formats/`: implementation-facing descriptions derived from claims. Scope and
+  qualifications remain part of each description; a fact about the observed files is
+  not necessarily a format-wide rule.
+- `tools/claim/`: a reader that prints individual claims and their retraction entries.
+- `SOURCE.md`: upstream snapshot identity and the scope of this public edition.
+- `scripts/`: project-authored, non-mutating publication-review tooling.
 
-## Confidence
+ROM2 coverage is incomplete: the k1 export omitted `claims/rom2-asset.md` while retaining
+pages that depend on it. This edition records that gap rather than inventing replacement
+claims or copying an unreviewed private ledger. Such pages are not self-contained
+implementation authorities until their cited findings have been published.
 
-Confidence measures whether the evidence discriminates between live alternatives, not
-how persuasive a claim reads.
+## Reading and checking
 
-| Level | Bar |
-|---|---|
-| High | Live alternatives are ruled out: an instruction-level reading of the compiled consumer, corpus agreement, and a failed falsification attempt. |
-| Medium | Corpus-consistent and internally coherent, but another fitting model remains live. |
-| Low | Partial or single-instance support. |
-| Unknown | The evidence does not decide. |
+Go 1.21 or newer is needed for the reader; it has no third-party module dependencies.
+Run from the repository root:
 
-## Retraction
+```sh
+go run ./tools/claim SAV-SACKENTRY-590
+go run ./tools/claim -k 'sight range'
+go run ./tools/claim -stats
+```
 
-A claim ID is permanent once allocated; it is never reused or deleted. When later
-evidence overturns a claim, `claims/retracted.md` preserves the former wording, the
-confidence it was believed at, the overturning evidence, and the corrected truth, and
-the per-format ledger row is amended to the corrected statement. Nothing in that
-history is edited to look better in hindsight. `go run ./tools/claim <ID>` reads a
-claim's current row together with its retraction state in one call.
+The supplied Python 3.9+ check is heuristic. It reads tracked working-tree files and
+reports binary/data candidates, instruction excerpts and unresolved inline links or
+claim references, without changing files or printing their contents:
 
-## Evidence
+```sh
+python3 -m unittest discover -s scripts -p 'test_*.py'
+python3 scripts/publication_check.py --json
+python3 scripts/publication_check.py --strict
+```
 
-Claim text cites the experiment that earned it, commonly as a path such as
-`../experiments/EXP-0293-sack-cell-lifecycle/`. That path does not resolve inside this
-repository: raw evidence, disassembly, and experiment write-ups live in the private
-research repository this snapshot was exported from. `SOURCE.md` names its exact
-commit.
+`--strict` also fails on review candidates. Neither a zero exit status nor absence of
+matches means legal clearance, absence of embedded game content, or independent origin.
+The existing corpus is expected to produce findings; there is no accepted-all baseline.
 
-This repository is a one-way export of that repository's `claims/`, `formats/`, and
-`tools/claim/`. It is never edited directly here. A correction to a claim starts as a
-falsifiable question against the private research repository, not an edit to a file in
-this one.
+## Confidence and corrections
 
-## License
+Confidence concerns the strength and scope of research evidence, not permission to
+publish or reuse material. A row may have High confidence for one clause and Medium or
+Unknown for another. Read its current wording and qualification, not just the first
+rating word.
 
-Documentation (`claims/`, `formats/`, `SOURCE.md`, this file) is licensed under
-[CC BY 4.0](LICENSE). Code (`tools/claim/`) is licensed under
-[Apache License 2.0](LICENSE-CODE). See `NOTICE` for the trademark and asset statement.
+A claim ID is permanent. `claims/retracted.md` records withdrawn or corrected claims,
+including clause-limited corrections. Publication editing must preserve IDs, confidence
+levels, uncertainty and the meaning and scope of corrections. Original evidence and
+unabridged research records remain in the private research snapshot.
+
+An `experiments/...` citation names a private research record at the revision identified
+in `SOURCE.md`; it is not a working public evidence link. Public verification of those
+records is therefore limited.
+
+Corrections to facts about the original still originate in the research process.
+Publication wording and tooling may be proposed in a public branch. Accepted editorial
+transformations must be incorporated into the export process before the next snapshot,
+so a raw copy does not silently restore removed material. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Licensing
+
+The project's own documentation is offered under [CC BY 4.0](LICENSE). Project-authored
+code in `tools/` and `scripts/` is offered under [Apache-2.0](LICENSE-CODE).
+
+These grants cover only rights the contributors are entitled to license. They do not
+relicense protected game or third-party expression quoted in a finding, grant rights to
+original assets or binaries, or grant trademark rights. This clarification does not
+withdraw or add restrictions to the licenses already granted for project-owned work.
+See [NOTICE](NOTICE) and [THIRD_PARTY.md](THIRD_PARTY.md).
