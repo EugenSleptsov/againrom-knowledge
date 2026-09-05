@@ -1,9 +1,9 @@
 # Claim registry
 
 This file is the public index of claim ledgers. The detailed research chronology,
-confidence-review notes, experiment write-ups, disassembly and raw evidence live in the
-private research repository named by [`SOURCE.md`](../SOURCE.md); they are not part of
-the public functional edition.
+confidence-review notes, experiment write-ups, disassembly and raw evidence live in this
+private research repository, indexed by [`docs/REGISTRY-LOG.md`](../docs/REGISTRY-LOG.md);
+they are not part of the public functional edition.
 
 A claim ID is permanent. Read the claim in its owning ledger and check
 [`retracted.md`](retracted.md) for later correction or narrowing. The command
@@ -72,5 +72,5 @@ material.
 The public ledgers should state independently expressed functional conclusions,
 confidence, scope, status and the identity of the private evidence that earned them.
 Instruction listings, decompiler output, reconstructable shipped-content tables and
-internal review narrative are publication-review material under
-[`PUBLICATION.md`](../PUBLICATION.md), not required parts of this index.
+internal review narrative are publication-review material under the knowledge
+repository's `PUBLICATION.md`, not required parts of this index.

@@ -756,6 +756,25 @@ Human      Humanoid::Serialize = Unit::Serialize + raw 24 XP[6] from +0x1cc
            + objref *(this+0x1e4).  Human's OWN store arm writes nothing.
 ```
 
+`Item`'s own `list(+0x20)` names "the Effect list" by an enforced base type, not by an exact one:
+the underlying `objref` primitive checks every typed reference against the class the reader
+requested — on a class name's first occurrence as well as on a repeat, and on an object
+back-reference — and what it permits is any class derived from that request. This list therefore
+accepts `Effect` and its one subclass `Effect_DirectDamage`, and raises the archive's own bad-class
+error on any other name (`SAV-774`). Two writers were located for this list — the item-generation
+`Effects=` grammar (`ITEM-EFFGRAM-070`) and, already published as the magic-shop effect generator's
+own dispatch (`SHOP-EFFALT-071`, `SHOP-MAGIC-007`), a merge-or-append routine that reads the item's
+own `+0x1c` price to size its interaction budget, not a use-time writer — and across a
+98-file/5,134-item/234-member census spanning the full preserved corpus, every member either writer
+produced is exactly `Effect`; the one derived class the reader would also accept was not observed
+in this list, and no third writer was located (`SAV-775`). `Effect`'s own trailing `+0x0c` byte
+(the fourth field in its row above) is 0 in all 234 census members, and both located writers
+construct through the same default constructor that never sets it to anything else — from either
+located writer an item's own `Effect` cannot carry the nonzero identity that
+`MAGIC-ATTACH-016`/`MAGIC-DMG-005` document for a live, attached spell effect, because that stamp
+is written by call sites neither item generation nor the shop generator's own merge routine
+reaches (`SAV-776`).
+
 The container's own tail, `u32 +0x1c` then `u32 +0x20` — `ITEM-CONT-004`'s shared container class
 (a `CObList` with two dwords bolted on, embedded at `Sack+0x40` and, presence-gated, at
 `Unit+0x7c`) — is `SAV-CITYSTORE-516`'s "insertion index" and "stored

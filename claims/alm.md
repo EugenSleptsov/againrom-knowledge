@@ -6,7 +6,7 @@ Level 2 ledger. Index: [registry.md](registry.md) · spec: [`formats/alm/format.
 > against the evidence it already cites, under the discriminating-evidence rule
 > ([`METHODOLOGY.md`](../METHODOLOGY.md#confidence-scale)). No new bytes were read. Where a
 > clause rests on corpus agreement alone it now reads Medium; where a figure was measured on a
-> base that later moved it is flagged in place. See `registry.md` → *Standing corrections*.
+> base that later moved it is flagged in place. See `../docs/REGISTRY-LOG.md` → *Standing corrections*.
 
 > ### ⚠ EXP-0030 — corpus-wide framing correction (read this before using any offset below)
 >
