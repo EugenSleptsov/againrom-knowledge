@@ -46,7 +46,8 @@ check evaluator and then the pattern evaluator (below). Every slot other than 90
 only generically, at a script-supplied index, by the check and pattern evaluators executing a
 map's own authored data. A check's own compiled-order subscript stays within the shipped maxima
 above, so no check in the analyzed corpus reaches slot 93; whether a pattern's own index
-assignment is bounded the same way was not established. — SAV-650, SAV-651, SAV-658
+assignment is bounded the same way was not established. — SAV-650, SAV-651 (partially
+retracted), SAV-658
 
 ## The pass
 
@@ -87,14 +88,15 @@ Shipped corpus: 387 one-shot, 34 repeating.
 restores this session block first (`004d13b4`) and rebuilds the map trigger programme later
 (`004d143f`).** The builder can preset at least an authored-variable result slot, so builder-first
 followed by a blanket saved-slot overwrite is not equivalent. A consumer that saves mid-mission
-without the latch array re-fires every one-shot trigger on reload. — TRIG-SAVE-008,
-SAV-RECON-268
+without the latch array re-fires every one-shot trigger on reload. — TRIG-SAVE-008 (load
+order and corpus count amended), SAV-RECON-268
 
 The selected positive overwrite is the authored opcode `0x10002` check arm: it copies node+0x48
 into the current compiled register slot and advances that slot. Successfully compiled earlier
 normal checks and constants determine its index; a resolution-rejected normal check does not
 advance it. Later `0053b870` repairs `session+0xa9c0` only. Its adjacency to `0053b880` does not prove
-a LOAD call to that separate register writer. — SAV-652, SAV-710, SAV-711
+a LOAD call to that separate register writer. — SAV-652 (partially retracted), SAV-710,
+SAV-711
 
 ## Mission end
 
@@ -108,7 +110,7 @@ At full-tick reporting, script loss `== 1` precedes win `== 1`, but only after t
 latch and primary-fall gates. Latch `player+0x3c >= 2` cannot reach either counter arm; campaign
 mode returns without automatic latch reset. Loss-to-win is therefore not enabled merely by
 incrementing the loss counter past 1. With a living primary and latch below 2, counter outcomes
-send `0xb4`/`0xb5` and write latch 2/1 without a mode predicate (`TRIG-END-009`).
+send `0xb4`/`0xb5` and write latch 2/1 without a mode predicate (`TRIG-END-009`, amended).
 
 An earlier branch tests the primary pointer `player+0x34` and its stage, not every companion.
 It writes latch 2 and sets owned actors' HP to -50. Its failure packet is restricted to joined
@@ -189,7 +191,7 @@ it, which is why both instants must re-seat the giver. A consumer maintaining a 
 index for pick-ups already has everything check 14 needs; one that does not will implement
 the check against the wrong structure.
 
-Three more (`TRIG-ADDITEM-027`…`TRIG-NEAREST-029`):
+Three more (`TRIG-ADDITEM-027` (amended)…`TRIG-NEAREST-029`):
 
 ```
 instant 12   obj = itemFactory(rec+0x40); if obj, add it to the Target_Unit's container
@@ -498,9 +500,9 @@ action-6 subcommands are runtime-reachable only when a surviving trigger names t
 The matrix keeps these separate from authored-but-unreferenced actions, dead table arms and
 operations absent from the campaign. EN and RU expose the same operation set and reachability
 classes, but their counts are not interchangeable: check 10 is authored 5/4 and check 18 10/9.
-The historical three-arm remainder is already `TRIG-ADDITEM-027`, `TRIG-MONEY-028` and
-`TRIG-NEAREST-029`; the closure retains those claim identities rather than allocating replacements
-(`TRIG-CLOSURE-037`).
+The historical three-arm remainder is already `TRIG-ADDITEM-027` (amended), `TRIG-MONEY-028`
+and `TRIG-NEAREST-029`; the closure retains those claim identities rather than allocating
+replacements (`TRIG-CLOSURE-037`).
 
 The **editor's** names for these arms live in `Description Checks.ini` / `Description
 Instants.ini` at the EN install root. Those are Map Editor files — `rom.exe` contains none

@@ -30,8 +30,8 @@ record = uint8(transformedByte - 0x20)
 
 This is a byte operation, not Unicode decoding. A compatible implementation may expose
 Unicode internally, but conversion to/from the original resources must preserve the
-original one-byte semantics. — `TEXT-CONV-001`, `TEXT-LANG-002`, `TEXT-INDEX-003`,
-`TEXT-SEL0-012`
+original one-byte semantics. — `TEXT-CONV-001` (partially retracted), `TEXT-LANG-002`,
+`TEXT-INDEX-003`, `TEXT-SEL0-012`
 
 ## Input conversion
 

@@ -1,7 +1,7 @@
 # SHOP — stock, price and trade — specification (partial)
 
 Level 3. Promoted, evidence-backed claims only. Class, generator, pool, enchantment and commit
-paths are `SHOP-CLS-001`…`SHOP-NPC-012`; lifecycle, serialization and rounding are
+paths are `SHOP-CLS-001`…`SHOP-NPC-012` (amended); lifecycle, serialization and rounding are
 `SHOP-LIFE-013`…`SHOP-ROUND-017`; campaign/town inputs are `SHOP-MISSION-018`…`SHOP-TOWN-023`;
 the complete equipment/effect populations and live enchantment generator are
 `SHOP-EFFPOOL-061`…`SHOP-EFFSEED-072`. Ledger: `claims/shop.md`.
@@ -208,7 +208,7 @@ either way      Shop::Open -> if the shelves are empty, Generate() first, then c
 ```
 
 Reached from `Shop::Open` (`FUN_005079a7`), `Shop::Generate` (`FUN_00505e54`) and
-`FUN_00507e56` — three callers, 0 in orphan code (`SHOP-GEN-005`, `SHOP-LIFE-013`,
+`FUN_00507e56` — three callers, 0 in orphan code (`SHOP-GEN-005` (partially retracted), `SHOP-LIFE-013`,
 `SHOP-LIFE-014`).
 
 ### Persistence

@@ -2,7 +2,7 @@
 
 Level 3. Promoted, evidence-backed claims only. Inventory assets are `MENU-ASSET-001`…`002`,
 the hit mask and state are `MENU-MASK-003`…`MENU-STATE-007`, and the two in-play Esc menus are
-`MENU-ESC-010`…`MENU-INPUT-016`. This is a **composition contract**, not a bitmap codec — the images are
+`MENU-ESC-010` (partially retracted)…`MENU-INPUT-016`. This is a **composition contract**, not a bitmap codec — the images are
 standard Windows BMP; what is re-derived here is how the engine assembles them into
 an interactive surface.
 
@@ -160,7 +160,7 @@ and child geometry are executable constants; all six strings are localised `main
 generic dialog-frame drawing assets were not re-enumerated as part of the command-panel asset
 census.
 
-## The in-play Esc menus (`MENU-ESC-010`…`MENU-INPUT-016`)
+## The in-play Esc menus (`MENU-ESC-010` (partially retracted)…`MENU-INPUT-016`)
 
 Two surfaces, not one. `VK_ESCAPE` reaches the frame window's `WM_KEYDOWN` handler
 `FUN_00472b80`, which reads the UI state word `campaign+0x3dc`:
@@ -173,7 +173,8 @@ Two surfaces, not one. `VK_ESCAPE` reaches the frame window's `WM_KEYDOWN` handl
 
 The town arm additionally requires the `campaign+0x3b4` CString to be empty. The
 mission surface is also raised by a 32×32 button on the character-panel sibling at panel-local
-`(0x7e,0xce)-(0x9e,0xee)`, whose tooltip is global string index 14 (MENU-ESC-010).
+`(0x7e,0xce)-(0x9e,0xee)`, whose tooltip is global string index 14 (MENU-ESC-010, partially
+retracted: this row is the owning-panel correction).
 
 Entries, in screen order. Labels come from `main.res::text/dialogs.txt` through the
 descriptor at `0x005ea678`; `FUN_004687f0(table,i)` resolves to

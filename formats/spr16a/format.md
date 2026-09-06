@@ -212,8 +212,9 @@ EN reinstall restored the pinned bytes), font1/font3/font4/font5 and all five `.
 build blanks its 35 accent records (chars `0x80..0x9A`, `0xA0..0xA5`, `0xE1`, `0xEF`) and
 carries a different dead residue (SPR16A-FONT-022). Note the measured mismatch a consumer
 should know about: the RU release's own data strings are **CP866** and its README **CP1251**
-(SPR16A-TXT-023) — neither matches these atlases' arrangement, and `rom.exe` converts
-nothing; how the RU game shows Russian text is an open question.
+(SPR16A-TXT-023, partially retracted) — neither matches these atlases'
+arrangement, and `rom.exe` converts nothing; how the RU game shows Russian text is an open
+question.
 
 ### A font is two nodes — `fontN.dat` is the advance table (SPR16A-FONT-018)
 
@@ -342,8 +343,8 @@ Hard checks a decoder can assert from a measurement rather than from taste:
   we have not found is not a format question, but it is unexplained.
 - **The RU text pipeline** — the RU release's data strings are CP866, its README CP1251, its
   fonts the hybrid arrangement, and `rom.exe` (byte-identical across releases) converts
-  nothing (SPR16A-TXT-023). Only runtime observation of the RU game can show what its text
-  looks like on screen.
+  nothing (SPR16A-TXT-023, partially retracted). Only runtime observation of the
+  RU game can show what its text looks like on screen.
 
 ## Closed
 
@@ -431,7 +432,7 @@ no `units.reg` `Projectile` key.
 
 ## Which consumer draws each spell-reachable sheet (`SPR16A-PART-030`)
 
-Promoted from `SPR16A-MARK-029` and `SPR16A-PART-030`. The 23 spell-reachable rows above are drawn
+Promoted from `SPR16A-MARK-029` (partially retracted) and `SPR16A-PART-030`. The 23 spell-reachable rows above are drawn
 by four different consumers.
 
 **Cast parity, `2*id + 8`, 15 rows.** Ten are actor-bound marks drawn from the mark array on the

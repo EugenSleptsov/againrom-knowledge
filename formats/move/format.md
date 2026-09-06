@@ -3,7 +3,7 @@
 Level 3. Promoted, evidence-backed claims only. Search, costs, termination, extraction,
 reservation, tick and refresh are `MOVE-SEARCH-001`…`MOVE-REFRESH-012`; tick ordering and
 save/load regrouping are `MOVE-TICK-013`…`MOVE-TICK-017`; substitute goals are
-`MOVE-ALT-018`…`MOVE-ORDER-023`; movement domains are `MOVE-DOM-024`…`MOVE-DOM-028`;
+`MOVE-ALT-018`…`MOVE-ORDER-023` (partially retracted); movement domains are `MOVE-DOM-024`…`MOVE-DOM-028`;
 the rate and formation gates are `MOVE-RATE-029`…`MOVE-GROUP-037`. Ledger: `claims/move.md`.
 
 **Status: partial (◐).** The search, its cost model, its termination, the substitute goal, the route

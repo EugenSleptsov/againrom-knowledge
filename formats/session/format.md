@@ -2,7 +2,7 @@
 
 Level 3. Promoted, evidence-backed claims only. Core lifecycle is `SESS-OBJ-001`…`SESS-IDLE-007`;
 load, outcome and command boundaries are `SESS-CMD-008`…`SESS-HERO-014`, `SESS-CMD-015`,
-`SESS-CMD-016` and `SESS-PARAM-017`. Ledger: `claims/session.md`.
+`SESS-CMD-016` and `SESS-PARAM-017` (partially retracted). Ledger: `claims/session.md`.
 
 **Status: partial (◐).** The session object, its phase and screen words, both simulation counters
 and the rate ladder that paces them, the command dispatch, the whole map-load order, the
@@ -20,7 +20,8 @@ participant entry/join bytes are distinct. New/load campaign allocates with argu
 phase-3 authority starts pass 0, and phase-1 host start passes 1. Initialization writes
 `server+0x0c = (arg < 2)`, but successful ALM load overwrites it from type-0 payload
 `+0x70 > 1`. These stores reload the **global server pointer**: the map sub-object's
-`+0x44` base adjustment does not apply to them (`SESS-MAP-010`, `SESS-DEFEAT-064`).
+`+0x44` base adjustment does not apply to them (`SESS-MAP-010` (its own blanket "every other
+displacement is 0x44 low" is retracted), `SESS-DEFEAT-064`).
 All 28 maps per campaign root load zero. RU loose Horror.alm also loads zero; all 10 EN
 loose maps and the other 5 RU loose maps load one. Save deserialization does not restore
 this mode dword. Constructor-only and loose-map-equals-network rules are invalid.
@@ -244,7 +245,8 @@ engine's own `"Request to set unknown parameter "`. Id 1 is the withdraw knob (`
 id 3 writes Player+0x58, mapping 0/1/2 to 100/50/0 and accepting raw 3..100 while retaining
 the prior value outside that range — id 3's value is the same `+0x0e` dword above, so a
 `+0x10` index fill with `+0x0e = 1` reads above 100 there and stores nothing.
-The earlier "parameter 3 is the withdraw knob" wording is corrected. — SESS-PARAM-017, SAV-726
+The earlier "parameter 3 is the withdraw knob" wording is corrected. — SESS-PARAM-017
+(partially retracted), SAV-726
 
 **Customisation.** 161 empty session opcodes, 4 empty order opcodes and 124 empty parameter ids
 are all *absent implementation* and free: no shipped `.alm`, `.res` or save carries a command

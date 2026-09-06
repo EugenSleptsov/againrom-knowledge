@@ -2,7 +2,8 @@
 
 Level 3. Promoted, evidence-backed claims only. The clock, action block, phase rules,
 run lengths, message set, death chain and object boundary are `ANIM-CLOCK-001`…`ANIM-OBJ-008`;
-the sheet/frame boundary is `SPR256-UNIT-024`, and simulation-side timing is `HERO-CADENCE-023`.
+the sheet/frame boundary is `SPR256-UNIT-024`, and simulation-side timing is `HERO-CADENCE-023`
+(amended; its complete-period formula and worked intervals are retracted).
 Ledger: `claims/anim.md`.
 
 **Status: partial (◐).** The driver, its clock, its five-field state block, all eight action arms,

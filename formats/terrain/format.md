@@ -1242,7 +1242,7 @@ by `shear/2000`.
 (body). A unit is dispatched twice over the drawable grid `CMapView+0x90`, both times at
 `idx = (row+3)*(visCols+6) + (col+3)` under `drawable+0x78 == 0`: `vt+0x2c` = `FUN_0045bf00` gets the
 `+0xc0` altitude and draws the **shadow**, `vt+0x28` = `FUN_0045b3f0` gets the `+0xb0` light level and
-draws the **body** (`TERR-SPR-065`, correcting `TERR-SPR-048`).
+draws the **body** (`TERR-SPR-065`, correcting `TERR-SPR-048`, partially retracted).
 
 **The level.** `CMapView+0xb0` is a per-frame byte grid of `(visCols+6) × (visRows+10)`, filled by
 `FUN_004050da`:

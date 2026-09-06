@@ -297,7 +297,7 @@ restrictions remain Unknown. — AI-SPELLPOP-287
 Cast capability is narrower than availability. In session states+3dc==1 or
 with bit2 set, each accepted `CUnit` with+20 equal17h/18h and nonzero+18 can
 OR200h into view+144. This is the current loop object, not only the primary
-object; the primary-only clause of AI-PANEL-061 is corrected. Other session
+object; the primary-only clause of AI-PANEL-061 (partially retracted) is corrected. Other session
 states assign summary8. The owner comparison still uses the primary. The
 mode helper returns0 for summary bit4, otherwiseEFh plus10h for200h; the
 panel separately disables on zero count or summary24h. Item action0Ah bypasses

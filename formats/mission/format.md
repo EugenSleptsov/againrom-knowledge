@@ -202,7 +202,7 @@ The human participant's `Player+0x38` purse is a 32-bit zero from `Player::Playe
 generation, mission 10 entry, and the first tick do not change it on the measured path. Fighter or
 mage, sex, face, stats, entered or default name, and starting weapon do not affect the purse. A
 runtime observation remains required for the complete negative: any non-zero purse before a player
-action refutes it (`PARTY-MONEY-018`).
+action refutes it (`PARTY-MONEY-018`, retracted).
 
 Mission 10 appends three text-document entries to the campaign record before hero creation:
 `(value=1,kind=1)`, `(2,1)`, and `(3,1)`. The collection is independent of the inventory item that
@@ -226,7 +226,7 @@ The branch sets latch 2, sends `0xb4` only with joined byte `player+0x3e != 0` a
 and sets all actors in the flat ownership index to HP -50. It does not test whether any companion
 is alive. Otherwise script loss `== 1` precedes success `== 1`, without a mode predicate.
 Win-to-loss is locally admissible; loss-to-win merely because loss count exceeds 1 is not
-(`MISSION-END-013`, `MISSION-DEFEAT-045`).
+(`MISSION-END-013` (amended), `MISSION-DEFEAT-045`).
 
 The actual failure panel uses vtable `00598b78`, handler `00447063`, and these two actions:
 
@@ -236,7 +236,7 @@ The actual failure panel uses vtable `00598b78`, handler `00447063`, and these t
 | Load Game / Восстановить игру | `0x446 -> 0x44c -> 0x418`, save selection; disabled when no `game*.sav` is found |
 
 Neither is Restart, Continue or a dead-primary repair command. The neighboring class's
-`00446d35 -> 0x41d` is not this panel (`MISSION-PATH-015`, `MISSION-VICTORY-035`,
-`MISSION-DEFEAT-046`). The shown panel sets screen bit 8, which pauses campaign idle stepping
-even while the run dword stays 1 (`MISSION-STOP-016`, `SESS-DEFEAT-065`). Runtime delay, packet
+`00446d35 -> 0x41d` is not this panel (`MISSION-PATH-015` (amended), `MISSION-VICTORY-035`
+(amended), `MISSION-DEFEAT-046`). The shown panel sets screen bit 8, which pauses campaign idle stepping
+even while the run dword stays 1 (`MISSION-STOP-016` (amended), `SESS-DEFEAT-065`). Runtime delay, packet
 backlog and ordinary-UI delivery of a repair command after fall remain Unknown.

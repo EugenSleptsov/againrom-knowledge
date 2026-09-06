@@ -965,8 +965,8 @@ trail or a differently sized bolt sheet all require an engine change; none is re
 ## 15 — what a lasting effect draws on its actor
 
 Promoted claims: `MAGIC-MARK-059`,
-`MAGIC-MARK-060`, `MAGIC-MARK-061`, `MAGIC-PROT-062`, `MAGIC-SHIELD-063`, `MAGIC-BLESS-064`,
-`MAGIC-CLOUD-065`, `MAGIC-ACTOR-066`.
+`MAGIC-MARK-060`, `MAGIC-MARK-061`, `MAGIC-PROT-062`, `MAGIC-SHIELD-063` (superseded),
+`MAGIC-BLESS-064`, `MAGIC-CLOUD-065` (partially retracted), `MAGIC-ACTOR-066`.
 
 Corrected and completed by the promoted presentation claims
 `MAGIC-089` through `MAGIC-093`, `ANIM-044` through `ANIM-047` and `SPR16A-031`.
@@ -1262,7 +1262,8 @@ produces damage absorption and no immobilisation.**
 
 Duration before resistance is `ftol(1.025^power × SpellDuration × 16)` ticks — 160 at power 0, 262
 at 20, 549 at 50, 1890 at 100 on the shipped row — then multiplied by `(100 − target+0xca)/100`
-with a floor of one tick (`MAGIC-SING-019` d).
+with a floor of one tick (`MAGIC-SING-019` d; a different clause of this id, the item-cast
+universal reach, was retracted).
 
 Two further, spell-independent ways an actor stops acting, which a consumer must not confuse with
 this one: `ord+0x09 = 0xff`, written when the queued command is `actor+0x50 == 0x17` and cleared

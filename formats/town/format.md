@@ -46,7 +46,7 @@ four entrance selectors. (`TOWN-404`)
 
 The hub has nine non-bird tested flag bits, invoking ten gated helpers because
 bit 4 calls two. Gate and guard helpers are unconditional. This corrects only
-the eight-count clause of `TOWN-158`. (`TOWN-405`)
+the eight-count clause of `TOWN-158` (partially retracted). (`TOWN-405`)
 
 ### Bird episode
 
@@ -134,7 +134,7 @@ For mouse-family routing, a non-null `control+34` handler bypasses the child
 broadcast, including after a zero return. Zero still permits the final vtable
 slot decision. With a null handler, the broadcast runs. The keyboard `+38`
 path differs: a zero handler result permits a child broadcast. This corrects
-the identical-fallback clause of `TOWN-211`. (`TOWN-406`)
+the identical-fallback clause of `TOWN-211` (partially retracted). (`TOWN-406`)
 
 ## Limits
 

@@ -3,7 +3,7 @@
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-010` (container),
 `R2-ASSET-011` (encoding). Cross-reference only, not evidence: ROM1's own
 [`formats/text/format.md`](../text/format.md) (`TEXT-STRTAB-023`,
-`TEXT-CONV-001`).
+`TEXT-CONV-001`, partially retracted).
 
 Seen as: `main.res:text/*.txt` (CRLF-delimited string tables) and
 `patch.res:patch.txt`.
@@ -23,7 +23,7 @@ every number in between present), and **6** are new non-mission names:
 
 ## Encoding result
 
-Does not stay inside TEXT-CONV-001's two source blocks `{0x80..0xAF, 0xE0..0xEF}`
+Does not stay inside TEXT-CONV-001's (partially retracted) two source blocks `{0x80..0xAF, 0xE0..0xEF}`
 the way ROM1's own text does, and its in-domain share is not spread over both
 blocks the way ROM1's is. Measured fresh, with this survey's own tool and its
 own population definition (`.txt`/`.ini`/`.lst`/extensionless nodes across all 11

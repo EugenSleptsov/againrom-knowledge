@@ -56,7 +56,7 @@ Level 3. Promoted, evidence-backed claims only. Claim basis: container
 `SAV-TAIL-018`); writer, reader and world `Serialize`
 (`SAV-SHAPE-023`, `SAV-ROSTER-024`, `SAV-HEAD-025`, `SAV-TRAIL-026`); campaign
 record (`SAV-CAMPTAIL-070`, `SAV-CAMPPROG-071`, `SAV-CAMPPOS-072`,
-`SAV-CAMPMARK-073`);
+`SAV-CAMPMARK-073`, partially retracted);
 terrain overlay, typed cell payload and post-load identity order
 (`SAV-CELLLOAD-108`…`SAV-CELLLOAD-113`, `TRIG-CELLTAIL-035`); and the exact
 byte-0-to-EOF reader and bounded witness census (`SAV-FULLREAD-252`, `SAV-READPOP-255`).
@@ -315,7 +315,24 @@ zero-initializer, the unconditional store-arm write shown above, and the marker-
 re-read — zero in 44 of the 45 parsed saves and 520 in exactly one, an original-written stream and
 not one of the six this project's own writer produced, returning to 0 in the very next save from
 the same directory: not a monotonic counter, and the write that first produces a non-zero value is
-not located. — SAV-646, SAV-647, SAV-648, SAV-649
+not located.
+
+That transfer is one call site, `004d15ed`, and both directions run it: the store arm tail-jumps
+into the load arm's epilogue at `004d0efa`. `FUN_0053e800` has exactly one direct call site and no
+stored pointer anywhere in the image, so it is not virtual, and neither is the block's constructor.
+Direction is the only thing the archive's mode word selects: a set loading bit reaches `0057b908`,
+which memcpies out of the archive's own buffer into the caller's, and a clear one reaches
+`0057ba16`, which copies the other way; the count is `0x190` at every mode value tested. The block
+is read unconditionally, even when the discriminator does not match — only the `[0x00609b0c]`
+re-read is gated on it. Of the block's 100 dwords, only `+0x0` and `+0x4` have any located
+consumer: the complete `[base+0x118]` displacement census over `.text` is 70 sites, and after
+crossing it against the complete absolute-dword reference census for `[0x005cd758]` and
+disassembling every survivor, the six that reach this block are exactly the trace-gate and toggle
+sites already named, each touching dword 0 or dword 1 and no other. Dwords 2 through 99 have no
+located consumer. That is a complete search of one instruction form, not a statement about the
+image: a consumer handed the block pointer as an argument uses no `+0x118` displacement and would
+not be found.
+— SAV-646, SAV-647, SAV-648, SAV-649, SAV-790, SAV-791
 
 This page's "world," in `world+0x118` and as the document routine's own `this` below, is one
 specific global, `[0x005cd758]` — every disassembled `+0x118` dereference loads its base from that
@@ -645,8 +662,8 @@ each word right eight and stores one byte, so only cell `+0x00/+0x01` influences
 sub-cell `+0x04/+0x05` is read then discarded. Neither arm reads packed `+0x02/+0x03`, unmanaged
 `+0x06/+0x07` or terrain `+0x08`. These are mandatory-prefix consumers unless the earlier tick
 changed them; absolute-first order and terrain-key fate remain Unknown. A no-world-half SAV carries
-zero loaded Buildings and Sacks; new-mission ALM objects are fresh. — SAV-POSTLOAD-220,
-SAV-POSTLOAD-221
+zero loaded Buildings and Sacks; new-mission ALM objects are fresh. — SAV-POSTLOAD-220
+(amended), SAV-POSTLOAD-221
 
 The optional edge is not a special load-only repair tick. Its nonzero arm and the normal paced loop
 both call the same wrapper, `FUN_004d2551`; when `server+0x2c` is nonzero that wrapper calls the same
@@ -667,7 +684,7 @@ zero and the loaded latch is zero, `FUN_004d403c` places unseated actors: `FUN_0
 Position cell, packed cell, sub-cell and terrain pointer, and the placement search may clamp the
 cell/sub-cell again. Already seated actors are skipped. The join then writes the latch to 1 on both
 placement and no-placement arms; mission teardown clears it for the surviving human Player. —
-SAV-POSTLOAD-220
+SAV-POSTLOAD-220 (amended)
 
 Actor entry mask `-1` admits equipment and carried-container walkers, but actor vtable eligibility,
 recipient ownership and type-ID branches gate them before any Item is reached. Each reached Item
@@ -688,8 +705,8 @@ The load arm binds the key to the object it has just constructed, in a map at
 For these sites a writer must mint a unique nonzero identity key per object and write a
 reference as its target's key. The value is arbitrary; the identity is not. Missing-key
 nulling is this resolver's rule, not a universal property of the map. These keys are neither
-Token creation-order/map-unit IDs nor MFC archive indices. — SAV-TOKEN-034, SAV-PTRMAP-035,
-SAV-ARCHREL-253
+Token creation-order/map-unit IDs nor MFC archive indices. — SAV-TOKEN-034, SAV-PTRMAP-035
+(partially retracted), SAV-ARCHREL-253
 
 Across 31 distinct complete documents the same call-site reader records 4,280 pointer-map
 definitions and 9,382 references: 5,722 uniquely resolve, 2,963 are zero and 697 nonzero keys remain
@@ -1010,7 +1027,7 @@ modifiers `de/e2`, as signed16; the stored remainder bytes `a2/a3` reload
 unsigned. Modifier plus100 is32-bit. Products and the accumulator wrap at32
 bits, followed by signed division truncated toward zero. The exact admitted
 formula and local gates are in the hero regeneration section.
-— SAV-REGENWIDTH-528, HERO-REGEN-021
+— SAV-REGENWIDTH-528, HERO-REGEN-021 (amended)
 
 Each reached arm stores the remainder's low byte, then the quotient's low
 word, then the signed minimum of that stored word and the maximum. There is
@@ -1311,7 +1328,8 @@ running `2..19` and `2..62`. Decoding the records field by field adds three inte
 `Building+0x40` reproduces the head's `u16` at +17 in 18/18 records; the dword at head **+19**
 runs `1 2 3 19 20 26 28 30 31 32 33 43 …`, the map's own type-4 record ids; and the identity
 keys ascend in `0x80`/`0x100` steps, an allocator's stride, while the reference field takes one
-of a few values shared by groups of buildings. — SAV-BLDG-037, SAV-PTRMAP-035
+of a few values shared by groups of buildings. — SAV-BLDG-037, SAV-PTRMAP-035 (partially
+retracted)
 
 ### Obfuscation and clamping
 
@@ -1527,7 +1545,7 @@ wholesale `Serialize` above restores every slot's raw file-stored value before t
 programme is rebuilt. Its authored opcode `0x10002` check nodes overwrite their compiled slots
 from node+0x48. The separate later call `0053b870` only repairs `session+0xa9c0` to the live session
 address; adjacency to `0053b880` does not establish a register-writer call edge. —
-SAV-650, SAV-651, SAV-652, SAV-658, SAV-710, SAV-711
+SAV-650, SAV-651 (partially retracted), SAV-652 (partially retracted), SAV-658, SAV-710, SAV-711
 
 ## Uncompressed tail (`[bodyEnd, EOF)`)
 
@@ -1607,7 +1625,7 @@ recurs the first almost entirely (26 of its 31 distinct states are `SAV-CAMPMARK
 saves, confirmed by SHA-256) rather than confirming it independently. This bounds the claim to the
 population actually walked, not every ROM1 save: accessible saves outside these corpora remain
 untested. The non-zero case is established by the paired programme, not by a save corpus. —
-SAV-CAMPMARK-073, SAV-609
+SAV-CAMPMARK-073 (partially retracted), SAV-609
 
 Campaign `+0x118` is the selected mission. Field `+0x120` is 1 when the live world-map position
 equals the first MapPoint. On load, 1 restores that first point; 0 looks up the MapPoint indexed by
@@ -2066,7 +2084,8 @@ projection and fresh original resave are not. — SAV-BOUNDARY-367
   measurement that would test the window from the other side, and it costs one play session. It
   would also test the runtime-id law (`SAV-ID-015`) on a second map.
 - **A save records what the participant has seen, in the uncompressed tail** (`SAV-FOG-061`). The
-  tile plane is not serialized anywhere in the document programme — that part of `SAV-SEEN-055` was
+  tile plane is not serialized anywhere in the document programme — that part of `SAV-SEEN-055`
+  (retracted headline; this negative clause survives) was
   right — and the load arm rebuilds the terrain from the `.alm` before applying the block records
   (`SAV-LOAD-057`); the explored bit arrives afterwards, from the tail's `Fog` section. A consumer
   that discards explored terrain across a save/load diverges from the original. What the original
@@ -2087,7 +2106,26 @@ projection and fresh original resave are not. — SAV-BOUNDARY-367
   actor's own carried weight and `+0x90` its derived load — own weight plus half the inventory
   container's running weight sum (`ITEM-LOAD-005`, `HERO-SIGHT-007`); `+0xa4` is the `u16` sight
   radius in 1/256-cell units, high byte `+0xa5` (`AI-SIGHT-092`, `HERO-SIGHT-007`) — closed without
-  new derivation by `SAV-635`. `+0x18` is a different surface, `Token+0x18` (`SAV-636` below), and
+  new derivation by `SAV-635`. All three are read back out of the stream by the load arm and are
+  not recomputed there: one original-written stream carries a load of 181 against an own weight of
+  178 and an empty container — a value no recompute could produce — and the original loaded that
+  stream, played, and wrote 181 back, twice (`SAV-794`). So a consumer must round-trip what the
+  file supplies. `+0x8e` is maintained incrementally, not stored once: besides the derive, which
+  has no direct caller and is reached only through a vtable slot, `FUN_004f36f7` has 13 direct
+  callers, adds a 16-bit delta to `+0x8e` and then recomputes `+0x90` with the same arithmetic
+  (`SAV-792`). That arithmetic is 16-bit and its 64 000 threshold is a signed compare, and the
+  speed penalty reads the result with `MOVSX`, so a load that wraps past 0x8000 reads negative and
+  cancels the penalty instead of deepening it; no preserved record reaches that range
+  (`SAV-793`). Over 826 `Unit` records in the 31 preserved streams no writer of this project
+  reaches, `+0xa4` takes six values, `1024 x {1, 1.25, 1.5, 1.75, 2, 2.25}`, with a zero low byte
+  on all of them — in the 1/256-cell unit above, whole-cell sight radii of 4 to 9, which is the
+  `scanRange` column the non-hero streamer registers; over 448 `Human` records in the same streams
+  it spans 1331..2037, and the hero derive reproduces the stored value on 442 of them (`SAV-795`).
+  `+0xa4 = 0` occurs in none of those 1 274 records. It occurs three times in the wider corpus, in
+  one generated candidate of this project's, a copy of it, and the original's own resave of the
+  first, all three agreeing in every scalar column: the original preserved that field rather than
+  choosing it, and the constructor's own sight word is `0x0500` = 1280, not 0 (`SAV-796`,
+  `claims/retracted.md`). `+0x18` is a different surface, `Token+0x18` (`SAV-636` below), and
   `+0x6c` is a countdown only while dying.
   `+0xa2/+0xa3` are the separately persisted regeneration remainder bytes
   (`SAV-REGENSTORE-529`, `SAV-REGENWIRE-532`), not unknown scalar padding.
@@ -2135,7 +2173,7 @@ projection and fresh original resave are not. — SAV-BOUNDARY-367
 - **The shape byte clear arm is observed in preserved no-world saves.** Those paths retain the
   roster while omitting the world half, and the reader's post-load path restores and detaches the
   actors. Acceptance of a newly generated no-world programme by the original remains Unknown
-  (`SAV-CITY-030`, `SAV-POSTLOAD-220`, `SAV-WRITER-284`).
+  (`SAV-CITY-030`, `SAV-POSTLOAD-220` (amended), `SAV-WRITER-284`).
 
 ## Conditional command route to trailer trace toggles
 
@@ -2151,7 +2189,9 @@ engine's debug-command help, naming subcommand 19's toggle "Script tracing
 on/off" (`0x5c8990`), without establishing what reaches it. SAV-694 falsifies
 SAV-647's earlier "0 direct E8 callers" reading for this same callee
 (`claims/retracted.md`): the route above is one direct E8 call. The other 98
-dwords and other world-head residuals remain unresolved. — SAV-694, SAV-647
+dwords have no located consumer at all, by the complete displacement census
+above; what they hold, and whether an ordinary runtime route reaches the two
+that do, remain unresolved. — SAV-694, SAV-647, SAV-791
 
 ## Primitive reader domain and minimal encodings
 
@@ -2174,7 +2214,7 @@ Unit `004f5946` (`UNIT-DERIVE-003`) consumes the same field through `actor+0x14`
 as the percentage `HERO-MP-006` already names the AI's mana floor. SAVE/LOAD
 transport does not apply this command normalization. Parameter 1, not 3, is the
 withdraw arm. Player+0x50 and other raw settings remain unresolved. — SAV-726,
-SAV-666, SESS-PARAM-017
+SAV-666, SESS-PARAM-017 (partially retracted)
 ## Session self-pointer and map-constant repair
 
 The raw 2,508-byte span beginning at `session+0xa9bc` includes a self-pointer at `+0xa9c0`,
@@ -2202,5 +2242,11 @@ function inlines the same OR-publish step twice, broadcasting to every bit
 when its recipient argument is null — the discriminator against a class flag
 or Boolean. This does not establish a universal fog-of-war meaning, a class
 discriminator or the full lifetime of every class. The existing width and
-literal transport remain.
-— SAV-678, SAV-653, SAV-664
+literal transport remain. Over 1,420 decoded records in 45 preserved streams
+the field is 2 on 1,404 and 0 on 16, with no other value. The terminal stage
+does not decide which: of 26 records at stage 5 exactly half carry 0, and the
+same three dead units appear at mask 2 in one save of a campaign and at mask 0
+in another. The three stage-0 records carrying 0 are all in the one save a
+preserved manifest records as the resave made after three mercenaries were
+hired.
+— SAV-678, SAV-653, SAV-664, SAV-797

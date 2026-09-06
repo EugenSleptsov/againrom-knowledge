@@ -228,7 +228,7 @@ where an off-by-one key would show:
 (`CenterX = 64` is the midpoint of `SelectionX1/X2` on `Unit0`; `CenterY = 78` is *not* the
 midpoint of `SelectionY1/Y2` = 69. The X relation is noted, not generalised.)
 
-## `units.reg` — unit classes (`REG-UNITS-018`, `REG-ROSTER-019`)
+## `units.reg` — unit classes (`REG-UNITS-018`, `REG-ROSTER-019` (partially retracted, corrected by `REG-ROSTER-052`))
 
 34 classes `Unit0..Unit33` (`[Global] UnitCount` = **34** on the corrected framing —
 `REG-UNITS-018`; the `33` this spec used to print was the
@@ -241,7 +241,7 @@ sprite-descriptor section. Per-class keys (all game-authored ASCII):
 | `File` | **scalar index into `Files[]`** — *not* a path. `units/` + `Files[File]` + `.256` (`REG-VAL-029`; see *Resolved values* below) |
 | `Index` | frame index / base |
 | `Palette` | palette ref |
-| `DescText` | human-readable name (`Human Two-Handed Swordsman`, `Ogre (Lord)`). **Nothing in `rom.exe` reads it** (`UNIT-NONAME-039`), it is byte-identical on both roots on 34/34 classes and pure ASCII, and its longest shipped value is 31 bytes + NUL against the `0x20` inline field — so it is editor-facing metadata with a 31-character ceiling (`REG-DESC-096`) |
+| `DescText` | human-readable name (`Human Two-Handed Swordsman`, `Ogre (Lord)`). **Nothing in `rom.exe` reads it** (`UNIT-NAME-039`), it is byte-identical on both roots on 34/34 classes and pure ASCII, and its longest shipped value is 31 bytes + NUL against the `0x20` inline field — so it is editor-facing metadata with a 31-character ceiling (`REG-DESC-096`) |
 | `InfoPicture` | portrait leaf, **without directory or extension** — the engine builds `graphics\infowindow\<InfoPicture>.bmp`, or `<InfoPicture><tier>.bmp` with the digit dropped at tier 1, from `class+0xd8` (`UNIT-PICT-036`). Read only when the drawable's `+0x18c & 0x11` is clear, i.e. for `ID >= 0x1a`; on the thirteen human classes below that it is **dead data** (`UNIT-PICT-035`) |
 | `Parent` | inherit-from class |
 | `InMapEditor` | editor-visible flag |
@@ -446,7 +446,8 @@ measurements are `REG-VAL-043` and the rows below.
   compares it against `0` and `-2` to pick which sound slot a burnt cell feeds. The
   21 classes carrying −2 are exactly the 21 that are some class's `DeadObject`. Neither
   key occurs in any other registry in the install.
-- **`structures.reg`** — 66 structures (held, `REG-STR-040`). The **in-memory class record**
+- **`structures.reg`** — 66 structures (held, `REG-STR-040`, partially retracted; see
+  retracted.md). The **in-memory class record**
   is `0xa4` bytes and `REG-STR-080` reads it off the loader `FUN_0046e8a0`:
 
   ```

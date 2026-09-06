@@ -107,7 +107,7 @@ Path processing has several important compatibility properties:
 - archive-manager input paths are lowercased before resolution in the reached path;
 - child lookup is case-insensitive over the original byte-oriented ASCII domain;
 - no Unicode normalization or general code-page conversion is part of the archive
-  grammar. — `RES-TEXT-021`, `RES-PATH-025`, `RES-CASE-036`
+  grammar. — `RES-TEXT-021`, `RES-PATH-025` (partially retracted), `RES-CASE-036`
 
 No byte-to-character conversion happens anywhere on the read path, and the sibling REG
 text store reaches the same conclusion through its own distinct reader. No examined

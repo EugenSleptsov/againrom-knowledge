@@ -13,7 +13,7 @@ of valid mission numbers is loaded from.
 
 This is not a file format. It is the seam between the script runtime (`formats/trigger`), the
 mission (`formats/mission`) and the container (`formats/res`). The glyph rule — byte → glyph →
-pixel and the font atlases — is specified by `TEXT-CONV-001`…`TEXT-TILDE-009` and is deliberately absent here.
+pixel and the font atlases — is specified by `TEXT-CONV-001` (partially retracted)…`TEXT-TILDE-009` and is deliberately absent here.
 
 ## The one thing a consumer must not get wrong
 
@@ -69,7 +69,7 @@ vtable `00598b78`; slot `+0x48` is `00447063`, forwarding the base result/close 
 It offers Exit to Main Menu (`0x445`) and Load Game (`0x446`). Base close posts `0x44c`; the
 frontend matches the stored failure-panel pointer `+0x110`, then chooses `0x41e` teardown/menu
 or `0x418` save selection. There is no failure-panel `00446d35 -> 0x41d` hop: that method is
-in a neighboring class (`DLG-PATH-002`, `MISSION-DEFEAT-046`). Both outcome panels set bit 8;
+in a neighboring class (`DLG-PATH-002` (amended), `MISSION-DEFEAT-046`). Both outcome panels set bit 8;
 the campaign idle gate pauses stepping while shown (`SESS-DEFEAT-065`).
 
 `FUN_004217be` is the class's **only** constructor. Rects are `{left, top, right, bottom}`.

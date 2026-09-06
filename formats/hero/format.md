@@ -235,7 +235,7 @@ There are three caller sites of that accepter (`HERO-DEFEAT-136`):
 Observed `0x48` production is character acceptance, not a failure-panel command. Teardown,
 direct healing and imported-character restoration also clear stage without this penalty.
 Ordinary UI delivery of a staged-primary `0x48` remains Unknown. The loss arithmetic's prior
-level-band result remains in `HERO-SKILLLOSS-075`; it does not establish mode reachability.
+level-band result remains in `HERO-SKILLLOSS-075` (amended); it does not establish mode reachability.
 
 ### the purchase — `FUN_004f7cd7`, one command
 
@@ -521,7 +521,7 @@ callback contract follows (`SAV-EQUIPOBS-555`).
 A weapon's numbers are `round(column × shapeFactor × materialFactor)` (`+0.5` then `ftol`); runtime
 column *i* is `Data.bin` title *i+1*, so they are the shipped titles `@.physicalMin`,
 `@.physicalMax`, `@.toHit`, `#.deIrnce`, `weight`. **The two factors are now decoded**
-(`ITEM-SCALE-017`): each is one f64 out of the Shapes record `[item+0x46]` and the Materials record
+(`ITEM-SCALE-017`, partially retracted; the ladder below is the `ITEM-LADDER-019` correction): each is one f64 out of the Shapes record `[item+0x46]` and the Materials record
 `[item+0x45]`, at `record + 0x20 + 8×(title−1)` — so the damage factor is the column the game itself
 names `@.damage`, the to-hit factor `@.toHit`, the defence factor `#.defence`. **Both ends of the
 damage pair take the same `@.damage` factor**, so an item scales symmetrically; the actor does not. **The damage pair is not stored as it is
@@ -871,7 +871,7 @@ health>0. Health0 is untouched; negative health belongs to the separate decay
 route. The helper computes signed `i32(server.sub - actor.due)` from server
 `+04` and actor `+138`; a result>80 selects local rate3, otherwise1. This is
 the arithmetic on an invocation, not a new scheduler or post-load timing rule.
-— HERO-REGEN-021, SAV-REGENORDER-531
+— HERO-REGEN-021 (amended), SAV-REGENORDER-531
 
 | arm | current / maximum / period | modifier / remainder | extra local gates |
 |---|---|---|---|
@@ -925,7 +925,7 @@ initial vector. — SAV-REGENWIRE-532
 
 The modifiers scale the base rate rather than adding a pool amount. No stat
 is directly read: Spirit contributes through `manaMax`, Mind not at all.
-— HERO-REGEN-021
+— HERO-REGEN-021 (amended)
 
 ## 10 — the combat loop around that hit
 
