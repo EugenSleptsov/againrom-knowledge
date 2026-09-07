@@ -167,6 +167,60 @@ into a jump table at `0x004186e3`.
       0 health  1 mana  2 +0x108  3 corpse stage  4 facing  5 position
 ```
 
+## The damage numeral: identity, merge and pacing
+
+A landed blow's client arm (opcode `0x73`) builds a floating numeral when the damage-number display option is enabled
+(`view+0xaa4`, default on, toggled by Ctrl+L) and the victim's health is dropping; a `0x24`-byte record per numeral is merged rather than
+duplicated on a repeat hit (`ANIM-NUM-020`). The merge key is `+0x1c` (victim drawable) **and**
+`+0x20`, which is the campaign's own sub-tick counter (`SESS-TICK-026`), fetched at construction
+through the campaign-object idiom `SESS-OBJ-001` names (`ANIM-071`). Two blows on the same victim
+merge into one growing numeral only while the client's local sub-tick mirror has not advanced
+between them — not merely while both remain inside the numeral's 1000 ms display window, which is
+a separate, longer-lived clock. A merge changes only `+0x04` (the displayed number) and re-formats
+the string in the same step; birth time, drift, colour and both keys are untouched (`ANIM-071`):
+
+```
+found in the list      +0x04 += new damage; re-format "%d" immediately         ANIM-071
+not found in the list   append (growable array, capacity doubles, cap 0x400)   ANIM-071
+```
+
+**Producers.** The direct-call census finds five sites calling `FUN_004e9da2`
+and no other direct sites: melee/general strike, Building strike, the area direct-damage
+apply twice, and the general effect applier's Token-8 branch (`ANIM-BLOW-019`, `ANIM-074`).
+The equipment grammar does not produce Token 8; its producer remains Unknown. A zero
+computed result skips both the Token-8 branch's health write and notification. Missile and
+melee share the strike/countdown dispatch. The existing spell claims place `wall_of_fire`
+on the direct-damage route and `poison_cloud` on the periodic base-Effect route without a
+direct numeral call. This synthesis is Medium overall: the spell-specific cast-time
+instruction and indirect calls remain outside the evidence (`ANIM-075`).
+
+**Pacing.** Lifetime uses `timeGetTime() - birth > 1000 ms`; drift is a fixed `-2`
+screen units per `0x401` tick (`ANIM-NUM-020`). Slower nominal cadence therefore covers
+fewer ticks and less total drift:
+
+```
+speed (ticks/s)   8     10    12    14    16    20    24    28    32
+ms/tick           125   100   83    71    62    50    41    35    31
+nominal ticks     8-9   10-11 12-13 14-15 16-17 20-21 24-25 28-29 32-33
+```
+
+These are nominal alignment counts, not realised bounds: `ANIM-PACE-017`'s catch-up
+loop can move actual counts in either direction after a stall (`ANIM-073`). The earlier
+"a third as far" aside has no named reference speed; slowest/default gives 1:2,
+slowest/fastest gives 1:4, and slowest/24-tps gives 1:3 at the nominal lower counts.
+
+**Message ordering.** `FUN_004104e8` pops command messages from `0x5f22d0` and
+dispatches on their opcode byte. Its shared post-dispatch tail compares the handled
+opcode with the caller's requested low byte and returns 1 on a match. Empty-queue
+polling also depends on that byte and the run bit; an exceptional queue-discard branch
+returns 0. The normal pacer runs simulation, pumps for `0x64`, then separately posts
+`0x401` to the window-message dispatcher `FUN_0040ec30` (`ANIM-072`, `ANIM-CLOCK-001`,
+`AI-CURSOR-177`). Matching completion applies a sub-tick broadcast before presentation.
+The transport of server `0x64`/`0x73` broadcasts into this queue remains untraced here.
+The paused path separately calls the pump with zero and issues a guarded `0x402` post;
+the five idle outcomes and paused command work are in `SESS-IDLE-019` and
+`SESS-PAUSE-020` (`ANIM-072`).
+
 ## The death chain, end to end
 
 ```

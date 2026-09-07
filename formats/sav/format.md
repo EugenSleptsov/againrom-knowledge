@@ -505,11 +505,25 @@ helper reads actor+70 -> Group+3c -> AI+44. A later conditional link arm writes 
 skipping resume's initial-stance branch does not prove whole-linker or first-tick preservation.
 — SAV-GRPAI-563
 
+A whole-image direct-call census of the shared list class's two mutation entry
+points finds 18 external sites: ten target other embedded instances (the two
+Unit route lists, the per-actor active ring and the AI+0x4c patrol path), one is
+the class's generic Serialize load arm, and seven target lists outside the save
+format. None targets Group+0x20. All 567 preserved Group records reached by the
+census have zero elements here. Writers that bypass those entry points or call
+them through a computed target, and readers of this list, remain Unknown.
+— SAV-GRPLIST-807
+
 The complete Group dispatcher chooses the restored/current order once and
 passes AI word+0a to arms2/4/5. All byte values reach the shared withdraw tail,
 which rereads current count/head. The ff overwrite occurs only at dispatch
 entry; becoming empty later does not reset the byte during that invocation.
 — SAV-GRPDISPATCH-568
+
+Every one of the eight live order values has a named static producer, but the
+preserved corpus's Group records exercise only five: 0, 1, 3, 4 and ff. 2, 5
+and 0x11 never occur in any preserved save, despite each having a named
+producer and two of the three shipping on campaign maps. — SAV-GRPORDER-806
 
 Order0, order3, ff and the withdraw tail use a current-list identity search
 for the just-dispatched actor before advancing. A missing actor ends that
@@ -805,6 +819,15 @@ order and an equip arm), both non-default and both exercised in the corpus. `+0x
 and never exceeds 224 in the preserved corpus, three orders of magnitude under `ITEM-LOAD-005`'s
 own `0xfa00` (64000) branch threshold. A transfer helper copies both fields verbatim between two
 container instances; a reset pair zeroes both together — SAV-670, SAV-671, SAV-672.
+
+The Mover's local serializer `0054d4c0..0054d4e6` passes its address and
+length0xb4 to the archive read/write branch without field-specific
+normalization. This includes current/desired bytes+0/+1, RotationSpeed+a,
+counter BYTE+9d, active DWORD+a0 and estimate BYTE+a4 (MOVE-TURN-044).
+The complete selected Unit load arm has no further direct Mover access, but
+its virtual call at00510d7a (actor vtable+0x30), embedded serializers and later
+lifecycle remain a frontier. Local raw transfer does not prove whole-LOAD
+preservation or the exact first turn dispatch — SAV-TURNLOAD-822.
 
 `Unit::Serialize` `FUN_00510518`, before the store/load branch: `Token`; `list(+0x20)`;
 `u16list(+0x15c)`; `u16list(+0x178)`; raw 24 from `+0xa6`; raw 22 from `+0xbe`; raw 24 from
@@ -1272,6 +1295,11 @@ four further seed/consume/clear drivers — `SAV-631`; the order list's own corp
 0-or-2 elements and matches `SAV-GRPPATROL-570`'s already-published setter, though its writer
 population is not exhaustively confirmed — `SAV-633`. Loaded list state reaches the same runtime
 append path as ordinary play with no separate recompute found in the module swept — `SAV-634`.
+The `Group+0x20` direct-call census through those two entry points has 18 external sites:
+ten target the other four embedded instances, one is the generic Serialize load arm, and seven
+target lists outside the save format. None targets this field, and all 567 Group records reached
+by the corpus census have zero elements here. A bypassing writer, a computed call to either
+entry point, and list readers remain Unknown — `SAV-GRPLIST-807`.
 
 **`Spellbook`** — `u32 +0x18`, `u32 n` (the element count of the array at `+0x04`), then
 **`n-1`** references, for `i = 1 .. n-1`: index 0 is skipped in both directions. The same

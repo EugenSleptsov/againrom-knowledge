@@ -550,6 +550,18 @@ called helpers. These bodies establish neither guaranteed wandering motion
 nor absence of all other wander paths. — AI-ROAM-025, AI-SWARM2GATE-107,
 AI-MOVE-023
 
+Every value above has a named, cited static producer. Three separate producers
+of `2` are named: the shipped script's Swarm sub-command and two structurally
+distinct sites with no direct caller or stored absolute reference found in the
+image. Their entries are `00538250` (the 10-way dispatcher containing the
+jump-table target the immediate-form 75-hit census first cited) and `00534680`.
+Whether either is already an uncounted hit of that census is not established.
+A computed call target is invisible to both instruments. No value the group order or the
+player-command and script authoring surfaces ever write is a pursuit, a cast
+or a pickup: those three already-published behaviours live on a different
+field of a different structure, the per-actor order object's own `ord+0x08`.
+— AI-ORDER-031, AI-ORDER-294
+
 The **actor state** (`actor+0x50`) is a 27-arm switch. **Its value at construction is `0xb`, guard.**
 The arms a consumer needs:
 

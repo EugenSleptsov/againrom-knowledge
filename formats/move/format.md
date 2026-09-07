@@ -424,10 +424,25 @@ A consumer that wants one rule: **the group term is live for a group iff the las
 order that group received was issued in formation, and it then stays live until another such order
 replaces it.**
 
-**Turning is a separate rate and a separate cost.** A step only starts when `mover+0x00` already
-equals the desired facing. A turn of less than 33 units snaps and costs 1 tick; a larger one costs
-`ceil(min(arc, 256-arc) / mover+0x0a)` ticks and **destroys the dynamic route** first. `mover+0x0a`
-is the `RotationSpeed` column (ctor default `0x10`).
+**Turning advances before stepping.** A next-cell step starts only when current
+facing byte+0 already equals desired byte+1. Its mismatch arm calls the turn
+routine and returns even if that call reaches the target facing. The full
+active DWORD+a0 matters: only zero admits the short-arc (<=32) snap. An active
+turn, or a larger fresh turn, advances current by RotationSpeed byte+a along
+the shorter arc, clamps at desired and wraps modulo256. An exact128 tie takes
+addition. This leaf has no route/list access; the older route-destruction
+interpretation is partially retracted in MOVE-TURN-031.
+
+The turn caller writes BYTE+a4=ceil(pre-step shorter arc/RotationSpeed) after
+the advancing call, rather than decrementing a countdown. A fresh short snap
+writes1. It resets BYTE+9d when inactive, increments it on each call, sets the
+active DWORD and clears that dword if the updated facings match. The division
+arm requires nonzero RotationSpeed. Its original data-column binding and
+constructor default0x10 stand. The selected move/order caller chain can repeat
+this step; complete order scheduling and route/callback effects remain
+Unknown. These are local call boundaries, not a whole-action tick count —
+MOVE-TURN-044. Serialized local treatment and the post-LOAD frontier are
+SAV-TURNLOAD-822.
 
 **The clock.** One `FUN_00548c60` per actor per **sub-tick** — the counter `server+0x04`, paced by
 `FUN_004753c0` against `timeGetTime` at `campaign+0x3f0 = 1000/R` ms, `R` from the nine-arm ladder
