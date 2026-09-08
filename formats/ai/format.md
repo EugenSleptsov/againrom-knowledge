@@ -4,6 +4,36 @@ Level 3. Promoted, evidence-backed claims only. Core acquisition is `AI-FILTER-0
 the authored behaviour layer is `AI-TICK-008`…`AI-DIFF-016`. Ledger:
 [`claims/ai.md`](../../claims/ai.md).
 
+## Saved formation ownership
+
+Formation LOAD copies the block into the current serialized Player's +30
+allocation. Archive object index, traversal position, saved identity key,
+word identifier+04 and dword identifier+08 are separate identities.
+Group+44 resolves its own saved key immediately; a key registered only later
+is unavailable at that read. Later actor-owner correction does not recopy
+Group+44. — SAV-PLAYERIDENT-830
+
+Both Group movement reads use `Group+44 -> Player+30 -> byte+1f`.
+The client formation command instead carries the active CPlayer's +04 word;
+the simulation finds the first matching saved Player+04 and writes that
+object. Trigger formation binding uses a temporary map keyed by Player+08,
+then writes through the compiled record's resolved Player pointer. These
+selectors can name different Players. — AI-FORMOWNER-314, AI-FORMCMD-315,
+AI-FORMTRIGGER-316
+
+The selected existing-player return path matches a name and sends that
+Player's description before the others. The client active-pointer store is
+conditional on its current Player array size being 1. Full incoming-name
+selection, initial client-array state, delivery and first post-LOAD chronology
+remain Unknown; there is no proved universal first-SAV-record selector.
+— AI-FORMACTIVE-317
+
+The measured snapshot contains 129 paths, 76 contents and 75 complete-reader
+acceptances. Its 262 Player records have traversal equal to both identifiers;
+all 764 Group owner keys agree with the enclosing Player. That agreement does
+not distinguish these selectors, and includes preserved generated diagnostics.
+One invalid-header path is an explicit refusal. — SAV-PLAYERPOP-831
+
 ## Structure-use command
 
 AI-STRUCTUSE-306 connects player order0x24 to actor state15, order15 and action15.

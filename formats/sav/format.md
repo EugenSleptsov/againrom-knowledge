@@ -1,5 +1,44 @@
 # SAV save game (`Asg&`) — specification (partial)
 
+## Player identity and formation consumers
+
+The archive reference identifies the Player object to deserialize. Its saved
+identity key is separately registered against the current object, and its
+settings block is read into that object's +30 allocation. Stored word+04,
+stored dword+08 and traversal position do not choose another destination for
+this copy. Group+44 is independently remapped when its tail is read; a later
+Player registration does not retroactively satisfy that local lookup.
+— SAV-PLAYERIDENT-830
+
+The subsequent consumer chooses the Player again through its own relation:
+
+| consumer | Player selection |
+|---|---|
+| Group movement formation read | Current Group+44, then Player+30 and byte+1f. |
+| Client formation command | Active client CPlayer+04 transported as a word; simulation returns the first matching Player+04. |
+| Trigger formation write | Temporary map keyed by Player+08; resolved Player pointer in compiled rec+38. |
+
+The client CPlayer is separate from the serialized simulation Player. A
+discordant Group owner can therefore select a different saved block from the
+command or trigger target. Original acceptance and later normalization of such
+discordance remain Unknown. — AI-FORMOWNER-314, AI-FORMCMD-315,
+AI-FORMTRIGGER-316
+
+The selected return path searches existing Players by incoming name and sends
+the matched Player's description before the others. The client sets its active
+pointer only when the current Player array size equals 1. Incoming-name source
+on every LOAD route, initial array state and actual packet delivery remain
+Unknown. This is not a universal first-record or identifier-1 rule.
+— AI-FORMACTIVE-317
+
+The measured preserved snapshot has 129 paths and 76 distinct contents. The
+complete reader accepts 75 and refuses one invalid header. All 262 Player
+records have traversal equal to both stored identifiers; all 764 Group owner
+keys equal the enclosing Player key and resolve using prior definitions.
+Formation is 0 in six records and 2 in 256. These snapshot counts include
+preserved generated diagnostics and do not discriminate runtime selectors or
+prove original acceptance. — SAV-PLAYERPOP-831
+
 ## Equipment producer sequence
 
 Stored equipment, modifier fields and Weapon-owned Spell state are not one
