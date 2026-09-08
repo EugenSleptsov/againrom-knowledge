@@ -187,12 +187,17 @@ not found in the list   append (growable array, capacity doubles, cap 0x400)   A
 **Producers.** The direct-call census finds five sites calling `FUN_004e9da2`
 and no other direct sites: melee/general strike, Building strike, the area direct-damage
 apply twice, and the general effect applier's Token-8 branch (`ANIM-BLOW-019`, `ANIM-074`).
-The equipment grammar does not produce Token 8; its producer remains Unknown. A zero
-computed result skips both the Token-8 branch's health write and notification. Missile and
-melee share the strike/countdown dispatch. The existing spell claims place `wall_of_fire`
-on the direct-damage route and `poison_cloud` on the periodic base-Effect route without a
-direct numeral call. This synthesis is Medium overall: the spell-specific cast-time
-instruction and indirect calls remain outside the evidence (`ANIM-075`).
+The equipment grammar does not produce Token 8. `MAGIC-POISONINPUT-157` identifies
+the Poison spell producer; a separate item equip/use producer remains Unknown.
+First attachment and continuous ticking invoke base Effect virtual `+0x40`,
+which reaches the Token-8 HP body (`MAGIC-POISONREFRESH-158`,
+`MAGIC-POISONPHASE-159`). Nonzero computed damage calls `FUN_004e9da2`; zero
+skips both the health write and notification (`ANIM-074`). `ANIM-075`'s earlier
+inference of no Poison notification from the attach routine's absence in the
+direct-call census is retracted. This establishes a local call, not a drawable
+numeral or client timing. Fire Wall remains on the direct-damage route, and
+missile/melee share the strike/countdown dispatch. The five-site direct-call
+census and its limits for indirect calls outside these paths are unchanged.
 
 **Pacing.** Lifetime uses `timeGetTime() - birth > 1000 ms`; drift is a fixed `-2`
 screen units per `0x401` tick (`ANIM-NUM-020`). Slower nominal cadence therefore covers
