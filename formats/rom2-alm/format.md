@@ -1,5 +1,9 @@
 # ROM2 ALM map (`M7R\0`) — identity survey
 
+**Status: ☑ specified (identity-survey core).** The compared population,
+matching layouts and measured divergences below complete this page's declared
+survey. Unread payload semantics remain explicit; this is not complete decoding.
+
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-002` (file
 header, record-0 metadata), `R2-ASSET-003` (record chain past record 0,
 `recordCount`/`formatVersion`), `R2-SESSION-010` (code-side dispatcher arity,
@@ -200,9 +204,10 @@ out-of-range `#players` value specifically. `R2-ASSET-027`.
 Field-level MEANING of the 3 additional record types' own per-element bytes
 (13 vs ROM1's 10) — `R2-ASSET-023` now places their exact widths, count-field
 offsets and destination collections, not only dispatch mechanism, but what
-each byte represents is undecoded; any record's own field content past its
-outer 20-byte header, for any of the 83 maps (types 4, 7, 8 and 9 have no
-published ROM1 per-type size formula to replay; every other type now does);
+each byte represents is undecoded. The mapped metadata, field widths and
+destination collections above are specified; the remaining per-field semantics
+are not implied by those layouts. Types4,7,8 and9 have no published ROM1 per-type
+size formula replayed by this survey; every other type does;
 which specific bytes of record 0's 28-byte true growth (`R2-ASSET-024`) the
 file's own declared `payloadSize` (644, `R2-ASSET-002`) counts, versus which
 land in the 16-byte undeclared overhang — the total is accounted for

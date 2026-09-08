@@ -1,5 +1,9 @@
 # ROM2 text — identity survey
 
+**Status: ☑ specified (identity-survey core).** The compared population,
+matching layouts and measured divergences below complete this page's declared
+survey. Unread payload semantics remain explicit; this is not complete decoding.
+
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-010` (container),
 `R2-ASSET-011` (encoding). Cross-reference only, not evidence: ROM1's own
 [`formats/text/format.md`](../text/format.md) (`TEXT-STRTAB-023`,

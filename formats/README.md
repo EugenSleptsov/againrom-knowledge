@@ -23,8 +23,8 @@ opens.
 | **FAME** | `famehall.dat` | Hall-of-fame records | ◐ [specified (single-sample)](fame/format.md) (`FAME-HDR-001`…`FAME-WRITE-007`, `FAME-DEFAULT-008`; 8 claim rows); writer confirmed byte-exact on replay, the two trailing per-record fields' meaning open |
 | **MENU** | `main.res:graphics/mainmenu/*` | Main-menu asset contract (mask + overlays) | ☑ [specified](menu/format.md) (base/mask/overlays + hit-test + placement; disable-source/cmd-ids open) |
 | **VIDEO/MUSIC** | `Allods/VIDEO*.RES`, `Allods/MUSIC.RES` | A/V payloads | ☑ [specified](video/format.md) (functional edition; music in `MUSIC.RES` — `VIDEO-MUSIC-001`…`VIDEO-MUSIC-012`; SFX — `VIDEO-SFX-013`…`VIDEO-SFX-021`; cutscenes — `VIDEO-029`…`VIDEO-036`, `VIDEO-045`…`VIDEO-051`; 36 claim rows); Smacker decoder internals and hardware/driver timing intentionally out of scope |
-| **TERRAIN** | `graphics.res:terrain.3d` | Tile graphics + cell geometry | ◐ [specified](terrain/format.md) (tile word → pixel, geometry, passability) |
-| **DAT** | `world.res:data/data.bin` | Placeable-definition database | ◐ [specified](databin/format.md) (grammar + the 3 placement tables) |
+| **TERRAIN** | `graphics.res:terrain.3d` | Tile graphics + cell geometry | ☑ [specified (core)](terrain/format.md) (tile word → pixel, geometry,16-bpp lighting/shroud and passability);8-bpp, legacy non-3d and named runtime bounds remain open |
+| **DAT** | `world.res:data/data.bin` | Placeable-definition database | ☑ [specified (core)](databin/format.md) (all eleven collections, placement and promoted item/magic consumers); second group-C dword array and group-D extra-byte meanings remain Unknown |
 | **TEXT** | `main.res:text/*.txt`, `patch.res:patch.txt` | One-byte string tables + display/input encoding | ☑ [specified](text/format.md) (functional edition; `TEXT-STRTAB-023`, `TEXT-NAMEIN-024`, `TEXT-COLL-025`, `TEXT-CHARGEN-027`…`TEXT-CHARGEN-029`, `TEXT-UI-032`…`TEXT-UI-047`; 45 claim rows); a Unicode mapping and malformed-byte behaviour are intentionally out of scope |
 
 ## Not a file format — simulation areas with their own spec
@@ -58,15 +58,19 @@ survey of ROM2 bytes against ROM1's own grammar, not a second game this project 
 (`claims/rom2-engine.md`, `R2-ENGINE-*`) is a structural binary comparison, not a stored
 byte format, and has no page here.
 
+The seven bounded layout/header surveys are complete. Their checkmarks report
+matched structure or characterized nonidentity, not complete ROM2 decoding.
+Each row retains the excluded payload/runtime questions beside its result.
+
 | Format | Seen as | Nature | Status |
 |--------|---------|--------|--------|
 | **RES** | 11 files at the ROM2 install root | Container archive, magic `&YA1` (ROM1's own) | ☑ [identity survey](rom2-res/format.md) (`R2-ASSET-001`, `R2-ASSET-012`; 0 violations, 11/11 clean); `world.res`/`world_srv.res` payload-level equality on the 4 shared same-size entries open |
-| **ALM** | `*.alm`/`*.ALM` at the root + nested in `scenario.res`, magic `M7R\0` | Map | ◐ [identity survey](rom2-alm/format.md) (`R2-ASSET-002`, `R2-ASSET-003`, `R2-ASSET-017`…`R2-ASSET-027`, `R2-SESSION-010`; header + record framing/dispatch 83/83 clean once a +16 correction is applied); record content past the 20-byte header, for any of the 83 maps, undecoded |
-| **Data.bin** | `world.res`/`world_srv.res:data/data.bin`, root `templates.bin` | Placeable-definition database | ◐ [identity survey](rom2-databin/format.md) (`R2-ASSET-004`, `R2-ASSET-005`, `R2-ASSET-025`, `R2-ASSET-026`, `R2-ASSET-029`…`R2-ASSET-033`; `world.res`/`world_srv.res` grammar closed, 0 residue); `templates.bin`'s own grammar and every group's entry content undecoded |
-| **Inline registry** | nested `&YA1` payloads inside `.res` containers, found by magic | Nested archive / key-value tree | ◐ [identity survey](rom2-reg/format.md) (`R2-ASSET-006`; 19/19 clean tiling); record value content and the `kind` bitfield unsurveyed on ROM2 data |
-| **Sprite / palette** | `*.16a`, `*.16`, `*.256`, `*.pal` inside `.res` containers | Sprite + palette containers | ◐ [identity survey](rom2-spr/format.md) (`R2-ASSET-007`…`R2-ASSET-009`; container framing 623/623, 1916/1929, 159/159 and 3/3 across the four kinds, every divergence cross-referenced to a pre-existing ROM1 finding); RLE/pixel decoding and palette colour values unsurveyed |
-| **Text** | `main.res:text/*.txt`, `patch.res:patch.txt` | String tables | ◐ [identity survey](rom2-text/format.md) (`R2-ASSET-010`, `R2-ASSET-011`; container preserved and extended); byte-range encoding measured at 66.36% overlap with ROM1's own two source blocks, not 100%, and the specific 8-bit encoding is not named |
-| **Session wire frame** | `CBufferManager::ReceiveData`, read by `allods2.exe`/`a2server.exe` | 8-byte socket record header | ◐ [identity survey](rom2-net/format.md) (`R2-SESSION-003`; the header's four fixed-offset fields specified); the record's own payload grammar past the header is unsurveyed |
+| **ALM** | `*.alm`/`*.ALM` at the root + nested in `scenario.res`, magic `M7R\0` | Map | ☑ [identity survey](rom2-alm/format.md) (`R2-ASSET-002`, `R2-ASSET-003`, `R2-ASSET-017`…`R2-ASSET-024`, `R2-ASSET-027`, `R2-SESSION-010`);83 full record chains and mapped per-type layouts with documented overhang; new field meanings and writer size accounting remain open |
+| **Data.bin** | `world.res`/`world_srv.res:data/data.bin`, root `templates.bin` | Placeable-definition database | ☑ [identity survey](rom2-databin/format.md) (`R2-ASSET-029`…`R2-ASSET-033`); both A–H streams tile exactly after C10→14 correction; `templates.bin` remains a bounded divergent input, wider table semantics open |
+| **Inline registry** | nested `&YA1` payloads inside `.res` containers, found by magic | Nested archive / key-value tree | ☑ [identity survey](rom2-reg/format.md) (`R2-ASSET-006`; 19/19 clean tiling); record value content and the `kind` bitfield unsurveyed on ROM2 data |
+| **Sprite / palette** | `*.16a`, `*.16`, `*.256`, `*.pal` inside `.res` containers | Sprite + palette containers | ☑ [identity survey](rom2-spr/format.md) (`R2-ASSET-007`…`R2-ASSET-009`);623 exact .16a,159 palettes,1916 exact .256 plus8 stubs/5 ROM1-identical residues; all3 .16 frame streams valid,1 exact and2 ROM1-identical residues; pixel/RLE/color decoding excluded |
+| **Text** | `main.res:text/*.txt`, `patch.res:patch.txt` | String tables | ☑ [identity survey](rom2-text/format.md) (`R2-ASSET-010`, `R2-ASSET-011`; container preserved and extended); byte-range encoding measured at 66.36% overlap with ROM1's own two source blocks, not 100%, and the specific 8-bit encoding is not named |
+| **Session wire frame** | `CBufferManager::ReceiveData`, read by `allods2.exe`/`a2server.exe` | 8-byte socket record header | ☑ [header survey](rom2-net/format.md) (`R2-SESSION-003`; the header's four fixed-offset fields specified); payload/opcode grammar and ROM1 protocol equivalence are excluded |
 
 ## Explicitly out of scope (not ROM1-native)
 

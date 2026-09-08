@@ -1,5 +1,9 @@
 # ROM2 sprite / palette containers — identity survey
 
+**Status: ☑ specified (identity-survey core).** The compared population,
+matching layouts and measured divergences below complete this page's declared
+survey. Unread payload semantics remain explicit; this is not complete decoding.
+
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-007` (`.16a`/
 `.256`), `R2-ASSET-008` (`.pal`), `R2-ASSET-009` (`.16`). Cross-reference only, not
 evidence: ROM1's own [`formats/spr16a/format.md`](../spr16a/format.md),
@@ -54,8 +58,8 @@ in ROM2, not a ROM2-specific residue pattern. `R2-ASSET-009`.
 
 ## Not yet surveyed
 
-RLE/pixel decoding, palette colour values, whether any `.16a`/`.256`/`.pal`/`.16`
-file OUTSIDE this survey's full-population walk (there is none — the walk covers
-every entry the extension census found) differs. What the `.16`/`.256` residue
+RLE/pixel decoding and palette colour values are outside this container survey.
+Its extension census covers every matching entry in the preserved root; another
+locale or install is not inferred from that population. What the `.16`/`.256` residue
 bytes hold at the field level is not re-decoded here — `SPR16A-FONT-014`/`-021`
 and `SPR256-EXC-017`/`-020` are its own, cross-referenced, not repeated.

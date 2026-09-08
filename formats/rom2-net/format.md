@@ -1,4 +1,8 @@
-# ROM2 session wire frame — identity survey
+# ROM2 session wire frame — header survey
+
+**Status: ☑ specified (header-survey core).** The existing result specifies the
+eight-byte header and its four consumed fields. Payload/opcode decoding and
+ROM1 protocol equivalence remain outside this survey.
 
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-SESSION-003`. No ROM1
 cross-reference: no ROM1 wire-protocol counterpart was surveyed by the

@@ -1,5 +1,9 @@
 # ROM2 Data.bin database — identity survey
 
+**Status: ☑ specified (identity-survey core).** The compared population,
+matching layouts and measured divergences below complete this page's declared
+survey. Unread payload semantics remain explicit; this is not complete decoding.
+
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-004`
 (`world.res`/`world_srv.res` partial match, now superseded on reach by
 `R2-ASSET-029`/`030`/`031`, not retracted), `R2-ASSET-005` (`templates.bin`
@@ -233,8 +237,9 @@ itself being confirmed. `R2-ASSET-026`.
 
 ## Not yet surveyed
 
-Entry CONTENT for any group beyond declared counts and byte spans (no field is
-read); which of `templates.bin`'s two candidate head readings, if either, is its
+Entry semantics beyond the mapped title/parameter schema and byte spans;
+all A–H group grammars and their compiled serializer chains are already read
+(`R2-ASSET-029`, `R2-ASSET-031`); which of `templates.bin`'s two candidate head readings, if either, is its
 real wire grammar, or what it holds past `Shapes` entry 111; the actual
 `.alm`-record-to-Data.bin-table consumer function, the link that would settle
 the map-reader's own type-id resolution outright; whether `templates.bin` is

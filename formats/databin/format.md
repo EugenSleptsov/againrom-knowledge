@@ -1,14 +1,15 @@
-# DAT `Data.bin` — the placeable-definition database — specification (partial)
+# DAT `Data.bin` — the placeable-definition database — specification
 
 Level 3. Promoted, evidence-backed claims only. The populator, grammar, streamed
 slot maps and corpus closure are `DAT-LOC-001`…`DAT-ACT-006`. Ledger:
 `claims/databin.md`.
 
-**Status: partial (◐).** The file, the wire grammar (exact tiling, 0 residue), the
-schema law and the three placement-facing tables (Buildings, Humans, Units) are
-specified with their consumer paths; the other eight tables are framed (names,
-counts, param arrays decoded) but their slots are named only by the shipped column
-titles — no consumer of them has been read.
+**Status: ☑ specified (core).** All eleven collections have a complete wire
+grammar and schema with exact tiling. Placement consumers and the promoted
+item/magic consumers below specify how the corresponding fields are used.
+The second group-C dword array and group D's extra byte remain structurally
+decoded opaque fields. Core status does not assign those fields meanings or
+claim every consumer is known.
 
 Seen as: `world.res:data/data.bin` (88 327 B in the shipped install), or a loose
 `World\Data\Data.bin` which takes precedence. If neither exists, `rom.exe` parses
@@ -60,7 +61,8 @@ default" (`DAT-SCHEMA-004`, `DAT-ACT-006`).
 - **Buildings** — index = `structures.reg` `ID` (1..66; `DAT-BLD-005`). Slots:
   `0 sizeX, 1 sizeY` (footprint in tiles — overridden by the ALM type-4 `kind==0x21`
   extension), `2 scanRange → obj+0x48`, `3 healthMax → obj+0x44`, `4 Passability`,
-  `5 BuildingPresent` (title-named only). Resolved from an ALM type-4 `kind` by
+  `5 BuildingPresent` (the two sub-cell masks, `TERR-STRUCT-070` and
+  `TERR-STRUCT-078`; a set Passability bit blocks). Resolved from an ALM type-4 `kind` by
   direct 1-based subscript (`ALM-CLS-036`/`ALM-CLS-053`), or by name
   (`FUN_005241d0`, backwards, `"Invalid building %s created"`).
 - **Humans** — searched on slot `0x10 typeID` for type-6 keys `< 0x40 ∉ {26,27}`,
@@ -86,14 +88,36 @@ default" (`DAT-SCHEMA-004`, `DAT-ACT-006`).
 Corpus closure: every shipped placement resolves — 3141/3141 type-4, 8079/8079
 in-scope type-6 (`ALM-CLS-052`).
 
-## Open
+## Consumers beyond placement
 
-The Shapes/Materials 9-double record's slot meanings; the armor 10-byte block and
-second dword array; Magic/Spells/MagicItems semantics; the `Start ID`/`Tiles`
-building columns (no stored param); the server→client creation-message encoding; and
-how `FUN_0050d670` parses an equipment cell's tier and material words — the name
-grammar `[<Shapes> ][<Materials> ]<Weapons>` closes 26/26 over the shipped Units
-`EquipItem` column but is a corpus fit, not a read (`UNIT-EQUIP-005`).
+These promoted consumers replace the earlier blanket claim that the other eight
+tables had no read consumers. Their detailed formulas remain in the linked domain
+pages; column titles alone are not evidence for a formula.
+
+| Collection | Established use and authority |
+|---|---|
+| Shapes / Materials | The nine-double records feed item tier/material scaling and damage factors: `ITEM-LADDER-019`, `ITEM-DMGFACT-020`, [item specification](../item/format.md). The old ladder in `ITEM-SCALE-017` is retracted in favour of `ITEM-LADDER-019` |
+| Weapons | Item scaling and equipped combat inputs: amended `ITEM-SCALE-017`, `HERO-EQUIP-017`; see [item](../item/format.md) and [hero](../hero/format.md) |
+| Armors / Shields | Slot selection, armor/shield fields and the suitability mask: `ITEM-ARMSLOT-031`, `ITEM-ARMFILL-032`, partially retracted `ITEM-SUIT-035`. Its mask/title remain supported; its display-only consumer limit is superseded by `ITEM-WEAR-055`/`ITEM-WEAR-057`: the client refuses unsuitable equipment drops, while the raw equip path remains unrestricted. Group C's ten raw bytes are five u16 material masks, one per Shapes row, tested by the shop candidate loop (`DAT-MATMASK-020`) |
+| Magic | The eligible enchantment pool and selection stages are `SHOP-EFFPOOL-061`, `SHOP-EFFWEIGHT-062`, `SHOP-EFFPAY-063`, `SHOP-EFFRANGE-064`, `SHOP-EFFCAST-065`, `SHOP-EFFPRICE-066`, `SHOP-EFFORDER-067`, `SHOP-EFFRETRY-068`, `SHOP-EFFCAP-069`, `SHOP-EFFBASE-070` and `SHOP-EFFALT-071`; see [shop](../shop/format.md) |
+| Spells | Definition binding, cast inputs and effect construction are `MAGIC-SPELL-001`, `MAGIC-CAST-003`, `MAGIC-EFFECT-015`; individual spell consumers remain in the [magic specification](../magic/format.md) |
+| MagicItems | Initial signed price assignment and name-derived Scroll/Book exceptions are amended `ITEM-MAGVAL-090` and `ITEM-VALUE-115`. Book uses the first Effect's spell id, not the last. The later -1 descriptor arm is `ITEM-WEAR-058`; the extra wire byte remains unnamed |
+
+The equipment-cell parser is read: `ITEM-NAMEPARSE-040` specifies name/tier/material
+parsing, with the enchantment grammar and effect construction refined by
+`ITEM-EFFGRAM-070`, `ITEM-EFFPOP-071`, `ITEM-EFFOBJ-072` and `ITEM-EFFMODE-073`.
+`UNIT-EQUIP-005`'s earlier corpus fit is no longer the only
+authority for that parser.
+
+## Coverage boundaries
+
+The second group-C dword array's role and group D's extra raw byte's meaning
+remain Unknown. Both have known wire extents and must be retained. The Buildings
+`Start ID`/`Tiles` titles have no stored numeric parameter (`DAT-SCHEMA-007`),
+so they are not two missing numeric payload fields. Full server-to-client
+creation-message semantics are a separate session contract. Human type-ID
+streaming retains the conditional constructor overwrite described above
+(`DAT-ACT-006`, `DAT-HUMANS-008`, `PARTY-M20-030`, `PARTY-M20-031`).
 
 **A second shipped sample exists.** `gameversions/ru/WORLD.RES` differs from the EN
 `world.res`, and so does its `Data.bin` — but the **Units** collection is identical

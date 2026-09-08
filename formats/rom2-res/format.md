@@ -1,5 +1,9 @@
 # ROM2 RES container (`&YA1`) — identity survey
 
+**Status: ☑ specified (identity-survey core).** The compared population,
+matching layouts and measured divergences below complete this page's declared
+survey. Unread payload semantics remain explicit; this is not complete decoding.
+
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-001` (container
 identity), `R2-ASSET-012` (`world.res` vs `world_srv.res`). Cross-reference only,
 not evidence: ROM1's own [`formats/res/format.md`](../res/format.md)

@@ -1,5 +1,11 @@
 # Terrain-tile graphics (`terrain.3d/*.bmp`) — specification
 
+**Status: ☑ specified (core).** The shipped 3d terrain path has a specified
+tile-word mapping, geometry, 16-bpp lighting/shroud and passability/cell-record
+contract. The open questions below bound wider display modes, custom inputs
+and remaining sprite/runtime consumers. This status does not raise any claim's
+confidence or assert complete rendering coverage.
+
 Level 3. Promoted, evidence-backed claims only. Sources: `TERR-LOC-001`,
 `TERR-LOAD-002`, `TERR-IDX-003`, `TERR-SEM-004`, `TERR-VER-005`
 (format, location and render mapping from `graphics.res` bytes and `rom.exe`'s
@@ -1281,9 +1287,15 @@ image are `FUN_004050da` and `FUN_00484f40`.
 
 **Which table each drawable gets.** Terrain: one, from the tile palette. Each object sheet: its own
 `(0x10, 2, 1)` table from its own BMP palette (`FUN_0046b7e0`), passed as `spriteObj + 0x14`. A unit:
-selected on `class+0x98` — `0` → one of 16 shared tables `[0x005eb65c][sprite[+8]]` over a 16 × `0x400`
-palette blob read into `0x005eb6a8` at `units.reg` load; `1` → the class's own `class+0x9c`; `> 1` → a
-per-owner `class+0x9c + (owner−1)*4`. Corpus: the 53 `terrain.3d` tiles share **one** palette and
+selected on the `units.reg` `Palette` key at `class+0x98`: `0` selects one of
+16 shared owner tables from `human.pal`; `1` selects `class+0x9c[0]`; `> 1`
+selects `class+0x9c[face-1]`, where face is the actor's Data.bin tier. The last
+arm is not owner-indexed (`PAL-KEY-002`, `PAL-OWN-007`, correcting that clause
+of `TERR-LIGHT-064`). The owner-index producer and first-message lifetime are
+specified by `PAL-RULE-021` and `PAL-FIRST-022`; see [palette selection](../pal/format.md).
+`MAGIC-STONEDRAW-084` identifies both greyscale overrides as the stone-curse
+draw arm; its stated confidence and the `drawable+0x15a` Unknown remain.
+Corpus: the 53 `terrain.3d` tiles share **one** palette and
 **0 of 1373** palette-bearing `.256` sheets carries it, so **a sprite's ramp must be built from that
 sprite's own palette**.
 
@@ -1365,86 +1377,45 @@ pass needs `< 2` (seen at least once), the main pass needs `== 0` (in sight now)
 
 **Ownership never reaches the sprite** — only the minimap blip `vt+0x34` (`TERR-STRUCT-107`).
 
-## Open questions
+## Coverage boundaries and open questions
 
-- ~~The exact per-hour dawn/dusk **colour schedule** of the sun model.~~ **Closed by `TERR-LIGHT-119…TERR-LIGHT-128`**
-  (`TERR-LIGHT-119`…`-128`): all six arms are in the table under *Sun* above, the magic division
-  is /120 rather than /60, and nothing is read from a table. `TERR-LIGHT-014`'s two intensity
-  figures are the cycle-off/day values only and are retracted as a description of the fields.
-  *(The `Δh` neighbour per axis is closed by `TERR-LIGHT-028`.)* **Still open there:**
-  why the object path's shroud level `0x5eb49c` is exactly twice the unit path's `0x5eb4a0`.
-- ~~Which **θ a live session actually runs at** — whether shipped play has the day/night cycle
-  enabled (`DAT_005eb528`) or takes the 0.78539815 default.~~ **Closed by `TERR-LIGHT-108`**
-  (`TERR-LIGHT-108`): it is the `ShowTimeFlow` option, default 1, so the default session sweeps and
-  the `0.78539815` row of the θ→level-range table is the *disabled* case, not the shipped one. What
-  remains open is narrower: **what a given install's profile or savegame contains**, which is not a
-  fact about the image.
-- ~~The **CMapView scroll clamp** — how far the camera may scroll, and therefore whether the outermost
-  1-cell ring ever becomes a *visible* pixel or always stays inside the culled over-scan margin.~~
-  **Closed by `SESS-VIEW-030`**: the band is `8 <= origin <= dim − 8 − span` on each axis,
-  enforced by four routines with identical arithmetic, so the outer 8 cells are never the viewport's
-  origin and the outermost ring is reachable *only* through the draw's own 3–4 cell over-scan. The
-  symbols this file writes as `scrollX`/`scrollY` are **`CMapView+0x5c` / `+0x60`, in cells**, and
-  the span they are bounded against is `+0x64` / `+0x68` — `(rect.right − rect.left)/32` and
-  `(rect.bottom − rect.top)/32`, i.e. **15×15 cells at 640×480, 20×18 at 800×600, 27×24 at 1024×768**,
-  with `+0x68` shortened while an inventory or spell-book panel is open (`SESS-VIEW-028`). What a
-  mission *opens* at is `clamp(heroCell − span/2)` (`MISSION-VIEW-019`).
-- What the **uncomputed brightness ring actually contains at runtime**: the engine never writes it and
-  the allocator never zeroes it, but a first-touch heap page may still arrive demand-zeroed from the
-  OS. Not observed on the running game (`TERR-EDGE-025`).
-- The **8-bpp** display path builds a different table (mode 3 is the 16-bpp one) — not covered.
-  *(The three further blitters that index the same geometry step table are identified by `TERR-FOG-037` and
-  are the shroud pass, not other pixel formats — see "Sprite placement" below.)*
-- Why the drawn edge (step table) and the engine's own hit-test edge (exact lerp) disagree by up
-  to 3 rows — reported, not explained (`TERR-GEOM-036`).
-- Behaviour for `|Δh| >= 128` across a cell edge: the step table has no such row. Unreachable on
-  the shipped corpus (max 127), uncharacterised.
-- ~~Whether **anything** reads the map-stored type-0 light fields, given the lighting path
-  overwrites them.~~ **Closed by `TERR-LIGHT-149`, `TERR-LIGHT-150` and `TERR-LIGHT-151`**
-  — see "The map's stored light fields" above. Nothing reads them, bounded by a pointer
-  reachability search whose blind spots those rows enumerate. What remains open is what the
-  values *mean*, which no reader in this image can answer.
-- What sets **bit 3 of the per-player fog flag** for a player other than the local one. The setter
-  is one located message arm (`004162ec`) whose opcode is unread, so "shared vision in multiplayer"
-  is the shape of the answer and not the answer (`TERR-FOG-080`).
-- What each of the **six pointers** at cell-record `+0x14`…`+0x28` holds. The loop that quadruples
-  the cost per non-null one, and the fourth one's extra block, are now sourced; the fields are not.
-- ~~Whether the four-corner `0xc000` gate is ever satisfied in play.~~ **Closed by `TERR-TILE-079`, `TERR-FOG-080` and `TERR-FOG-081`** — see
-  "Bits 15..14 are the FOG OF WAR" above.
-- ~~Unit/sprite lighting uses the same sun globals and the same builder in the 16-level mode 2
-  (neutral row `nLevels/2`), via a separate path (not covered here).~~ **Closed by `TERR-LIGHT-059…TERR-LIGHT-064`** —
-  "Sprite lighting" above. What remains open in that area: what `class+0x98` counts, and so which of
-  the 34 unit classes takes the shared, class-owned or per-owner table; what the `[0x005eb65c]+0x40`
-  and mode-5 greyscale overrides at `0045b9a5`/`0045b9cb` are for; which node supplies the 16 KB
-  palette blob `FUN_004ca140(0x5eb6a8, 0x4000)` reads; and what the second `vt+0x28` dispatch
-  (`CMapView+0x9d4`, gated `+0x9e0`, arguments `(0,0,0)`) is for.
-- ~~**What a unit's own `Draw` does.**~~ *(Closed for the frame and destination by `TERR-SPR-047…TERR-SPR-048`, and
-  re-labelled by `TERR-SPR-065`: `vt+0x2c` = `FUN_0045bf00` draws the unit's **shadow**, `vt+0x28` =
-  `FUN_0045b3f0` its **body** — `TERR-SPR-065`.)* Still open from that reading: the second placement
-  model beside it, the unit's screen *rectangle* built by `OffsetRect` from its own pixel position
-  minus two further terms.
-- ~~The shroud's actual darkening curve: the 16→16-bpp remap table behind `[0x005e8420]` … was not
-  read (`TERR-FOG-037`).~~ **Closed by `TERR-FOG-082…TERR-FOG-089`** — see "Fog of war" below. The table is **17 rows**
-  and row `L` is `out_channel = (in_channel × (16 − L)) >> 4`; the same table is what the sprite
-  silhouette passes index, so that half is closed with it.
-- The `vt+0x34` overlay's blend rule — it reads the destination and `[0x005eb578]` alongside the
-  source. `TERR-LIGHT-059` locates the consuming instructions (`0044dde0`, `0044eca0`) and does not read
-  them; this is the standing `spritesb` residual (`SPR256-OVL-014`).
-- ~~The altitude-driven **vertical mesh offset** … is runtime-render detail, out of scope here.~~
-  **Closed by `TERR-GEOM-031…TERR-GEOM-036`** — it was not out of scope, it was the missing half of the render
-  ("Cell geometry" above). Per-display-mode 8-bpp palette quantization remains uncovered.
-- The legacy non-3d `terrain\tile*.bmp` fallback set is noted but not corpus-exercised.
-- The type3 static-object placement layer's own graphics are a separate render path
-  (`ALM-CLS-035`).
-- ~~**Movement (`TERR-PASS-049…TERR-PASS-051`, `TERR-COST-052`, `TERR-PASS-053`):** which `units.reg` class is a ground mover … what fills `vt+0x1c`~~
-  **Answered by `TERR-MOVE-054…TERR-MOVE-057`, and the answer is that there is no such binding**: both values are
-  per-instance bytes of the simulation actor, written `1` by its constructor and by nothing else,
-  and the `units.reg` class array is never referenced from the simulation module ("Who is asking"
-  above). ~~What remains open in the same area: what fills those two bytes on the (de)serialization
-  path, and therefore whether a mask other than `0x41` is ever produced at all~~ — **answered by
-  `TERR-MOVE-057`**: the `Data.bin` param streamers, and yes (above). Also answered by
-  `TERR-MOVE-058`: the `+0x70 → +0x3c → +0x44` speed override is a per-owner runtime byte, not the DB.
-  **Block bit 2 is answered by `TERR-STRUCT-068…TERR-STRUCT-072`** ("Structures" below) — it is *an object
-  occupies this cell*, written and erased only ever paired with bit 0. **Bits 3 and 4 remain open**
-  beyond "part of the border value `0x1f`", with the narrower question that bit 4 is a live runtime
-  flag every recompute deliberately preserves and no located instruction originates.
+The six area-effect layer pointers and their cost/block consumers are specified
+by `TERR-CELLREC-146`. Bit 4's damaging-effect producer and preservation are
+`TERR-PASS-148`; the old complete writer lists in `TERR-PASS-073` remain
+retracted. `TERR-MOVE-057` supplies spawned footprint/domain values from Data.bin,
+so the old universal 1×1/0x41 consequence is withdrawn. These are closed facts,
+not remaining questions.
+
+Reveal-permission writers include opcodes33 and45 (`TERR-FOG-089`). Calling bit3
+shared vision remains Medium: those writers do not establish the senders or the
+bit's name. The render fog save boundary follows `TERR-FOG-145`, not the
+withdrawn save-absence clause in `TERR-FOG-087`.
+
+- The 8-bpp display path and its palette quantization are not covered. The legacy
+  non-3d tile set is identified but not corpus-exercised.
+- Runtime contents of the uncomputed brightness ring remain unobserved
+  (`TERR-EDGE-025`). The camera clamp is specified by `SESS-VIEW-030`; it does
+  not establish allocator residue.
+- Custom edge differences `|Δh| >= 128` are outside the shipped maximum127 and
+  the geometry step table. The drawn/hit-test edge difference of up to3 rows is
+  measured but its reason remains open (`TERR-GEOM-036`).
+- The map-stored light scalars' meanings remain Unknown. The consumer negatives
+  and overwrite-order results retain the bounded Medium confidence, indirect-call
+  limitations and skipped-relight/message-path caveats of `TERR-LIGHT-149`,
+  `TERR-LIGHT-150` and `TERR-LIGHT-151`. The separate tile-group-mask consumer
+  is specified by `TERR-LOAD-152`.
+- Bit3 of the block plane remains open beyond the border value0x1f. Bit4's
+  producer is specified; this does not restore a universal writer enumeration.
+- The object/unit shroud-level ratio's reason remains open (`TERR-LIGHT-126`).
+  Sprite rectangle construction, the second `CMapView+0x9d4` dispatch and
+  remaining scene-sweep identities are wider presentation questions; the known
+  body/shadow placement and sweep ordering remain specified by `TERR-SPR-067`,
+  `TERR-SPR-137`, `TERR-SPR-138`, `TERR-SPR-139`, `TERR-SPR-140`, `TERR-SPR-141`
+  and `TERR-SPR-144`.
+- The `vt+0x34` overlay blend consumer remains the separate sprite residual
+  `SPR256-OVL-014`. Runtime clip-rectangle values and the displaced-well-shadow
+  boundary remain scoped by `TERR-SHDW-136` and `TERR-SPR-140`.
+
+The day/night schedule, profile option, palette selector, cell-layer identities
+and fog-message opcodes do not require new research to implement their published
+contracts. A particular profile/save's values still have to be read from that input.

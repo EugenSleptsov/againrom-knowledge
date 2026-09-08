@@ -1,5 +1,9 @@
 # ROM2 inline registry (`&YA1`, nested) — identity survey
 
+**Status: ☑ specified (identity-survey core).** The compared population,
+matching layouts and measured divergences below complete this page's declared
+survey. Unread payload semantics remain explicit; this is not complete decoding.
+
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-006`. Cross-reference
 only, not evidence: ROM1's own [`formats/reg/format.md`](../reg/format.md)
 (`REG-FMT-031`, `REG-REC-032`) and `RES-SCOPE-015` (found by magic, not by name).
