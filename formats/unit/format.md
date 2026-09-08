@@ -85,7 +85,7 @@ alternatives (`UNIT-STRUCTBOUND-081`).
 ## Which file carries which number
 
 `units.reg` is the **client drawable's** class record (`REG-UNITS-049`) and the simulation
-module never reads that array (`REG-UNITS-061`). `Data.bin` **Units** is the **simulation
+module never reads that array (`REG-UNITS-061`, amended; this simulation-domain clause is retained). `Data.bin` **Units** is the **simulation
 actor's**. The join is `units.reg ID == Data.bin typeID`; the tier `face` (1..4) exists only
 on the `Data.bin` side, so one `units.reg` class covers a whole tier family.
 

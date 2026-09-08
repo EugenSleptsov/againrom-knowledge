@@ -1059,6 +1059,10 @@ Promoted claims: `MAGIC-MARK-059`,
 
 Corrected and completed by the promoted presentation claims
 `MAGIC-089` through `MAGIC-093`, `ANIM-044` through `ANIM-047` and `SPR16A-031`.
+The all-unit late-pass wording of `ANIM-047` is partially retracted: its late
+shadow/body population is CAirUnit; ordinary and alternate CUnit routes occur
+earlier (`ANIM-CATEGORY-084`, `ANIM-AIRPASS-086`). The mark-builder and actor-local
+before/after-body order below is retained; no native overlap result is added.
 
 ### The two states an actor's marks are held in
 

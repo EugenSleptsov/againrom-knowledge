@@ -204,7 +204,7 @@ bytes' *addresses* to a field-by-field (de)serializer (`FUN_004f5604`, `FUN_004f
 registry key reaches the simulation at all. `TileSize` is *not* the footprint — it is what
 **`CUnit`'s** `vt+0x20` returns, a different hierarchy at the same offset (`TERR-MOVE-054`,
 `TERR-MOVE-055`; the one registry key that does select a C++ class is `Z`, and it selects the draw
-layer — `REG-UNITS-061`).
+layer — `REG-UNITS-061`, amended; the simulation-domain clause is retained).
 
 ### Movement speed (`TERR-MOVE-056`)
 
@@ -1123,29 +1123,66 @@ true column of `-9..-11` wraps to `245..247`, passes, and reads the previous row
 
 ### The order one frame is painted in, and everything that bounds a drawn silhouette
 
-`TERR-SPR-137…TERR-SPR-141`, `TERR-FOG-142`, `TERR-LIGHT-143`, `TERR-SPR-144`.
+`TERR-SPR-137…TERR-SPR-141` (the 137–139 count, population and gate clauses are amended),
+`TERR-FOG-142`, `TERR-LIGHT-143`, `TERR-SPR-144`.
 
-`FUN_00407b1a` is **ten cell sweeps back to back**, not one composite pass. Its lowest back-edge
-target is `0x004094ca`, so the 1570 instructions before that — rect/scroll arithmetic and the
-terrain painting — contain no loop: **the terrain is finished before the first drawable is
-touched**, and the shroud sweep is the tenth and last, after every sprite (`TERR-SPR-137`,
-`TERR-FOG-142`).
+`FUN_00407b1a` has nine cell sweeps and one non-cell collection walk. The retained
+phase labels 1..10 count the collection as phase 6. The prefix's terrain/rect work
+precedes these loops; the lowest direct back-edge target is `004094ca`. The old
+ten-cell-sweeps count is retracted in `TERR-SPR-137` and `ANIM-WALKORDER-088`.
 
-```
-sweeps 1..9  grid CMapView+0x8c / +0x90 / +0x94 / +0x98 / +0x9c,  all indexed
-             idx = (row+3)*(visCols+6) + (col+3)
-             outer = row,    -4  ..  visRows + 7      ascending
-             inner = column, visCols + 3  ..  -4      DESCENDING
-sweep 10     the shroud:  outer = column 0..visCols, inner = row 0..visRows+3, ascending
-```
+Registration selectors are joined to their actual destinations
+(`ANIM-REGISTER-083`, `ANIM-CATEGORY-084`):
 
-So within a sweep a cell can only be overpainted by a **greater row**, or the same row and a
-**smaller column** — nothing is depth-tested, and the walk order is the visibility rule
-(`TERR-SPR-138`). Two of the sweeps composite several planes inside one cell (sweep 4 issues seven
-dispatches per cell); the `+0x90` plane's **shadow** (`vt+0x2c`, sweep 5) and **body** (`vt+0x28`,
-sweep 8) are two whole sweeps apart, with byte-identical six-test guard chains, so on that plane
-*every shadow is drawn before any body* — a body covers the shadow of a drawable above and to the
-right of it (`TERR-SPR-139`).
+| Registration selector | View plane | Conditional population |
+|---|---|---|
+| 0 | `+0x98` | CBackPack |
+| 1 | `+0x94` | CStructure and bridge subclasses |
+| 2 | `+0x8c` | CUnit with unsigned `+0x15a<2` and `(+0x18c&0x80)==0` |
+| 3 | `+0x90` | CAirUnit, without those two tests |
+| 4 | `+0x9c` | The other CUnit branch |
+
+Selector 1 stores the prepared, clipped footprint rectangle; the other selectors
+store one computed anchor. Each plane/cell holds one pointer. Native refresh
+order, the final writer after collisions and stale-entry lifetime remain Unknown.
+The index is `(row+3)*(visCols+6)+col+3`; the registration gate is `+0x4c!=0`.
+The out-of-table selector arm uses its argument as a pointer, not a validated
+default plane (`ANIM-REGISTER-083`).
+
+| Phase | Dispatch composition, subject to gates |
+|---|---|
+| 1 | Structure shadows |
+| 2 | Flat structure bodies |
+| 3 | Per cell: selector 4 shadow/body, then CBackPack shadow/body |
+| 4 | Per cell: non-flat structure body, selector 2 shadow/body, auxiliary `vt+0x18` dispatch, static-object path, then retained-area selector 1 |
+| 5 | Complete selector 3 shadow sweep |
+| 6 | Non-cell collection payload body calls |
+| 7 | Retained-area selector 0 |
+| 8 | Complete selector 3 body sweep |
+| 9 | Structure/selector 2/selector 3 marker and bar calls |
+| 10 | Shroud |
+
+This is the amended form of the former universal unit wording in `TERR-STRUCT-104`,
+`TERR-SPR-065` and `TERR-SPR-139`. CUnit and CAirUnit share drawing methods but
+not these registration/phase populations (`ANIM-CELL-085`, `ANIM-AIRPASS-086`).
+The retained-area selector passed to the overlay routine is a separate domain
+from a drawable registration selector.
+
+Both structure body phases accept signed `+0x78<2`; Flat chooses the phase.
+Selector 2/3/4 and CBackPack body paths require `+0x78==0`. Selector 2 has the
+additional key `0x26` lookup and indexed-mask gate. Shadow calls have their
+separate global enable gate. These are corrected local dispatch rules, not
+proof that a sprite body paints opaque pixels (`ANIM-DRAWGATE-087`).
+
+Phases 1..5,7..8 walk rows -4..visRows+7 ascending and columns visCols+3..-4
+descending. Phase 9 instead walks rows -3..visRows+6 and columns visCols+2..-3.
+Phase 10 is column-major, ascending columns below visCols and rows below
+visRows+4. The phase-9 common-bound wording in `TERR-SPR-138` is retracted.
+Within a drawable cell sweep, later cells have greater row or equal row and
+smaller column. Across phases, the earlier phase finishes first regardless of
+cell coordinates (`ANIM-WALKORDER-088`). The late shadow/body phases have one
+collection walk and one cell sweep between them; identical entry tests do not
+establish identical painted pixels (`TERR-SPR-139`, amended).
 
 **What bounds a silhouette.** One global device-space clip rectangle,
 `0x005e4408` / `0x440c` / `0x4410` / `0x4414` = left/top/right/bottom, set from `*(CMapView+0xf4)`
@@ -1177,14 +1214,18 @@ and darkens once draws something the original never draws.
 silhouette and changes no body, bar, terrain cell or shroud cell. It is a runtime global — no
 shipped file's bytes move (`TERR-SPR-144`).
 
-**Open:** the runtime value of `CMapView+0xf4`; the meaning of `drawable+0x78`, the field every
-sweep filters on; what sweeps 2, 6 and 7 draw.
+**Open:** the runtime value of `CMapView+0xf4`, the complete producer/lifecycle
+join of `drawable+0x78`, native registration/collision order and actual pixel overlap. The collection's complete insertion/type
+population remains unjoined; its projectile interpretation remains Medium.
 
-### A unit places itself — and its shadow places itself differently (`TERR-SPR-047`, `TERR-SPR-065…TERR-SPR-067`)
+### A unit places itself — and its shadow places itself differently (`TERR-SPR-047`, `TERR-SPR-065…TERR-SPR-067`, late-caller population amended)
 
-A **unit** does not use the cell-centre destination above. It is dispatched twice per frame over the
-drawable grid `CMapView+0x90`, at `idx = (row+3)*(visCols+6) + (col+3)`, both times under
-`drawable+0x78 == 0`, and both passes ignore the `(col, row, …)` they are handed:
+The shared CUnit/CAirUnit drawing methods place their own image. The late
+`CMapView+0x90` callers below are CAirUnit's selector-3 path; ordinary and
+alternate CUnit reach the same methods in earlier cell compositions
+(`TERR-SPR-065`, amended; `ANIM-CATEGORY-084`, `ANIM-AIRPASS-086`). Both late
+paths require `drawable+0x78==0`, and both methods ignore the `(col,row,…)`
+destination arguments:
 
 ```
 vt+0x2c  FUN_0045bf00   the SHADOW   third argument = the CMapView+0xc0 four-corner altitude
@@ -1369,11 +1410,12 @@ sideways, past any viewport, so the blitter rejects it: **they cast no shadow, a
 displacement rather than a branch.** They are the flat and the hollow — four bridges, four graves,
 a cave, three wells, a teleport, a campfire, `magic`. A consumer must not clamp the field.
 
-**Order** (`TERR-STRUCT-104`): the drawable registers into `CMapView+0x94` over its whole
-footprint rectangle and the renderer's cell walk reads that plane twice — an early pass
-taking `Flat != 0`, then the main pass taking `Flat == 0`, immediately before the unit plane
-`CMapView+0x8c` at the same cell. Both passes are skipped by the fog state `+0x78`: the flat
-pass needs `< 2` (seen at least once), the main pass needs `== 0` (in sight now).
+**Order** (`TERR-STRUCT-104`, amended): the drawable registers its prepared
+footprint into `CMapView+0x94`. The early body phase takes `Flat!=0`; the main
+cell phase takes `Flat==0` before the selector-2 CUnit calls in that cell.
+Both body gates require signed `+0x78<2`. The former main-body `==0` clause is
+retracted: that later test guards work after the body call. Structure shadows
+have an earlier separate phase (`ANIM-DRAWGATE-087`, `ANIM-CELL-085`).
 
 **Ownership never reaches the sprite** — only the minimap blip `vt+0x34` (`TERR-STRUCT-107`).
 
@@ -1408,9 +1450,13 @@ withdrawn save-absence clause in `TERR-FOG-087`.
   producer is specified; this does not restore a universal writer enumeration.
 - The object/unit shroud-level ratio's reason remains open (`TERR-LIGHT-126`).
   Sprite rectangle construction, the second `CMapView+0x9d4` dispatch and
-  remaining scene-sweep identities are wider presentation questions; the known
-  body/shadow placement and sweep ordering remain specified by `TERR-SPR-067`,
-  `TERR-SPR-137`, `TERR-SPR-138`, `TERR-SPR-139`, `TERR-SPR-140`, `TERR-SPR-141`
+  complete collection insertion/type population remain wider presentation
+  questions. Registration storage and conditional cell/phase composition are
+  specified by `ANIM-REGISTER-083`, `ANIM-CATEGORY-084`, `ANIM-CELL-085` and
+  `ANIM-AIRPASS-086`; native refresh/collision order and pixel overlap remain
+  Unknown. The existing placement and sweep contracts are retained with the
+  amended count, bounds and population clauses of `TERR-SPR-137`, `TERR-SPR-138`
+  and `TERR-SPR-139`, alongside `TERR-SPR-067`, `TERR-SPR-140`, `TERR-SPR-141`
   and `TERR-SPR-144`.
 - The `vt+0x34` overlay blend consumer remains the separate sprite residual
   `SPR256-OVL-014`. Runtime clip-rectangle values and the displaced-well-shadow

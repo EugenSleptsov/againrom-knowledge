@@ -74,3 +74,11 @@ confidence, scope, status and the identity of the private evidence that earned t
 Instruction listings, decompiler output, reconstructable shipped-content tables and
 internal review narrative are publication-review material under the knowledge
 repository's `PUBLICATION.md`, not required parts of this index.
+
+## Drawable registration scope
+
+ANIM-REGISTER-083 through ANIM-WALKORDER-088 distinguish ordinary, air and
+alternate CUnit storage and dispatch phases. The affected clauses of
+TERR-STRUCT-104, TERR-SPR-065, TERR-SPR-137, TERR-SPR-138, TERR-SPR-139,
+REG-UNITS-061 and ANIM-047 are amended; read their retraction entries before
+using earlier all-unit or common-bound shorthand.

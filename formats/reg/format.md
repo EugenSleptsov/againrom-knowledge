@@ -298,7 +298,7 @@ int tracks.
 > before `Width`" observation was `Width`'s own value read one key early and is not
 > re-examined.
 
-### `Z` picks the C++ class — and only the draw layer (`REG-UNITS-061`)
+### `Z` selects the drawable class (`REG-UNITS-061`, registration scope amended)
 
 `FUN_004104e8` is the only site in `rom.exe` that allocates a `0x1b0` unit object, and it branches
 on `class+0x104` = **`Z`**:
@@ -309,9 +309,15 @@ on `class+0x104` = **`Z`**:
 00411536      PUSH 0x1b0 ; CALL 0x00461560    ; Z != 0 -> CAirUnit   (CRuntimeClass 0x599220)
 ```
 
-`CAirUnit` derives from `CUnit` and overrides exactly one behavioural slot of 33 (`vt+0x38`): the
-draw-layer registration, layer **3** unconditionally against `CUnit`'s **2** alive / **4** dead
-(the corpse stage is `unit+0x15a`, `REG-UNITS-050`). It is a z-order flag on the *drawable*; it
+`CAirUnit` derives from `CUnit` and overrides one behavioural vtable slot of 33
+(`vt+0x38`): registration selector 3. CUnit selects 2 only when unsigned corpse
+stage `+0x15a<2` and bit `0x80` of `+0x18c` is clear, otherwise 4. This is the amended form of the
+alive/dead shorthand of `REG-UNITS-061`; the alternate flag matters at stage 0.
+Selectors 2/3/4 store into map-view `+0x8c/+0x90/+0x9c`, respectively
+(`ANIM-REGISTER-083`, `ANIM-CATEGORY-084`). Their shared drawing functions do not
+imply one phase population: only selector 3 has the late separated shadow/body
+sweeps (`ANIM-AIRPASS-086`). CAirUnit construction also writes `+0x10=16`; this
+does not decode the registry's `Z=96` value. `Z` is a drawable-side class flag; it
 does not reach the simulation, whose mover fields are per-instance bytes no registry key can touch
 (`TERR-MOVE-055`). Corpus: `Z != 0` on **2 of 34** classes — `Sonic Bat` (ID 70) and `Dragon`
 (ID 71), both `Z = 96`.

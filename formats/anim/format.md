@@ -8,7 +8,9 @@ Ledger: `claims/anim.md`.
 
 **Status: partial (◐).** The driver, its clock, its five-field state block, all eight action arms,
 the eleven message opcodes that fill it and the whole death chain are read at instruction level.
-Not specified: `CAirUnit`'s and `CProjectile`'s overrides; what distinguishes opcodes
+Registration overrides and conditional category composition are specified below
+by `ANIM-CATEGORY-084`; other CAirUnit/CProjectile overrides remain outside this
+registration result. Remaining scope includes what distinguishes opcodes
 `0x86`/`0x8a`/`0x8b`/`0x8c` from `0x6b`/`0x71`; `FUN_0040eaee`, the every-32-ticks call on the same
 chain; and no runtime session has confirmed the clock by eye.
 
@@ -420,7 +422,7 @@ effect record's `+0x0e` rather than on `actor+0x144` (`MAGIC-STONEDRAW-084`). Th
 mechanisms in the two hierarchies this ledger's header keeps apart: the draw substitution is
 presentation and is not serialized, the action refusal is simulation and is.
 
-## Reviewed spell-effect presentation (`ANIM-044`…`ANIM-047`)
+## Reviewed spell-effect presentation (`ANIM-044`…`ANIM-047`, late-pass scope amended)
 
 The paced `0x401` tick drives both actor marks and projectiles. CUnit and CAirUnit invoke vtable
 `+0x50` once before their action branch, and both bind it to the effect-list rebuild. A mark is
@@ -447,16 +449,55 @@ phase 8..15  frame phase-8  y offset = 0
 It ends on frame 7 and never returns to frame 8. The world position stays at the accepted cell; only
 the draw offset moves (`ANIM-046`).
 
-Projectiles do not register in the cell grid. Their exact relevant map composition is:
+The projectile registration slot is a no-op. The relevant map composition uses
+the actual selector/storage join; the earlier universal unit-body wording of
+`ANIM-047` is retracted (`ANIM-CATEGORY-084`, `ANIM-AIRPASS-086`):
 
 ```
-selector-1 retained overlay: wall_of_fire, wall_of_earth
-all unit shadows
-separate projectile list
-selector-0 retained overlay: freezing_cloud, poison_cloud
-all unit bodies, including their actor marks
-later: shroud
+earlier cell phases: alternate CUnit and CBackPack, then ordinary CUnit/static objects
+within the main cell phase: area selector 1, wall_of_fire/wall_of_earth
+complete registration-selector-3 (CAirUnit) shadow sweep
+separate collection walk; projectile type interpretation remains Medium
+area selector 0, freezing_cloud/poison_cloud
+complete registration-selector-3 (CAirUnit) body sweep
+later: marker/bar calls, then shroud
 ```
 
-The exact traversal order among projectiles in that separate list remains Unknown, so overlapping
-same-cell Meteors are specified only up to their list order (`ANIM-047`).
+The complete projectile insertion/type population and native pixel overlap in
+that collection remain Unknown. A dispatch order does not promise a particular
+Meteor-over-unit pixel result (`ANIM-047`, amended).
+
+## Drawable registration and cell composition
+
+`ANIM-REGISTER-083` joins registration selectors 0/1/2/3/4 to map-view planes
+`+0x98/+0x94/+0x8c/+0x90/+0x9c`. Selector 1 stores the prepared footprint
+rectangle; the others store one computed anchor. Registration requires
+`+0x4c!=0`. A plane/cell retains one pointer, so later writes replace earlier
+ones. Native refresh, collision-winner and stale-entry lifetime remain Unknown.
+
+CBackPack uses selector 0; structures and bridge subclasses use selector 1.
+CUnit uses selector 2 only when unsigned `+0x15a<2` and bit `0x80` of `+0x18c`
+is clear; otherwise it uses selector 4. CAirUnit uses selector 3 without those
+tests. Stage 1 therefore need not mean the earlier plane, and the alternate
+flag can change the route at stage 0. These are conditional branches, not a
+native population census (`ANIM-CATEGORY-084`).
+
+The earlier cell sweep dispatches selector 4 shadow/body before CBackPack
+shadow/body in that cell. The main cell sweep dispatches non-flat structure,
+selector 2 shadow/body, auxiliary `vt+0x18` dispatch, static objects and then area
+selector 1. Static objects use their map-byte/class-array path. The late split
+shadow/body sweeps belong to selector 3 (`ANIM-CELL-085`, `ANIM-AIRPASS-086`).
+Area selectors and drawable registration selectors are separate domains.
+
+Both structure body phases admit signed `+0x78<2`; their Flat predicates choose
+the phase. CUnit/CAirUnit and CBackPack body paths require `+0x78==0`, with an
+additional key/indexed-mask gate on selector 2. Shadow dispatches have an
+independent global enable gate (`ANIM-DRAWGATE-087`).
+
+Nine cell sweeps and one non-cell collection walk form the ten named phases.
+Drawable cell sweeps walk rows ascending and columns descending; the marker/bar
+window is narrower and the shroud is column-major. A later phase follows the
+completed earlier phase regardless of cell coordinates. Within a drawable
+phase, later cells have greater row or equal row and smaller column
+(`ANIM-WALKORDER-088`). Pixel coverage, opaque overlap and native lifecycle
+equivalence remain outside these static dispatch results.
