@@ -437,12 +437,34 @@ The turn caller writes BYTE+a4=ceil(pre-step shorter arc/RotationSpeed) after
 the advancing call, rather than decrementing a countdown. A fresh short snap
 writes1. It resets BYTE+9d when inactive, increments it on each call, sets the
 active DWORD and clears that dword if the updated facings match. The division
-arm requires nonzero RotationSpeed. Its original data-column binding and
-constructor default0x10 stand. The selected move/order caller chain can repeat
+arm requires nonzero RotationSpeed. The selected move/order caller chain can repeat
 this step; complete order scheduling and route/callback effects remain
 Unknown. These are local call boundaries, not a whole-action tick count —
 MOVE-TURN-044. Serialized local treatment and the post-LOAD frontier are
 SAV-TURNLOAD-822.
+
+**The turning byte has several producers.** Unit initialization stores the
+180-byte mover allocation at actor+154. Its constructor writes byte+a=16,
+then actor defaults write8 to the same object. Unit table slot9 and Human
+table slot7 address that byte; their byte helper preserves the incoming value
+on -1 and otherwise stores low8. The former final-default interpretation in
+MOVE-TURN-031 is partially retracted — MOVE-RATE-052.
+
+Human derive later writes low8(actor+8c) to mover+a after its speed derivation
+and modifier fold. It can therefore replace the independent table value.
+The exact Unit derive slot lacks this assignment; the measured Humanoid and
+Human slots share it — MOVE-RATE-053. Effect selector18 first adds into the
+target's mover+a modulo256, then calls that same target's derive. This local
+effect write alone does not establish a surviving Human bonus — MOVE-RATE-054.
+
+The complete turn leaf gets its actor from the stack argument and reloads
+actor+154; incomingECX is not its mover receiver. It changes current facing
+only. The selected next-cell arm with actor+184=0 calls it and returns without
+a Position change. The turn caller also uses byte+a for its estimate, while
+the selected positional-rate body reads actor+8c or the formation override.
+All three direct leaf callers are selected; eight of eleven direct turn-caller
+sites and all unresolved indirect/rebased accesses remain outside this local
+proof. Full scheduling and elapsed time remain Unknown — MOVE-RATE-055.
 
 **The clock.** One `FUN_00548c60` per actor per **sub-tick** — the counter `server+0x04`, paced by
 `FUN_004753c0` against `timeGetTime` at `campaign+0x3f0 = 1000/R` ms, `R` from the nine-arm ladder

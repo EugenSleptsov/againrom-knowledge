@@ -915,6 +915,17 @@ its virtual call at00510d7a (actor vtable+0x30), embedded serializers and later
 lifecycle remain a frontier. Local raw transfer does not prove whole-LOAD
 preservation or the exact first turn dispatch — SAV-TURNLOAD-822.
 
+The exact receiver transfer is also checked through the Unit prefix:
+005105d2 reloads actor+154 intoECX, and005105d8 passes the unchanged archive
+argument to the mover serializer. With an aligned512-byte archive buffer,
+five synthetic SAVE/LOAD pairs per image transport all180 bytes and advance
+each cursor180, including independently varied byte+a. The selected Unit,
+Humanoid and Human serializer bodies contain no direct replacement of that
+byte after transport. A composed turn-leaf call consumes the restored byte,
+but it is invoked explicitly by the instrument. A later Human derive can be
+a new producer; intervening callbacks, first live dispatch and whole-LOAD
+preservation remain Unknown — SAV-MOVRATE-866.
+
 `Unit::Serialize` `FUN_00510518`, before the store/load branch: `Token`; `list(+0x20)`;
 `u16list(+0x15c)`; `u16list(+0x178)`; raw 24 from `+0xa6`; raw 22 from `+0xbe`; raw 24 from
 `+0x114`; raw 64 from `+0xd4`; raw 180 from `*(+0x154)`; raw 148 from `*(+0x158)` followed by

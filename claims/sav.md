@@ -1,5 +1,11 @@
 # Claim registry — SAV (save game)
 
+## Mover byte transport and later producer boundary
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-MOVRATE-866 | **The Unit archive prefix transports the exact allocated mover byte; a later derive is a different producer.** At005105cb..005105dd actor is the Unit serializer receiver saved atEBP-20, archive is its argument, and005105d2 loads [actor+154] intoECX before calling0054d4c0. This helper passes the mover address and180-byte length to0057ba16 when archive mode bit0 is clear, or0057b908 when set. Five synthetic buffered SAVE/LOAD pairs per image execute this Unit prefix, both original archive-buffer branches and the selected original aligned copy; all180 bytes match, including byte+a independently varied over0/1/7/19/255. The archive cursor advances180 in each direction. A composed subsequent00548e20 invocation consumes the restored byte and changes facing only. Complete selected Unit/Humanoid/Human serializer bodies contain no direct mover+a replacement after this transfer; their other callees and enclosing events remain separate boundaries. | **High** for exact receiver, byte range and admitted buffered transfer. The vectors use synthetic memory and invoke the consumer explicitly. File callbacks, whole-LOAD preservation, first live dispatch and whether Human derive rewrites the byte beforehand remain **Unknown**; MOVE-RATE-053 supplies that later local producer. | ✔ promoted | [EXP-0329](../experiments/EXP-0329-mover-rate-binding/), archive-prefix and restored-byte vectors |
+
 ## Diary word-array consumer frontier
 
 | ID | Claim | Confidence | Status | Evidence |

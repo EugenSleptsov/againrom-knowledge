@@ -307,12 +307,23 @@ Reached **only** through the `.rdata` slots `0x0059c498` and `0x0059c520`. The o
 13  defence      reaction / 3                                                -> +0xbe
 14  protections  prot[i] = spirit / 2                        i = 1..5, +0xc4 .. +0xcc (u16)
 15  modifiers    FUN_004f54f8(actor+0xd4, actor)             -- section 5a
-16  clamps       current health/mana clamped to their maxima; defence, absorption and load
-                 floored at 0; prot[i] = clamp(min(spirit/2 + 70, prot[i]), 0, 100);
+16  current      current health/mana clamped to their maxima
+17  mover        [actor+0x154] + 0xa = low8(speed)            -- turning byte, see below
+18  clamps       defence, absorption and load floored at 0;
+                 prot[i] = clamp(min(spirit/2 + 70, prot[i]), 0, 100);
                  skill[i] = clamp(skill[i], 0, 100)
-17  mover        [actor+0x154] + 0xa = (byte)speed            -- this is how speed reaches movement
-18  effects      if actor+0x140: walk the spell list
+19  effects      if actor+0x140: walk the spell list
 ```
+
+The mover assignment is an exact byte transfer:004f85da loads actor+154,
+004f85e3 reads BYTE actor+8c and004f85e9 writes the allocated mover's byte+a.
+This byte controls the reached facing update; it replaces any earlier table
+rotation value when this derive reaches the store. The modifier fold's
+negative-speed branch clears modifier+d8 while leaving the already stored
+WORD+8c unchanged. Full callback effects remain Unknown — MOVE-RATE-053.
+Effect selector18 directly increments mover+a modulo256, then calls the same
+target's vt+50. That intermediate write does not establish a surviving Human
+bonus, because the Human/Humanoid slot selects this derive — MOVE-RATE-054.
 
 Order is load-bearing at four points: the caps run first, so everything downstream sees the capped
 value; health and mana are computed **before** the skills are restored, so a skill change reaches them
