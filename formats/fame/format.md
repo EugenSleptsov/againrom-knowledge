@@ -1,102 +1,134 @@
-# FAME hall-of-fame (`famehall.dat`) — specification (single-sample)
+# FAME hall-of-fame (`famehall.dat`) — specification (core)
 
-Level 3. Promoted, evidence-backed claims only. The single-file corpus and its
-10/10 exact tiling are `FAME-HDR-001`, `FAME-REC-002`, `FAME-NAME-003`,
-`FAME-SCORE-004`, and `FAME-UNK-005`. The 6/6 mutant boundary is our own
-validator's bound (`FAME-HDR-001`, `FAME-REC-002`); the default-table
-interpretation is `FAME-DEFAULT-006`.
+Level 3. The core covers the ordinary record reader, insertion, display input,
+two located record producers and writer. The last two words are opaque values
+with a supported lifecycle contract: the located producers initialize both to
+zero, record transfers preserve both, and the traced display body reads neither.
+They are not padding or a required-zero validation field. Their purpose beyond
+these paths remains Unknown. — FAME-READER-009, FAME-INSERT-011,
+FAME-DISPLAY-012, FAME-TAILS-013, FAME-PRODUCER-014, FAME-SEED-015
 
-**Status: the writer is read (`FAME-WRITE-007`), the content is still one table (◐).** `FUN_00489de0` writes
-the count, then per record `strlen+1`, the string including its NUL, and three `u32` — striding
-`0x10` through an in-memory array of `{CString*, u32, u32, u32}`. It is a **raw `CFile`**, not a
-`CArchive`: no `Asg&`, no compression, no class record, nothing shared with the save path. Its one
-caller opens the file `modeCreate\|modeWrite` and is the main frame's **`WM_DESTROY`** handler, so
-the file is rewritten every time the game exits. A 2026-08-02 play session did exactly that and
-produced **byte-identical** output to both pristine roots. — FAME-WRITE-007
+The EN and RU installs contain the same executable and the same 228-byte table.
+The two file copies therefore provide one distinct content sample, not two
+independent content populations. The core contract comes from the original
+instructions; synthetic instruction examples are conditional on their memory
+and I/O environment. No full native runtime or malformed-input compatibility
+claim follows. — FAME-DEFAULT-008, FAME-BOUNDARY-016
 
-**Status: single-sample content (◐).** The whole file *is* decoded — this is not a
-framing-only spec — but the corpus is **one file**, almost certainly the shipped
-default (untouched by play). So the record layout is well-supported (replicated 10×
-inside the file + exact tiling + falsification), while the two trailing `u32` per
-record are **all zero** here and their meaning is **Unknown**.
+## Wire layout
 
-Seen as: `famehall.dat` at the install root, 228 bytes. No magic — the file opens on
-a bare `u32` count. (The file changes if the game is played; hash-pin the sample.)
+All integer fields occupy four little-endian bytes. The file has no magic,
+version, archive wrapper or compression. — FAME-HDR-001, FAME-REC-002,
+FAME-WRITE-007
 
-## At a glance
-
-A high-score / hall-of-fame table: a 4-byte record count, then that many
-variable-length, length-prefixed records that tile the file exactly. Each record
-holds a name and a score; the table is sorted strictly descending by score.
-
-```
-+-------+-----------------------------------------------------------+
-| count | record[0] | record[1] | … | record[count-1]               |
-| u32   |                                                           |
-+-------+-----------------------------------------------------------+
-0     0x04                                                         EOF (228)
-
-record = [ u32 nameLen ][ char[nameLen] name\0 ][ u32 score ][ u32 ][ u32 ]
-                                                              \___ 8 reserved ___/
-         size = 4 + nameLen + 12
+```text
+[count:32]
+repeat count times:
+    [nameSpan:32][name bytes:nameSpan][score:32][tail1:32][tail2:32]
 ```
 
-## Header (4 bytes, little-endian)
+The writer emits `4 + sum(16 + nameSpan)` bytes. Exact end-of-file after the
+records is a writer and shipped-file property; the reader does not check for
+trailing bytes. — FAME-REC-002, FAME-READER-009
 
-| Off | Type | Field | Notes | Claim |
-|-----|------|-------|-------|-------|
-| 0x00 | u32 | count | number of records that follow (= 10) | FAME-HDR-001 |
+| Field | Ordinary writer / producer | Reader / consumer | Claims |
+|---|---|---|---|
+| `count` | Current array count; not a constant ten | Resizes the record array and controls the record loop; zero clears it | FAME-HDR-001, FAME-READER-009 |
+| `nameSpan` | CString stored byte length plus one | Number of bytes requested from the file; not a terminator-validation rule | FAME-STRING-010 |
+| `name bytes` | CString bytes including the final NUL | Builds a CString by scanning from the local buffer to the first NUL; that string supplies display text | FAME-STRING-010, FAME-DISPLAY-012 |
+| `score` | First record word; computed or seeded by the two located producers | Transferred unchanged; insertion compares signed 32-bit values and display formats with `%d` | FAME-INSERT-011, FAME-DISPLAY-012, FAME-PRODUCER-014, FAME-SEED-015 |
+| `tail1` | Zero in both located producers | Read, copied and written unchanged; no direct read in the traced display body | FAME-TAILS-013 |
+| `tail2` | Zero in both located producers | Same independent four-byte transfer as `tail1` | FAME-TAILS-013 |
 
-Record stream begins at offset `0x04`. There is no ASCII magic and no separate
-version field.
+In memory, each record is 16 bytes: a CString data pointer at `+0`, followed
+by the three words at `+4/+8/+c`. The containing object has its array pointer
+at `+134`, count at `+138`, and insertion limit at `+12c`. Its constructor sets
+that limit to ten and initializes an empty array. — FAME-REC-002,
+FAME-READER-009, FAME-INSERT-011
 
-## Record (variable length, little-endian)
+## Loading, strings and writing
 
-| Off (within record) | Type | Field | Notes | Claim |
-|-----|------|-------|-------|-------|
-| +0x00 | u32 | nameLen | byte length of the name field, **including** its trailing `\0` (`= strlen + 1`) | FAME-NAME-003 |
-| +0x04 | char[nameLen] | name | NUL-terminated ASCII | FAME-NAME-003 |
-| +0x04+nameLen | u32 | score | strictly descending across the table; spans > 16 bits | FAME-SCORE-004 |
-| +0x08+nameLen | u32 | *reserved #1* | 0 in this sample — meaning unknown | FAME-UNK-005 |
-| +0x0C+nameLen | u32 | *reserved #2* | 0 in this sample — meaning unknown | FAME-UNK-005 |
+The startup path opens `famehall.dat` for reading. An open failure or a file of
+zero bytes takes the default-seeding path. A nonempty file goes to the reader:
+a four-byte zero count produces an empty table, not seeded defaults. The
+writer uses raw file writes; the previously traced exit handler opens the
+file with create/write mode. — FAME-SEED-015, FAME-WRITE-007
 
-Record size `= 4 + nameLen + 12`.
+The reader neither sorts the records nor clamps their count to ten. It reads
+all three words without score-range or zero-tail tests. A loaded table can
+therefore retain ties, nonzero tails and a different order until another
+operation changes it. Signed loop/allocation arithmetic means that absence of
+a guard is not a promise that every 32-bit count succeeds. — FAME-READER-009,
+FAME-INSERT-011, FAME-BOUNDARY-016
 
-## Sample measurements (not the original payload)
+The name buffer occupies 1,024 bytes. The reader passes the supplied prefix
+directly to `Read`, then passes the buffer to a char-string constructor that
+calls `lstrlenA`. There is no local ASCII, positive-length, length-bound or
+final-NUL check. A well-formed ordinary name has one terminating NUL inside
+that buffer. A 1,024-byte span with 1,023 non-NUL bytes followed by NUL fits the
+observed buffer; it is not an enforced maximum-name validation rule.
+— FAME-STRING-010
 
-The measured file has ten records and is 228 bytes long. The observed scores are
-strictly descending from 70006 to 0; two values exceed 65535, supporting the field-width
-finding in `FAME-SCORE-004`. All 80 bytes in the two trailing dwords per record are
-zero in this sample (`FAME-UNK-005`); this is not a proved universal zero default.
+An early NUL shortens the in-memory string even though the full prefixed span
+has been consumed; the writer then emits the shorter string. Non-ASCII byte
+values are not rejected here. Zero-length or unterminated spans can reuse
+previous buffer content; these instruction examples establish missing
+validation, not a portable malformed-name contract. The effective native
+encoding, upstream name-entry limits and rendering remain separate questions.
+— FAME-STRING-010, FAME-BOUNDARY-016
 
-The original ten-name/ten-score content table is intentionally not reproduced in
-this public edition. The unabridged research evidence is identified by
-[SOURCE.md](../../SOURCE.md). `FAME-DEFAULT-008` retains the correspondence to the
-installed UI table's lines 263..272 and the uncertainty about which copy is drawn.
-These omissions change neither the file grammar nor the research confidence.
+## Insertion and display
 
-## Invariants (hold for the sample; enforced by the probe)
+Insertion walks the stored order and inserts before the first existing score
+less than or equal to the new score, using signed comparisons. A new equal
+score precedes the old equal score. If no such position exists, it appends.
+The operation copies whole records and trims the array to its configured
+limit after insertion. It does not deduplicate names or repair an already
+unsorted table. The normal constructor's limit is ten; the load path has no
+corresponding clamp. — FAME-INSERT-011
 
-- `len(file) >= 4`; `count = u32@0`.
-- Exactly `count` records walk: each `[u32 nameLen][nameLen bytes][12 bytes]` is
-  in-bounds, `nameLen >= 1`, and `name[nameLen-1] == 0` (NUL-terminated).
-- **Exact tiling:** after `count` records the cursor equals file size —
-  `4 + Σ(4 + nameLen + 12) == 228`, 0 bytes unaccounted, no overrun.
+The display initializer copies the current record count. The display body
+walks the array in its stored order, formats a one-based rank with `%d.`, passes
+the record name to drawing, and formats the score with `%d` before a further
+number-formatting helper. Neither trailing word is read directly by that
+body. The helper's final text transformation and native rendered pixels are
+outside this contract. — FAME-DISPLAY-012, FAME-TAILS-013
 
-The repository probe's own validator rejects six synthetic mutants breaking the
-contract above (truncation, `count` too small/large, inflated length prefix,
-removed NUL terminator) — 6/6 (`FAME-HDR-001`, `FAME-REC-002`). This is a bound
-on our validator, not evidence from the original reader.
+## Located producers
 
-## Notes & open questions
+The non-default producer takes its name from a char buffer at a live source
+object's `+e4`. With signed words `A = campaign+124`, `B = campaign+128` and
+`C = source+108`, it computes `C / (A * 10.0) * B` when A is nonzero, or
+`C * stored_binary64(2e-6) * B` otherwise, using the observed x87 instruction
+order. A helper truncates to a signed 64-bit integer and the producer stores
+the low 32 bits as score. Both other words remain zero. These offsets identify
+immediate inputs; their full upstream meaning and native floating-point
+control state are Unknown. The expression is not a promise of exact rational
+rounding at integer boundaries. — FAME-PRODUCER-014
 
-- **Corpus limit:** one file, and it is almost certainly the untouched **default**
-  table (10 seeded names, clean descending ladder ending at a `0` entry, all-zero
-  trailing fields). We cannot see how `count` scales, whether it can differ from the
-  record total, or the max name length. — FAME-DEFAULT-006
-- **Reserved `[u32][u32]`** after each score are zero in every record, so they are
-  observed but not decodable. A played-in `famehall.dat` (with non-zero values) would
-  be needed to interpret them — candidates by analogy only: a level/rank, a
-  mission/difficulty id, or a play-time.
-- **Score width:** `u32` is forced (two entries exceed 65535); the descending order
-  is read from the static table, not from watching the game write it.
+The fallback producer obtains names from UI string-table indices 263 through
+272. For the first nine it starts a score base at 70000, subtracts 7000 per
+row and adds a random-derived remainder modulo 5000. It assigns zero score
+to the last row. Both trailing words stay zero and all ten records pass
+through the same insertion routine. This resolves the old choice between
+independent display defaults and a file-seeding source. — FAME-DEFAULT-008,
+FAME-SEED-015
+
+## Sample facts and remaining boundaries
+
+The shipped table has ten records, ASCII names, strictly descending scores
+from 70006 to zero, and 80 zero bytes across the two trailing words. Those
+are measurements of this table; the broader ASCII and strict-order constraints
+in the old name/score claims are partially retracted. Neither exact content
+identity nor the
+absence of earlier play is proved by the resemblance to fallback defaults.
+— FAME-HDR-001, FAME-REC-002, FAME-NAME-003, FAME-SCORE-004,
+FAME-UNK-005, FAME-DEFAULT-006, FAME-DEFAULT-008
+
+Allocation failure, short reads, oversized or overflowing lengths/counts,
+exceptions, string lifetime and an untraced helper edge remain
+outside the ordinary successful-transfer account. Direct-call and literal
+pointer censuses do not exclude computed or aliased consumers elsewhere.
+In particular, the two tail words have no inferred level, mission, difficulty
+or time meaning. No native nonzero-tail lifecycle or full score-production
+session was witnessed. — FAME-TAILS-013, FAME-BOUNDARY-016
