@@ -247,17 +247,54 @@ archive call itself admits no per-field dispatch to find one — SAV-662, SAV-66
 `*(Player+0x40)`, a 48-byte object built at `004fac36`/`004fac4f` whose constructor stores vtable
 `0x59c4b8`. `Diary::Serialize` `00511427` writes a `CDWordArray` (`WriteCount` then `4n` raw), a
 `CWordArray` (`WriteCount` then `2n` raw), and a `u32` resolved through the pointer map on load.
-A freshly constructed `Diary` sizes both arrays once from a global catalog — `data.bin`'s Units
-table (DAT-OBJ-002, ALM-CLS-038 as amended), so an array index is a unit type — through the same
-`SetSize` entry point every subsequent load also reaches, resizing both arrays again from the
-stream's own count; their element counts are always equal (119 on 540/542 preserved records, 0 on
-the remaining 2, both the same project-written save and its unmodified resave). Each
-pair satisfies `word[i] = 1024 - dword[i]` exactly, with the one located mutator touching only the
-word side (the dword side's own writer is a bounded negative; only six of the 119 indices ever
-carry a nonzero dword anywhere in the corpus). The trailing `u32` resolves, on every one of 408
-nonzero-reference records among 410 `Player`-owned `Diary` records, to the Diary's own enclosing
-`Player` and never any other object; a further 132 `Diary` records are actor-owned
-(`Humanoid+0x1e4`) and all null — SAV-667, SAV-668, SAV-669.
+A fresh `Diary` initializes both arrays from the Units collection count, with
+dword 0 and word 1024. Capacity does not establish a single index domain: base Unit
+construction writes a Units ordinal into actor+0c, while Human construction writes
+a Humans ordinal there. The mutation rejects an index above 63 only when the actor's
+virtual+30 predicate is nonzero; that predicate is false on Unit and true on
+Humanoid/Human. SAV-667 and SAV-668 are narrowed on that index inference and bound;
+the original producers and class split are SAV-844.
+
+`004f8c22` first decrements a nonzero word through `004f8ce3`, then increments the
+dword only while its unsigned old value is at most16. From defaults,17 admitted
+calls give `(17,1007)` and 18 give `(17,1006)`. The complement relation in saved
+samples is therefore a finite corpus fact. The accessors perform pointer arithmetic
+without a length check. These local rules and their malformed-backed-memory limits
+are SAV-842.
+
+The located caller is actor teardown under actor+54==16. With T the removed actor
+and S=T+40, the tail requires S type word+0e in 33..63 and signed health+94>=0; zero
+health passes. Its Diary receiver is `S->Player(+14)->Diary(+40)` and its argument
+is T. The standard damage body can record its source at T+40 before death, so a
+universal lethal-blow or every-kill interpretation is not established. Full event
+attribution and first post-LOAD scheduling remain Unknown — SAV-843.
+
+A nonnull Diary+2c routes notification after increments to 2,4,6,8,10,12,14,16.
+The downstream builder reads that supplied Player's own dword array and packs
+17 words under opcode 186. For i>=64 it derives typeID/face from Units row i,
+uses typeID 64..80 as output index `typeID minus 64`, and ORs
+`min(low-byte(dword[i]>>1),7)` shifted by4*(face-1) into the output word.
+Player+68>10 selects all 0xffff. Null+2c suppresses notification without suppressing
+mutation. The receiving UI and visible cadence remain Unknown — SAV-845.
+
+Player-owned Diaries and actor-owned Diaries have separate construction and
+serialization paths. The latter live at actor+1e4 and default to a null owner.
+No additional live actor-owned array consumer was established in the bounded
+call/access census; indirect, computed and unclassified receivers remain open —
+SAV-846. A direct-original complete-reader census has 465 Diaries,333 Player-owned
+with self-references and 132 actor-owned with null references and default pairs.
+All 55,335 element pairs have119 entries per array and satisfy word=1024-dword;
+256 dwords are nonzero, maximum 7, at eight indices. The sample is82 complete paths
+out of 85; three incomplete-reader paths and their24 partial Diaries are excluded.
+These per-path counts include duplicate original contents and do not establish a
+mutation law — SAV-848.
+
+LOAD resizes each array from its own streamed count and reads its own payload;
+it does not enforce equal lengths or a complementary value relation. It stores
+the trailing key and explicitly calls the pointer-map resolver, replacing it with
+the mapped pointer or zero. SAV-669 is amended: its former no-separate-LOAD-fixup
+clause is partially retracted. The serializer, subsequent local Player continuation
+and remaining first-consumer limits are SAV-847.
 Without that record a walk desynchronises inside the first `Player`. — SAV-MEMBER-036,
 SAV-PLDIARY-054, SAV-HERO-059
 

@@ -1,5 +1,13 @@
 # Overturn history
 
+## Diary index and LOAD corrections
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `SAV-667` (the inference from capacity to every index's table identity only) | "so an array index is a Units-table row — a unit type" | High | [EXP-0327](../experiments/EXP-0327-diary-consumers/), SAV-844 | Units capacity sizes storage. The actor+0c producer selects Units for base Unit and Humans for Human; the Diary's virtual predicate excludes only Human-family indices above 63. The capacity/default/load-size mechanisms and historical corpus counts stand. | **NARROWED** — one common semantic index domain does not follow from the capacity |
+| `SAV-668` (unconditional index-bound wording and inherited per-unit-type interpretation) | "its +0xc index byte, bounded <=0x3f"; "an element is a per-unit-type counter" | High for local mechanism and corpus relation; Medium for the unlocated writer | [EXP-0327](../experiments/EXP-0327-diary-consumers/), SAV-842, SAV-844 | Rejection requires virtual+30 to be nonzero as well as index>63. Unit index64 is admitted; Human index64 is rejected. Index identity follows the actor's class-dependent definition producer. The previously open caller004f8c22 is the dword writer; the measured historical complement relation is retained as a finite corpus fact, not a permanent law. | **NARROWED** — conditional bound and class-dependent index; prior writer search superseded by a located body |
+| `SAV-669` (no separate LOAD fixup clause only) | "written at construction, not fixed up separately at load" | High | [EXP-0327](../experiments/EXP-0327-diary-consumers/), SAV-847 | Diary Serialize stores the streamed key at 00511485 and explicitly calls 00527d30 at 0051148f. The resolver overwrites+2c with the mapped pointer or zero. Constructor seeding and the original owner-reference census stand. | **PARTIALLY RETRACTED** — the claimed absence of a separate LOAD fixup is false |
+
 ## SAV closure call-path corrections
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
