@@ -295,6 +295,16 @@ the trailing key and explicitly calls the pointer-map resolver, replacing it wit
 the mapped pointer or zero. SAV-669 is amended: its former no-separate-LOAD-fixup
 clause is partially retracted. The serializer, subsequent local Player continuation
 and remaining first-consumer limits are SAV-847.
+The complete reproduced direct population of the shared word accessor has14
+wrapper calls and one inner delegate. Three wrapper calls are the known Diary
+initialization/decrement; no independent Diary consumer is established by the
+other11 receiver paths. One argument-taking routine's four reads receive a
+fresh stack word collection through its sole raw direct caller. The input
+payload's provenance remains unknown; the local object is not an existing
+Player or actor Diary. These bounds are SAV-854 and SAV-855. The separate
+instruction-shape census leaves aliases, inlined/computed/indirect access and
+unclassified receivers open. Word meaning, caller event and first post-LOAD
+use remain Unknown; the bounded negative does not establish global non-use.
 Without that record a walk desynchronises inside the first `Player`. — SAV-MEMBER-036,
 SAV-PLDIARY-054, SAV-HERO-059
 
