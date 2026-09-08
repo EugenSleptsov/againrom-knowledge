@@ -3,6 +3,25 @@
 Level 3. Promoted, evidence-backed claims only. Ledger:
 [`claims/unit.md`](../../claims/unit.md).
 
+## Clickable structures
+
+AI-STRUCTUSE-306 schedules approach before the local use action. In that action,
+selectors28/29 toggle word+42 between zero and one, treating every nonzero
+input as the zero-producing arm (UNIT-STRUCTUSE-090). Notification uses the
+same client projection boundary as UNIT-STRUCTCONT-078.
+
+Selectors15/16 spend one positive word+42 charge and construct, respectively,
+Potion Big Healing or Potion Big Mana. For Human receivers the item goes
+through the ordinary potion-use virtual before any unconsumed item is returned
+to the container (UNIT-STRUCTUSE-091). ITEM-USE-113 and MAGIC-CONSUME-142 give
+the existing application and clamped +100 effects. A full stat does not prevent
+charge consumption. UNIT-STRUCTZERO-080 describes the separate local recharge
+callback; its scheduler period in elapsed play time remains Unknown.
+
+The action performs nearby-object lookups rather than using the retained order
+pointer for the effect. Ambiguous neighbors, non-Human receivers, complete
+scheduling and original-runtime completion remain outside these local claims.
+
 **Status: partial (◐).** Creation is specified end to end for the arm that reaches the
 `Data.bin` **Units** collection: the constructor's defaults, the 38 streamed slots, the
 equipment step, the spellbook step, the one-time modifier fold, and every combat input

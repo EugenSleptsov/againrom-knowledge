@@ -4,6 +4,17 @@ Level 3. Promoted, evidence-backed claims only. Core acquisition is `AI-FILTER-0
 the authored behaviour layer is `AI-TICK-008`…`AI-DIFF-016`. Ledger:
 [`claims/ai.md`](../../claims/ai.md).
 
+## Structure-use command
+
+AI-STRUCTUSE-306 connects player order0x24 to actor state15, order15 and action15.
+The command stores a Building reference and approaches a width-dependent cell
+with range1,2 or3. Local admission checks an orientation byte and Chebyshev
+distance before selecting use; failure continues movement. Exact scheduler
+latency, interruption and first dispatch after LOAD remain Unknown.
+UNIT-STRUCTUSE-090 and UNIT-STRUCTUSE-091 describe the reached switch and
+fountain effects. They resolve nearby objects again; retained order identity
+alone does not establish which object receives the effect in ambiguous layouts.
+
 **Status: partial (◐).** Specified end to end: the relation a unit consults, where it comes
 from, the candidate population, the selection, the three radii, **who runs the AI and how often,
 the group and per-actor state machines, guard, patrol, and where a behaviour is chosen**. Not
