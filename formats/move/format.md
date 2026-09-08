@@ -569,3 +569,33 @@ gated, and it can install an attack (`MAGIC-ACTGATE-079`); it runs only when `mo
 non-zero, and that flag's three setters — `00549092`, `005494a4`, `00549b8d` — are all inside
 `FUN_00548f70`, `FUN_005492a0` and `FUN_00549a90`, which the closure above puts behind an order arm.
 A refused actor can therefore never raise the flag again, and the tail clears it at `00531673`.
+
+## Restored actor registration and the reached turn
+
+LOAD rebuilds Player+20 from group membership, then the global actor list from
+those Player lists, skipping actor+4c mask0x08. The restored registration helper
+appends the exact actor pointer; the creator helper's ID assignment is a separate
+path. The later manager+4 callback invokes actor+24, not actor+50. Unit uses the base hook;
+Humanoid and Human delegate to it. Stage BYTE+13c=0 admits
+mover reference repair at+7c. These local paths do not by themselves establish
+preservation through every callback. — SAV-LOADREG-878, SAV-LOADHOOK-879
+
+The three measured actor classes share the+18 tick. It processes attached effects
+before signed HP and order admission; HP>0 and actor+3c!=0 are necessary for the
+selected order call. Within an admitted order prefix, progress+9=0 without the
+status hold lets pending byte+8=10 choose the explicit turn arm. Unequal current
+and desired facing call the turn with the same actor; equality clears the pending
+byte. The inactive short-arc turn arm snaps without reading mover+a, whereas the
+other arm reads that actor's allocated byte. — MOVE-EVENT-060
+
+A selected continuous Effect callback can call the same actor's derive first:
+its original+38 -> +40 -> generic+48 route passes the unchanged actor to+50.
+Unit's derive differs from Humanoid/Human's, whose reached store replaces mover+a
+with low8(actor+8c). Empty/ineligible effects and special identities can skip that
+route. This conditional order does not identify the first restored effect or the
+first post-LOAD mover access. — MOVE-EVENT-061
+
+The selected frontend resume can bootstrap a server call, but earlier world,
+frontend, phase-dependent full-tick, command and world-object callbacks remain
+between LOAD and the selected actor consumer. Absolute first producer/read order,
+the byte at that read and native resume timing remain Unknown. — SAV-FIRSTMOVE-880

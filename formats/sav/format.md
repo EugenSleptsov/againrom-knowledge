@@ -926,6 +926,29 @@ but it is invoked explicitly by the instrument. A later Human derive can be
 a new producer; intervening callbacks, first live dispatch and whole-LOAD
 preservation remain Unknown — SAV-MOVRATE-866.
 
+The world-present LOAD arm rebuilds Player membership from groups and appends the
+same actor pointers into the global actor list, omitting actor+4c mask0x08. It uses
+0050fbee, distinct from the creator helper that also assigns actor+4. The later
+global manager+4 callback reaches actor+24; Unit uses the base hook and
+Humanoid/Human delegate to it. Stage BYTE+13c=0 reaches mover+7c reference repair. The
+selected registration and repair bodies establish no unconditional derive at
+actor+50 and do not close every transitive callback. — SAV-LOADREG-878,
+SAV-LOADHOOK-879
+
+The reached common actor tick processes attached Effect+38 before HP and order
+admission. Positive signed HP, nonzero actor+3c and the admitted order prefix are
+needed for the selected pending-order10 turn. That turn receives the same actor;
+its short inactive snap skips the allocated-byte read. A selected continuous
+Effect path can instead invoke that actor's+50 first, with Unit and Human/Humanoid
+selecting different derive bodies. These conditional paths do not prescribe a
+first restored event. — MOVE-EVENT-060, MOVE-EVENT-061
+
+Normal frontend LOAD can call the resume path and bootstrap a server tick, but
+world post-load, archive/frontend, phase-specific full-tick and command/world
+callbacks occur before the selected actor suffix. The absolute first allocated
+mover producer/read, the byte at that read and native resume timing therefore
+remain Unknown. — SAV-FIRSTMOVE-880
+
 `Unit::Serialize` `FUN_00510518`, before the store/load branch: `Token`; `list(+0x20)`;
 `u16list(+0x15c)`; `u16list(+0x178)`; raw 24 from `+0xa6`; raw 22 from `+0xbe`; raw 24 from
 `+0x114`; raw 64 from `+0xd4`; raw 180 from `*(+0x154)`; raw 148 from `*(+0x158)` followed by
