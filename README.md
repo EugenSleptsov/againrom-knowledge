@@ -7,7 +7,7 @@ this repository is not a distribution of either game or a decoder SDK.
 
 ## SAV readiness
 
-This is delivery status for Againrom engine `5bccb0d`, not evidence about ROM1.
+This is delivery status for Againrom engine `4f9bf2b`, not evidence about ROM1.
 AGS is the engine's native save format. "From scratch" means without an imported
 SAV or a copied SAV document; lawful installed game resources are still required.
 
@@ -22,11 +22,17 @@ in the shipped campaign. Pre-town and completed-campaign states, incompatible
 graphs and other named writer limits refuse explicit SAV; AGS remains available.
 Original RU acceptance and arbitrary generated-state interoperability remain open.
 
+City export writes qualified world-map marker paths and repairs known bare names
+from older generated cities. The exact engine passes 275 installed checks on each
+root, including direct reads of all five serialized marker resources and retained
+document items/pages. The owner's corrected mission100 city still awaits an
+original EN town-gates check; town LOAD alone does not certify that transition.
+
 The converter separately supports bounded current-world SAV output from a previously
 imported mission. That path retains source authority for unresolved state; it is
 neither the mission save dialog's city-return policy nor a creator from scratch.
-See the [save workflow](https://github.com/EugenSleptsov/againrom-engine/blob/5bccb0de8535fed48940b9178ee74f879651e0c6/docs/1173/story.md),
-[converter](https://github.com/EugenSleptsov/againrom-engine/blob/5bccb0de8535fed48940b9178ee74f879651e0c6/pkg/game/saveconvert.go)
+See the [save workflow](https://github.com/EugenSleptsov/againrom-engine/blob/4f9bf2b2b7f9b431dca0276bb3b7db46d9023292/docs/1173/story.md),
+[converter](https://github.com/EugenSleptsov/againrom-engine/blob/4f9bf2b2b7f9b431dca0276bb3b7db46d9023292/pkg/game/saveconvert.go)
 and [SAV format reference](formats/sav/format.md).
 
 ## Sources and publication boundary
