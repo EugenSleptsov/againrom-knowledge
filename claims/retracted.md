@@ -1,5 +1,15 @@
 # Overturn history
 
+## CPlayer scalar copy and editor scope
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `ALM-SCALAR-087` (remaining copy-scope clause) | computed/advanced-pointer and whole-object mover paths remain unsearched | High for destination and family sites; effect Unknown | [EXP-0352](../experiments/EXP-0352-cplayer-scalar-lifetime/EXP-0352.md) | Both00511dd4 owner arms now have explicit independent scalar destinations and bounded source-roster teardown witnesses. Native owner reach and other computed/indirect paths remain Unknown; the prior uncalled retraction remains in force. | **AMENDED** |
+| `ALM-SCALAR-088` (remaining survival scope) | consumer effect and survival through unsearched whole-object movement remain Unknown | Medium for17+7 direct-displacement population | [EXP-0352](../experiments/EXP-0352-cplayer-scalar-lifetime/EXP-0352.md) | The earlier population is unchanged. ALM-COPY-151 closes only the named owner arms conditionally, and ALM-ALIAS-154 distinguishes retained addresses from live objects. It is still invalid to infer global no-survival. | **AMENDED** |
+| `ALM-SCALAR-089` (producer boundary) | installed0/5000 value set; constructor/absence disagreement does not establish effect | High for measured counts; effect Unknown | [EXP-0352](../experiments/EXP-0352-cplayer-scalar-lifetime/EXP-0352.md) | The corpus counts stand and were reused. The EN editor additionally supplies a property value and a new-entry default. The corpus is not a two-value schema and does not prove inertness. | **SCOPE CLARIFIED** |
+| `ALM-CPLAYER-090` (image boundary) | six-dword CPlayer table at0059a560 | High for game-image class boundary | [EXP-0352](../experiments/EXP-0352-cplayer-scalar-lifetime/EXP-0352.md) | The game table stands. The EN editor has its own four-function-plus-null table at004d0bdc. Shared scalar offsets do not make the two method surfaces interchangeable. | **SCOPE CLARIFIED** |
+
+
 ## Authored Player value and native-join scope
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

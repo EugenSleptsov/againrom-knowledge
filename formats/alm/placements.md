@@ -101,11 +101,35 @@ separate predicates below.
 |-----|------|-------|-------|
 | +0x00 | u32 | **colour slot** | → `player+0x08`, carried `+1` to `Player+0x44`; the unit body draw indexes the 17 shade objects with it (`ALM-PLAYER-069`, `PAL-SHADE-012`, `PAL-SHADE-013`). Sparse and unordered, e.g. `Cross.ALM` `8 2 3 5 1 6 4 13`. The owner lookup `FUN_004fb534` compares the record's own 1-based ordinal (below), **not** this word |
 | +0x04 | u32 | **control word** | Four-byte Read destination `CPlayer+0x30`; complete copies reach `Player+0x28`. No Boolean validation occurs in these local transfers. The old 0/1 inventory is a corpus result; `UNIT-OWNER-009` is partially retracted for treating it as a general value/authorship bound. `ALM-139`, `SESS-072`, retained corpus/ordinal chain in `ALM-PLAYER-069` |
-| +0x08 | u32 | **scalar; effect Unknown** | Installed values 0/5000, with 0 on record 0; loaded into CPlayer+0x0c. It has a copy-constructor read, but no identified direct map-side consumer in the selected routine family. Computed pointers and whole-object move/serialize/copy paths are outside that negative; it is not established as inert or redundant with+0x04. — ALM-SCALAR-087, ALM-SCALAR-088, ALM-SCALAR-089 |
+| +0x08 | u32 | **scalar; gameplay effect Unknown** | Loaded into CPlayer+0x0c. Preserve all four bytes. The installed 0/5000 values are a corpus observation, not a two-value schema. — ALM-SCALAR-087, ALM-SCALAR-089 |
 | +0x0c | char[32] | **name** | NUL-terminated ASCII: `Self, Monsters, Villagers, Neutral, Enemy, Beasts, Guards, Peasants, Orcs, Trolls, …` |
 | +0x2c | u16[16] | **relations** | one per editor player slot (the editor caps at 16) — the diplomacy row |
 
-The object each record is loaded into is the interface `CPlayer`, RTTI object size `0x48`, vtable `0x0059a560` — **six dwords: five function entries and a null at `0x59a574`**; `0x59a578` begins the next class (`ALM-CPLAYER-090`). Its fields take the record's reads in order: `+0x08` the colour word, `+0x30` the control word, `+0x0c` the scalar above, `+0x10` the 32-byte name, `+0x34` the diplomacy `CWordArray`, and `+0x04` the loader-written ordinal. Both non-copy constructors leave `+0x0c` at `0` (`UNIT-VPLAYER-022`); the map loader writes the authored scalar or the absent-section default.
+The game loads each record into the map-owned `CPlayer`, object size `0x48`.
+Its vtable at `0x0059a560` has five function entries and a null; the EN editor
+has a separate four-function-plus-null table at `0x004d0bdc`. These are not the
+session `Player` type. The game destinations are `+0x08` colour, `+0x30`
+control word, `+0x0c` scalar, `+0x10` name, `+0x34` diplomacy array and
+`+0x04` loader ordinal. Non-copy constructors initialize the scalar to zero;
+the loader supplies the authored word or its absent-section default. —
+ALM-CPLAYER-090, ALM-SCALAR-087, ALM-EDITOR-152, UNIT-VPLAYER-022
+
+The game map-copy constructor can allocate independent scalar-bearing
+CPlayers in a second map. Destroying the original roster does not destroy
+those copies. Native reach of that constructor and any later gameplay
+consumer remain Unknown. A world field also retains an address after map
+destruction; the address does not establish a live object. The earlier
+selected direct-displacement absence is not a whole-image exclusion. —
+ALM-COPY-151, ALM-ALIAS-154, ALM-SCALAR-088
+
+The EN editor copies this scalar and writes its current four-byte value.
+Roster dialog control `0x407` is bound to a signed integer with a requested
+validation range of `0..2147483647`; selected handlers transfer that value
+to the roster scalar. Adding an entry initializes its scalar to `5000`.
+The dialog edits the live roster while retaining a map copy for restoration
+after a modal result other than `1`. Actual accept/cancel, validation and
+file round-trips remain unobserved. These producer facts establish no game
+currency or gameplay interpretation. — ALM-EDITOR-152, ALM-EDITOR-153
 
 A record's **physical slot + 1** is what type-4 `+0x0e` and type-6 `+0x14` store
 (`ALM-OWN-039`); the loader itself writes `slot+1` to `player+0x04`. The
