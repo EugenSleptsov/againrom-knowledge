@@ -1,5 +1,34 @@
 # Buildings, interaction and cell casters
 
+## Building-associated type9 object
+
+`UNIT-T9CTOR-110` describes the selected VirtualCaster construction. The
+0x44-byte object has vtable59c388, a distinct Position at+10 and a6-byte
+payload at+40. The caller copies the building Position and owner, writes
+caster+3c from the low byte of the unlinked record tag, and writes payload0..3
+from low8(spellRaw), byte2(spellRaw), low8(X), low8(Y). It appends the object
+to the collection at builder.this+24 pointee+10. Neither authored A nor a
+continuing building object pointer is stored by this construction chain.
+
+Payload constructor0054f560 supplies no initializer. Payload4..5 retain
+allocation contents through this caller; no zero default or tail-coordinate
+meaning is established there. This differs from the fully assigned cell-entry
+payload described below. Later writers and native allocator contents remain
+Unknown.
+
+`UNIT-T9LIFE-111` supplies a local deletion relation. A nonnull candidate at
+005195b0 receives virtual+4(1) after the unlink helper, whose return is ignored.
+On this caster table the call reaches its destructor, releases payload and
+Position, zeroes their pointers and can delete the object allocation. The
+selected caster virtual+14/+18 methods are empty; they establish no activation.
+
+The session publishes global6099d0 to+14 and+68; its cleanup reaches member+10.
+The Building damage resolver has the conditional position-key cleanup already
+bounded by `UNIT-STRUCTSTOP-066`. The builder's collection pointer has not been
+proven identical to that global instance in the selected chain. First list
+consumer, actual unlink, native callback/removal order and complete save/load
+lifetime remain Unknown. A class serializer's presence is not a SAV parent.
+
 [Reference](format.md)
 
 ## Clickable structures

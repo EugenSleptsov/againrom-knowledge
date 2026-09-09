@@ -395,7 +395,7 @@ wire offsets.
 The consumer accepts a linked recipe only when its file X/Y are both zero and the backlink exists.
 It then appends Effects in this order:
 
-1. non-zero A becomes kind `A + 43`, with B/C as its operands;
+1. non-zero A becomes kind `low8(A + 43)`, with B/C as its operands (`ALM-T9CONTROL-175`);
 2. non-zero low word of `spellRaw` becomes kind 41, or kind 42 for a Book;
 3. every tail element becomes `(kind, low, high)` in file order, with input kind 41 remapped to
    runtime kind 49.
@@ -424,6 +424,33 @@ arm performs no such lookup. Mission 10 has exactly two cell selections,
 (22,64) and (21,63), both spell 13 / power 1, and no building-caster selection.
 The remaining nine records have zero X/Y. Runtime admission and lifetime are
 `UNIT-M10ENTRY-055` through `UNIT-M10LIFE-057`.
+
+### Type9 control predicates
+
+`ALM-T9CONTROL-175` bounds the complete builder's use of A. Let N mean X or Y
+is nonzero, and L mean the runtime backlink at+4 is nonzero. The first loop
+executes these tests in order:
+
+| Predicate | Operation |
+|---|---|
+| N and zero-extended A<4 | Cell write; L does not gate it |
+| not L and A&8 | Actor lookup and Spellbook insertion |
+| N and not L and A&4 | Building lookup and VirtualCaster construction |
+
+Failed actor lookup skips the rest of that record. Thus A=12 reaches both
+searches only when the actor lookup succeeds; it is not a pair of independent
+operations. A=8 needs no nonzero coordinate. A=0x8000 does not pass A<4.
+The later linked-item arm requires not N and L and treats nonzero A as
+arithmetic data: kind low8(A+43). The local store maps212/213/65535 to255/0/42;
+this does not establish that every resulting kind is valid at later consumers.
+
+`ALM-T9ACTOR-176` fixes the inputs. The key is full32 B|(C<<16) for both
+lookups. The actor path creates actor+140 storage only if absent, constructs
+an entry from low8(spellRaw) and inserts it at low16(spellRaw), deleting a
+previous occupied slot through its own virtual+4. The building constructor
+receives no A argument. Its copied fields and bounded lifetime are in
+[Buildings and casters](../unit/structures.md). Native admission and additional
+record aliases remain Unknown.
 
 `%d.alm` is built + loaded in `FUN_00477c00`→`FUN_00572a2a` (`CMap` family).
 `FUN_004d403c` reads groups (type 5, `"…no groups"`) + the drop location (type 7, `"…no
