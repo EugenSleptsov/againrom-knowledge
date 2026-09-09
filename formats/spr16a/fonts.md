@@ -56,6 +56,41 @@ x += height(0)/2 + dat[0] + spacing   // for glyph 0, the space
 The cell width is distinct from `dat[glyph]`. Use the advance value and
 the space special case above for text layout. — SPR16A-FONT-018
 
+### Standalone `.16` trailer
+
+The final four bytes are read as one little-endian word directly into
+`this+4`. The successful loader stores it unchanged. Two `AND ECX,3`
+instructions elsewhere in the complete loader handle error-message string
+copying before the trailer read; neither masks that word. — SPR16A-070
+
+| Operation | Original `.16` expression |
+|---|---|
+| Stored word | Complete raw u32 |
+| Resource allocation request | Full resource byte length |
+| Pointer-table allocation request | 32-bit `raw << 2`, equivalent to `4*(raw & 0x3fffffff)` |
+| Indexing entry | `int32(raw) > 0` |
+| Indexing continuation | Signed 32-bit `index < raw` after increment |
+| Cursor advance | `cursor + 12 + u32(cursor+8)`, in 32-bit address arithmetic |
+
+The masking expression in the table is an arithmetic equivalence; the
+instruction is a shift. Allocation calls precede indexing. Zero and
+bit-31-set words skip indexing if the allocation call returns normally.
+A positive raw value retains its complete logical bound even when upper
+bits disappear from the allocation request. No native allocation result or
+completed large-count traversal follows from these expressions.
+— SPR16A-070, SPR16A-071
+
+The loader rewinds to resource offset 0, copies the full resource including
+the final trailer, and sets `this+0x20` to zero. The selected decoder adapter
+loads `table[index]`, passes width, height, frame pointer plus 12 and the
+caller's ramp, and does not read the stored word. Trailer bits do not select
+a palette, payload origin or decoding mode on this path. — SPR16A-072
+
+An original `.16` producer remains Unknown. A bounded search of the game
+and EN editor suffix references, loader paths and selected class methods
+identified no frame-record writer. Memory copying, diagnostic count output
+and conversion to a system bitmap do not establish one. — SPR16A-073
+
 ### `.16` glyph pixel grammar (SPR16A-FONT-013)
 
 A `.16` glyph record has the same `[u32 w][u32 h][u32 dataSize][data]` shape, but `data` is a
@@ -92,7 +127,7 @@ pixel = ramp[v]        // ramp = 16 u16 entries chosen by the text's caller
 - The write is **opaque** — unlike the `.16a` u16 blitter there is no destination read and no
   additive blend. A `.16` glyph replaces the pixels it covers.
 
-### The `.16` section chain (SPR16A-FONT-014, SPR16A-FONT-021)
+### The `.16` section chain (SPR16A-FONT-014 partially retracted, SPR16A-FONT-021)
 
 `font1`/`font2` do not end at their count trailer. Each continues into further
 `[records][4-byte trailer]` sections, every trailer an identical copy of the first:
@@ -104,8 +139,13 @@ RU font2.16  224 recs  8x10 | e0000000 | (28 B) | e0000000          (font1.16 id
 font3.16      64 recs  8x 6 | 00000040
 ```
 
-The loader indexes exactly `frameCount` records from the front. Bytes after
-that live frame list are not indexed. The named residual sections are older
-in-place overwrite layers and cut record suffixes. They do not extend the
-live count or define a new section grammar. — SPR16A-FONT-014,
-SPR16A-FONT-021, SPR16A-FONT-022
+The named shipped files have positive counts and their indexed records
+begin at the front. The signed count predicates are stated above. Bytes after
+that frame list add no pointers to the selected frame table. The loader
+nevertheless reads the full resource, and its selected copy constructor
+copies the full stored byte length if invoked. Other runtime uses of the
+tails, native invocation of that copy and visible rendering of the tails
+remain Unknown. The named residual sections are older in-place overwrite
+layers and cut record suffixes. They do not extend the indexed count or
+define a new section grammar. — SPR16A-FONT-014 (partially retracted), SPR16A-072,
+SPR16A-FONT-021, SPR16A-FONT-022, SPR16A-071

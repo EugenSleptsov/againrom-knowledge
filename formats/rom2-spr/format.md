@@ -32,7 +32,8 @@ overwrite layers. Font3 has 64 frames and ends at its trailer; font1/font2
 have 224 indexed frames. — R2-ASSET-007, R2-ASSET-009
 
 The ROM1 residual interpretations are cross-referenced by SPR256-EXC-017,
-SPR256-EXC-020, SPR16A-FONT-014 and SPR16A-FONT-021. Their native ROM2
+SPR256-EXC-020, SPR16A-FONT-014 (partially retracted for ROM1 tail reachability)
+and SPR16A-FONT-021. Their native ROM2
 consumer behavior is not independently specified here.
 
 <a id="pal-result"></a>

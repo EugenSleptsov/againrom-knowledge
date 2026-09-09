@@ -13,7 +13,7 @@ repeat frames:
    u32  dataSize
    u8   data[dataSize]             16-bit word-RLE — see below     SPR16A-RLE-002
 u32  trailer                       [31-bit frameCount][bit31 = has-palette?]
-                                                                   SPR16A-TRLR-012
+                                                                   SPR16A-TRLR-012 (partially retracted for .16)
 ```
 
 - **`frameCount = trailer & 0x7FFFFFFF`, and `trailer & 0x80000000` gates the 1024-byte
@@ -21,13 +21,20 @@ u32  trailer                       [31-bit frameCount][bit31 = has-palette?]
   (SPR16A-TRLR-012, SPR256-TRLR-021). Read the trailer; do not only walk. The `16+16`
   alternative is refuted: the loader reads the trailer with a single 4-byte read and touches
   it only as a dword.
-- **For a `.16` the same four bytes are a plain `u32` count with no flag** — `FUN_004284e0`
-  applies no mask and never reads a palette (SPR16A-TRLR-012). Masking a `.16` trailer is
-  harmless on everything that ships, but it is not what the engine does.
-- **The loader validates nothing** (SPR16A-RDR-017). It indexes exactly `frameCount` records,
-  `cursor += 12 + dataSize`, with no size threshold, no `w`/`h` check and no bound against the
-  end of the buffer. There is no rejection path and no "null frame": a `dataSize == 0` record
-  is a bare 12-byte header. A bounded decoder must check record extents before reading them.
+- **For `.16`, distinguish the stored word, allocation request and indexing predicates.**
+  The full u32 is stored unchanged. The pointer-table request is
+  `(raw << 2) mod 2^32`; entry requires `int32(raw) > 0` and continuation
+  compares the 32-bit index to the raw word with signed `JL`. These facts do
+  not determine native allocator outcomes. — SPR16A-070, SPR16A-071
+- **The frame-indexing block has no frame-header validation.** Its
+  `cursor += 12 + dataSize` step has no size threshold, width/height read or
+  buffer-end comparison. Zero dataSize advances by 12. File-open and I/O
+  guards are outside that block; the old whole-reader no-rejection wording
+  is partially retracted. — SPR16A-RDR-017 (partially retracted), SPR16A-071
+- `.16` copies from resource offset 0 and stores a null palette pointer.
+  Its adapter passes frame dimensions, frame data at header plus 12, and
+  the caller's ramp to the byte decoder; it does not pass the trailer.
+  — SPR16A-072
 - Every frame is compressed: `dataSize != w*h` and `!= w*h*2` (SPR16A-STRUCT-001).
 - Installed `.16a` sheets have uniform frame dimensions. The frame grammar
   still stores dimensions on every record; this observation is not a general
@@ -178,7 +185,7 @@ address split is 4 level bits and 8 palette-index bits.
 |---|---|
 | Frame width, height, dataSize | u32 each |
 | `.16a` frame count | Low 31 bits of final trailer |
-| `.16` frame count | Complete final u32 |
+| `.16` stored count word | Complete final u32; signed indexing and wrapping allocation are separate operations |
 | `.16a` RLE count | 14 bits, maximum 16383 |
 | `.16` RLE count | 6 bits, maximum 63 |
 
@@ -187,7 +194,7 @@ the containing input and the decoded cursor against the frame bounds.
 `.16a` data is a u16 stream and therefore has even byte length.
 The original loader does not impose these defensive extent checks.
 Installed maxima, uniform sheet dimensions and unused literal bit patterns
-are not arbitrary-input admission limits. — SPR16A-RDR-017, SPR16A-BOUND-016
+are not arbitrary-input admission limits. — SPR16A-RDR-017 (partially retracted), SPR16A-BOUND-016
 
 ## Unknowns
 
@@ -207,22 +214,39 @@ are not arbitrary-input admission limits. — SPR16A-RDR-017, SPR16A-BOUND-016
 - **Animation frame-block roles** — as with SPR256, per-class block sums vs registry
   phase counts, once cross-referenced.
 - `font5.16a` has no identified loader; its runtime use remains Unknown.
+- The named `.16` and `.16a` entry identities are verified, but their
+  retained reference enumeration is limited to its repaired, disassembled
+  project. Bytes never disassembled and other entry paths are outside that
+  result; global loader exclusivity remains Unknown. — SPR16A-RDR-017
 
 ## Read and write sequence
 
 1. Select `.16a` or `.16` from the resource contract; do not infer a shared
    codec from the frame-header shape.
 2. Read the final trailer. For `.16a`, extract the low-31-bit count and optional
-   palette flag. For `.16`, use the complete count and no palette.
-3. Walk exactly that many `12+dataSize` records from the selected origin.
+   palette flag. For `.16`, retain the complete word and no palette.
+3. For ordinary positive-count resources, walk `12+dataSize` records from
+   the selected origin. The original `.16` allocation request and signed
+   loop predicates remain distinct; their arithmetic does not prove a
+   native traversal completes. — SPR16A-070, SPR16A-071
 4. Decode `.16a` with word controls and its shade-table blend, or `.16` with
    byte controls, low-nibble-first literals and the caller's text ramp.
 5. For text, load the paired `.dat` advance table and use its space rule.
+
+The named positive-count `.16` fonts' trailing sections add no pointers to
+the selected frame table. Full-buffer reading and copying are separate:
+the loader reads the full resource, and the selected copy constructor
+copies the full stored byte length if invoked. Other runtime uses of those
+tails remain Unknown. — SPR16A-FONT-014 (partially retracted), SPR16A-072
 
 An ordinary `.16a` emitter writes the optional palette, frame headers/RLE data
 and count/flag trailer. A `.16` emitter writes its glyph records and plain
 count trailer; an odd literal run uses the final high nibble as zero padding.
 Widths, encoded lengths and counts must describe the emitted records. No
 writer for arbitrary retained overwrite tails is established.
-— SPR16A-TRLR-012, SPR16A-RLE-002, SPR16A-FONT-013,
-SPR16A-FONT-014, SPR16A-FONT-018
+— SPR16A-TRLR-012 (partially retracted), SPR16A-RLE-002, SPR16A-FONT-013,
+SPR16A-FONT-014 (partially retracted), SPR16A-FONT-018
+
+No original standalone `.16` producer was identified in the bounded game
+and editor paths searched. Dynamic filenames and other entry paths remain
+outside that result. — SPR16A-073
