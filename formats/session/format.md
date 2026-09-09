@@ -1,17 +1,14 @@
-# SESSION — the game's own lifecycle — specification (partial)
+<a id="session--the-games-own-lifecycle--specification-partial"></a>
 
-Level 3. Promoted, evidence-backed claims only. Core lifecycle is `SESS-OBJ-001`…`SESS-IDLE-007`;
-load, outcome and command boundaries are `SESS-CMD-008`…`SESS-HERO-014`, `SESS-CMD-015`,
-`SESS-CMD-016` and `SESS-PARAM-017` (partially retracted). Ledger: `claims/session.md`.
+# Session state, clocks and command dispatch
 
-**Status: partial (◐).** The session object, its phase and screen words, both simulation counters
-and the rate ladder that paces them, the command dispatch, the whole map-load order, the
-mission-end arm and the hero-creation chain are read at instruction level. Not specified: where a
-**win** is decided; the trigger machinery; the network client's own clock; the pre-create screen's
-button rectangles.
+A session owns phase/screen state, two simulation counters and the command
+pool. Map load and mission completion cross separate simulation and frontend
+paths. — SESS-OBJ-001, SESS-CLOCK-005, SESS-CMD-008, SESS-HERO-014
 
-This is not a file format. The map's bytes are `formats/alm`; the actors it spawns are
-`formats/hero` and `claims/unit.md`; the shop the town opens is `formats/shop`.
+The [trigger runtime](../trigger/format.md) defines script outcomes, and
+[dialogue](../dialogue/format.md) defines the resulting panels. The network
+client's complete clock and pre-create button rectangles remain Unknown.
 
 ## Defeat mode and stepping
 
@@ -78,7 +75,9 @@ requests the source stack's quantity. A successful gold selection debits the pur
 is built. No command is emitted until left-up. Right down, up and double-click return consumed
 without changing selection or issuing a command.
 
-## The one thing a consumer must not get wrong
+<a id="the-one-thing-a-consumer-must-not-get-wrong"></a>
+
+## State and identity
 
 **There are two clocks, and every published "tick" belongs to one of them.**
 
@@ -91,7 +90,9 @@ without changing selection or issuing a command.
 A consumer that treats the two as one will run regeneration sixteen times too often or the shop
 restock sixteen times too slowly.
 
-## The rate
+<a id="the-rate"></a>
+
+## Tick rate
 
 `campaign+0x3f0` = `1000 / R` milliseconds per sub-tick, `R` selected by `campaign+0x3f4 ∈ [0,8]`,
 default **4**. A full tick is 16 sub-ticks.
@@ -111,16 +112,20 @@ default **4**. A full tick is 16 sub-ticks.
 The pacing is a **deadline** loop with catch-up, so the figure is a ceiling. Under
 `campaign+0x40c != 0` there is no deadline at all.
 
-## The objects
+<a id="the-objects"></a>
+
+## Object ownership
 
 | Object | Where | Size | What it is |
 |---|---|---|---|
 | session window | `AfxGetThread()->vt+0x7c()`, = `app+0x1c` | `0x6d0` | the MFC main frame; carries the phase, the screen mask, the clock, the campaign state and the chargen inputs |
-| server singleton | `[0x005cd758]` | `0x174` | the simulation's own root; carries both counters, the participant flags and the difficulty (`UNIT-GATE-012`); `formats/sav/format.md`'s own "world" names this row, not the "world" row below (`SAV-657`) |
+| server singleton | `[0x005cd758]` | `0x174` | the simulation's own root; carries both counters, the participant flags and the difficulty (`UNIT-GATE-012`); [SAV](../sav/format.md)'s own "world" names this row, not the "world" row below (`SAV-657`) |
 | world | `[0x005f22c8]` | `0xa4558` | built by `FUN_005417f0` from the loaded map |
 | session/AI | `[0x005f21c4]` | `0xc320` | built by `FUN_0052c400`; carries the 50×50 diplomacy matrix at `+0xa9c4` |
 
-## The session window's fields, as far as read
+<a id="the-session-windows-fields-as-far-as-read"></a>
+
+## Session-window fields
 
 | Offset | Meaning |
 |---|---|
@@ -142,7 +147,9 @@ The pacing is a **deadline** loop with catch-up, so the figure is a ceiling. Und
 | `+0x6b8` | this process owns the simulation |
 | `+0x6bc` | phase, `{0,1,2,3}` |
 
-## The lifecycle
+<a id="the-lifecycle"></a>
+
+## Lifecycle
 
 ```
 InitInstance              new(0x6d0) -> FUN_00471790 -> app->m_pMainWnd
@@ -184,18 +191,16 @@ is separate state on the `Player`. Its constructor sets it to zero, then partici
 sends opcode `0x67`, so the first playable client state and the first-sub-tick automatic save both
 carry 100 (`PARTY-MONEY-024`, correcting `SESS-START-034`'s former constructor-only reading).
 
-## The map load, in order
+<a id="the-map-load-in-order"></a>
 
-> **⚠ Read every `server+…` in this section on the sub-object base, not on the server**
-> (`retracted.md` → `SESS-MAP-010`). `FUN_004d00e9` calls `FUN_004e1924` with
-> `ECX = server + 0x44` (`004d0467`/`004d046a`), so **every displacement this section prints
-> for `FUN_004e1924` is 0x44 low**: the tested `server+0x20` is `server+0x64`, and that field
-> is the **mission number**, not a flag — which is why nonzero means *campaign*.
-> **Unreconciled, deliberately left so:** `formats/shop` and `claims/shop.md` read
-> `server+0x0c` and `server+0x14c` at the **bare-server** base, from *other* routines
-> (`FUN_00507db0`, the `0x3f` dispatcher). Either the two routines address different bases —
-> plausible, and then each figure must say which — or one set of displacements is wrong.
-> Nothing in the repo has re-read both against each other. Do not silently pick one.
+## Map-load sequence
+
+`FUN_004e1924` receives `server+0x44` as its map sub-object. Its
+receiver-relative+0x20 test is therefore server+0x64, the mission number;
+nonzero selects the campaign Scenario path. Mode stores instead reload the
+global server pointer and use actual server+0x0c,+0x120,+0x14c. The blanket
+0x44 adjustment in `SESS-MAP-010` is retracted; apply the base belonging to
+each access. — SESS-MAP-010, SESS-DEFEAT-064
 
 `FUN_004e1924` is the only routine that turns a map into a session, and its order is normative:
 `map+0xd4` → `server+0x0c`/`+0x120`; `server+0x170 = map+0x94`; players (type-5); **the world**;
@@ -207,7 +212,9 @@ The six load failures the engine names for itself: *File not found*, *Not a map 
 number*, *Map version too new (update loader!)*, *Tiles block not found*, *Altitudes block not
 found*. The last two are `ALM-REQ-055`'s required pair, named from the loader's own side.
 
-## Where an embedded campaign map comes from
+<a id="where-an-embedded-campaign-map-comes-from"></a>
+
+## Map resource selection
 
 `server+0x20 != 0` prefixes `"Scenario\"`, which is `RES-IDENT-034`'s dispatch to `scenario.res`;
 the campaign names its map `"%d.alm"` from the mission number. A loose map keeps its bare name and
@@ -218,7 +225,7 @@ routine runs on `server+0x44`, and the field it tests is the mission number itse
 
 Everything the simulation is told is a byte opcode executed inside a sub-tick. `FUN_004d5dd8`
 dispatches on `cmd+0x04`: `>= 1` selects the **order** space, opcodes `0x14..0x26` over 19 direct
-dwords at `0x4d86ae` (`formats/ai` has the vocabulary); `== 0` the **session** space, opcodes
+dwords at `0x4d86ae` ([AI](../ai/format.md) has the vocabulary); `== 0` the **session** space, opcodes
 `0x02..0xBE` through a 189-byte index at `0x4d876e` into a 29-entry table at `0x4d86fa`, of which
 **28 opcodes are live** and 161 map to the exit. The two spaces are disjoint and share the opcode
 byte, so an opcode has no meaning without `cmd+0x04`. `SESS-CMD-008`, `SESS-CMD-015` and
@@ -228,9 +235,8 @@ byte, so an opcode has no meaning without `cmd+0x04`. `SESS-CMD-008`, `SESS-CMD-
 which is a drain loop: `MOV ECX,0x603c28` / `CALL 0x004e7670` / dispatch if non-null / repeat. No
 routine dispatches a command it synthesised. `AI-INPUT-121`, `AI-SELECT-122`, `AI-PANEL-123`,
 `AI-MINIMAP-124`, `AI-KEY-125`, `AI-CURSOR-126` and `AI-INPUT-127` establish the mission input enqueuers in
-`formats/ai`, including the Drop Gold dialog's `0x23`; it does not turn the older 279-hit global
-sweep into a census of every non-input producer in the executable. A consumer may rely on the
-input-to-opcode mappings there and must not generalise them into a universal producer claim.
+[AI](../ai/format.md), including the Drop Gold dialog's `0x23`. Other non-input command producers
+are outside that input mapping; no universal producer list is established.
 
 The command's shape, from the instructions that read it: `+0x04` space, `+0x05` a `u16` player,
 `+0x09` the opcode, `+0x0a`/`+0x0c` a column and a row (a `u32` parameter id under session `0x46`),

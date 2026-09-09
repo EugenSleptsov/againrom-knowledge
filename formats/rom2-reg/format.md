@@ -1,39 +1,42 @@
-# ROM2 inline registry (`&YA1`, nested) — identity survey
+<a id="rom2-inline-registry-ya1-nested--identity-survey"></a>
 
-**Status: ☑ specified (identity-survey core).** The compared population,
-matching layouts and measured divergences below complete this page's declared
-survey. Unread payload semantics remain explicit; this is not complete decoding.
+# ROM2 inline REG store (`&YA1`)
 
-Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-006`. Cross-reference
-only, not evidence: ROM1's own [`formats/reg/format.md`](../reg/format.md)
-(`REG-FMT-031`, `REG-REC-032`) and `RES-SCOPE-015` (found by magic, not by name).
-The cited ROM1 record layout is retained; its lookup clause is partially retracted.
+Nested ROM2 registries use the inline REG envelope. It is distinct from the
+tail-registry RES envelope despite the shared magic. Resource context and
+record geometry select the parser. — R2-ASSET-006
 
-Seen as: any file-typed node, in any of the 11 `.res` containers, whose payload
-begins with magic `&YA1` — the same by-magic search RES-SCOPE-015 used on ROM1,
-not a `.reg`-extension filter.
+<a id="result"></a>
 
-## Result
+## Layout
 
-Identical to ROM1's REG-FMT-031 grammar. The by-magic search over all 11
-containers finds **19** nested registries (`graphics.res` 5, `scenario.res` 1,
-`sfx.res` 1, `video.res` 8, `world.res` 2, `world_srv.res` 2), and **19/19 parse
-cleanly**: the `0x18`-byte header reads, `recordCount` 32-byte records read, and
-the payload tiles `0x18 + recordCount*32 + 4 + poolLen` exactly to the payload's
-own end — 0 exceptions. `world.res` and `world_srv.res` each nest the identical
-pair `data/ai.reg` (156 B) and `data/map.reg` (1020 B), matching the independent
-size comparison in [`rom2-res/format.md`](../rom2-res/format.md). `R2-ASSET-006`.
+| Position | Width | Data |
+|---|---:|---|
+| 0 | 24 bytes | Six-dword header; magic `&YA1`, root fields, record count at 0x10 |
+| 0x18 | 32×R bytes | Record array |
+| 0x18+32×R | 4 bytes | Pool byte length |
+| 0x1c+32×R | poolLen bytes | Pool |
 
-Sampled key names (first 12 distinct per registry, printed only because the
-payload's own tiling was already verified exact) read as plausible schema
-identifiers, e.g. `Files`, `Global`, `Object0..Object106` (`objects/objects.reg`),
-`Scanning`, `Tasker`, `IntelligentCons`, `MinimalGuardRan` (`data/ai.reg`),
-`Common`, `Fading1`, `Fading2`, `startx`, `starty` (`video.res`'s `*/01.reg`
-family).
+`registryEnd = 24 + 32*R + 4 + poolLen`. This framing covers the preserved
+nested registries. The installed `data/ai.reg` and `data/map.reg` lengths are
+156 and 1020 bytes in both world archives; equal lengths do not prove equal
+values. — R2-ASSET-006
 
-## Not yet surveyed
+## Read and write order
 
-Record VALUE content and the `kind` bitfield's meaning on ROM2 data (REG-KIND-033/
-034/035 are ROM1 findings, not replayed here); whether any registry's key SET
-differs from an equivalent ROM1 registry (no ROM1 registry of the same name was
-compared field-for-field, only the container grammar).
+Read the six header dwords, R records, u32 pool length and pool bytes.
+The corresponding structural emitter writes those same regions in order.
+Raw record and pool values must remain opaque where ROM2 type/lookup semantics
+have not been established. [ROM1 REG](../reg/format.md) supplies a layout
+cross-reference, not an authority for unverified ROM2 value behavior.
+REG-REC-032's ROM1 record layout is retained; its lookup clause is partially
+retracted and cannot be imported as an unconditional ROM2 rule.
+— R2-ASSET-006, REG-FMT-031, REG-REC-032
+
+<a id="not-yet-surveyed"></a>
+
+## Unknowns
+
+ROM2 record kinds, value interpretation, key-set differences, native lookup,
+sort and application/writer acceptance are unspecified. Recognition by a
+nested `&YA1` payload is broader than a `.reg` extension filter.

@@ -1,54 +1,63 @@
-# ROM2 RES container (`&YA1`) — identity survey
+<a id="rom2-res-container-ya1--identity-survey"></a>
 
-**Status: ☑ specified (identity-survey core).** The compared population,
-matching layouts and measured divergences below complete this page's declared
-survey. Unread payload semantics remain explicit; this is not complete decoding.
+# ROM2 RES archive (`&YA1`)
 
-Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-001` (container
-identity), `R2-ASSET-012` (`world.res` vs `world_srv.res`). Cross-reference only,
-not evidence: ROM1's own [`formats/res/format.md`](../res/format.md)
-(`RES-MAGIC-001`, `RES-HDR-002`, `RES-ACCEPT-031`).
+The preserved ROM2 archives use the same tail-registry container layout as
+[ROM1 RES](../res/format.md). This identity covers the stored envelope and
+node geometry; it does not equate their payload contents or all runtime
+lookup behavior. — R2-ASSET-001
 
-Seen as: 11 files at the ROM2 install root — `MUSIC.RES`, `graphics.res`,
-`main.res`, `movies.res`, `patch.res`, `scenario.res`, `sfx.res`, `speech.res`,
-`video.res`, `world.res`, `world_srv.res`.
+<a id="result"></a>
 
-## Result
+## Layout
 
-ROM2's `.res` container is the same format as ROM1's, byte for byte, at the level
-this survey tested. `internal/rom.OpenArchive` — ROM1's own reader, unmodified —
-opens all 11 files; every one carries magic `26 59 41 31` ("&YA1"). Replaying
-RES-ACCEPT-031's stricter corpus invariant (every file node's payload inside
-`[24,regOff)`, exact contiguous tiling with no gap or overlap, printable-ASCII
-names) finds **0 violations across all 11 containers** — the same invariant ROM1's
-own corpus satisfies. `R2-ASSET-001`.
+All integer fields are little-endian. The header is 24 bytes, and each node
+is 32 bytes.
 
-The entry-extension vocabulary found inside these 11 containers is **not** a
-subset of ROM1's own. 12 of ROM2's 14 non-empty extension categories match
-ROM1's exactly (`.16`, `.16a`, `.256`, `.alm`, `.bin`, `.bmp`, `.dat`, `.pal`,
-`.reg`, `.txt`, `.wav`, plus the extensionless entry both roots have), but
-`.pkt` (2 files — `data/itemname.pkt` in `world.res` and `world_srv.res`) and
-`.smk` (8 files, all in `video.res` — Smacker video) appear in neither ROM1 EN's
-nor ROM1 RU's own container population, confirmed by running the identical
-extension census rooted at each ROM1 install as a positive control.
+| Offset | Type | Field |
+|---:|---|---|
+| 0x00 | u32 | Magic `0x31415926` (`&YA1`) |
+| 0x04 | u32 | Root first-child index |
+| 0x08 | u32 | Root child count |
+| 0x0c | u32 | Root kind/flags |
+| 0x10 | u32 | Registry byte offset |
+| 0x14 | u32 | Node count |
 
-## Population note
+File nodes reference payload byte ranges; directory nodes reference child
+node ranges. The installed payloads lie between byte 24 and the registry.
+Use the explicit offset and count, not an EOF-derived node count.
+— R2-ASSET-001; shared layout: RES-HDR-002, RES-NODE-007
 
-This survey's own brief named 10 top-level `.res` files; the actual population is
-**11** (`MUSIC.RES` was the omission). A count taken from a list rather than a
-directory read undercounts here.
+## Read and write order
 
-## Client/server split
+Read the header, then the counted node array. Resolve payload and child
+ranges using the node type. The shared container emitter order is header,
+payloads, node array, with final registry offset/count in the header; its
+detailed field rules are in [RES](../res/format.md#write-sequence).
+Original ROM2 writer and malformed-input behavior are not independently
+specified by the layout identity. — R2-ASSET-001
 
-`world.res` and `world_srv.res` hold the identical 5-entry `data/` directory
-(`ai.reg`, `data.bin`, `itemname.bin`, `itemname.pkt`, `map.reg` — 0 client-only, 0
-server-only names). 4 of 5 are byte-identical in size; `data/data.bin` differs
-(client 149 971 B, server 152 527 B) — see
-[`rom2-databin/format.md`](../rom2-databin/format.md) for what those two files' own content
-comparison shows. `R2-ASSET-012`.
+<a id="clientserver-split"></a>
 
-## Not yet surveyed
+## Installed resources
 
-Whether every entry's PAYLOAD (not just its size) is identical between `world.res`
-and `world_srv.res` for the 4 same-size entries; whether any other container pair
-(there is only one client/server pair, `world`/`world_srv`) exists.
+The archive names are `MUSIC.RES`, `graphics.res`, `main.res`, `movies.res`,
+`patch.res`, `scenario.res`, `sfx.res`, `speech.res`, `video.res`, `world.res`
+and `world_srv.res`. Recognized entry extensions include `.16`, `.16a`,
+`.256`, `.alm`, `.bin`, `.bmp`, `.dat`, `.pal`, `.reg`, `.txt`, `.wav`,
+extensionless entries, and the additional `.pkt` and `.smk` families.
+The `.pkt` members are `data/itemname.pkt` in both world archives;
+`.smk` members occur in `video.res`. — R2-ASSET-001
+
+Both world archives have `data/{ai.reg,data.bin,itemname.bin,itemname.pkt,map.reg}`.
+Data.bin is 149971 bytes on the client and 152527 on the server. The other
+four matching names have equal lengths; payload equality is Unknown.
+— R2-ASSET-012
+
+<a id="population-note"></a><a id="not-yet-surveyed"></a>
+
+## Unknowns
+
+Complete client/server payload equality, additional archive-pair relations,
+native malformed-input acceptance and writer behavior remain unspecified.
+These resource facts describe one preserved ROM2 locale.

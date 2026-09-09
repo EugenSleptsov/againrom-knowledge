@@ -1,34 +1,34 @@
-# TAVERN — mercenary hire — specification (partial)
+<a id="tavern--mercenary-hire--specification-partial"></a>
 
-Level 3. Promoted, evidence-backed claims `MERC-TYPE-001`…`MERC-DEATH-006`. Ledger:
-`claims/tavern.md`.
+# Tavern mercenary selection and hire
 
-**Status: partial (◐).** The type space, the shelf gate, the hire, the price, the level, the
-death/recovery rule and both commands are read at instruction level. **Not specified:** what a
-mercenary *is* once spawned (that is `formats/databin/format.md`'s Humans table); the inn's own
-art and layout; the multiplayer path, including whether a map-placed `Tavern` is reachable and
-what mode makes `FUN_005050ee` return its flat 450.
+Campaign registry lists, persistent unlocks and per-type pool counts determine
+the mercenary shelf. Hiring selects complete pools by type; mission end
+updates losses/recovery and clears hire flags. Actor definitions come from
+[Data.bin](../databin/format.md). MERC-SHELF-002's early-display inference
+is retracted: being named in a roster does not display a locked type.
+— MERC-TYPE-001, MERC-SHELF-002,
+MERC-HIRE-003, MERC-PRICE-004, MERC-LEVEL-005, MERC-DEATH-006
 
-This is not a file format. It is the second half of the town building whose mission half is
-specified by `REG-SCN-064` / `REG-SCN-065`; it sits on `scenario.res::scenario.reg`,
-`scenario.res::npc.reg` and `world.res:data/data.bin`.
+The multiplayer tavern path and the mode selecting the flat price 450 remain
+Unknown. Room drawing is specified by [TOWN](../town/format.md).
 
 ## Entry and saved Player prerequisites
 
-The located campaign helper sends command37 before computed tavern activation.
+The located campaign helper sends command 37 before computed tavern activation.
 Its reached server arm resolves the command key against signed Player+04 and
 exits without stock construction on a miss. A match reaches the stock handler's
-refund: wrapped32-bit addition to Player+38, followed by event67 even when the
+refund: wrapped 32-bit addition to Player+38, followed by event67 even when the
 refund is zero, before the old roster is inspected. This is a local static
 order. Earlier UI/transport effects, actual client key and absolute first
 runtime consumer remain Unknown. (SAV-918)
 
-The measured N3 and accepted city resaves each contain one Player with slot1;
-their colour+44 differs 0/2. Neither that difference nor the equal slot proves
-which operation failed. The four-file comparison is not native-construction
-evidence and supplies no additional witnessed tavern run. (SAV-920)
+Saved Player slot and colour values alone do not identify a failing tavern
+operation or establish the native construction prerequisites. — SAV-920
 
-## At a glance
+<a id="at-a-glance"></a>
+
+## Structure
 
 ```
 type t            1..15, the [npc<t>] section number and the MercenaryCount subscript
@@ -45,7 +45,9 @@ unitPrice(m)      m30..m150 -> 10 15 20 40 60 80 100 600 800 1000 6000 8000 1000
                   anything else -> 0
 ```
 
-## The type space
+<a id="the-type-space"></a>
+
+## Type identity
 
 There are fifteen mercenary types and they are one index space shared by four files:
 `[General] MercenaryCount`'s fifteen elements, `npc.reg`'s `[npc<t>]` sections, the runtime
@@ -56,7 +58,9 @@ object's own byte (`CUnit +0x15b` on the client, the server object's `+0x14c`), 
 A consumer implementing this needs no separate "mercenary table": the type id **is** the npc
 id, and `MercenaryCount[t-1]` **is** the headcount.
 
-## What the tavern shows
+<a id="what-the-tavern-shows"></a>
+
+## Shelf filters
 
 Three independent gates, in this order:
 
@@ -94,18 +98,12 @@ their server and client mercenary-type bytes remain zero and the tally matches o
 they increment no pool slot. The agreement is template reuse, not conversion or identity
 persistence (`PARTY-M20-032`).
 
-An owner-preserved 55-file save corpus corroborates this boundary and its counterpart at the type-10
-row above (`Humans[54] NPC10_1`) at population scale rather than one fixture. Every classKey-58 save
-in that corpus sits at main mission 20 — where, as above, type 14 has no shelf at all — and matches
-the mission-20 transfer's own signature exactly (three actors, typeWord `0x0a`, a bundled
-classKey-201/`M10_Merchant` identity); a hire is excluded at every one of those states for the same
-reason the shelf is empty. Every classKey-54 save in the same corpus instead sits on side-mission map
-`41.alm` — its own selected-mission field reads 41, not the campaign record's main-mission value of
-50 — which places exactly three `Humans[54]`/`NPC10_1` actors directly under the Player's own group;
-no corpus row's own permanent-unlock array, including these three, ever admits type 10, so a hire is
-excluded here too, on the same shelf-filter mechanism this page's own type-10 row states above. The
-map's own authored placement, not a hire or a transfer, accounts for this class. — SAV-622, SAV-623,
-SAV-624, SAV-625, SAV-626, SAV-627, SAV-628, SAV-629
+A Human template key does not establish that an actor was hired. Mission 20
+can transfer template 58 (`NPC14_1`) while its tavern has no eligible type-14
+shelf. Side mission 41 directly places template 54 (`NPC10_1`) under the
+Player's group; this does not enable type 10 or make those actors hires.
+Use mission identity, the actual mercenary-type byte and the unlock/pool
+relations. — PARTY-M20-032, SAV-623, SAV-624, SAV-625, SAV-626, SAV-627
 
 ## Hiring
 
@@ -117,7 +115,9 @@ Money is checked locally against `player.money − Σ cost(t) over already-hired
 actually debited once, on the simulation side, as the spawn runs. A hire never survives past
 the mission it was made for.
 
-## The price
+<a id="the-price"></a>
+
+## Price
 
 ```
 cost(t, mission) = (PriceA[t] + n * PriceB[t]) * unitPrice(mission)
@@ -126,9 +126,6 @@ cost(t, mission) = (PriceA[t] + n * PriceB[t]) * unitPrice(mission)
 `n` is the number actually taken, which for a hire is the whole pool. `PriceA` is the constant
 term, `PriceB` the per-head term; the five pool-1 types all ship `PriceB = 0`. `unitPrice`
 depends on the **mission number only** — the type id is passed to the routine and never read.
-
-A witnessed hire's debit confirms this formula end to end against one type's own already-published
-price fields, `n` equal to that type's whole hired pool (SAV-614).
 
 ## Levels
 
@@ -173,14 +170,11 @@ checks; the local zero-storage controls read data[-1]. Preserving that state
 through the complete intervening UI/resource work is Medium, and a later
 selection write remains a live alternative. (SAV-929)
 
-The separate party list must contain an entry marked with bit0x20. Its helper
+The separate party list must contain an entry marked with bit 0x20. Its helper
 returns -1 if no marked entry exists; activation uses that index without an
 absent-selection guard. Nonempty mercenary stock does not supply this party
 prerequisite. (SAV-930)
 
-Eight matched owner-labelled resaves associate a nonempty saved eligible set
-with the two reported opening cases; the other six were reported closing.
-Documents do not change that bounded association. The ten total observations
-do not localize the original failure. Stock construction, list activation,
-selection and full click chronology remain separate results; attribution of
-the observed hang and closing remains Unknown. (SAV-931, SAV-932)
+A saved eligible set does not establish successful stock construction, list
+activation or full click completion. The original first failing operation
+across those paths remains Unknown. — SAV-931, SAV-932

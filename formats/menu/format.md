@@ -1,19 +1,13 @@
-# MENU — menu surface composition contracts — specification
+<a id="menu--menu-surface-composition-contracts--specification"></a>
 
-Level 3. Promoted, evidence-backed claims only. Inventory assets are `MENU-ASSET-001`…`002`,
-the hit mask and state are `MENU-MASK-003`…`MENU-STATE-007`, and the two in-play Esc menus are
-`MENU-ESC-010` (partially retracted)…`MENU-INPUT-016`. This is a **composition contract**, not a bitmap codec — the images are
-standard Windows BMP; what is re-derived here is how the engine assembles them into
-an interactive surface.
+# Menu surfaces and input
 
-Two different surface kinds are specified here. The pre-game main menu is a
-full-screen bitmap surface with a pixel hit mask. The two menus Esc raises during
-play carry no art of their own and are built from text rows over a sprite
-nine-patch; they are specified in their own section at the end.
-
-Inputs pinned: `main.res` (the bitmaps) and `rom.exe`
-(sha256 `942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03`; the loader,
-hit-test, and coordinate tables). All from the owned install.
+The main menu composes bitmap overlays over a full-screen background and uses
+a pixel hit mask. In-play Esc menus use text rows and a sprite nine-patch.
+The command panel and Drop Gold modal have separate state and input rules.
+BMP and sprite codecs are defined in their respective references.
+— MENU-ASSET-001, MENU-ASSET-002, MENU-MASK-003, MENU-STATE-007,
+MENU-ESC-010 (partially retracted), MENU-COMBAT-017
 
 ## Asset set (18 files under `graphics/mainmenu/`)
 
@@ -58,7 +52,7 @@ Two contiguous tables, 8 entries × 16 B = `{x, y, w, h}` (int32 LE):
 
 `FUN_00485c20` places button *i* at screen rect `(x, y) … (x+w, y+h)`, offset by the menu
 origin (0,0). Overlays draw **1:1** — each `(w,h)` equals the BMP's pixel dimensions,
-verified 16/16; and each normal rect brackets that button's mask region, 8/8
+each normal rectangle brackets its button's mask region
 (MENU-GEOM-005/006).
 
 | btn | hover (x,y,w,h) | pressed (x,y,w,h) |
@@ -156,9 +150,7 @@ Enter aliases action; Esc aliases cancel.
 
 Action parses the edit, resolves the entered amount, subtracts it from the purse and emits opcode
 `0x23` at the current map cell before closing. Cancel closes without an order. Its screen placement
-and child geometry are executable constants; all six strings are localised `main.res` data. The
-generic dialog-frame drawing assets were not re-enumerated as part of the command-panel asset
-census.
+and child geometry are executable constants; all six strings are localised `main.res` data. The generic dialog-frame assets are outside this command-panel contract.
 
 ## The in-play Esc menus (`MENU-ESC-010` (partially retracted)…`MENU-INPUT-016`)
 
@@ -239,17 +231,18 @@ claims: the whole screen is darkened once, destructively, at shade level 3
 (`MENU-STOP-015`, `DLG-STOP-012`); Esc also closes, and the panel does not capture
 the mouse (`MENU-INPUT-016`).
 
-## Open / not established
+<a id="open--not-established"></a>
+
+## Unknowns
 
 - The `+0xe4` disable bits' source (which buttons start disabled) and the non-WM_CLOSE
   command-message meanings — needs further `rom.exe`/runtime.
 - The DIB loader's row order (top-down vs flip) is inferred from the 8/8 placement bracket
-  rather than read directly; the screen y here is top-down.
+  ; the screen y here is top-down. Its native row-order behavior remains Unknown.
 - How the Esc menus' nine-patch covers a frame width that is not `96 + 96k`. The tile
   counts are `(w−96)/96` and `(h−96)/64` with truncating division, which for the
   332×332 frame these panels have leaves a 44-px band inside the right edge and one
-  inside the bottom edge unaccounted for by any placed tile. `MENU-ART-014` retains this as a
-  falsifiable prediction rather than a settled fact.
+  inside the bottom edge unaccounted for by any placed tile. `MENU-ART-014` retains the unaccounted-for band as an unresolved draw-boundary prediction.
 - What each entry's raised panel then does. `MENU-ITEM-011` and `MENU-ITEM-012` name the constructor and rect each
   message raises and stops there; the two exit rows of both `0x41c` confirmations post the same
   `0x41e` and differ only in control id, and how the exit target is distinguished is unread.

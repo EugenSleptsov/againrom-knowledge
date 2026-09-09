@@ -1,13 +1,15 @@
-# PAL (`.pal` palette) — specification
+<a id="pal-pal-palette--specification"></a>
 
-Level 3. Promoted claims `PAL-FILE-001`…`PAL-LIMIT-009` from
-[`claims/pal.md`](../../claims/pal.md).
+# PAL palette resources
 
-Seen as: `*.pal` inside `graphics.res`. **Not a format of its own** — a `.pal` the engine opens
-is either a Windows BMP whose colour table it lifts, or a raw run of such tables. It matters
-because it is the entire per-tier and per-owner recolour: nothing in that path is arithmetic.
+The palette loader consumes either a BMP color table at byte `0x36` or
+sixteen consecutive raw color tables. A table contains 256 four-byte BGR0
+entries. The consuming path selects the resource shape and shade-table mode.
+— PAL-FILE-001, PAL-MODE4-010
 
-## Two shapes, told apart by how the engine opens the file
+<a id="two-shapes-told-apart-by-how-the-engine-opens-the-file"></a><a id="corpus"></a>
+
+## Resource layouts
 
 ```
 A — the per-class palette                     B — the shared owner palettes
@@ -27,7 +29,9 @@ A colour table entry is 4 bytes, `[B, G, R, 0]` — the same layout as a `.256`'
 1024 bytes (`SPR256-PAL-003`, `SPR256-PAL-011`). The engine reads bytes 0..2 of each entry and
 ignores byte 3.
 
-## How a palette becomes the draw's lookup
+<a id="how-a-palette-becomes-the-draws-lookup"></a>
+
+## Shade-table construction
 
 Identical for every sprite in the game — the tier path is not special:
 
@@ -63,16 +67,15 @@ for level = 1 .. 16:                                 // table row = level - 1
         row[i] = pack(R, G, B) into the framebuffer's widths and shifts
 ```
 
-Two things a consumer needs and one it does not (`PAL-MODE4-010`):
+Mode-4 rules (`PAL-MODE4-010`):
 
 - **No tint term appears on this arm**, on either branch. `useTint` is passed and ignored, so a
   `.16a` sprite does not change colour with the daylight cycle the way a `.256` unit does.
 - The `>> 4` / `/ 18` pair is **not a display mode**. `FUN_0044ba10` sets the flag that picks it
   from `GlobalMemoryStatus`: `dwTotalPhys < 24000000`. The same flag halves the companion
-  destination table from 65 536 entries a row to 8 192. Neither low arm is reachable on a
-  machine that can run the install.
+  destination table from 65 536 entries a row to 8 192. The condition is an environment check, not a palette-field value.
 - The table is only half of a `.16a` pixel. The other half is the destination table
-  `FUN_0044ba10` builds, and the two are complementary — `formats/spr16a`.
+  `FUN_0044ba10` builds, and the two are complementary — [SPR16A](../spr16a/format.md).
 
 ## The two shared projectile tables
 
@@ -153,7 +156,9 @@ Shipped `face`: Units 1..4 (four rows per creature family, one `typeID` each), H
 Over the 262 `Data.bin` rows whose `typeID` resolves to a `units.reg` class, **0** carry a `face`
 outside `[1, Palette]` on a class that owns palettes.
 
-## Reproducing the recolour — what a consumer must and must not do
+<a id="reproducing-the-recolour--what-a-consumer-must-and-must-not-do"></a>
+
+## Recolor procedure
 
 - **Read the file.** No closed form reproduces a tier palette from tier 1. Fitted at their own
   optima over the 39 shipped (class, tier >= 2) pairs: per-channel affine misses by >= 18 of 255
@@ -162,8 +167,8 @@ outside `[1, Palette]` on a class that owns palettes.
   degrees, and an index remap is impossible because at most 191 of 256 tier colours occur anywhere
   in tier 1.
 - **Tier 1 is not a recolour.** `palette.pal` is byte-identical to the sheet's own embedded
-  palette on all 256 entries, 13/13 classes.
-- **Never touch palette entry 0.** It is identical across every tier of every class (39/39) and
+  palette on all 256 entries of each installed class.
+- **Never touch palette entry 0.** It is identical across every installed tier of every class and
   no sprite ever emits it (`SPR256-PAL-012`). It is *reserved*, not a key: no blitter tests it
   (`SPR256-KEY-044`), so a decoder must not treat it as transparent.
 - **The owner band is separate and narrow.** The 16 sub-palettes of `human.pal` differ from
@@ -206,12 +211,9 @@ Worked for tier 2: `R = 157*26/16 = 255` (clamped), `G = 148*26/16 = 240`, `B = 
 implementation that rounds instead of truncating, that applies the gain per pixel instead of per
 table row, or that reads `[R,G,B,0]` instead of `[B,G,R,0]`, gives a different word here.
 
-## Corpus
+<a id="open"></a>
 
-52 per-class tier tables + `units/humans/human.pal`, **byte-identical across all three roots**
-(live GOG install, `gameversions\en`, `gameversions\ru`). `human.pal` sha256 `ed8f0e6d…`.
-
-## Open
+## Unknowns
 
 - What the global sprite table `[0x005ef6ac]` holds, and therefore whether the sprite a
   map-placed humanoid is drawn from is an equipment-composed figure or a class sheet. The shade
@@ -220,7 +222,7 @@ table row, or that reads `[R,G,B,0]` instead of `[B,G,R,0]`, gives a different w
   (`PAL-RULE-021`…`PAL-BLIT-024`).
 - Whether the shade object the shadow arm selects (`0045b9a5` / `0045b9cb`) is used at all: the
   silhouette blits `vt+0x1c` / `vt+0x3c` index `[0x005e8420]` and never read the object handed to
-  them. That global is another experiment's surface.
+  them. The contents of that global are a separate unresolved consumer relation.
 - `palette_.pal`, which ships beside every `palette.pal` (byte-identical to it on 11 of 13
   classes, different on `ghost`) and matches no name the loader builds. The same `_` sibling
   pattern in the projectile directory is **not** a parallel: there the loader does build both

@@ -1,13 +1,16 @@
-# Town reactions and tavern interior animation
+<a id="town-reactions-and-tavern-interior-animation"></a>
 
-This page describes executable state, not a stored file format. Exterior contracts are
-conditional on the named town pointer handler and paint hub being reached.
-Physical-pointer message delivery and audio-device results remain Unknown.
+# Town rooms, reactions and animation
+
+Town pointer handlers and paint routines maintain entrance state, ambient
+episodes, tavern selection and school-training pictures. These contracts are
+conditional on the named handlers being reached. Physical-pointer delivery
+and audio-device results remain Unknown.
 
 ## Tavern entry ordering boundary
 
-The located campaign tavern helper calls the command37 sender before its
-computed view activation. On the reached server command37 arm, Player+04
+The located campaign tavern helper calls the command 37 sender before its
+computed view activation. On the reached server command 37 arm, Player+04
 selects the Player and a miss bypasses stock construction. A match first
 changes Player+38 for the refund and requests its event. That local ordering
 does not establish the earliest operation after a city click: earlier UI
@@ -71,13 +74,13 @@ zeros all progress, while no direct exact-address static reset is known.
 (`TOWN-415`, `TOWN-417`)
 
 The loader binds nine `TownBirds/Birds1..9/sprites.16a` sheets, each 57
-frames. An arm selects group0..2 and count1..3; composition uses
+frames. An arm selects group 0..2 and count 1..3; composition uses
 `array[group*3+i]` for `i<count`. Every admitted hub increments all three
 progress words once while active. Paint draws each selected nonterminal bird
 through the class-specific `.16a` frame-draw slot+18, then draws keyed
 `Town_add.bmp`, including on
 the final active paint. It clears bit `80h` only after every selected sprite is
-terminal. Count1 conditionally requests `Birds1.wav`; count2/3 requests
+terminal. Count 1 conditionally requests `Birds1.wav`; count 2/3 requests
 `Birds2.wav`, both repeat0. (`TOWN-415`, `TOWN-416`)
 
 ### Horse, baba and dervish
@@ -85,13 +88,13 @@ terminal. Count1 conditionally requests `Birds1.wav`; count2/3 requests
 The exterior loader selects one of five horse positions, one of four baba
 positions and a different one of four dervish positions. It binds the chosen
 horse's A1..A3 sheets at `+128`, baba's A1..A2 at `+fc`, and the selected
-dervish sheet at `+150`. All installed horse sheets have15 frames, baba A1
-has31 and A2 has32, and dervish has30. (`TOWN-439`)
+dervish sheet at `+150`. All installed horse sheets have 15 frames, baba A1
+has 31 and A2 has 32, and dervish has 30. (`TOWN-439`)
 
 | family | entry and activation | admitted hub progression | terminal / idle |
 |---|---|---|---|
-| Baba | selects A1, current -1 and delay2000..3999 ms; a strict elapsed paint test rerolls A1/A2 and delay2000..6999, then sets bit `200h` | one forward frame through the selected sheet | count31/32 clears the bit and writes -1; retained sheet draws frame0 until another delay |
-| Horse | selects A1, current -1 and its own delay2000..3999 ms; a separate strict test rerolls A1/A2/A3 and delay2000..6999, then sets bit `100h` | one forward frame through a 15-frame sheet | count15 clears the bit and writes -1; retained sheet draws frame0 until another delay |
+| Baba | selects A1, current -1 and delay2000..3999 ms; a strict elapsed paint test rerolls A1/A2 and delay2000..6999, then sets bit `200h` | one forward frame through the selected sheet | count 31/32 clears the bit and writes -1; retained sheet draws frame 0 until another delay |
+| Horse | selects A1, current -1 and its own delay2000..3999 ms; a separate strict test rerolls A1/A2/A3 and delay2000..6999, then sets bit `100h` | one forward frame through a 15-frame sheet | count 15 clears the bit and writes -1; retained sheet draws frame 0 until another delay |
 | Dervish | current0 and bit `400h` are set on entry | `(current+1)%30` | wraps without clearing; a null sheet writes -1 but retains the bit |
 
 Every eligible own-paint runs the two delay tests; the admitted hub gives each
@@ -103,15 +106,15 @@ entry-active and continuously cyclic. (`TOWN-440`, `TOWN-441`, `TOWN-442`,
 `TOWN-443`, `TOWN-444`)
 
 The sound loader binds Horse2/Horse3/Horse1 to `+a0/+a4/+a8`. Non-null and
-status0 gates request Horse1 at A3 frame1 and Horse2 at A1 frame14, A2
-frames8/14 and A3 frame14, repeat0 and priority128. No direct Horse3 request
+status 0 gates request Horse1 at A3 frame 1 and Horse2 at A1 frame 14, A2
+frames 8/14 and A3 frame 14, repeat0 and priority128. No direct Horse3 request
 receiver or baba/dervish-specific request is present in the bounded town
 closure; indirect/computed and runtime audio results remain open.
 (`TOWN-445`)
 
 Leave and destruction release the three family assets and horse sound
 objects; re-entry reloads positions/assets, restores horse and baba idle A1
-state and arms dervish at0. The families share only flag word `+208` and the
+state and arms dervish at 0. The families share only flag word `+208` and the
 process-static admitted-hub clock. Exhaustive mask-selector outputs are
 -1/1/2/4/8/16, so its default OR does not directly arm bits
 `100h/200h/400h`; horse/baba delay arms and dervish entry arm remain separate.
@@ -122,13 +125,13 @@ process-static admitted-hub clock. Exhaustive mask-selector outputs are
 The star loader binds nine 64×44 `Town/stars/S00..S08.bmp` pictures at `+1ac`,
 initializes current `+1c0` through `-1→0`, and stores S00 in selected pointer
 `+1bc`. That pointer draws at view-relative `(340,288)` whenever non-null.
-Selector16 ORs bit `10h`; the admitted hub then advances S01..S08. A step
+Selector 16 ORs bit `10h`; the admitted hub then advances S01..S08. A step
 beginning at current0 conditionally requests `Stars.wav`, repeat0. The step
 reaching current9 hides the pointer and clears the bit; it does not wrap.
 (`TOWN-418`)
 
 Each terminal star call increments process-static `005f20c4`. On the tenth it
-resets current and the static to0, but still ends hidden; a subsequent selector
+resets current and the static to 0, but still ends hidden; a subsequent selector
 arm begins the visible sequence again. Entry independently restores S00 and
 does not directly clear that exact static. Thus the star is rearm-driven, not
 an autonomous cycle. Alias/bulk reset and physical pointer delivery remain
@@ -168,17 +171,17 @@ not a fresh index lookup. Loaded pointers must be non-null. (`TOWN-407`)
 | Candle | `1dc` | `candle/t0000..t0009.bmp` | `(160,48)` | Draw current, then share the strict >100-ms gate with cauldron; `(index+1) % (count-1)` visits 0..8. (`TOWN-408`) |
 | Cauldron | `20c` | `cauldron/t0000..t0020.bmp` | `(420,160)` | The same admitted step visits 0..19. Neither series selects its last loaded entry through this cycle. (`TOWN-408`) |
 | Tender breath | `23c` | `tender/breath/br0001..br0024.bmp` | `(240,152)` | Mode2 draws before one strict >83-ms forward step. Completion clears mode/index but retains the last cached picture. (`TOWN-410`) |
-| Tender drink | `26c` | `tender/drink/dr0001..dr0040.bmp` | `(240,152)` | Mode1 draws before a bounded forward/reverse step. The top step immediately reverses to index38; reverse completion at0 disables the episode. (`TOWN-411`) |
+| Tender drink | `26c` | `tender/drink/dr0001..dr0040.bmp` | `(240,152)` | Mode1 draws before a bounded forward/reverse step. The top step immediately reverses to index 38; reverse completion at 0 disables the episode. (`TOWN-411`) |
 
-Tender delay is `3000 + rand()/16`, range3000..5047 ms from the measured
-15-bit random result. Strict elapsed >delay arms mode1/direction1 for odd
-delay, or mode2 for even delay. That test does not require idle mode. The
+Tender delay is `3000 + rand()/16`, range 3000..5047 ms from the measured
+15-bit random result. Strict elapsed >delay arms mode 1/direction 1 for odd
+delay, or mode 2 for even delay. That test does not require idle mode. The
 >83-ms tender gate resets the same tender timestamp after one step; completion
 chooses the next delay. Mode0 draws neither tender series. These are conditional
 gates, not measured frame rates or uniform random probabilities. (`TOWN-409`)
 
 Two consequences matter. A long paint gap can rearm a descending drink toward
-ascent. A completed breath retains cached `br0024.bmp` while its index is0;
+ascent. A completed breath retains cached `br0024.bmp` while its index is 0;
 the next episode first draws that cached last picture and then selects
 `br0002.bmp`, unless a reload or another writer intervenes. No catch-up loop
 is present in either measured animation gate. (`TOWN-408`, `TOWN-410`, `TOWN-411`)
@@ -194,7 +197,7 @@ here. Actual release, destruction and cross-visit state remain Unknown.
 (`TOWN-412`)
 
 Conditional requests are steam (>10000-ms separate clock), chair and
-`Town/Shop/Breath.wav` (breath arm), drink (index30 on every paint, either
+`Town/Shop/Breath.wav` (breath arm), drink (index 30 on every paint, either
 direction), glotok (reverse completion), water (parent own-paint, repeat1),
 and enter (entry, repeat0). Other named requests use repeat0. A non-null sound,
 status-zero result and further audio-buffer gates are required. Request
@@ -223,45 +226,43 @@ not layered and are not a separate movie surface. (`TOWN-428`)
 
 | family | activation | admitted progression | terminal behavior |
 |---|---|---|---|
-| Mage `tr` | entry/current-class transition, bit1 | one modulo-23 step under strict elapsed `>83` ms | wrap to index0 clears bit1 |
-| Fighter `tr` | entry/current-class transition, bit4 | one modulo-19 step under the same gate | wrap to index0 clears bit4 |
-| Mage `m` | idle side, strict elapsed `>3000+rand()/10`, bit2 | forward indices0..10; terminal cached10 hold; reverse starts from index8 to7 | reverse terminal0 clears bit2 before the `m` draw |
-| Fighter `m` | independent idle side, same delay shape, bit8 | forward0..8; terminal cached8 hold; reverse7..0 | reverse terminal0 clears bit8 before the `m` draw |
+| Mage `tr` | entry/current-class transition, bit 1 | one modulo-23 step under strict elapsed `>83` ms | wrap to index 0 clears bit 1 |
+| Fighter `tr` | entry/current-class transition, bit 4 | one modulo-19 step under the same gate | wrap to index 0 clears bit 4 |
+| Mage `m` | idle side, strict elapsed `>3000+rand()/10`, bit 2 | forward indices 0..10; terminal cached 10 hold; reverse starts from index 8 to 7 | reverse terminal 0 clears bit 2 before the `m` draw |
+| Fighter `m` | independent idle side, same delay shape, bit 8 | forward 0..8; terminal cached 8 hold; reverse 7..0 | reverse terminal 0 clears bit 8 before the `m` draw |
 
 `tr` starts after a class change and participates in the pending-transition
 input block until its counter returns to zero and the column reaches that
-class endpoint. Mage index at least5 can start column step+1; fighter index at
-least6 can start step-1. Those starts conditionally request
+class endpoint. Mage index at least 5 can start column step+1; fighter index at
+least 6 can start step-1. Those starts conditionally request
 `SFX\Town\School\Rotate.wav`. (`TOWN-429`)
 
 Each idle armer requires both the `tr` and `m` bit for its own side to be
 clear. A busy side refreshes its timestamp. With the accepted 15-bit random
 result, `3000+rand()/10` spans 3000..6276 ms; the comparison is strict.
-Arming sets direction1 and sequence index -1. The shared paint gate admits at
+Arming sets direction 1 and sequence index -1. The shared paint gate admits at
 most one step per side and has no elapsed-time catch-up. (`TOWN-430`)
 
 At mage `m` ascent completion, the direction changes to reverse and samples
-hold threshold `((rand()*20)/0x7fff)%20 + 20`, range20..39. This is not
+hold threshold `((rand()*20)/0x7fff)%20 + 20`, range 20..39. This is not
 `20+rand()%20`, and no uniform distribution is established. The sequence
-index is then set to8 while the cached pointer remains terminal index10. The
-terminal stays selected during hold; the first reverse selection is index7,
-so return omits indices9 and8. Fighter samples the same threshold, retains
-index8 at its terminal and reverses normally to7. An active same-side `tr`
+index is then set to 8 while the cached pointer remains terminal index 10. The
+terminal stays selected during hold; the first reverse selection is index 7,
+so return omits indices 9 and 8. Fighter samples the same threshold, retains
+index 8 at its terminal and reverses normally to 7. An active same-side `tr`
 forces an ascending `m` toward reverse rather than instantly removing it.
 (`TOWN-431`, `TOWN-432`)
 
 Entry rebuilds both sequences, resets the local flags/counters and primes the
-two `tr` pointers at index0. Leave and destruction call both family cleanup
+two `tr` pointers at index 0. Leave and destruction call both family cleanup
 routines. The idle clocks, random extras and hold counters are static state
 and are not explicitly cleared by the read lifecycle bodies; object identity,
 alias writers and cross-visit timing remain Unknown. (`TOWN-433`)
 
-The literal/direct-call/draw population converges on this one school object:
-one owner per format literal, one direct caller per family loader, no parsed
-code pointer to either loader, and one room painter consuming all fields. No
-`m` arm/step/draw body directly requests a sound. Computed filenames, targets,
-other school audio paths, delivered paint cadence, visible output and audible
-results remain open. (`TOWN-434`)
+The room painter consumes the school object's fields. No direct `m`
+arm/step/draw body requests a sound. Computed filenames and targets, other
+school audio paths, delivered paint cadence, visible output and audible
+results remain Unknown. — TOWN-434
 
 ## Tavern initial selection boundaries
 
@@ -272,10 +273,9 @@ preservation across intervening UI/resource calls is Medium. A nonempty NPC
 list does not change the measured empty-mercenary selection store. (SAV-929)
 
 Initial party selection is separate. Its helper returns the first primary
-party index with bit0x20, or -1, and activation then indexes the party array
+party index with bit 0x20, or -1, and activation then indexes the party array
 without checking that sentinel. A live marked party entry is therefore an
 additional local prerequisite. (SAV-930)
 
-These conditional instruction results do not establish the entire original
-click, resource lifetime, first paint or the location of the observed hang and
-closing. First-failure attribution remains Unknown. (SAV-932)
+Native click continuation, resource lifetime, first paint and first-failure
+attribution remain Unknown. — SAV-932

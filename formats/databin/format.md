@@ -1,60 +1,69 @@
-# DAT `Data.bin` — the placeable-definition database — specification
+<a id="dat-databin--the-placeable-definition-database--specification"></a>
 
-Level 3. Promoted, evidence-backed claims only. The populator, grammar, streamed
-slot maps and corpus closure are `DAT-LOC-001`…`DAT-ACT-006`. Ledger:
-`claims/databin.md`.
+# Data.bin definition database
 
-**Status: ☑ specified (core).** All eleven collections have a complete wire
-grammar and schema with exact tiling. Placement consumers and the promoted
-item/magic consumers below specify how the corresponding fields are used.
-The second group-C dword array and group D's extra byte remain structurally
-decoded opaque fields. Core status does not assign those fields meanings or
-claim every consumer is known.
+`world.res:data/data.bin` serializes eleven definition collections in eight
+groups. A loose `World\Data\Data.bin` takes precedence. If both sources are
+absent, the original loads eleven semicolon-separated CSV tables from that
+directory and writes Data.bin, including their column titles. — DAT-LOC-001
 
-Seen as: `world.res:data/data.bin` (88 327 B in the shipped install), or a loose
-`World\Data\Data.bin` which takes precedence. If neither exists, `rom.exe` parses
-eleven `;`-separated `.csv` tables from the same directory and **rewrites**
-`Data.bin` (`DAT-LOC-001`) — the `.bin` is a serialized image of the CSVs, column
-titles included.
+All integer fields are little-endian. Arrays are counted; groups C–H reserve
+collection index 0 and omit that entry from the stream. — DAT-GRAM-003
 
-## At a glance
+<a id="at-a-glance"></a>
+
+## Structure
 
 Eight class-groups, each `[column-title string array][1..3 collections]`; a
 collection is `[u32 count][entries]`. Groups C–H write entries `1..count-1` — entry
-0 is a reserved null, which makes every consumer index **1-based**.
+0 is reserved in these C–H definition collections. Their serialized
+definition indices begin at 1; this is not an indexing rule for A/B or
+for every consuming lookup.
 
-```
-group A  titles(11)  Shapes(5, all)      Materials(16, all)     entry = [name][9 doubles]
-group B  titles(30)  Magic(50, all)                             entry = [name][params]
-group C  titles(18)  Armors(30) Shields(9) Weapons(27)          entry = [name][params][10 raw][dwords]
-                     the 10 raw = five u16 material masks, one per Shapes row  DAT-MATMASK-020
-group D  titles(4)   MagicItems(49)                             entry = [name][params][1 raw][string]
-group E  titles(57)  Units(118; 56 parameterised)               entry = [name][params][2 strings]
-group F  titles(28)  Humans(215; 210 parameterised)             entry = [name][params][10 strings]
-group G  titles(9)   Buildings(66)                              entry = [name][params]
-group H  titles(24)  Spells(28)                                 entry = [name][params][1 string]
-```
+| Group | Collections | Serialized definitions in the installed file | Payload after name |
+|---|---|---|---|
+| A | Shapes, Materials | 5,16 | Nine binary64 values (72 bytes) |
+| B | Magic | 50 | Parameter array |
+| C | Armors, Shields, Weapons | 30,9,27 | Parameter array, ten raw bytes, second dword array |
+| D | MagicItems | 49 | Parameter array, one raw byte, CString |
+| E | Units | 118 (56 parameterized) | Parameter array, two CStrings |
+| F | Humans | 215 (210 parameterized) | Parameter array, ten CStrings |
+| G | Buildings | 66 | Parameter array |
+| H | Spells | 28 | Parameter array, CString |
 
-Wire primitives: `CString` = u8 length (0xFF → u16) + bytes; a title array = u16
-count + CStrings; a param array = u16 count + raw u32 little-endian values; the
-collection count is a plain u32. Counts above are the shipped file's stored entries
-(`DAT-GRAM-003`).
+For A/B the collection count equals the serialized definition count. For
+C–H it includes the reserved entry 0, so it is one greater than the numbers
+shown above. Read that stored count rather than using the installed numbers
+as constants. Installed title counts for A–H are 11,30,18,4,57,28,9,24.
+The ten group-C raw bytes are five u16 material masks, one per Shapes row.
+— DAT-GRAM-003, DAT-MATMASK-020
+
+| Primitive | Encoding |
+|---|---|
+| CString | u8 byte length;0xff selects a following u16 length; then the string bytes |
+| Title array | u16 count followed by that many CStrings |
+| Parameter/second dword array | u16 count followed by that many u32 values |
+| Collection count | u32 |
+
+These are the established bounded primitive forms. Broader MFC length
+escapes are outside this reference. Integers and binary64 values are
+little-endian. — DAT-GRAM-003
 
 ## The schema law
 
-The complete per-collection column list, re-expressed as slots and carrying each
-streamed slot's actor destination, is promoted as `DAT-SCHEMA-007`.
-Two things a raw title dump does not show: a group's title array is **one array
-shared by its sibling collections** (Armors + Shields + Weapons share 18 titles;
-Shapes + Materials share 11, and that element kind has **no param array at all** —
-its record is 9 doubles), and the param arrays are **full** — 56/56 Units rows carry
-55 values, 210/210 Humans rows carry 26.
+Each group shares one title array among its collections. Shapes and Materials
+have nine binary64 values per entry and no parameter array. Other named
+parameter arrays carry explicit counts. The stored Units and Humans parameter
+arrays contain 55 and 26 values respectively in their parameterized rows.
+— DAT-SCHEMA-007
 
 Param slot `i` is CSV column `i+1` (column 0 is the entry name); the trailing
 "equipment" column, when the class has string slots, is `,`-separated with `{...}`
 groups and fills the entry's extra strings instead. **An empty cell is stored as −1,
-and the engine's readers skip the store on −1**, so −1 always means "constructor
-default" (`DAT-SCHEMA-004`, `DAT-ACT-006`).
+and the named parameter-streaming readers skip the store on −1**. In those
+readers, −1 preserves the constructor default; other consumers can use −1
+as a literal value, including the document-item price below.
+— DAT-SCHEMA-004, DAT-ACT-006
 
 ## The placement-facing tables
 
@@ -85,14 +94,9 @@ default" (`DAT-SCHEMA-004`, `DAT-ACT-006`).
   Complete slot → actor-field map with widths and instruction addresses:
   [`formats/unit`](../unit/format.md), `UNIT-STREAM-001`.
 
-Corpus closure: every shipped placement resolves — 3141/3141 type-4, 8079/8079
-in-scope type-6 (`ALM-CLS-052`).
-
 ## Consumers beyond placement
 
-These promoted consumers replace the earlier blanket claim that the other eight
-tables had no read consumers. Their detailed formulas remain in the linked domain
-pages; column titles alone are not evidence for a formula.
+Field consumers and their formulas are defined in the following references.
 
 | Collection | Established use and authority |
 |---|---|
@@ -106,8 +110,8 @@ pages; column titles alone are not evidence for a formula.
 The equipment-cell parser is read: `ITEM-NAMEPARSE-040` specifies name/tier/material
 parsing, with the enchantment grammar and effect construction refined by
 `ITEM-EFFGRAM-070`, `ITEM-EFFPOP-071`, `ITEM-EFFOBJ-072` and `ITEM-EFFMODE-073`.
-`UNIT-EQUIP-005`'s earlier corpus fit is no longer the only
-authority for that parser.
+
+<a id="buildings-presence-mask-consumer"></a>
 
 ## Coverage boundaries
 
@@ -119,11 +123,9 @@ creation-message semantics are a separate session contract. Human type-ID
 streaming retains the conditional constructor overwrite described above
 (`DAT-ACT-006`, `DAT-HUMANS-008`, `PARTY-M20-030`, `PARTY-M20-031`).
 
-**A second shipped sample exists.** `gameversions/ru/WORLD.RES` differs from the EN
-`world.res`, and so does its `Data.bin` — but the **Units** collection is identical
-in every name, string and parameter, while **Humans** differ on 16 parameters over
-6 slots. Any corpus figure taken from the Humans table must say which root it read.
-## Buildings presence-mask consumer
+EN and RU Data.bin payloads differ. Units entries match; Humans parameters
+can differ. Preserve the values of the selected definition source.
+— DAT-HUMANS-008
 
 The Buildings presence mask is consumed as `(row*width+col)&31`, with byte width/height and a
 32-bit mask; it is not an arbitrary-size bitset. Registration visits only its set positions and
@@ -139,5 +141,23 @@ the titles `Magic Items`, `Price`, `weight`, `Effects`; price is therefore -1. I
 is `0x0e1c`.
 
 The `Humans` table cannot place this MagicItems row in starting equipment. Cell 0 constructs a
-Weapon, cell 1 a Shield, and cells 2..9 Armor. Across all 215 stored rows in each preserved root,
-the 909 non-empty cells contain no `Quest` string (`DAT-DOC-021`).
+Weapon, cell 1 a Shield, and cells 2..9 Armor. The installed starting-equipment cells contain no `Quest` entry. — DAT-DOC-021
+
+## Read and write sequence
+
+1. Process groups A through H in the fixed order above.
+2. For each group, read its u16 title count and length-prefixed strings.
+3. Read each collection's u32 stored count. Read all entries for A/B and
+   entries `1..count-1` for C–H; preserve the reserved null slot in memory.
+4. Read the entry name and its group's exact payload. The group-C second
+   dword array has the same u16-count/u32-element framing as a parameter array.
+5. Resolve parameters through the relevant definition consumer. A stored -1
+   preserves the constructor default on the named streaming paths.
+
+Emission uses the same order and count rules. Emit the shared titles once per
+group, each collection count once, then its entries. Keep the ten-byte group-C
+material-mask block, its second counted array, and the group-D extra byte even
+when their interpretation is incomplete. No magic, section tags or per-entry
+size fields are inserted by this grammar. Array and CString lengths must fit
+the established primitive form; broader MFC encodings are not specified here.
+— DAT-GRAM-003, DAT-SCHEMA-004, DAT-SCHEMA-007, DAT-MATMASK-020

@@ -1,0 +1,139 @@
+# Tile resources and selection
+
+[Reference](format.md)
+
+## Location & format
+
+The terrain images live inside **`graphics.res`** (the `RES-MAGIC-001` `&YA1` archive) under the
+node prefix **`terrain.3d/`**. They are **standard 8-bpp Windows BMP** files (magic `BM`,
+14-byte `BITMAPFILEHEADER` + 40-byte `BITMAPINFOHEADER`, 256-entry RGBQUAD palette,
+`bfOffBits = 1078 = 14 + 40 + 1024`) — read with any standard BMP decoder; ROM adds no
+wrapper. (`world.res` holds only terrain *config* — `data/map.reg` — not the images.)
+
+| File(s) | Count | BMP W×H | 32×32 sub-cells | Role |
+|---------|-------|---------|------|------|
+| `dirt.bmp` | 1 | 32×128 | 4 | impassable-tile composite overlay |
+| `tile1-00..15` | 16 | 32×448 | 14 | Land group (Grass / Cracked / Sand / Savanna) |
+| `tile2-00..15` | 16 | 32×448 | 14 | Stones / Cracked-Stones / Flowers-Savanna / Mountain |
+| `tile3-00..15` | 16 | 32×256 | 8 | **Water** (animated) |
+| `tile4-00..03` | 4 | 32×448 | 14 | **Road** |
+
+Each BMP is **32 px wide** and is a **vertical strip of 32×32 sub-cells** (top-to-bottom;
+BMP rows are bottom-up per the standard, so sub-cell `k` occupies the *k*-th 32×32 block
+counting from the strip origin the game reads — pixel byte offset `8 + k·0x400` into the
+loaded image buffer). There is a parallel **legacy non-3d** set at `terrain\tile*.bmp`
+that `rom.exe` can load instead; the flag `DAT_005e4418 & 2` selects the `terrain.3d` set,
+which is the shipped path.
+
+## Loader (`rom.exe FUN_00469620`)
+
+The only referrer of the terrain path strings. It builds `tileG-VV.bmp` (`%d-%d` /
+zero-padded `%d-0%d` for `V<10`) and loads each into a **128-slot pointer array `tiles[]`**
+at `DAT_005ef6c0`:
+
+```
+tiles[(G-1)*16 + V]  <-  tileG-VV.bmp      G = 1..8, V = 0..15   (absent file -> null)
+DAT_005ef8d4         <-  dirt.bmp
+DAT_005ef8d8         =   (first non-null tile) + 0x14            (default handle)
+```
+
+On disk only `tile1/2/3` (16 each) + `tile4` (0..3) exist, so slots for groups 5–8 and
+`tile4` V≥4 stay null. The loader then pre-composes the tiles into 256×256 DirectDraw work
+surfaces (`DAT_005eb5a8[]`) and a shared palette (built from the tiles' own palette) for
+8-bpp display.
+
+**The loader takes one argument, and the map supplies it.** `FUN_00469620` is `cdecl` with a
+single dword, read at `[esp+0x558]` and used as a 32-bit mask: the body runs exactly 32
+iterations over `tiles[]` in steps of four slots, and enters iteration `i` only when
+`mask & (1<<i)`. Iteration `i` fills `tiles[4i .. 4i+3]`, which is precisely the block the
+render mapping reaches with strip group `g = i` and blend column `b = 0..3`, so one mask bit
+is one value of `g`, i.e. one file group `G = (i>>2)+1` with variants `V = (i&3)*4 .. +3`.
+The value comes from the `.alm` type-0 record: payload `+0x18` → landscape slot `P+0x28`,
+pushed at the end of the map-build. Over 72 shipped maps it takes eight values, all
+`≤ 0x1fff` — `0x1fff`×44, `0x0fff`×10, `0x00ff`×4, `0x0fbf`×4, `0x1fdf`×4, `0x0f7f`×2,
+`0x1f1f`×2, `0x1fbf`×2 — never a bit above 12, which decodes to groups 1–3 entire plus
+group 4 variants 0–3: the same set the disk holds. A clear bit leaves all four images that
+tile-word group can select null (`TERR-LOAD-152`).
+
+## Tile-word → graphic (render mapping)
+
+Four render routines — `FUN_004058c7`, `FUN_00405e83`, `FUN_00406349`, `FUN_00406806`
+(zoom/mode variants) — read the type 1 tile-word `w` (u16) and select image + sub-cell with
+**identical** arithmetic:
+
+```
+g    = (w & 0x1fff) >> 6          strip group      (bits 6..9; installed range 0..12)
+b    = (w >> 4) & 3               blend column     (bits 4..5)
+sub  = w & 0xf                    sub-cell index    (bits 0..3)
+
+image = tiles[ g*4 + b ]          == tileG-VV.bmp with:
+          G = (g >> 2) + 1        file group  (1..4)
+          V = (g & 3)*4 + b       file variant (00..15)
+src   = image.pixels + 8 + sub*0x400        one 32x32 8-bpp cell (0x400 = 1024 B)
+```
+
+Mapping of strip group → file group → terrain (terrain names via `ALM-TERR-015`):
+
+```
+g  0  tile1-00..03  Grass  / Land        g  4  tile2-00..03  Stones          / Land
+g  1  tile1-04..07  Cracked/ Land        g  5  tile2-04..07  Cracked         / Stones
+g  2  tile1-08..11  Sand   / Land        g  6  tile2-08..11  Flowers         / Savanna
+g  3  tile1-12..15  Savanna/ Land        g  7  tile2-12..15  Mountain        / Stones
+g 8..11  tile3-*    Water (animated)     g 12  tile4-00..03  Road            / Land
+```
+
+- **Water (`g 8..11` = `tile3`)** is animated (fully decoded by `TERR-ANIM-006…TERR-ANIM-010`; see "Water
+  animation" below). The renderer replaces the group with `8 + phase`,
+  `phase = (g + (worldCol+1)*worldRow + (animCtr>>2)) & 3` when enabled (`DAT_005bcef0 ≠ 0`),
+  else `phase = 0`. Water uses only 8 sub-cells (tile3 is 32×256).
+- **Impassable tiles (bit 13 set, non-water)** are composited over `dirt.bmp` before blit
+  (`dirt` sub-cell `= (col + row*5) & 3`), giving the "blocked ground" look. The composite is a
+  **transparent-index (index 0) keyed overlay**, not a blend: copy the terrain sub-cell, then
+  paint the dirt sub-cell's non-zero pixels over it (`FUN_0044c390`; `TERR-DIRT-017`). Drawn shaded.
+- The four **corner altitudes** (type 2 Altitudes grid, `ALM-GRID-013`) choose a flat vs
+  sloped blit **and displace the pixels** — see [cell geometry](geometry.md).
+- Every tile is drawn **relief-shaded** — see [terrain lighting](lighting.md).
+
+## Installed tile domain
+
+Installed maps use strip groups 0..12. Groups 1–3 of the resource filenames
+are complete; group 4 supplies variants 00–03. Land strips contain 14
+subcells and water strips contain 8. A decoder must use the selected strip's
+own subcell count and reject or handle missing resources explicitly; these
+installed populations are not a new upper bound on the tile-word field.
+— TERR-VER-005
+
+## Tile draw sequence
+
+```
+# one-time: load terrain.3d/*.bmp into tiles[(G-1)*16+V], G=1..4, V=0..15; + dirt.bmp
+def draw_cell(w, col, row):
+    g   = (w & 0x1fff) >> 6
+    b   = (w >> 4) & 3
+    sub = w & 0xf
+    if 8 <= g <= 11:                      # animated water
+        g = 8 + (0 if anim_off else phase(g,col,row,anim_ctr))
+    img = tiles[g*4 + b]                  # == tileG-VV.bmp, G=(g>>2)+1, V=(g&3)*4+b
+    cell = img.subcell(sub)              # 32x32 block at pixel offset 8 + sub*0x400
+    if (w & 0x2000) and not water:        # impassable, non-water
+        cell = composite(cell, dirt.subcell((col + row*5) & 3))
+    blit(cell, x=col*32, y=..., corner_heights=Altitudes[...])
+```
+
+## Water animation (`TERR-ANIM-006…TERR-ANIM-010`)
+
+The water group is animated on a fixed-timestep logic clock (all from `rom.exe`):
+
+- **Sequence.** A water cell keeps `b=(w>>4)&3` and sub-cell `w&0xf`; only the group rotates,
+  so the drawn image walks `tile3` variant `V = phase*4 + b`, i.e. `tile3-{b, b+4, b+8, b+12}`,
+  as `phase` steps `0→1→2→3→0`. The 16 `tile3` files = 4 phases × 4 blend columns. The
+  `(worldCol+1)*worldRow` term (scroll-adjusted) offsets neighbours into a diagonal ripple.
+- **Counter.** `animCtr = *(mapObj+0xa70)`; its only writes are init-0 (`FUN_004023c6`) and
+  `+1` per logic tick (`FUN_0040dcdd`, the handler of window message `0x401`). `phase` uses
+  `animCtr>>2` → one variant every **4 ticks**, full cycle every **16 ticks**.
+- **Cadence.** The paced loop `FUN_004753c0` fires one `0x401` per `dtMs = 1000/tps` ms;
+  `SetGameSpeed` (`FUN_00477370`) maps speed index `0..8` → `tps ∈ {8,10,12,14,16,20,24,28,32}`.
+  Map-load defaults to **index 4 → 16 tps → 62 ms/tick → ~250 ms/frame → ~1 s/cycle**; the +/-
+  keys and config key 2 change it. Per-frame ms = `4·(1000/tps)`, per-cycle = `16·(1000/tps)`.
+- **Enable.** `DAT_005bcef0` (static default `1`); cleared by `-noanimation` / `-detail0` (then
+  `phase=0`, water static). Each phase selects a present tile3 resource. — TERR-ANIM-006…TERR-ANIM-010

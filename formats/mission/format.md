@@ -1,23 +1,22 @@
-# MISSION — starting a campaign mission and ending it in a win — specification (partial)
+<a id="mission--starting-a-campaign-mission-and-ending-it-in-a-win--specification-partial"></a>
 
-Level 3. Promoted, evidence-backed claims only. Ledger: `claims/mission.md`.
+# Mission start, party placement and outcomes
 
-**Status: partial (◐).** Read at instruction level: the player-placement routine, the drop-cell
-decision and its RNG, the seat search and its failure, the four placement arms and their branch
-order, the definition lookup, the npc→definition hop, the message-text path, and the entry gate
-and two-container writer boundary (`PARTY-ORIGIN-010`…`PARTY-GATE-013`). Not specified: the arithmetic behind the
-`DataBinID == 26` sentinel; whether the compiled check list is the whole node list or the validated
-subset; which arm the campaign state machine drives between two missions.
+Mission setup binds campaign state to an ALM, Player/Group objects, class
+definitions and the authored script. Drop selection, placement, outcome and
+party retention are separate steps. — MISSION-DROP-002, PARTY-ORIGIN-010,
+PARTY-GATE-013
 
-**`MISSION-DROP-002` corrects a base name used throughout the older text: `FUN_004d403c`'s
-`this` is the server singleton `[0x005cd758]`, not a map object.** Where this spec said `mapObj+0xc` read
-`server+0x0c`, and `mapObj+0x6c` is `server+0x6c` — the same memory as `(server+0x44)+0x28`,
-because `server+0x44` *is* the map sub-object. Numbers unchanged, object different.
+`server` denotes the singleton whose map subobject is at `server+0x44`.
+`server+0x6c` is therefore `(server+0x44)+0x28`; those are not offsets from
+an independent map object. — MISSION-DROP-002
 
-This is not a file format. It is the seam between three that are: the map (`formats/alm`), the
-script runtime (`formats/trigger`) and the class definitions (`formats/databin`, `formats/reg`).
+The arithmetic behind the DataBinID 26 sentinel, the complete compiled-check
+population and full inter-mission state-machine arm remain Unknown.
 
-## The one thing a consumer must not get wrong
+<a id="the-one-thing-a-consumer-must-not-get-wrong"></a>
+
+## State and identity
 
 **The map does not contain the player.** Not the hero, and — on 23 of the 28 campaign maps — not
 one unit for him either; the five exceptions supply **19 units in total** and the walk moves even
@@ -72,7 +71,7 @@ campaign path `server+0x0c` is 0, so the value is written and never read.
 ## Ending
 
 ```
-instant 4  ->  win     exactly one authored node per campaign map, 28/28, and all 28
+instant 4  ->  win     one authored node per installed campaign map, all
                        are reached by a trigger
                        zero on all ten loose maps -> a skirmish map cannot be won
 instant 5  ->  lose    authored on 15 of 28, reached by a trigger on 12 of those
@@ -160,7 +159,7 @@ own `+0x10` is dead. Two traps in the lookup:
 `<NPC=n,Part=k,…>` tags; `n` is an `npc.reg` section number, the same id space the npc placement
 arm uses. Over the campaign, 223 of 242 raised numbers name a shipped file. **The 19 that do not are
 silent**: `DLG-ABSENT-003` establishes that the failure path has no fallback, no message and no state
-change (`formats/dialogue`). Three of the 19 are English-only — the Russian root ships
+change ([DIALOGUE](../dialogue/format.md)). Three of the 19 are English-only — the Russian root ships
 `m100/event09`, `m130/event07` and `m150/event10` from identical scripts.
 
 ## The register file is one array

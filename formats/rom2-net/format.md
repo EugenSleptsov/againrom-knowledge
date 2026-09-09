@@ -1,34 +1,37 @@
-# ROM2 session wire frame — header survey
+<a id="rom2-session-wire-frame--header-survey"></a>
 
-**Status: ☑ specified (header-survey core).** The existing result specifies the
-eight-byte header and its four consumed fields. Payload/opcode decoding and
-ROM1 protocol equivalence remain outside this survey.
+# ROM2 session record header
 
-Level 3. Promoted, evidence-backed claims only. Basis: `R2-SESSION-003`. No ROM1
-cross-reference: no ROM1 wire-protocol counterpart was surveyed by the
-experiment that produced this page.
+The client and server receive an eight-byte header before each socket payload.
+The four named fields below have the same header-relative offsets in both
+programs. Payload and opcode grammar remain Unknown. — R2-SESSION-003
 
-Seen as: the 8-byte record header `CBufferManager::ReceiveData` reads at the
-start of every inbound socket record, in both `allods2.exe` and `a2server.exe`.
+<a id="result"></a>
 
-## Result
+## Header
 
-**One 8-byte header, four fixed-offset fields.** Relative to the header's own
-start: `+0` is a `u16` payload length, observed valid range 1..142; `+4` is a
-`u8` codec selector (0 skips decoding); `+5` is a `u16` codec input size,
-passed to the codec as its own input-length argument; `+7` is a `u8`
-passthrough byte the codec never reads, copied verbatim into the decoded
-record. Both binaries read these four fields identically, once each
-transport's own record-copy displacement is accounted for. `R2-SESSION-003`.
+| Offset | Type | Field | Rule |
+|---:|---|---|---|
+| 0 | u16 LE | Payload length | Socket receive continuation accepts 1..142 |
+| 2 | raw 2 | Unknown | No meaning assigned by this reference |
+| 4 | u8 | Codec selector | Zero skips decoding |
+| 5 | u16 LE | Codec input size | Passed as the codec input-length argument |
+| 7 | u8 | Passthrough | Copied into the post-decode record; not read by the codec |
 
-**The 142-byte cap is one bound restated, not a second bound.** A second
-transport on the same binary (`a2server.exe`'s DirectPlay message handler)
-checks its own total message length against 8..150 bytes; 150 is the same
-142-byte payload cap plus the 8-byte header that transport has not yet split
-off the total, not an independently chosen constant. `R2-SESSION-003`.
+The DirectPlay handler accepts total lengths 8..150. Its maximum is
+`8+142`; its total-length test does not establish that a zero payload passes
+the socket path. The codec call and returned decoded size are bounded by
+142 bytes. — R2-SESSION-003
 
-## Not yet surveyed
+<a id="not-yet-surveyed"></a>
 
-The record's own payload grammar past the codec/passthrough fields; whether
-any wire message carries a type or opcode field at all, downstream of the
-queue this header feeds; a ROM1 counterpart, if one exists.
+## Receive sequence
+
+1. Accumulate the eight header bytes.
+2. Apply the transport's length rule and read the payload.
+3. If the codec selector is nonzero, pass the codec input size to decoding.
+4. Preserve the passthrough byte in the record sent to the next queue.
+
+No complete sending/encoding procedure is established: the two unnamed
+header bytes, codec grammar, queue payload, possible opcode fields and any
+ROM1 counterpart remain Unknown. — R2-SESSION-003

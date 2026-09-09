@@ -1,12 +1,12 @@
-# TEXT — public functional specification
+<a id="text--public-functional-specification"></a>
 
-Level 3 functional edition. Promoted claim families live in
-[`claims/text.md`](../../claims/text.md). Sprite/font framing is documented separately
-under [`formats/spr16a`](../spr16a/format.md).
+# Text bytes, tables and input
 
-This page publishes the byte-level interoperability rules needed to display and accept
-text. It deliberately omits copied UI prose, complete shipped string tables and other
-reconstructable content inventories.
+ROM1 stores one-byte strings. The active language selector controls input and
+display conversion; font indexing follows conversion. Positional string
+tables retain source byte order. Glyph framing and advances are defined in
+[SPR16A](../spr16a/format.md). — TEXT-CONV-001 (partially retracted),
+TEXT-LANG-002, TEXT-STRTAB-023, SPR16A-FONT-018
 
 ## Encoding model
 
@@ -93,7 +93,7 @@ are addressed by table-local or global numeric indices depending on the consumer
 Loading is byte-preserving; conversion happens when text is displayed or entered, not
 when the resource file is parsed. — `TEXT-STRTAB-023`
 
-Important compatibility consequences:
+Table rules:
 
 - table ordering is semantically significant;
 - inserting/removing a line in a positional table can renumber later entries;
@@ -103,11 +103,6 @@ Important compatibility consequences:
   not be assumed interchangeable;
 - a consumer must not infer a language-independent semantic key from the displayed
   wording alone.
-
-The public edition intentionally does **not** reproduce the complete shipped filename
-list, line counts, global offsets, localized phrases or other tables that would recreate
-substantial parts of the game's textual resources. Those are corpus evidence, not the
-text-format grammar.
 
 ## Character-name entry
 
@@ -132,8 +127,7 @@ ROM1 mixes three presentation mechanisms:
 
 A replacement engine must not assume every visible caption has a corresponding string
 entry, or that every descriptive string is persistently drawn next to its control.
-Specific shipped wording and bitmap caption contents are intentionally omitted from the
-public functional edition. — `TEXT-CHARGEN-027`, `TEXT-CHARGEN-028`, `TEXT-CHARGEN-029`,
+— `TEXT-CHARGEN-027`, `TEXT-CHARGEN-028`, `TEXT-CHARGEN-029`,
 `TEXT-UI-032`, `TEXT-UI-033`, `TEXT-UI-034`, `TEXT-UI-035`, `TEXT-UI-036`, `TEXT-UI-037`,
 `TEXT-UI-038`, `TEXT-UI-039`, `TEXT-UI-040`, `TEXT-UI-041`, `TEXT-UI-042`, `TEXT-UI-043`,
 `TEXT-UI-044`, `TEXT-UI-045`, `TEXT-UI-046`, `TEXT-UI-047`
@@ -148,21 +142,7 @@ must therefore treat caption identity as element position in the control's own a
 not as the rendered wording. — `TOWN-383`, `TOWN-384`, `TOWN-385`, `TOWN-391`,
 `TOWN-392`, `TOWN-393`
 
-## Corpus observations versus rules
-
-The private evidence includes complete EN/RU byte censuses, atlas-coverage measurements
-and comparisons of localized tables. Those measurements support the transforms above
-but are **not themselves wire-format requirements**. This public page therefore keeps
-only the constraints needed for an independent consumer:
-
-- single-byte resource storage;
-- selector-dependent input/display conversion;
-- direct font-record indexing;
-- positional string tables;
-- caller-owned formatting/markup semantics.
-
-Exact shipped prose, full content inventories, hashes and reconstructable translation
-matrices stay in private evidence unless separately reviewed for publication.
+<a id="corpus-observations-versus-rules"></a>
 
 ## Unknown / bounded areas
 
@@ -174,5 +154,16 @@ The published rules do not establish:
 - a universal UI labelling mechanism;
 - coverage of strings embedded in every possible non-text resource type.
 
-Do not fill these gaps from a third-party reimplementation or by copying game-resource
-text. Preserve them as Unknown until independently researched and reviewed.
+## Decode and encode sequence
+
+1. Parse CRLF-delimited resource tables as bytes, retaining positional order.
+2. Apply the active selector's display transform to each display byte.
+3. Handle controls and markup on the appropriate text path, then index
+   `uint8(transformedByte-0x20)` in the selected font.
+4. Measure using that font's advance sidecar and the draw path's markup rule.
+
+For keyboard input, apply the input transform before appending accepted bytes;
+backspace edits the current string. Preserve stored bytes on save or resource
+rewrite. Display conversion is not injective and therefore has no unique
+inverse suitable for reconstructing original text. — TEXT-STRTAB-023,
+TEXT-INDEX-003, TEXT-DOM-010, TEXT-NAMEIN-024, TEXT-COLL-025

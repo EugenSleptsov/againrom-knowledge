@@ -1,9 +1,12 @@
-# RES / LM container (`&YA1`) — public functional specification
+<a id="res--lm-container-ya1--public-functional-specification"></a>
 
-Level 3 functional edition. Promoted claim families are recorded in
-[`claims/res.md`](../../claims/res.md). This page states the binary grammar and lookup
-behaviour needed by an independent reader/writer; instruction addresses and
-reverse-engineering listings remain private evidence.
+# RES / LM archive (`&YA1`)
+
+A RES/LM archive stores file payloads and a tree of named 32-byte nodes.
+The 24-byte header gives the node array's position and count. The inline
+[REG store](../reg/format.md) uses the same magic with a different layout;
+choose the grammar from the containing resource's role. — RES-HDR-002,
+RES-NODE-007, RES-SCOPE-015
 
 ## Overview
 
@@ -46,11 +49,9 @@ The header's first 16 bytes have the same logical shape as a node's first 16 byt
 the header functions as the tree's virtual root node. — `RES-NODE-016`,
 `RES-HDR-017`, `RES-HDR-018`
 
-`0x08` is that root node's own child count. The value domains of `0x04` and `0x0C` are
-per-file constants rather than quantities a reader may derive: `0x04` is a legal array
-index anywhere in the table, not a count or a checksum, and `0x0C` carries the directory
-type with the optional sorted flag and no third value in the examined corpus. —
-`RES-HDR-005`, `RES-HDR-012`, `RES-HDR-013`
+`0x08` is the root's child count. `0x04` is a node-array index; it is
+not a count or checksum. `0x0c` carries the directory type and optional sorted
+flag. — RES-HDR-005, RES-HDR-012, RES-HDR-013
 
 ## Node record
 
@@ -72,7 +73,9 @@ should use the terminator/name bound rather than treating padding bytes as conte
 is never read by lookup, descent or sort, which refutes reading it as a per-node hash,
 id or checksum. — `RES-NODE-011`, `RES-NODE-014`
 
-## Minimal read algorithm
+<a id="minimal-read-algorithm"></a>
+
+## Read sequence
 
 ```text
 require u32(file, 0x00) == 0x31415926
@@ -109,12 +112,11 @@ Path processing has several important compatibility properties:
 - no Unicode normalization or general code-page conversion is part of the archive
   grammar. — `RES-TEXT-021`, `RES-PATH-025` (partially retracted), `RES-CASE-036`
 
-No byte-to-character conversion happens anywhere on the read path, and the sibling REG
-text store reaches the same conclusion through its own distinct reader. No examined
-archive name byte reaches the high half of the byte range, so the corpus cannot
-discriminate between candidate renderings that agree on ASCII: a code page for an entry
-name is a display convention of the consumer, not a property of the format. —
-`RES-TEXT-022`, `REG-TEXT-036`
+The read path performs no byte-to-character conversion. Names remain byte
+strings; no general non-ASCII code-page mapping is established.
+— RES-TEXT-022, REG-TEXT-036
+
+<a id="container-digest-versus-selected-member"></a>
 
 ## Archive identities and resolver
 
@@ -130,48 +132,36 @@ match, then falls back to configured loose-file directories. Because normal path
 an archive identity, the shipped archives mostly form disjoint namespaces rather than a
 single overlay-by-priority system. — `RES-SET-032`, `RES-ORDER-033`, `RES-IDENT-034`
 
-The leading path segment is matched against the resolving archive's own stored name by a
-direct case-sensitive byte compare — a narrower comparison than the case-insensitive
-child lookup used for every later component — which is why the whole path is lowercased
-first. The loose-file tier is anchored on the process working directory captured before
-entry, so which archives exist at all is an environment property rather than an archive
-property. Over the live archives of each preserved release the measured identity and
-cross-archive path collision counts are both zero, which is what makes registration
-order a search order and not a priority. — `RES-IDENT-024`, `RES-DIR-037`, `RES-COLL-038`
+The leading path segment is compared case-sensitively with the archive's
+stored name; subsequent components use the case-insensitive child lookup.
+The resolver lowercases the path before these comparisons. Its loose-file
+tier uses the process working directory captured before entry.
+— RES-IDENT-024, RES-DIR-037
 
 The original also supports an update-list mechanism that can mark an archive node so
 resolution falls through to a loose file. A compatible implementation may model this as
 an explicit override from archive member to filesystem resource. — `RES-MASK-035`
 
-The complete shipped archive-name inventory and path corpus are evidence about one game
-installation, not part of the container grammar, and are intentionally omitted here.
+<a id="acceptance-versus-corpus-invariants"></a><a id="publication-boundary"></a>
 
-## Acceptance versus corpus invariants
+## Validation
 
-The format grammar and the shipped corpus should not be conflated.
+Use explicit registry offsets and counts. Payload packing, tree reachability
+and lack of cycles are properties of the installed archives, not checks made
+by the original loader. EN and RU header values and registry slack can differ.
+— RES-ACCEPT-031, RES-GEOM-028, RES-HDR-029, RES-HDR-030, RES-TREE-009
 
-Observed corpus properties include well-formed trees, in-range payloads and exact
-payload tiling on the examined archives. However, some releases carry trailing registry
-slack, and some header-value patterns differ between EN and RU data. Therefore a reader
-must use the explicit registry offset/count fields rather than promoting one release's
-packing pattern into a universal requirement. — `RES-ACCEPT-031`, `RES-GEOM-028`,
-`RES-HDR-029`, `RES-HDR-030`
-
-The nodes form a tree with every node reachable and no cycles, and file payload ranges
-tile the data region exactly, over every blob measured. That is a measurement of the
-shipped corpus, not a rule the original reader enforces. — `RES-TREE-009`
-
-Useful defensive checks for independent software include:
+For a structurally bounded archive, check ranges without integer overflow:
 
 ```text
 regOffset >= 24
 regOffset + nodeCount*32 <= fileSize
 file node: off + size <= regOffset
-folder node: off + size <= nodeCount
+directory node: off + size <= nodeCount
 ```
 
-These checks protect the replacement implementation; they are not all asserted by the
-original reader.
+These are structural safety checks; the original loader does not enforce all
+of them. Bytes following the registry are not required to be absent.
 
 ## Two `&YA1` families
 
@@ -184,17 +174,9 @@ The same magic is used by two structurally distinct storage families:
 Do not select the parser from the magic alone. Use the surrounding file/context and the
 appropriate specification. — `RES-SCOPE-015`
 
-## Container digest versus selected member
+<a id="writer-guidance"></a>
 
-A differing whole-container digest does not imply that the members a consumer selects
-differ. Across the two preserved roots several containers have different whole-file
-digests while every map and store member selected by the current save corpus is
-byte-identical between them; one measured data payload differs at equal length. Compare
-the member actually used, not the archive that carries it, and do not read a differing
-container digest as evidence about an unmeasured member. The member inventory and the
-individual digests are corpus evidence and stay private. — `SAV-SUFF-301`
-
-## Writer guidance
+## Write sequence
 
 A conservative writer for the tail-registry form should:
 
@@ -209,13 +191,8 @@ A conservative writer for the tail-registry form should:
 There is no interoperability need to reproduce incidental padding/slack values from the
 original packer.
 
-## Publication boundary
+## Unknowns
 
-The private research contains exact executable addresses, reader/writer instruction
-sequences, complete shipped archive inventories and corpus hashes used to establish the
-rules above, including the address map of the original reader, lookup and writer. They
-are not required to implement the public binary grammar and are not reproduced in this
-edition. — `RES-CODE-020`
-
-Unknown or malformed-input behaviour should remain explicit rather than being inferred
-from a third-party implementation.
+The complete malformed-input behavior and a general non-ASCII entry-name
+mapping remain unspecified. Reserved node words have no established
+semantic value beyond the writer and lookup rules above.

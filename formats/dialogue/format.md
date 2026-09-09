@@ -1,29 +1,28 @@
-# DIALOGUE — the window a mission's script speaks through — specification (partial)
+<a id="dialogue--the-window-a-missions-script-speaks-through--specification-partial"></a>
 
-Level 3. Promoted, evidence-backed claims only. Ledger: `claims/dialogue.md`.
+# Dialogue windows and announcements
 
-**Status: partial (◐).** Read at instruction level: both announcement senders and their shared
-transport, the client dispatcher's whole opcode map, the session window's `0x433` arm with both
-of its negatives, the panel class end to end (13 functions, 0 orphan bytes), the tag scan's
-vocabulary, and the text control's wrap-and-clamp. `DLG-MSGNUM-025`…`DLG-SOUND-028` add the mission number's own field, the
-eight sex-and-class conditionals and the `sound=` consumer. Not specified: what the four
-npc-flag conditionals *do* once matched; the `%s` of the speech name; the lose chain past
-`0x41e`; whether text past the clamp is reachable by any route; where the campaign's list
-of valid mission numbers is loaded from.
+Script and outcome messages select a dialogue or outcome panel through the
+client dispatcher. Text resources, speaker flags and current panel state
+control the displayed content. Missing text is silent; an announcement
+arriving while a dialogue is open is discarded. — DLG-PATH-002 (amended),
+DLG-MSGNUM-025
 
-This is not a file format. It is the seam between the script runtime (`formats/trigger`), the
-mission (`formats/mission`) and the container (`formats/res`). The glyph rule — byte → glyph →
-pixel and the font atlases — is specified by `TEXT-CONV-001` (partially retracted)…`TEXT-TILDE-009` and is deliberately absent here.
+The four NPC-flag conditional effects, complete speech-name construction,
+text beyond the clamp and source of the valid-mission list remain Unknown.
+Glyph conversion is defined in [TEXT](../text/format.md).
 
-## The one thing a consumer must not get wrong
+<a id="the-one-thing-a-consumer-must-not-get-wrong"></a>
 
-**An announcement whose text does not ship is silent, and an announcement that arrives while a
-dialog is open is discarded.** Neither is an error path: both are ordinary returns with no
-message, no fallback and no retry. A consumer that logs, falls back, or queues shows the player
-something the original never showed — and on the English release that is 19 of the campaign's
-242 announcements.
+## State and identity
 
-## The path
+An absent text resource returns without fallback, retry or error. If the
+dialogue-open flag is set, the arriving announcement is dropped.
+— DLG-PATH-002 (amended)
+
+<a id="the-path"></a>
+
+## Message route
 
 ```
 script instant 2          FUN_004ea1b3   opcode 0xb6 into the static message at 0x00609c38
@@ -56,13 +55,15 @@ record embedded at `campaign+0x548`, written only through that record's own sett
 the image writes displacement `0x660`.
 
 **Reserved value.** `<NN> = 255` is the mission-lost sentinel and reaches the lose panel, not a
-text window. `<NN>` is otherwise unconstrained; the shipped corpus uses 0..25.
+text window. `<NN>` is otherwise unconstrained; installed text identifiers use 0..25.
 
 **Mode.** The `0x433` arm carries no `campaign+0x6bc` test, so it runs in any session. Only the
 map load is mode-gated: `campaign+0x6bc == 2` builds `<n>.alm` from `campaign+0x660`, and any
 other value loads the map named by the CString at `campaign+0x6b4`.
 
-## The window
+<a id="the-window"></a>
+
+## Panel state
 
 The failure panel is **not** the following dialogue class. Its constructor `00446de2` installs
 vtable `00598b78`; slot `+0x48` is `00447063`, forwarding the base result/close mechanism.
@@ -86,7 +87,9 @@ Six call sites, all six shipping their resources: mission events (`battle\m%d\ev
 inn's NPCs (`inn\NPC\npc%02dm%d`), the mercenary hall (`inn\mercenary\npc%02d`, `…\npc35`), the
 shop (`shop\npc31m%d`) and the training hall (`training\npc34m%d`).
 
-## The speaker's figure
+<a id="the-speakers-figure"></a>
+
+## Speaker figure
 
 Child 12's picture is built by `FUN_00421b46(npcId)` and comes in two forms, chosen by the
 speaker's own flags word. `DLG-FIGURE-020`, `DLG-FIGURE-021`, `DLG-SPEAKER-022`.
@@ -176,7 +179,9 @@ uses is decided by the resource's leaf name**: a leaf beginning `event` gives `n
 any other leaf gives `%sp%d`. That is the only family test in the whole surface that reads the
 file name rather than the directory.
 
-## Measurement
+<a id="measurement"></a>
+
+## Text measurement
 
 The text control wraps into a line array and computes
 

@@ -1,85 +1,82 @@
-# Format specifications (level 3)
+<a id="format-specifications-level-3"></a>
 
-One folder per ROM1-native format, each holding a `format.md` that contains **only
-promoted, evidence-backed claims**. Anything speculative stays in an experiment
-until it earns its way here.
+# Format and runtime references
 
-## Target formats
+These references describe the installed ROM1 resource families and their
+promoted loader, writer and behavioral contracts. Each page keeps unknown
+fields and limits explicit. Resource scope: `INV-CORPUS-001`, `INV-SIG-002`,
+`INV-SCOPE-005`.
 
-Derived purely from the bounded install census promoted as `INV-CORPUS-001`,
-`INV-SIG-002`…`004` and `INV-SCOPE-005`.
-Status reflects how much of the format is specified, not whether a file merely
-opens.
+<a id="target-formats"></a>
 
-| Format | Seen as | Nature | Status |
-|--------|---------|--------|--------|
-| **RES / LM** | `*.res`, `KIDS.LM` | Container archive, magic `26 59 41 31` | ☑ [specified](res/format.md) (core; `@4`/`@12`/node`@0` open) |
-| **REG** | `*.reg` (inside `.res`) | Nested archive / sprite manifest | ☑ [specified](reg/format.md) (`REG-FMT-031`, `REG-REC-032` (record layout retained; lookup clause partially retracted), `REG-KIND-033`/`REG-KIND-034`, `REG-VAL-024`…`REG-VAL-029`, `REG-KEY-044`, `REG-ROSTER-052`, `REG-CUT-053`; 64 claim rows); `data/map.reg`'s own per-key table open |
-| **SPR256** | `*.256` (inside `.res`) | 8-bit paletted sprite, multi-frame | ◐ [structure](spr256/format.md) done (`SPR256-STRUCT-001`…`SPR256-CORPUS-006`); RLE/palette/roles open |
-| **SPR16A** | `*.16a`, `*.16` (inside `.res`) | 16-bit-word sprite | ☑ [specified](spr16a/format.md) (`SPR16A-STRUCT-001`, `SPR16A-RLE-002`, `SPR16A-RLE-003`, `SPR16A-PIX-011`); framebuffer packing + `.16` fonts open |
-| **PAL** | `*.pal` (inside `.res`) | Palette — the per-tier and per-owner recolour | ☑ [specified](pal/format.md) (both shapes, the shade-table build, the `Palette` selector and `face`; the owner index’s writer open) |
-| **ALM** | `*.alm`/`*.ALM`, in root + `scenario.res`, magic `M7R\0` | Map | ☑ [specified](alm/format.md) (`ALM-HDR-001`, `ALM-FRAME-031`, `ALM-META-008`…`ALM-META-010`, `ALM-GRID-012`…`ALM-GRID-014`, `ALM-CLS-035`…`ALM-CLS-038`, `ALM-CORP-060`; 87 claim rows); the placeable-definition database's populating file, the trigger's 64-byte junk field and `Target_Item` open |
+## ROM1 files and resource contracts
+
+| Format | Seen as | Nature | Reference and limits |
+|---|---|---|---|
+| **RES / LM** | `*.res`, `KIDS.LM` | Container archive, magic `26 59 41 31` | [Reference](res/format.md): Header, tree nodes, payload addressing and emission; unnamed header/node fields remain Unknown |
+| **REG** | `*.reg` inside archives | Hierarchical typed store | [Reference](reg/format.md): Record/pool encoding, lookup, writing, inheritance and consuming registries; complete map.reg key table remains Unknown |
+| **SPR256** | `*.256` inside archives | Palette-indexed sprite frames | [Reference](spr256/format.md): Frame/trailer layout, byte RLE and class sheet roles; named overlay and palette anomalies remain Unknown |
+| **SPR16A** | `*.16a`, `*.16` inside archives | Word-RLE sprites and byte-RLE fonts | [Reference](spr16a/format.md): Container, literal blend, font glyphs/advances and resource consumers; framebuffer globals and wider malformed-input behavior remain Unknown |
+| **PAL** | `*.pal` inside archives | Palette tables and recoloring | [Reference](pal/format.md): BMP/flat layouts, shade tables, tier/owner selection and first-message state; unnamed runtime cases remain Unknown |
+| **ALM** | `*.alm`/`*.ALM`, loose or in `scenario.res` | Typed map records, magic `M7R\0` | [Reference](alm/format.md): Header/version/order rules, metadata, grids, placements, script, loot and caster records; unnamed fields and full arbitrary-map authoring remain Unknown |
 | **SAV** | `game*.sav` | Save game, magic `Asg&` | ◐ [Format reference](sav/format.md): envelope, compression, object and field tables, city/world grammar, read/write sequence and required relations; unresolved field meanings and authoring limits are explicit (`SAV-FRAME-021`, `SAV-FULLREAD-252`, `SAV-WRITERAUDIT-380`) |
-| **FAME** | `famehall.dat` | Hall-of-fame records | ☑ [specified (core)](fame/format.md) (`FAME-HDR-001`…`FAME-BOUNDARY-016`; 16 claim rows); ordinary reader/insertion/display/producer/writer contract, both tails opaque and carried; broader semantics and native exceptional lifecycle open |
-| **MENU** | `main.res:graphics/mainmenu/*` | Main-menu asset contract (mask + overlays) | ☑ [specified](menu/format.md) (base/mask/overlays + hit-test + placement; disable-source/cmd-ids open) |
-| **VIDEO/MUSIC** | `Allods/VIDEO*.RES`, `Allods/MUSIC.RES` | A/V payloads | ☑ [specified](video/format.md) (functional edition; music in `MUSIC.RES` — `VIDEO-MUSIC-001`…`VIDEO-MUSIC-012`; SFX — `VIDEO-SFX-013`…`VIDEO-SFX-021`; cutscenes — `VIDEO-029`…`VIDEO-036`, `VIDEO-045`…`VIDEO-051`; 36 claim rows); Smacker decoder internals and hardware/driver timing intentionally out of scope |
-| **TERRAIN** | `graphics.res:terrain.3d` | Tile graphics + cell geometry | ☑ [specified (core)](terrain/format.md) (tile word → pixel, geometry,16-bpp lighting/shroud and passability);8-bpp, legacy non-3d and named runtime bounds remain open |
-| **DAT** | `world.res:data/data.bin` | Placeable-definition database | ☑ [specified (core)](databin/format.md) (all eleven collections, placement and promoted item/magic consumers); second group-C dword array and group-D extra-byte meanings remain Unknown |
-| **TEXT** | `main.res:text/*.txt`, `patch.res:patch.txt` | One-byte string tables + display/input encoding | ☑ [specified](text/format.md) (functional edition; `TEXT-STRTAB-023`, `TEXT-NAMEIN-024`, `TEXT-COLL-025`, `TEXT-CHARGEN-027`…`TEXT-CHARGEN-029`, `TEXT-UI-032`…`TEXT-UI-047`; 45 claim rows); a Unicode mapping and malformed-byte behaviour are intentionally out of scope |
+| **FAME** | `famehall.dat` | Hall-of-fame record list | [Reference](fame/format.md): Record layout, ordinary reader, insertion, display and writer; two opaque tails are carried and exceptional lifecycle remains Unknown |
+| **MENU** | `main.res:graphics/mainmenu/*` and UI resources | Asset, hit-test and dialog contracts | [Reference](menu/format.md): Mask indices, bitmap placement, command panels and dialog frames; named disable/command and loader details remain Unknown |
+| **VIDEO/MUSIC** | `Allods/VIDEO*.RES`, `Allods/MUSIC.RES` | Video, music and sound resources | [Reference](video/format.md): Archive routes, resource names, selection and playback controls; decoder internals and hardware timing are outside this reference |
+| **TERRAIN** | `graphics.res:terrain.3d` and ALM planes | Tile graphics, geometry and cell rules | [Reference](terrain/format.md): Tile-word lookup, 16-bpp lighting, fog, sprites, structures and passability; 8-bpp/legacy paths and named runtime boundaries remain Unknown |
+| **DAT** | `world.res:data/data.bin` | Definition database | [Reference](databin/format.md): All eleven collection grammars and established consumers; selected raw-array/extra-byte meanings remain Unknown |
+| **TEXT** | `main.res:text/*.txt`, `patch.res:patch.txt` | Byte string tables and UI text | [Reference](text/format.md): Splitting, display/input transforms, font/name/collision rules and localized consumers; complete Unicode and malformed-byte behavior remain Unknown |
 
-## Not a file format — simulation areas with their own spec
+<a id="not-a-file-format--simulation-areas-with-their-own-spec"></a>
 
-The same three levels apply to engine *behaviour* we have read out of `rom.exe`: an experiment, a
-claim ledger, a promoted spec. These folders hold no file layout.
+## Runtime contracts
 
-| Area | Spec | Status |
-|------|------|--------|
-| **MOVE** — unit movement & path selection | [`move/format.md`](move/format.md) | ◐ search, costs, termination, route, reservation, step, refresh policy specified; tick order + the blocked-cell verdict table open |
-| **SHOP** — stock, price & trade | [`shop/format.md`](shop/format.md) | ◐ object graph, generator, candidate pool, enchantment stage, both price formulas and the refusal specified; the unit price's own derivation, the RNG seed and whether stock survives a save open |
-| **TAVERN** — mercenary hire | [`tavern/format.md`](tavern/format.md) | ◐ the type space, the shelf gate, the hire vector, the price and level ladders and the death/recovery rule specified; what a mercenary *is* once spawned, the inn's art and the multiplayer path open |
-| **HERO** — chargen, the derived-stat graph, the combat loop | [`hero/format.md`](hero/format.md) | ◐ see `claims/hero.md` |
-| **MAGIC** — the spellbook, the cast, the resistance | [`magic/format.md`](magic/format.md) | ◐ see `claims/magic.md` |
-| **ANIM** — the simulation ↔ presentation boundary | [`anim/format.md`](anim/format.md) | ◐ see `claims/anim.md` |
-| **SESSION** — the game's own lifecycle: object, phase, clock, map load, mission end | [`session/format.md`](session/format.md) | ◐ the two counters, the rate ladder, the map-load order, the mission-end arm and the hero-creation chain specified; where a **win** is decided, the trigger machinery and the network client's clock open |
-| **DIALOGUE** — the window a mission's script speaks through, and its lifecycle | [`dialogue/format.md`](dialogue/format.md) | ◐ the announcement transport, the client dispatcher, the window class and its six entries, both negatives, the pager, the tag scan and the wrap/clamp specified; the conditional tag arms' effects, the composed speech name and the lose chain past `0x41e` open |
-| **TRIGGER** — the runtime that evaluates a map's authored mission script | [`trigger/format.md`](trigger/format.md) | ◐ the one-second pass, both dispatch tables read whole, the comparison arms, the fire-once latch, the save contract, the binder and the win/lose path specified; the helper routines behind a handful of arms open; what turns the outcome announcement into `0x41d` is specified for the win side in [`dialogue/format.md`](dialogue/format.md) |
-| **UNIT** — the non-hero actor: template → instance → combat inputs | [`unit/format.md`](unit/format.md) | ◐ creation specified end to end (ctor defaults, 38 streamed slots, equipment, the one-time fold) and there is **no derive** on this arm; `actor+0x14`, the equipment-name parse and six constructor call sites open |
-| **ITEM** — the item, its container and the sack | [`item/format.md`](item/format.md) | ◐ the four item classes, the definition binding, the container and its load, the fourteen equipment slots, both move commands, the pick-up, death and the sack's whole lifecycle specified; the `Armors`/`Shields`/`Magic Items` columns, `item+0x44`'s value space and the per-class `Equip` bodies open |
-| **AI** — target acquisition, the diplomacy matrix, and idle/guard/patrol behaviour | [`ai/format.md`](ai/format.md) | ◐ the consulted relation, candidate population, selection, the three radii, who runs the AI and how often, the group/per-actor state machines, guard and patrol specified (`AI-FILTER-001`…`AI-GUARD-007`, `AI-TICK-008`…`AI-DIFF-016`; 192 claim rows); order execution (`formats/move`), the four player-issued group orders, the candidate scorer and the line-of-sight predicate open |
-| **MISSION** — starting a campaign mission and ending it in a win | [`mission/format.md`](mission/format.md) | ◐ the player-placement routine, the drop-cell RNG, the seat search, the four placement arms, the definition lookup and the entry/two-container writer boundary specified (`MISSION-DROP-002`, `PARTY-ORIGIN-010`…`PARTY-GATE-013`, `MISSION-VICTORY-035` (amended); 38 claim rows in `claims/mission.md`); the `DataBinID == 26` sentinel arithmetic and the inter-mission campaign-state arm open |
-| **TOWN** — town-exterior and tavern-interior reactions and animation | [`town/format.md`](town/format.md) | ◐ shop/tavern/school/gate entrance reactions, the bird/horse/baba/dervish episodes, tavern-interior draw/clocks and school training presentation specified (`TOWN-158` (partially retracted, see TOWN-405), `TOWN-211` (partially retracted, see TOWN-406), `TOWN-399`…`TOWN-447`); the wider town/world-map/rooms domain in `claims/town.md` (224 rows) is mostly not yet reified in a format page |
+These areas define inputs, state and transitions rather than a standalone
+file encoding. Their save fields link to the relevant stored formats.
+
+| Area | Reference | Contents and limits |
+|---|---|---|
+| **MOVE** | [Reference](move/format.md) | Domains, search costs, routes, reservations, step timing and refresh; complete blocked-cell verdict table and selected cell-boundary effects remain Unknown |
+| **SHOP** | [Reference](shop/format.md) | Stock generation, candidate/enchantment pools, price arithmetic, tray/payment/return and retained state; partial-selection gesture and first-shelf timing remain Unknown |
+| **TAVERN** | [Reference](tavern/format.md) | Mercenary types, shelf/hire gates, price/level rules and death recovery; selected pending-hire and native failure behavior remain Unknown |
+| **HERO** | [Reference](hero/format.md) | Character generation, skills/experience, ordered derived stats, equipment, combat and party continuity; named producer/lifecycle gaps remain Unknown |
+| **MAGIC** | [Reference](magic/format.md) | Spell definitions, books, power, casting, effects, projectiles and action gates; named consumers and runtime limits remain Unknown |
+| **ANIM** | [Reference](anim/format.md) | Drawable clocks, action phases, frame selection, numerals and composition; selected message meanings and native clock appearance remain Unknown |
+| **SESSION** | [Reference](session/format.md) | Construction, phases, clocks, speed, map load, mission end, input and viewport; selected network-client and lifecycle paths remain Unknown |
+| **DIALOGUE** | [Reference](dialogue/format.md) | Announcement transport, text windows, paging, tags, wrap/clamp and outcome dispatch; selected tag effects and composed names remain Unknown |
+| **TRIGGER** | [Reference](trigger/format.md) | ALM compilation, register/latch state, checks/actions, comparisons, binding and mission outcomes; dormant or unreferenced arms keep their own limits |
+| **UNIT** | [Reference](unit/format.md) | Definition-to-instance creation, equipment, overrides, combat inputs, Building/cell interactions and presentation; selected field/callsite meanings remain Unknown |
+| **ITEM** | [Reference](item/format.md) | Class fields, effect grammar, formulas, containers, equipment, transfers, activation and sacks; unnamed columns/flags and selected lifecycle paths remain Unknown |
+| **AI** | [Reference](ai/format.md) | Input commands, ownership, diplomacy, sight, target selection, group/member states, orders and retreat; broader execution and saved-continuation gaps remain Unknown |
+| **MISSION** | [Reference](mission/format.md) | Placement, mission entry/exit, persistent party and campaign state (`PARTY-ORIGIN-010`); selected sentinel and fresh-campaign gates remain Unknown |
+| **TOWN** | [Reference](town/format.md) | Exterior reactions, tavern drawing/clocks and school presentation; wider room/world-map behavior is outside this page |
 
 ## ROM2
 
-ROM2 (Rage of Mages II) work in this repository is format research only — an identity
-survey of ROM2 bytes against ROM1's own grammar, not a second game this project builds
-(owner direction). The family index, with its own per-surface result column, is
-[`rom2/README.md`](rom2/README.md); compiled-code relationship to ROM1
-(`claims/rom2-engine.md`, `R2-ENGINE-*`) is a structural binary comparison, not a stored
-byte format, and has no page here.
+The [ROM2 family index](rom2/README.md) covers stored layouts and selected
+loader/header contracts. It does not establish complete ROM2 decoding or
+runtime equivalence with ROM1. The structural compiled-binary relationships
+in `claims/rom2-engine.md` have no standalone stored format page.
 
-The seven bounded layout/header surveys are complete. Their checkmarks report
-matched structure or characterized nonidentity, not complete ROM2 decoding.
-Each row retains the excluded payload/runtime questions beside its result.
+| Format | Seen as | Reference | Contents and limits |
+|---|---|---|---|
+| **RES** | `Root archives` | [Reference](rom2-res/format.md) | Header/tree addressing and standard emission; payload equivalence between world/world_srv remains Unknown (`R2-ASSET-001`) |
+| **ALM** | `Loose and scenario.res maps` | [Reference](rom2-alm/format.md) | Record types 0–12, version gates and declared/actual extents; new field meanings and writer accounting remain Unknown |
+| **Data.bin** | `world/world_srv data and root templates.bin` | [Reference](rom2-databin/format.md) | A–H layouts, C raw14 extension and bounded templates.bin divergence; wider table semantics remain Unknown |
+| **REG** | `Nested &YA1 resources` | [Reference](rom2-reg/format.md) | 24-byte header, records and pool; ROM2 kind semantics, lookup and value consumers remain Unknown |
+| **Sprite / palette** | `*.16a, *.16, *.256, *.pal` | [Reference](rom2-spr/format.md) | Frame/trailer/palette shapes and named residues; full pixel/RLE/color semantics remain Unknown |
+| **TEXT** | `main.res text and patch.txt` | [Reference](rom2-text/format.md) | String-table structure and known byte ranges; a complete named encoding and decoder remain Unknown |
+| **Session frame** | `Socket and DirectPlay receive paths` | [Reference](rom2-net/format.md) | Eight-byte header and admission/decompression bounds; payload/opcode grammar and ROM1 equivalence remain Unknown (`R2-SESSION-003`) |
 
-| Format | Seen as | Nature | Status |
-|--------|---------|--------|--------|
-| **RES** | 11 files at the ROM2 install root | Container archive, magic `&YA1` (ROM1's own) | ☑ [identity survey](rom2-res/format.md) (`R2-ASSET-001`, `R2-ASSET-012`; 0 violations, 11/11 clean); `world.res`/`world_srv.res` payload-level equality on the 4 shared same-size entries open |
-| **ALM** | `*.alm`/`*.ALM` at the root + nested in `scenario.res`, magic `M7R\0` | Map | ☑ [identity survey](rom2-alm/format.md) (`R2-ASSET-002`, `R2-ASSET-003`, `R2-ASSET-017`…`R2-ASSET-024`, `R2-ASSET-027` (partially retracted: maxima attribution only), `R2-SESSION-010`);83 full record chains and mapped per-type layouts with documented overhang; new field meanings and writer size accounting remain open |
-| **Data.bin** | `world.res`/`world_srv.res:data/data.bin`, root `templates.bin` | Placeable-definition database | ☑ [identity survey](rom2-databin/format.md) (`R2-ASSET-029`…`R2-ASSET-033`); both A–H streams tile exactly after C10→14 correction; `templates.bin` remains a bounded divergent input, wider table semantics open |
-| **Inline registry** | nested `&YA1` payloads inside `.res` containers, found by magic | Nested archive / key-value tree | ☑ [identity survey](rom2-reg/format.md) (`R2-ASSET-006`; 19/19 clean tiling); record value content and the `kind` bitfield unsurveyed on ROM2 data |
-| **Sprite / palette** | `*.16a`, `*.16`, `*.256`, `*.pal` inside `.res` containers | Sprite + palette containers | ☑ [identity survey](rom2-spr/format.md) (`R2-ASSET-007`…`R2-ASSET-009`);623 exact .16a,159 palettes,1916 exact .256 plus8 stubs/5 ROM1-identical residues; all3 .16 frame streams valid,1 exact and2 ROM1-identical residues; pixel/RLE/color decoding excluded |
-| **Text** | `main.res:text/*.txt`, `patch.res:patch.txt` | String tables | ☑ [identity survey](rom2-text/format.md) (`R2-ASSET-010`, `R2-ASSET-011`; container preserved and extended); byte-range encoding measured at 66.36% overlap with ROM1's own two source blocks, not 100%, and the specific 8-bit encoding is not named |
-| **Session wire frame** | `CBufferManager::ReceiveData`, read by `allods2.exe`/`a2server.exe` | 8-byte socket record header | ☑ [header survey](rom2-net/format.md) (`R2-SESSION-003`; the header's four fixed-offset fields specified); payload/opcode grammar and ROM1 protocol equivalence are excluded |
+<a id="explicitly-out-of-scope-not-rom1-native"></a>
 
-## Explicitly out of scope (not ROM1-native)
+## External formats
 
-Standard or third-party formats we only *identify*, never re-derive:
+These identified standard or third-party formats have no native-format
+reference here:
 
-- `Map Editor.opt` — Microsoft OLE2 compound document (`D0 CF 11 E0 …`).
-- `*.bmp`, `*.wav` inside archives — standard Windows BMP / RIFF WAVE.
-- GOG / system wrappers: `goggame-*`, `unins000*`, `ddraw.dll`, `smackw32.dll`,
+- `Map Editor.opt`: Microsoft OLE2 compound document (`D0 CF 11 E0 …`).
+- `*.bmp`, `*.wav`: Windows BMP and RIFF WAVE.
+- GOG/system wrappers: `goggame-*`, `unins000*`, `ddraw.dll`, `smackw32.dll`,
   `aqrit.cfg`, `webcache.zip`, `Help/*.htm`, `Hints/*.gif`, `*.ico`, `*.lnk`.
-- `rom.exe`, `Map Editor.exe` — PE executables (the engine itself, not a data format).
-
-Status key: ☐ not started · ◐ in progress · ☑ specified (core) · ★ complete.
+- `rom.exe`, `Map Editor.exe`: PE executables.

@@ -1,19 +1,12 @@
-# FAME hall-of-fame (`famehall.dat`) — specification (core)
+<a id="fame-hall-of-fame-famehalldat--specification-core"></a>
 
-Level 3. The core covers the ordinary record reader, insertion, display input,
-two located record producers and writer. The last two words are opaque values
-with a supported lifecycle contract: the located producers initialize both to
-zero, record transfers preserve both, and the traced display body reads neither.
-They are not padding or a required-zero validation field. Their purpose beyond
-these paths remains Unknown. — FAME-READER-009, FAME-INSERT-011,
-FAME-DISPLAY-012, FAME-TAILS-013, FAME-PRODUCER-014, FAME-SEED-015
+# FAME hall of fame (`famehall.dat`)
 
-The EN and RU installs contain the same executable and the same 228-byte table.
-The two file copies therefore provide one distinct content sample, not two
-independent content populations. The core contract comes from the original
-instructions; synthetic instruction examples are conditional on their memory
-and I/O environment. No full native runtime or malformed-input compatibility
-claim follows. — FAME-DEFAULT-008, FAME-BOUNDARY-016
+The file stores a count followed by variable-length names and three words per
+record. The ordinary reader preserves stored order and both opaque tail
+words. Insertion and default seeding are separate operations. The tails are
+not padding or required-zero validation fields. — FAME-READER-009,
+FAME-INSERT-011, FAME-TAILS-013, FAME-SEED-015
 
 ## Wire layout
 
@@ -94,7 +87,9 @@ number-formatting helper. Neither trailing word is read directly by that
 body. The helper's final text transformation and native rendered pixels are
 outside this contract. — FAME-DISPLAY-012, FAME-TAILS-013
 
-## Located producers
+<a id="located-producers"></a>
+
+## Score producers
 
 The non-default producer takes its name from a char buffer at a live source
 object's `+e4`. With signed words `A = campaign+124`, `B = campaign+128` and
@@ -110,25 +105,35 @@ The fallback producer obtains names from UI string-table indices 263 through
 272. For the first nine it starts a score base at 70000, subtracts 7000 per
 row and adds a random-derived remainder modulo 5000. It assigns zero score
 to the last row. Both trailing words stay zero and all ten records pass
-through the same insertion routine. This resolves the old choice between
-independent display defaults and a file-seeding source. — FAME-DEFAULT-008,
+through the same insertion routine. — FAME-DEFAULT-008,
 FAME-SEED-015
 
-## Sample facts and remaining boundaries
+<a id="sample-facts-and-remaining-boundaries"></a>
 
-The shipped table has ten records, ASCII names, strictly descending scores
-from 70006 to zero, and 80 zero bytes across the two trailing words. Those
-are measurements of this table; the broader ASCII and strict-order constraints
-in the old name/score claims are partially retracted. Neither exact content
-identity nor the
-absence of earlier play is proved by the resemblance to fallback defaults.
-— FAME-HDR-001, FAME-REC-002, FAME-NAME-003, FAME-SCORE-004,
-FAME-UNK-005, FAME-DEFAULT-006, FAME-DEFAULT-008
+## Unknowns
 
-Allocation failure, short reads, oversized or overflowing lengths/counts,
-exceptions, string lifetime and an untraced helper edge remain
-outside the ordinary successful-transfer account. Direct-call and literal
-pointer censuses do not exclude computed or aliased consumers elsewhere.
-In particular, the two tail words have no inferred level, mission, difficulty
-or time meaning. No native nonzero-tail lifecycle or full score-production
-session was witnessed. — FAME-TAILS-013, FAME-BOUNDARY-016
+Names are not restricted to ASCII and loaded scores need not be strictly
+descending. Those earlier clauses of FAME-NAME-003 and FAME-SCORE-004 are
+partially retracted. Installed content does not establish prior-play history.
+— FAME-NAME-003, FAME-SCORE-004, FAME-DEFAULT-006, FAME-DEFAULT-008
+
+Allocation failure, short reads, overflowing lengths/counts, exceptions and
+string lifetime are outside the ordinary successful-transfer contract.
+The effective name encoding, upstream limits and final display transformation
+remain Unknown. Neither tail word has an established level, mission,
+difficulty or time meaning; a full native nonzero-tail lifecycle and complete
+score-production session remain unverified. — FAME-TAILS-013, FAME-BOUNDARY-016
+
+## Read and write sequence
+
+1. Read u32 count and process that many records in stored order.
+2. Read u32 nameSpan and that many name bytes. The ordinary CString value
+   ends at the first NUL; the complete span is still consumed.
+3. Read score, tail1 and tail2 as independent four-byte words.
+4. Retain order, ties and tails. Loading does not sort, trim or deduplicate.
+
+To write, emit the current count, then each CString's byte length plus one,
+its bytes and final NUL, and all three stored words. The output size is
+`4 + sum(16 + nameSpan)`. Use zero tails only for the two specified record
+producers; preserve them in ordinary record transfers. — FAME-REC-002,
+FAME-WRITE-007, FAME-STRING-010, FAME-TAILS-013

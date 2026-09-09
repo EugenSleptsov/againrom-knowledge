@@ -1,0 +1,74 @@
+# Diplomacy
+
+[Reference](format.md)
+
+## Diplomacy matrix
+
+50 × 50 bytes at `session+0xa9c4`, all zero at construction — with nothing written, no unit ever
+finds an enemy. Cell `[i][j]` is indexed by `Player+0x04`, stride 50; the engine reads three
+bits of it.
+
+| bit | meaning |
+|---|---|
+| 0 | *i* treats *j* as hostile. This is the only bit acquisition tests. |
+| 1 | locked: combat may not turn this pair hostile. Forced on every diagonal. |
+| 2 | read (`AND …,0x7`) and unused by any shipped map. |
+
+**Row 0 and column 0 are not padding.** Column 0 holds each player's owner kind and row 0 marks
+the slot live; the join routine writes both and reads them back. A consumer that treats index 0 as
+unused loses the join rule.
+
+### The six writers
+
+Ordered by when they run. Only the last two are symmetric, and only one of the six re-scans.
+
+| # | when | routine | writes | symmetric? | respects bit 1? |
+|---|---|---|---|---|---|
+| 1 | map load | `FUN_004e1924` | the `.alm` type-5 record's sixteen `u16` at file `+0x2c` into columns 1…16 of that player's row (low byte only), then forces the diagonal to 2 | one way | n/a |
+| 2 | a player joins | `FUN_0053d8a0` | column 0 = owner kind (kind 2 stored as 0), row 0 = 1, then for every live slot one of four template bytes chosen by whether the two column-0 flags agree; forces the diagonal to 2 | both | no |
+| 3 | a player leaves | `FUN_0053d9a0` | row 0 = 0 for that slot | n/a | n/a |
+| 4 | a mission join | `FUN_004d303e` / `FUN_004d8963` | clones a reference player's row *and* column, allies with it, forces neutrality or 2 between participants | both | no |
+| 5 | script action **10** | `FUN_00539be0` | `matrix[p0][p1] = (v &~ 3) + p2` | **one way** | **no — it clears it** |
+| 6 | session command **0x45** | `FUN_004d5dd8` | assigns the whole row `matrix[setter][*]` from a `u16` array in the command body, each element `& 7` | **one way** | **no** |
+| 7 | a blow landing, or a spell cast | `FUN_0053d9b0` | sets bit 0 (`OR AL,0x1`) in both directions, each direction **separately** gated on `(cell & 3) == 0` | both | **yes** |
+
+The template of writer 2 is four bytes at `session+0xa9bc`, set by the constructor to
+`{1, 1, 0, 0}`: with those values a joining player is hostile both ways to exactly the live
+players whose column-0 flag differs from his, and neutral to the rest.
+
+### What a change reaches
+
+Writers 1–6 are **bare**: they change the byte and nothing else. The one exception is the
+spell-cast entry into writer 7, which rebuilds the caster's group candidate list in the same
+instruction stream. Everything else propagates only because a consumer re-reads the cell — which
+for the 95.6 % of hostile placements under a group order means the next AI tick, since the
+candidate list is rebuilt and re-filtered on every evaluation. **An order already issued keeps
+running**: making a faction friendly does not stop a unit that is already attacking, it stops that
+unit being re-selected.
+
+### What the script can do with it
+
+Action opcode **10** writes `matrix[p0][p1]`, one direction, clearing the low two bits and then
+**adding** `p2`. Nothing clamps `p2`, so a value ≥ 4 carries into the bits above and ≥ 256
+truncates in the byte store; shipped maps use only `{0, 1, 2}`. Check opcode **10** reads
+`matrix[A][B] & 3` into a script slot — **narrower than the action can write**.
+
+Mutual changes require two action nodes, one for each ordered pair;
+one action never updates the reverse relation. — AI-DIPLO-005
+
+### Persistence and the wire
+
+The matrix is serialised **verbatim** as part of the 2508-byte (`8 + 2500`) sub-object at
+`session+0xa9bc`, in the world half of a save, and read back verbatim. Nothing re-derives it from
+the map on a save load. Outbound, a changed row is broadcast as message `0xb9` carrying the whole
+row widened to `u16`; inbound, session command `0x45` receives a row in the same width. The
+relation is byte-wide in the simulation and **word-wide on the wire in both directions**.
+
+The relation is directional: `matrix[A][B]` and `matrix[B][A]` can
+differ, including hostility bit 0. Store ordered pairs independently.
+— AI-DIPLO-005
+
+`World\Data\ai.reg` contributes one value on this path: `[Scanning] MinimalGuardRange`, a floor
+on a group's notice radius. The code default is 10; **the shipped file sets 8**. The file has four
+records in total and its other scalar, `[Tasker] IntelligentCons` = 15, has no literal anywhere in
+the image — nothing reads it.

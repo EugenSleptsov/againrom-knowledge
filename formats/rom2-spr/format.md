@@ -1,65 +1,58 @@
-# ROM2 sprite / palette containers — identity survey
+<a id="rom2-sprite--palette-containers--identity-survey"></a>
 
-**Status: ☑ specified (identity-survey core).** The compared population,
-matching layouts and measured divergences below complete this page's declared
-survey. Unread payload semantics remain explicit; this is not complete decoding.
+# ROM2 sprite and palette containers
 
-Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-007` (`.16a`/
-`.256`), `R2-ASSET-008` (`.pal`), `R2-ASSET-009` (`.16`). Cross-reference only, not
-evidence: ROM1's own [`formats/spr16a/format.md`](../spr16a/format.md),
-[`formats/spr256/format.md`](../spr256/format.md),
-[`formats/pal/format.md`](../pal/format.md), and the pre-existing ROM1 claims
-`SPR256-EXC-017`/`SPR256-EXC-020`, `SPR16A-FONT-014`/`SPR16A-FONT-021`.
+The preserved `.16a`, `.256`, `.16` and `.pal` resources have the container
+shapes below. This reference establishes frame geometry and residual regions;
+it does not establish ROM2 RLE, pixel, color or runtime draw semantics.
+— R2-ASSET-007, R2-ASSET-008, R2-ASSET-009
 
-Seen as: `.16a`, `.16`, `.256` (inside `.res` containers, mainly `graphics.res`)
-and `.pal` (same), found by the extension census over all 11 containers — every
-result below is the FULL population found that way, not a capped sample. The
-private sample listings cap their displayed rows at 8 per container/extension;
-the population counts here do not. `R2-ASSET-007`, `R2-ASSET-008`.
+<a id="16a--256-result"></a><a id="16-result"></a>
 
-## `.16a` / `.256` result
+## Sprite envelope
 
-Identical container framing. `.16a`: **623/623** (100%) walk with exact tiling
-from the trailer-derived frame count through every frame's `[w,h,dataSize,data]`
-header to the trailer boundary, 0 exceptions (ROM1 EN and RU: 542/542 each, same
-code, positive control). `.256`: **1916/1929** (99.3%) walk exactly clean; of the
-remainder, 8 are 0-byte stub entries (not evaluable — e.g. `cursors/cast.256`,
-`cursors/defend.256`) and **5 show residue** before the trailer despite every
-frame validating internally. All 5 are **sha256-identical** to the
-identically-named node in ROM1 RU — the already-published `SPR256-EXC-017`
-Bucket-B pattern (a bracketed secondary section appended after the frame data,
-resolved by `SPR256-EXC-020` as loader-inert) reproduced byte for byte, not a
-ROM2-specific extension. `R2-ASSET-007`.
+| Family | Prefix | Frame | Final trailer |
+|---|---|---|---|
+| `.16a` / `.256` | Optional 1024-byte palette selected by trailer bit 31 | u32 width, u32 height, u32 dataSize, dataSize bytes | Low 31 bits = count; bit 31 = palette |
+| `.16` | No palette | Same three-u32 frame header and counted data | Plain u32 frame count |
 
-## `.pal` result
+Read the trailer, select the origin, then walk the counted records using
+`12+dataSize`. Bound every frame against its containing resource. A zero-byte
+archive entry is a stub, not a zero-frame instance of this envelope.
+The same region order defines a structural emitter, but original ROM2 pixel
+encoding and writer acceptance remain unspecified. — R2-ASSET-007, R2-ASSET-009
 
-Identical to one of ROM1's two known shapes (BMP colour table at a fixed seek, or
-a flat 16×1024-byte block) on **159/159** (100%) of the full population — 0
-matching neither shape. Of the 156 matching the BMP shape, all **156/156** also
-pass the strict field-value test `bfOffBits == 0x436 && biBitCount == 8` — 0
-partial matches. Both ROM1 EN and RU show the identical proportional breakdown on
-their own smaller population, same code: **82/82** total, **79/79**
-shape-A-and-strict, 3/3 shape B, 0 matching neither, on both roots — the
-positive control this test previously lacked. `R2-ASSET-008`.
+## Residual regions
 
-## `.16` result
+Five `.256` entries contain bytes between their indexed frames and final
+trailer. They are identical to the corresponding ROM1 RU resources with
+appended secondary sections. `.16` font1 and font2 likewise retain 17716 and
+32 residual bytes; their corresponding ROM1 RU resources have in-place
+overwrite layers. Font3 has 64 frames and ends at its trailer; font1/font2
+have 224 indexed frames. — R2-ASSET-007, R2-ASSET-009
 
-A complete population of 3 files. All 3 have no palette (matching ROM1's own rule
-that a bare `.16` never carries one) and every individual frame in every file
-validates (no frame's own header/data ever exceeds file bounds). Only 1 of 3
-(`font3.16`, 64 frames) tiles exactly to the trailer; the other 2 (`font1.16` and
-`font2.16`, both 224 frames) leave unexplained bytes between the last frame and
-the trailer — 17716 and 32 bytes respectively. Both residue files are
-**sha256-identical** to the identically-named node in ROM1 RU: this is the
-already-published `SPR16A-FONT-014`/`SPR16A-FONT-021` finding (older
-in-place-overwrite build layers of the same font, each boundary run the
-byte-suffix of a record cut by the next build's own end) reproduced byte for byte
-in ROM2, not a ROM2-specific residue pattern. `R2-ASSET-009`.
+The ROM1 residual interpretations are cross-referenced by SPR256-EXC-017,
+SPR256-EXC-020, SPR16A-FONT-014 and SPR16A-FONT-021. Their native ROM2
+consumer behavior is not independently specified here.
 
-## Not yet surveyed
+<a id="pal-result"></a>
 
-RLE/pixel decoding and palette colour values are outside this container survey.
-Its extension census covers every matching entry in the preserved root; another
-locale or install is not inferred from that population. What the `.16`/`.256` residue
-bytes hold at the field level is not re-decoded here — `SPR16A-FONT-014`/`-021`
-and `SPR256-EXC-017`/`-020` are its own, cross-referenced, not repeated.
+## Palette layouts
+
+| Shape | Layout |
+|---|---|
+| BMP palette | 8-bpp BMP, `bfOffBits=0x436`; 1024-byte color table at byte 0x36 |
+| Raw owner tables | 16 consecutive 1024-byte tables, total 16384 bytes |
+
+The preserved resources use 156 BMP-shaped and three raw palettes. The
+shape determines where to read/write the table bytes; color-value meanings
+and ROM2 table-building modes remain Unknown. — R2-ASSET-008
+
+<a id="not-yet-surveyed"></a>
+
+## Unknowns
+
+RLE opcodes, pixel/color conversion, native use of residual bytes, arbitrary
+malformed resources and other locales are outside the established contract.
+Related ROM1 references: [SPR16A](../spr16a/format.md),
+[SPR256](../spr256/format.md), [PAL](../pal/format.md).
