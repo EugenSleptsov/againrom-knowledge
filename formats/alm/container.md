@@ -6,7 +6,7 @@
 
 The header gives `recordCount`. Each record supplies `payloadSize` and
 `typeId`. The standard record chain ends at EOF; record count and type order
-are data, subject to the loader dependencies below. — ALM-FRAME-031,
+are data, subject to the loader dependencies below. — ALM-FRAME-031 (amended; framing retained),
 ALM-CORP-060
 
 ```
@@ -23,11 +23,11 @@ ALM-CORP-060
 
 | Off | Type | Field | Notes | Claim |
 |-----|------|-------|-------|-------|
-| 0x00 | char[4] | magic | `4D 37 52 00` = `"M7R␀"` — the **only** field the loader validates | ALM-HDR-001 |
-| 0x04 | u32 | **hdrLen** | `= 20` — this header's **own length**, and it is *used*: the header helper peeks 8 bytes, seeks back, then reads `dword[cursor+4]` bytes. At offset 0 that reads 20 | ALM-HDR-001, ALM-FRAME-031 |
+| 0x00 | char[4] | magic | `4D 37 52 00` = `"M7R␀"` — compared by the selected readers | ALM-HDR-001 |
+| 0x04 | u32 | **hdrLen** | `= 20` — this header's **own length**, and it is *used*: the header helper peeks 8 bytes, seeks back, then reads `dword[cursor+4]` bytes. At offset 0 that reads 20 | ALM-HDR-001, ALM-FRAME-031 (amended; framing retained) |
 | 0x08 | u32 | dataSize | Installed version-990 value `4·W·H + 72`; the loader ignores it. The writer-side meaning of 72 is Unknown | ALM-HDR-001 |
-| 0x0C | u32 | **recordCount** | the loader's loop bound, gated `≥ 3` and nothing more; `= 10` in every authored map, `= 4` in `ru/Horror.alm` | ALM-META-024, ALM-FRAME-031, ALM-CORP-060 |
-| 0x10 | u32 | **formatVersion** | `= 990`; gated `≤ 1001`; selects version-conditional record fields at `0x3b6/0x3d8/0x3da/0x3dd/0x3e9`, and `== 1000` would skip record headers entirely (unexercised by any shipped map) | ALM-META-024, ALM-FRAME-031 |
+| 0x0C | u32 | **recordCount** | the loader's loop bound, gated `≥ 3` and nothing more; `= 10` in every authored map, `= 4` in `ru/Horror.alm` | ALM-META-024, ALM-FRAME-031 (amended; framing retained), ALM-CORP-060 |
+| 0x10 | u32 | **formatVersion** | Installed value990; primary/editor unsigned upper gate1001 and conditional payload thresholds951,985,987,989,990. The1000 helper rule differs by reader; see below | ALM-META-024, ALM-FRAME-031 (amended; framing retained) |
 
 `W`,`H` themselves live in the [type 0 record payload](metadata.md), not the header.
 `rom.exe` `FUN_00512353` reads this header as one `Read(dest, 0x14)`.
@@ -36,11 +36,11 @@ ALM-CORP-060
 
 | Off | Type | Field | Notes | Claim |
 |-----|------|-------|-------|-------|
-| +0x00 | u32 | tag | installed value `7`; stored to the map object (`+0x08`) and never read again | ALM-SEC-002, ALM-FRAME-031 |
+| +0x00 | u32 | tag | installed value `7`; stored to the map object (`+0x08`) and never read again | ALM-SEC-002, ALM-FRAME-031 (amended; framing retained) |
 | +0x04 | u32 | hdrLen | constant `20` (= this header's own length); read, not validated | ALM-SEC-002 |
 | +0x08 | u32 | payloadSize | payload byte length; the payload follows immediately | ALM-SEC-002 |
-| +0x0C | u32 | **typeId** | the record's type, `0..9`; **this is the word the loader's `switch` dispatches on** (10-entry jump table) | ALM-SEC-003, ALM-FRAME-031 |
-| +0x10 | f32 | **perMapConst** (`selectorA`) | a per-map `f32` (e.g. `0xBFC02B6D`), byte-identical in every record header of a map | ALM-SEC-003, ALM-META-027 |
+| +0x0C | u32 | **typeId** | the record's type, `0..9`; **this is the word the loader's `switch` dispatches on** (10-entry jump table) | ALM-SEC-003 (amended; type dispatch retained), ALM-FRAME-031 (amended; framing retained) |
+| +0x10 | byte[4] | opaque word | Same raw bytes within each installed map; numeric representation and semantic role Unknown | ALM-HEADER-098, ALM-CENSUS-101 |
 
 Each record payload starts immediately after its 20-byte header and has no
 additional type identifier. The loader reads the header with `Read(dest,0x14)`
@@ -52,7 +52,7 @@ the header's typeId. A payload may be empty or shorter than eight bytes.
 The complete authored order is `0,1,2,3,5,4,9,8,6,7`. The primary loader
 dispatches the declared recordCount, requires only types 1/2 and permits
 other record sets. The four-record RU Horror.alm satisfies these structural
-checks. — ALM-SEC-003, ALM-REQ-055, ALM-REQ-056, ALM-ORD-057,
+checks. — ALM-SEC-003 (amended; type dispatch retained), ALM-REQ-055, ALM-REQ-056, ALM-ORD-057,
 ALM-META-058, ALM-RDR-059, ALM-CORP-060
 
 Sizes by type (`ALM-SEC-004`):
@@ -140,7 +140,7 @@ for k in 0..count-1:
     tag, hdrLen = u32(off), u32(off+4)    # == 7, 20
     size        = u32(off+8)
     typeId      = u32(off+12)             # <- the loader's switch; >= 10 is skipped by seek
-    perMapConst = f32(off+16)
+    opaqueWord = bytes(off+16, 4)
     payload     = bytes[off+20 : off+20+size]
     off        += 20 + size
 assert off == len(bytes)                  # no trailer
@@ -199,7 +199,7 @@ assert off == len(bytes)                  # no trailer
 The structural size relation is `20 + sum(20+payloadSize) = fileSize` for
 the standard complete form. Types 1 and 2 are required by the primary loader;
 the complete installed type set is not an acceptance requirement.
-— ALM-FRAME-031, ALM-ORD-057, ALM-ORD-068, ALM-TRIG-044,
+— ALM-FRAME-031 (amended; framing retained), ALM-ORD-057, ALM-ORD-068, ALM-TRIG-044,
 ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047, ALM-CORP-060
 
 ## Unknowns and compatibility
@@ -234,3 +234,37 @@ type 6 payload despite nonzero metadata counts. Decode no placements from
 those absent records; native runtime continuation remains Unknown. A Building's
 rectangle, selected presence-mask cells and successfully attached cells are
 distinct quantities. — ALM-CORP-060, UNIT-AREAPOP-075, UNIT-STRUCTCELL-070
+
+## Reader and writer distinctions
+
+The main and editor readers test file+0x10 as an unsigned word. Their payload
+read thresholds are951 (two Unit words),985 (one Unit byte),987 (one Unit
+dword),989 (one type8 dword) and 990 (one type9 dword). These tests describe
+read programs, not successful complete maps at every value. — ALM-HEADER-097
+
+At1000, main00512332 makes no record-header read and preserves its destination.
+Editor0044d580 reads wire words 0..4 into header dwords2,4,0,3,1 respectively.
+Other values select20-byte reads. The browser and landscape helper instead
+peeks8 bytes, rewinds8, and requests hdrLen bytes without a version test.
+Short or oversized headers have no new safety guarantee. — ALM-HEADER-097
+
+Record-header final-word mutations in the selected main/landscape prefixes
+do not alter their read program or scalar copy. No numeric interpretation or
+equality enforcement was identified there. Earlier f32/enum wording in
+ALM-META-009, ALM-META-027, ALM-FRAME-031 and ALM-SEC-003 is partially
+withdrawn for this word only. — ALM-HEADER-098
+
+Selected editor writer 00455e94 emits file-word 990 and dataSize 4*W*H+72.
+It submits a 20-byte record header whose last four bytes come from a frame
+slot with no local initializer or input-header copy. The incoming frame bytes
+and a native editor round-trip remain Unknown. — ALM-WRITER-099
+
+The wrapper clamps reads to length-cursor and advances its cursor before the
+underlying read. A successful-short lower read can leave old destination
+bytes while the wrapper has advanced further. Full-width field storage
+therefore requires a complete lower read. The loose-file receiver is resolved;
+archive container+34 and later aliases remain open. — ALM-STREAM-100
+
+The preserved corpus contains 72 maps and 714 record headers. All file words
+are990; all 72 maps have equal raw record words internally. This equality is
+a corpus property. — ALM-CENSUS-101

@@ -15,7 +15,7 @@ case-sensitive; the unsorted fast path folds ASCII case.
 
 | Offset | Size | Contents |
 |---:|---:|---|
-| 0x00 | 24 | Six u32: magic, root child start/count/kind, record count R, unknown dword |
+| 0x00 | 24 | Six u32: magic, root child start/count/kind, record count R, pool waste counter |
 | 0x18 | 32×R | Records: unknown u32, value u32, size u32, kind u32, name[16] |
 | 0x18+32×R | 4 | Pool byte count P |
 | 0x1c+32×R | P | String/array pool |
@@ -33,6 +33,27 @@ assign child ranges and pool offsets, emit those same blocks and advertise
 sorted children only when their case-sensitive ordering is correct. Preserve
 unknown fields when rewriting. The raw writer's sorting is not a general
 recursive normalization guarantee. — REG-099, REG-100, REG-102
+
+## Typed consumer boundaries
+
+Header `+0x14` maps to registry `+0x30`, the pool-waste counter. Kind 8 has
+an original setter: a dword string count followed by terminated byte strings.
+REG-KIND-034's producer-absence clause is partially retracted. Its getter
+sizes output by count and scans using the record byte extent. — REG-104,
+REG-105, REG-107
+
+Pooled setters retain a larger existing size on shrink, so old pool suffixes
+can survive raw writer/readback. Matching existing records retain flags;
+insertion assigns a whole supported kind. Integer-array getters have one-,
+two- and four-byte destinations, but their scalar arm keeps only the low
+byte. Doubles remain inline; double arrays use eight-byte items. Capacity
+growth is separate from used size. — REG-106, REG-107, REG-110, REG-111
+
+Converter capacity is not a universal memory bound: the return scans for NUL,
+and type 8 subtracts from unsigned size/capacity before copying. Binary64
+conversion reaches a formatter then converts the low dword as an integer;
+native formatter behavior remains unverified. Path, copy and deletion impose
+separate flag predicates after lookup. — REG-104, REG-108, REG-109
 
 ## Reference map
 

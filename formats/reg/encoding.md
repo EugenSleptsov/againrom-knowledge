@@ -30,7 +30,7 @@ the file path. — REG-FMT-031
 | 0x08 | root `size` | number of top-level children |
 | 0x0C | root `kind` | **17** = `0x11` in installed files = subkey (bit 0) \| sorted (bit 4). The raw loader does not require this value (`REG-099`, `REG-101`). |
 | 0x10 | `R` | total record count |
-| 0x14 | — | read into the object but used by no accessor found; **Unknown** |
+| 0x14 | pool waste counter | loaded/stored as registry `+0x30`; deletion and pooled replacement account bytes here — REG-104, REG-107 |
 
 Then `R × 32 B` of records at `0x18`, a `u32` **pool byte length**, and the pool:
 
@@ -46,7 +46,7 @@ retracted, as narrowed by REG-100.
 
 | Off | Type | Field | Notes |
 |-----|------|-------|-------|
-| 0x00 | u32 | — | explicitly zeroed by the writer; read by no accessor found; **Unknown** |
+| 0x00 | u32 | — | zeroed on insertion, retained by raw copy; no further meaning established — REG-104 |
 | 0x04 | u32 | `value` | int32 · pool byte offset · child-block **start** index · **low dword of a double** |
 | 0x08 | u32 | `size` | byte length · child count · **high dword of a double** |
 | 0x0C | u32 | `kind` | bitfield, see below |
@@ -61,10 +61,18 @@ REG-REC-032 offsets are retained; its lookup clause is narrowed by REG-100.
 type       = kind & 0x0E          tested as AND 0xe / CMP by every accessor
 bit 0      = node is a subkey
 bit 4      = children are sorted -> the lookup bsearch()es instead of scanning
-bit 28     = the name was longer than 15 chars and got truncated (no shipped record sets it)
+bit 28     = insertion truncated a long name; a typed setter can replace the kind
+bit 30     = deletion mark, tested by descent, endpoint and copy
 ```
 
-### Kinds and their storage (`REG-KIND-034`)
+Descent with another component requires `kind & 0x40000001 == 1`; endpoint
+selection rejects `kind & 0x40000010 != 0`. Bit 0 alone does not reject a
+terminal. Deletion marks bit 30, skips repeated accounting and recurses for
+active subkeys, with a separate global early-stop gate. Copy omits marked
+children and clears copied parent bit 4. Matching a name does not establish
+acceptance by those later consumers. — REG-104
+
+### Kinds and their storage (`REG-KIND-034`, producer absence partially retracted)
 
 | Kind | Meaning | Storage |
 |---:|---|---|
@@ -73,18 +81,32 @@ bit 28     = the name was longer than 15 chars and got truncated (no shipped rec
 | 2 | int32 (signed) | `value` |
 | **4** | **double** | **`value` = low dword, `size` = high dword — 8 bytes in the record, no pool access** |
 | 6 | int32[] | `poolBase + value`, `size/4` LE int32s |
+| 8 | string array | pool dword count, then NUL-terminated byte strings; count and record byte size are separate consumer bounds — REG-105 |
 | 10 | double[] | `poolBase + value`, `size/8` LE doubles |
 
 A key name does not determine its kind. `Mercenaries`, `InnNPC`, `InnMission`,
 `EnableMercenary` and `AddTextDocument` can hold a bare int32 or an int32 array.
-The content model treats a scalar as a one-element list. The behavior of
-`FUN_004cd240` itself on kind 2 remains Unknown. Empty-string/array alternatives
-also occur. — REG-KIND-056, REG-KEY-045
+Integer-array getters accept a scalar as one element but read only its low
+byte. `004cd030`, `004cd130` and `004cd240`/`004cd370` produce one-, two- and
+four-byte elements; wider scalar destinations zero-extend the byte. For array
+inputs they instead read one, two or four bytes of each four-byte pool item,
+for unsigned `size >> 2` elements. The four-byte getters accept type 0 with
+size below two as empty; the byte/word getters reject those controls.
+— REG-KIND-056, REG-KEY-045, REG-106
 
-For `(kind>>1)&7 == 4` (kind 8/9), the string converter skips the first
-four pool bytes, copies `size−4` bytes and terminates with two NULs. Its
-producer and semantic meaning remain Unknown. Other conversion classes
-return `"UNKNOWN TYPE. CANT CONVERT"`.
+Kind 8 has producer `004cde70`, using string pointers with length metadata;
+a new item requires `4 + sum(length+1)` bytes. Getter `004cd5b0` sizes output
+from the count dword and scans strings to the byte end. Count/string mismatch
+can exceed the supplied output range. Native caller reach and string-object
+construction beyond the named cuts remain Unknown. — REG-105
+
+The type-8 converter skips four pool bytes and copies unsigned
+`min(size-4,capacity-2)`, then places NULs at capacity minus two/minus one.
+A shorter copy can leave a gap. Size below four underflows; small capacities
+and the final destination NUL scan can exceed the supplied logical range.
+Type 0 uses bounded string copying; type 2 converts the signed dword in base
+10. Selectors 6/7 reach a throw, rather than returning the diagnostic as the
+converted value. — REG-108
 
 The game's own names for the types, from its error strings: *int*, *double*, *int array*,
 *double array*, *string array or single string*.
@@ -98,10 +120,30 @@ writer  FUN_004cb340 :  *(double *)(node + 4) = atof(text) ; node->kind = 4
 
 Kind 4 stores the binary64 value directly at record `+4`; it has no pool allocation. — REG-DBL-035
 
+The direct setter `004cce30` also writes both inline dwords. The string
+converter calls a formatter with that pair, then converts the low dword as
+an integer into the same buffer. A supplied formatter-return control proves
+the later overwrite; native formatter behavior remains Unknown. Double-array
+getter `004cd6d0` copies unsigned `size >> 3` qwords, dropping partial final
+bytes; setter `004ce020` writes eight bytes per item. — REG-109, REG-110
+
 ### Pool encoding (`REG-VAL-025`, as amended)
 
 Kind 0/6/10 records address `poolBase + value`; `size` is a byte length.
 Values do not depend on a cursor or the preceding record. — REG-VAL-025
+
+Pooled setters update size on growth but retain it on equal/shrinking
+replacement, adding unused bytes to the pool-waste counter. The suffix and
+larger extent can survive raw writer/readback. Existing matching kinds retain
+flags; new typed records replace the whole kind. Byte/word source setters
+zero-extend into four-byte pool entries. — REG-107
+
+Record capacity grows when at most `count+1`, to
+`capacity+(capacity>>2)+1`. Pool capacity grows when at most `used+request`;
+outside its waste-sensitive compaction arm it becomes
+`capacity+(capacity>>3)+request`. These are capacity rules, not wire size
+limits. Overflow, allocation failure and native compaction remain Unknown.
+— REG-111
 
 ### Tree walk (`REG-VAL-028`, as amended)
 
@@ -204,4 +246,4 @@ Set each sorted flag only when its child block has the required unsigned-byte,
 case-sensitive ordering. The original raw writer's sorting behavior is stated
 above; it is not a general recursive normalization guarantee. Preserve unknown
 values and the header's unnamed final dword when rewriting an existing store.
-— REG-FMT-031, REG-KIND-034, REG-099, REG-100, REG-102
+— REG-FMT-031, REG-KIND-034 (amended; storage clauses retained), REG-099, REG-100, REG-102

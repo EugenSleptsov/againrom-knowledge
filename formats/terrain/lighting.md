@@ -122,8 +122,9 @@ result and does not lean. — TERR-LIGHT-111, TERR-LIGHT-112, TERR-LIGHT-113
 Type0 light fields use payload offsets+0x08 (f32 angle),+0x10 and+0x14
 (intensities), stored to terrain+0x20,+0x1c,+0x1d. The angle store fills
 only four bytes of a double. Relight overwrites all three from sun globals
-before reading them; they do not define initial lighting. This amends the
-light-meaning clauses of `ALM-META-009` and `TERR-LIGHT-015`.
+before reading them; they do not define initial lighting. These are the amended
+light-meaning clauses of `ALM-META-009` and `TERR-LIGHT-015`; the separate
+record-word interpretation of `ALM-META-009` is also withdrawn.
 The separate scalar+0x0c goes to terrain+0x2c and has no identified consumer.
 Map-object copies also have no identified reader. These negatives retain
 bounded Medium confidence, indirect-call limitations and the skipped-relight/

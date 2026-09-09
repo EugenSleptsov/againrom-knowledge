@@ -8,13 +8,13 @@ The type 0 payload is 632 bytes: 48 bytes of scalar fields, a 64-byte map
 name, two u32 values, a 64-byte description and seven further 64-byte text
 slots. — ALM-META-008
 
-The offsets below are relative to the payload. The fixed reads total 632 bytes. — ALM-FRAME-031
+The offsets below are relative to the payload. The fixed reads total 632 bytes. — ALM-FRAME-031 (amended; framing retained)
 
 | Off | Type | Field | Notes | Claim |
 |-----|------|-------|-------|-------|
 | +0x00 | u32 | **W** | map width — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x04 | u32 | **H** | map height (`W≠H` occurs, e.g. 112×144) — read into the map object | ALM-HDR-001, ALM-META-024 |
-| +0x08 | f32 | **angle** | Radians; loaded into map `M+0x18` and terrain `P+0x20`. The terrain store fills four bytes of a double. Forced relight replaces it from the sun globals before the known read. Installed angles are whole degrees: `±45, ±44, ±18, 36, 28, 25, 22`; the common π/4 encoding is `0x3f490fda`. | ALM-META-027, ALM-META-091, ALM-META-092, ALM-CORP-093, TERR-LIGHT-149, TERR-LOAD-152 |
+| +0x08 | f32 | **angle** | Radians; loaded into map `M+0x18` and terrain `P+0x20`. The terrain store fills four bytes of a double. Forced relight replaces it from the sun globals before the known read. Installed angles are whole degrees: `±45, ±44, ±18, 36, 28, 25, 22`; the common π/4 encoding is `0x3f490fda`. | ALM-META-027 (amended; payload-angle clause retained), ALM-META-091, ALM-META-092, ALM-CORP-093, TERR-LIGHT-149, TERR-LOAD-152 |
 | +0x0c | u32 | scalar (stored) | Loaded into map `M+0x1c` and terrain `P+0x2c`; no identified reader in the named direct-consumer paths. Installed values: `360,480,645,720,1080`. Meaning Unknown; numeric agreement with the sun clock does not identify a consumer. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x10 | u32 | scalar (stored) | Loaded into map `M+0x20` and terrain ambient byte `P+0x1c`. Forced relight overwrites the terrain value before its known read. Installed values span `0..33`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x14 | u32 | scalar (stored) | Loaded into map `M+0x24` and terrain range byte `P+0x1d`; the four-byte terrain store also writes `P+0x1e/0x1f/0x20`. Relight replaces the range before its known read. Installed values span `27..64`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
@@ -35,7 +35,7 @@ paths. Indirect calls, aliases and the skipped-relight/message-path cases
 remain Unknown; absence of a reader is not a semantic default.
 — TERR-LIGHT-149, TERR-LIGHT-150, TERR-LIGHT-151
 
-The record's `typeId = 0` and per-map `selectorA` float are [record-header
+The record's `typeId = 0` and opaque four-byte word are [record-header
 fields](container.md) at `+0x0c/+0x10`; they are not payload fields.
 
 The whole type-0 record is read by `rom.exe`'s `.alm` loader (`FUN_00512369`, case 0) in
@@ -50,7 +50,7 @@ constant is `+0x08` (`0x3F490FDA`).
 Each grid record stores **`W·H` cells starting at payload+0** — the payload being the
 bytes after the record's 20-byte header — with `payloadSize` exactly `2·W·H` (type 1) /
 `W·H` (type 2, type 3). The payload is **pure grid**: nothing is overlaid on it, no cell is
-lost, and the record's `typeId`/`f32` live in the header (`ALM-GRID-032`). Cell layout is
+lost, and the record's `typeId`/opaque word live in the header (`ALM-GRID-032`). Cell layout is
 row-major, `W` cells per row:
 
 ```
@@ -146,3 +146,16 @@ the ingest, to a per-cell record, and one routine then recomputes that cell's co
 block bytes from the record. Its footprint can **clear** bits 0 and 2 as well as set them, which is
 how a bridge crosses water. Specified in [TERRAIN](../terrain/format.md) → "Structures on the block plane"
 (`TERR-STRUCT-068`…`072`, `TERR-PASS-073`); the `kind`→class resolution is `ALM-CLS-036` above.
+
+The record-header opaque word is separate from metadata payload+0x08.
+No numeric interpretation follows from its bit-pattern census. — ALM-HEADER-098
+
+For payload+0x0c, the selected editor reader stores four bytes at object+0x1c
+and its writer submits four bytes from receiver+0x1c. The writer caller uses
+document+0x50. Publication between constructor and document, intervening
+control changes, and native round-trip preservation remain Unknown.
+— ALM-EDSCALAR-102
+
+The game and landscape read prefixes transfer this scalar unchanged only
+when their lower read completes. Resolving that stream edge does not close
+later map/landscape aliases or establish meaning. — TERR-STREAM-157

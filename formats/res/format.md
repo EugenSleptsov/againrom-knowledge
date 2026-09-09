@@ -53,6 +53,11 @@ the header functions as the tree's virtual root node. — `RES-NODE-016`,
 not a count or checksum. `0x0c` carries the directory type and optional sorted
 flag. — RES-HDR-005, RES-HDR-012, RES-HDR-013
 
+Header bit 31 also controls original open: clear seeks to `regOffset`, set
+reads the table at the current stream position after six header dwords.
+Bounded one-bit controls establish this flag gate. Neither the complete header
+kind nor each node kind is validated as a two-value enum. — RES-039
+
 ## Node record
 
 Each registry node is 32 bytes:
@@ -62,7 +67,7 @@ Each registry node is 32 bytes:
 | `0x00` | `u32` | reserved | reserved |
 | `0x04` | `u32` | payload byte offset | first child node index |
 | `0x08` | `u32` | payload length | child count |
-| `0x0C` | `u32` | type `0` | type `1`, optionally OR `0x10` for sorted children |
+| `0x0C` | `u32` | ordinary base type `0`; consumer flags apply | ordinary base type `1`; `0x10` selects sorted children; consumer flags apply |
 | `0x10` | `char[16]` | NUL-terminated name | NUL-terminated name |
 
 Observed writers may leave non-semantic padding values after a short name. Readers
@@ -100,17 +105,34 @@ permissive; such hardening is a safety choice, not an additional format invarian
 
 ## Directory lookup
 
-A directory's `0x10` flag indicates that its children are sorted. The original uses a
-sorted lookup in that case and a linear lookup otherwise. Both perform ASCII-oriented
-case-insensitive child-name comparison. — `RES-HDR-018`, `RES-LOOKUP-023`
+A directory's `0x10` flag selects sorted lookup; clear selects a linear scan.
+The sorted comparator compares unsigned bytes without case folding. The
+linear comparator folds ASCII under the named no-locale state.
+RES-LOOKUP-023's unresolved-comparator clause is partially retracted; its
+linear evidence stands. — RES-HDR-018, RES-LOOKUP-023, RES-041
 
 Path processing has several important compatibility properties:
 
 - both `/` and `\\` are accepted as component separators;
 - archive-manager input paths are lowercased before resolution in the reached path;
-- child lookup is case-insensitive over the original byte-oriented ASCII domain;
+- sorted lookup compares preprocessed query bytes to stored bytes without folding;
+- unsorted lookup folds ASCII under the named no-locale state;
 - no Unicode normalization or general code-page conversion is part of the archive
-  grammar. — `RES-TEXT-021`, `RES-PATH-025` (partially retracted), `RES-CASE-036`
+  grammar. — `RES-TEXT-021`, `RES-PATH-025` (partially retracted), `RES-CASE-036`, RES-041
+
+Manager queries `R/KEY` and `r/key` both become `r/key`. Sorted lookup then
+matches stored `key` and misses stored `Key`; unsorted lookup matches either.
+The query fold does not modify the stored name. — RES-041
+
+After name matching, descent with another component requires
+`kind & 0x40000001 == 1`; the endpoint rejects bits 4/30 but not bit 0 alone.
+Deletion marks bit 30; shared copy omits marked children. Those decisions
+differ from raw lookup acceptance. The later wrapper applies the existing
+bit-29 loose-file sentinel. — RES-040, REG-104, RES-MASK-035
+
+RES-CODE-020's `004cd370` subkey-creator label is partially retracted: that
+shared-library address is a REG array getter. It does not define RES payload
+representation. — RES-CODE-020, REG-106
 
 The read path performs no byte-to-character conversion. Names remain byte
 strings; no general non-ASCII code-page mapping is established.
@@ -133,10 +155,10 @@ an archive identity, the shipped archives mostly form disjoint namespaces rather
 single overlay-by-priority system. — `RES-SET-032`, `RES-ORDER-033`, `RES-IDENT-034`
 
 The leading path segment is compared case-sensitively with the archive's
-stored name; subsequent components use the case-insensitive child lookup.
+stored name; subsequent components use the parent-selected comparator.
 The resolver lowercases the path before these comparisons. Its loose-file
 tier uses the process working directory captured before entry.
-— RES-IDENT-024, RES-DIR-037
+— RES-IDENT-024, RES-DIR-037, RES-041
 
 The original also supports an update-list mechanism that can mark an archive node so
 resolution falls through to a loose file. A compatible implementation may model this as

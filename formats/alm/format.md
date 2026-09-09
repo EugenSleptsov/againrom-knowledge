@@ -5,7 +5,7 @@
 An ALM stores metadata, three cell planes, placed actors and structures, and
 mission-script data in typed records. The file header and each record header
 are 20 bytes in the version-990 form. Payloads start after their record
-headers; there is no separate trailer. — ALM-HDR-001, ALM-FRAME-031,
+headers; there is no separate trailer. — ALM-HDR-001, ALM-FRAME-031 (amended; framing retained),
 ALM-GRID-032
 
 The primary loader requires Tiles and Altitudes. Other records have individual
@@ -21,13 +21,13 @@ the hexadecimal runtime member offsets used for loader destinations.
 |---:|---:|---|
 | 0x00 | 20 | Magic M7R\0, header length, dataSize, recordCount, formatVersion |
 | 0x14 | Repeated | 20-byte record header followed by its payload |
-| Record +0x00 | 20 | Tag u32, header length u32, payloadSize u32, typeId u32, scalar f32 |
+| Record +0x00 | 20 | Tag u32, header length u32, payloadSize u32, typeId u32, opaque four-byte word |
 
 At version 990 the metadata payload is 632 bytes; grids are 2WH, WH and WH
 bytes; structure/player/unit records are 20(+8 extension),76 and 70 bytes.
 Type7 has counted script arrays, type 8 has metadata-counted loot, and type 9
 has counted caster records. The standard size is
-`20+sum(20+payloadSize)`, with no trailer. — ALM-FRAME-031,
+`20+sum(20+payloadSize)`, with no trailer. — ALM-FRAME-031 (amended; framing retained),
 ALM-SEC-004, ALM-PLACE-033, ALM-TRIG-044, ALM-SACK-065
 
 ## Read and write order
@@ -38,7 +38,9 @@ its dependent records; type 2 precedes type 3. For the complete version 990
 form, write types `0,1,2,3,5,4,9,8,6,7`, derive metadata counts from the
 payloads and retain the documented caster/loot/unit ordering. A missing
 record supplies no instances even when metadata has a nonzero count.
-Version 1000 skips record headers and is outside this standard chain.
+At version 1000 the main helper skips record-header reads while the editor
+reads five words in a different order; the browser/landscape helpers follow
+header length without testing this word. — ALM-HEADER-097
 — ALM-REQ-055, ALM-REQ-056, ALM-ORD-057, ALM-ORD-068, ALM-CORP-060
 
 ## Reference map
@@ -51,3 +53,8 @@ Version 1000 skips record headers and is outside this standard chain.
 
 Runtime member offsets identify original in-memory fields. Wire offsets and
 byte order are stated separately in the relevant layouts.
+
+The record-header final word has no established numeric interpretation. The
+selected editor writer supplies a local frame slot without initializing it;
+within-map equality alone does not identify semantics. — ALM-HEADER-098,
+ALM-WRITER-099, ALM-CENSUS-101

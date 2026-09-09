@@ -10,7 +10,7 @@ TERR-IDX-003, ALM-GRID-012, ALM-GRID-013
 This reference describes the 3d terrain path, including its 16-bpp lighting
 and cell geometry. The 8-bpp and legacy non-3d paths remain incomplete.
 ALM grid payloads begin after the full 20-byte record header.
-— ALM-FRAME-031, ALM-GRID-032, TERR-GRID-027
+— ALM-FRAME-031 (amended; framing retained), ALM-GRID-032, TERR-GRID-027
 
 ## Input planes and draw order
 
@@ -45,3 +45,8 @@ ALM-GRID-013, TERR-GRID-027
 
 Runtime member offsets identify original in-memory fields. Wire offsets and
 byte order are stated separately in the relevant layouts.
+
+Metadata+0x0c storage at landscape P+0x2c shares the map reader's resolved
+stream wrapper. Complete lower reads transfer the four bytes unchanged;
+short reads can preserve part of the previous destination. Later P/M aliases,
+first use and semantic role remain Unknown. — TERR-STREAM-157
