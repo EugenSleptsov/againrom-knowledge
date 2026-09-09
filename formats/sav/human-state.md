@@ -105,6 +105,35 @@ drains queued commands around client restoration. Earlier document calls,
 queues and callbacks remain outside that hook's negative scope.
 — SAV-HUMRESUME-460
 
+Group LOAD first invokes the embedded Group+20 list serializer, then the
+separate Group+3c state serializer. Its actor archive read distinguishes an
+existing object from a newly constructed object: the new object is registered
+before its receiver+8 serialization and before Group insertion. Insertion can
+remove old Group membership before assigning actor+70. These callbacks and
+archive aliases precede later Player/world registration; they do not establish
+the first Human stat read. — SAV-946
+
+The world-present suffix repairs a copied thirteen-dword manager record:
+ten nonzero keys at +4..+28 are replaced only on lookup hits. The following
+manager callback only sets its own +a9c0 self-pointer. Another manager walks
+its own entries and calls their +24; those entries are not established as
+Humans. The no-world arm bypasses these callbacks, clears actor +40/+44/+5c,
+and leaves the server run gate zero. Earlier archive and later frontend work
+remain separate boundaries. — SAV-947
+
+Resume setup sends opcode4 before the optional server bootstrap. If that
+packet reaches the ordinary dispatcher unchanged, its ID selects a Player by
+WORD+4 and its resume argument1 supplies zero to the entry setup flag. The
+reached setup can project that Player's current +34 actor before ordinary
+actor subticks. Earlier setup callbacks, transport arrival and continued
+identity of +34 with the restored Human remain unproved. — SAV-948
+
+The first computed read after LOAD remains Unknown. Earlier archive/world/UI
+callbacks, phase6 Group work, phase12 projection/full ticks, earlier actors
+and queued packets can precede the selected ordinary consumer. A same-Human
+ordered trace with values at the first read or an explicit skipped tick is
+still missing. There is no universal derive-before-read guarantee. — SAV-949
+
 ## Conditional consumers
 
 These admitted paths compute from saved fields without a local derive call.
