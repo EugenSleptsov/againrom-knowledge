@@ -65,19 +65,24 @@ The world ingest addresses `tiles[row*W+col]`, `heights[row*W+col]` and
 
 | Layer | Name | Cell | Encoding | Claim |
 |-------|------|------|------------------------------------------------|-------|
-| type 1 | **Tiles** | u16 LE | **tile-index word**: **bits 0–9 = tile index**, **bit 13 (`0x2000`) = impassable flag**, bits 10–12/14–15 unused in installed maps. Terrain class is *derived* from the index by the loader (below), not a raw high byte | ALM-GRID-012 |
+| type 1 | **Tiles** | u16 LE | Bits 0–9 feed the simulation classifier; bits 0–12 feed graphics selection. Bit 13 feeds the simulation block assignment but is cleared by the light parser. Bits 14/15 carry render visibility state. An installed absence is not an unused-bit rule. | ALM-GRID-012, ALM-TILEMAIN-121, ALM-TILEVIEW-122 |
 | type 2 | **Altitudes** | u8 | Height/altitude, copied to the simulation height buffer. Installed heights are below `0x80`; this is not a general u8 limit. The earlier range derived from the displaced grid origin is retracted. | ALM-GRID-013, TERR-LIGHT-016, TERR-LIGHT-028 |
 | type 3 | **Objects** | u8 | Static-object code: 0 is empty; nonzero `c` selects `objects.reg` section `c-1`. Missing type 3 is zero-filled. World ingest additionally derives runtime block value 5 for nonzero cells. | ALM-GRID-014, ALM-CLS-035 |
 
 ### type 1 tile word — terrain resolution (`rom.exe`)
 
-`terrainType, passability = f(tileIndex = word & 0x3ff)` (`FUN_00548720`):
+`terrainClass, cost = f(word & 0x3ff)` (`FUN_00548720`); the block assignment is separate:
 
 - **strip group = bits 6–9** indexes a hardcoded (primary, secondary) terrain-type pair
   table at `world+0x54156`; **blend variant = bits 0–5** selects primary vs secondary
-  and a **5-level** blend of their passability (auto-tiling terrain transitions).
-- tile-index range **`[512,768)`** (bits 8–9 = `0b10`) = **Water** (special case).
-- **bit 13** forces the cell impassable regardless of tile.
+  and a **5-level** blend of their costs (auto-tiling terrain transitions).
+- In the water range `(word & 0x300) == 0x200`, subcell 8–15 returns class
+  `0xff`; below 8, subcell 4 with variant 1 returns class 1 and the others
+  return class 9. All leave the classifier cost output at 8. Ingest replaces
+  that cost with slot 0 (`0xff`) for an invalid class and independently sets
+  block 1 for every raw-water word. — TERR-WATERBOUND-164
+- **Bit 13** assigns block 1 before later object and border writes.
+  It does not itself select a terrain class. — TERR-TILECONTROL-163
 
 **Terrain enum** (1-based in the lookup; = `world.res:data/map.reg` `Terrain` record
 order): `1 Land · 2 Grass · 3 Flowers · 4 Sand · 5 Cracked · 6 Stones · 7 Savanna ·
@@ -107,10 +112,28 @@ characters and `rom.exe` asks for keys up to 21; both lookup paths truncate the 
 to 15 first, so every key still resolves.
 
 **Terrain graphic** (which picture a tile-word draws) is a separate render mapping,
-specified in [TERRAIN](../terrain/format.md) (`TERR-IDX-003`, `TERR-SEM-004`): `g = (w & 0x1fff) >> 6` selects a
+specified in [TERRAIN](../terrain/format.md) (`TERR-IDX-003`, amended bit interval;
+arithmetic retained, `TERR-SEM-004`): `g = (w & 0x1fff) >> 6` selects a
 `terrain.3d/tileG-VV.bmp` strip (`G=(g>>2)+1`, `V=(g&3)*4+((w>>4)&3)`) and `w & 0xf`
 selects the 32×32 sub-cell. `tile1/2` = land strips, `tile3` = animated water, `tile4` =
 road; bit-13 tiles composite over `dirt.bmp`.
+
+### Main and light-parser tile storage
+
+The main type-1 arm requests `2*W*H` bytes into `M+0x0c`, with dimensions
+at `M+0/+4`. With a complete lower read, it preserves the word before the
+simulation ingest. The light parser has dimensions at `P+4/+8` and its own
+tile pointer at `P+0x0c`; after reading, it applies `word &= 0xdfff` to every
+tile. View binding stores `P` at `view+0x80`, and renderers use that pointer.
+The binder copies dimensions, not the tile plane. Equal member offsets do
+not prove that the two reader layouts share an allocation.
+— ALM-TILEMAIN-121, ALM-TILEVIEW-122
+
+The light parser preserves `0x4000` as well as `0x8000` and `0xc000`.
+Later render-grid updates can replace bit 13, stamp bits 14/15 together or
+clear bit 14. Load-time words and post-event words must be distinguished.
+See [tile selection](../terrain/tiles.md) and [visibility](../terrain/fog.md).
+— ALM-TILEVIEW-122
 
 **Runtime passability** — corrected and completed by `TERR-PASS-049…TERR-PASS-051`.
 The map load derives **three** 256×256 byte planes at fixed

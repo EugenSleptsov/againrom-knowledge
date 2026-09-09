@@ -5,7 +5,7 @@
 Terrain draws the ALM Tiles and Altitudes planes through `terrain.3d` bitmap
 strips. Tile words select files and subcells; the terrain state also carries
 block planes, cell records, lighting and fog. — TERR-LOC-001, TERR-LOAD-002,
-TERR-IDX-003, ALM-GRID-012, ALM-GRID-013
+TERR-IDX-003 (amended bit interval; arithmetic retained), ALM-GRID-012, ALM-GRID-013
 
 This reference describes the 3d terrain path, including its 16-bpp lighting
 and cell geometry. The 8-bpp and legacy non-3d paths remain incomplete.
@@ -25,7 +25,8 @@ Load the planes and selected bitmap groups, build the lighting tables, then
 select each tile's animated subcell. The four corner heights choose flat or
 sloped drawing and its edge walk. Sprite/structure passes have separate
 placement and palette rules. Movement consumes the block planes, not the
-drawn pixel colors. — TERR-LOAD-002, TERR-IDX-003, ALM-GRID-012,
+drawn pixel colors. — TERR-LOAD-002, TERR-IDX-003 (amended bit interval;
+arithmetic retained), ALM-GRID-012,
 ALM-GRID-013, TERR-GRID-027
 
 ## Reference map

@@ -58,19 +58,47 @@ tile-word group can select null (`TERR-LOAD-152`).
 ## Tile-word → graphic (render mapping)
 
 Four render routines — `FUN_004058c7`, `FUN_00405e83`, `FUN_00406349`, `FUN_00406806`
-(zoom/mode variants) — read the type 1 tile-word `w` (u16) and select image + sub-cell with
-**identical** arithmetic:
+— extract the following fields from the render-grid word. Their branch rules
+differ: `00405e83` skips non-water groups before its pointer lookup.
+— TERR-GFXBOUND-165, TERR-WATERPASS-167
 
 ```
-g    = (w & 0x1fff) >> 6          strip group      (bits 6..9; installed range 0..12)
+g    = (w & 0x1fff) >> 6          strip group      (bits 6..12; installed range 0..12)
 b    = (w >> 4) & 3               blend column     (bits 4..5)
 sub  = w & 0xf                    sub-cell index    (bits 0..3)
 
 image = tiles[ g*4 + b ]          == tileG-VV.bmp with:
-          G = (g >> 2) + 1        file group  (1..4)
+          G = (g >> 2) + 1        file group  (installed 1..4; loader covers 1..8)
           V = (g & 3)*4 + b       file variant (00..15)
 src   = image.pixels + 8 + sub*0x400        one 32x32 8-bpp cell (0x400 = 1024 B)
 ```
+
+The graphic arithmetic admits `g=0..127`, but the 3d loader fills only
+128 pointer slots, covering `g=0..31`. Starting from word zero, bit 10
+selects slot 64; bits 11 and 12 select slots 128 and 256, outside that
+array. The selected full-render kernels contain no intervening bound check.
+This is an address boundary, not a new terrain type or a graceful refusal.
+The bit interval of TERR-IDX-003 is amended; its arithmetic is retained.
+— TERR-GFXBOUND-165
+
+Loading is a separate decision. Mask bit `i` admits slots `4i..4i+3`.
+A masked-out preexisting slot is destroyed and set to null. An admitted
+slot still needs a usable bitmap from the resource constructor. A null
+selected pointer reaches a pixel-buffer-field read at pointer `+0x10` in
+the inspected full-render arm; bounded execution faults there. Native
+resource failure behavior and pixels for unpopulated groups remain Unknown.
+— TERR-SLOTADMIT-166, TERR-GFXBOUND-165
+
+With animation disabled, the water arm normalizes groups 8–11 to group 8.
+The `00405e83` pass instead skips every non-water group before lookup;
+that skip does not establish what the other passes draw.
+— TERR-WATERPASS-167
+
+The light parser first clears bit 13. The render-grid RLE updater can later
+replace it with `(word & 0xdfff) | runFlag`, where `runFlag` is 0 or
+`0x2000`; the other 15 bits survive. The write kernel is established,
+while first-message timing and subsequent native ordering remain Unknown.
+— TERR-RLEBIT-168
 
 Mapping of strip group → file group → terrain (terrain names via `ALM-TERR-015`):
 

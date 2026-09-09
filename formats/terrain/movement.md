@@ -12,6 +12,10 @@ in [ALM](../alm/format.md) → "Runtime passability"; what belongs here is the t
 
 `rom.exe FUN_00548720` maps the masked word to a terrain class and a movement cost:
 
+The water subcell rejection below is retained. TERR-PASS-050 is amended
+because its water-return prose omitted this guard. Ingest applies its raw
+water block test independently of the returned class. — TERR-WATERBOUND-164
+
 ```
 i = w & 0x3ff
 
@@ -56,6 +60,23 @@ A ground mover is blocked by tile bit 13 (`w&0x2000`), Mountain class 8,
 raw water bits `(w&0x300)==0x200`, a nonzero type 3 object cell, or the
 eight-cell border. Bit13 also controls the render-path dirt composite;
 that graphical use does not replace the other movement blockers.
+
+### Cost, block and later state
+
+With the constructor's default cost vector and an empty interior cell,
+word `0x0214` produces classifier class 1 and cost 8 but block 1. Word
+`0x03ff` produces cost 255 but block 0. Cost is not the block predicate.
+The ingest copies its final static block plane to the dynamic plane;
+objects replace the block with 5 and the border replaces it with 31.
+The actual footprint tests apply `block & mask`, independently of cost.
+These are immediate-ingest rules. Later structures, cell records and
+occupants can change both planes. — TERR-TILECONTROL-163
+
+Bits 10–12 and 14–15 do not affect the selected ingest rules, even though
+the render grid retains them. Off-corpus non-water groups 13–15 can read
+constructor-unwritten terrain pairs when the subcell is below 14. Their
+native allocation contents remain Unknown; synthetic residues produce
+different classes. — TERR-TILECONTROL-163, TERR-WATERBOUND-164
 
 ### Who is asking — the mover (`TERR-MOVE-054…TERR-MOVE-057`)
 

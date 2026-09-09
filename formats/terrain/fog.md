@@ -6,8 +6,42 @@
 
 Bits 15/14 carry explored/current visibility. They gate animated objects
 and partial terrain repaint. Installed ALM words leave these bits clear;
-the runtime modifies the same tile words. — TERR-TILE-079, TERR-FOG-080,
-TERR-FOG-081
+the runtime modifies the light-parser tile plane at `[[view+0x80]+0x0c]`.
+That pointer belongs to the render object layout, distinct from the main
+reader's simulation input. — TERR-TILE-079, TERR-FOG-080, TERR-FOG-081,
+ALM-TILEVIEW-122
+
+The light parser clears bit 13 only, so an authored high pair `01` can
+survive that operation. The known stamp and clear have these local effects:
+
+| Input pair (15/14) | After light parse | Immediately after clear | After an admitted stamp |
+|---|---|---|---|
+| 00 | 00 | 00 | 11 |
+| 01 | 01 | 00 | 11 |
+| 10 | 10 | 10 | 11 |
+| 11 | 11 | 10 | 11 |
+
+The clear column ends before restamping in the same event. A full event's
+final grid and its native interval are separate observations.
+— ALM-TILEVIEW-122, TERR-TILECLEAR-169, TERR-DRAWSTAMP-170
+
+The global `01`-unreachability clause of TERR-FOG-082 is partially retracted.
+Its shroud classifier remains exact: `11` selects level0, `10` selects level8,
+and both `00` and raw `01` select the default level16.
+
+Drawable `00459f50` ORs the four corner words before testing `0xc000` and
+`0x8000`. Combined `0xc000` sets drawable state 0; `0x8000` sets 1;
+`0x0000` or `0x4000` leaves 2 in a one-cell footprint without the permission
+bypass. A corner `0x8000` plus another `0x4000` passes as `0xc000`, although
+neither word contains both bits. This is not an all-corners-current test.
+Downstream redraw is separate from that stored state. — TERR-DRAWGATE-171
+
+The stamp's drawable virtual dimensions read class `+0xd0`; they are not
+the simulation actor's footprint virtual. Both named drawable vtables reach
+the original decay, permission, sight and position guards. The observed
+stores require an admitted LOS cell. Bounded guard controls used a fixed
+synthetic LOS field; native LOS extent and event cadence remain Unknown.
+— TERR-DRAWSTAMP-170
 
 ```
 state  11  currently in sight     10  explored, not in sight     00  never seen
@@ -70,7 +104,7 @@ degenerate quads filled with colour 0) or `FUN_00451710` (level `8`, degenerate 
 `(px>>1) & mask`). These reuse the terrain quad and the same step-table edge walk.
 
 **What the renderer branches on, and the levels it turns the pair into**
-(`TERR-FOG-082`, `TERR-FOG-083`, `TERR-FOG-084`, `TERR-FOG-085`). The shroud pass does not read the
+(amended `TERR-FOG-082`, `TERR-FOG-083`, `TERR-FOG-084`, `TERR-FOG-085`). The shroud pass does not read the
 tile word directly: `FUN_00404135` projects the pair onto a **per-vertex** dword grid every frame.
 
 ```
@@ -79,13 +113,14 @@ grid    CMapView+0xa0, one dword per lattice vertex, (cols+7)*(rows+11) entries
         memset to 0 at 004043d7, filled, then memcpy'd to +0xa4 at 004046f2
         FUN_00404135 is its only content writer; FUN_00402f85 frees both
 
-classify per vertex, off [CMapView+0x80]+0xc  (= map+0x0c, the SAME plane the sim uses)
+classify per vertex, off [CMapView+0x80]+0xc  (= the light-parser render plane)
         004044d0 MOV DX,word ptr [ECX+EAX*2] ; 004044d4 AND EDX,0xc000
         == 0xc000  -> level 0    00404644     11  in sight        NO shroud drawn at all
         == 0x8000  -> level 8    00404674     10  explored        half brightness
         otherwise  -> level 0x10 00404695     00  never seen      black
-        01 is not a state: the stamp writes one immediate 0xc0, and nothing clears bit 15,
-        so a renderer branches on the PAIR and needs no fourth arm.
+        Raw 01 takes the same default arm as 00. The known stamp writes 11;
+        the periodic clear maps 01 to 00 and 11 to 10. This does not rule
+        out raw authored 01 or an additional writer.
 
 dispatch FUN_00407b1a reads the four corner vertices (0040c1ce..0040c305) and branches
         (0040c421..0040c679) on all-equal-0 / all-equal-0x10 / all-equal-8 / otherwise.
@@ -109,8 +144,9 @@ clock   FUN_0040eaee clears bit 14 over the WHOLE map (W*H words) then re-stamps
 
 gates   1. the shroud pixels above
         2. FUN_004597f0: OR the four corner words, & 0xc000 != 0xc000 -> drawable+0x78 = 1,
-           the sprite pass's guard (00459814..00459839). A unit on a cell with no visible
-           corner is NOT DRAWN. One visible corner suffices. +0x7c latches +0x10c on change.
+           the sprite pass's guard (00459814..00459839). Aggregate 0xc000 stores 0.
+           One 0xc000 corner suffices but is not necessary: separate 0x8000 and 0x4000
+           corners also pass. +0x7c latches +0x10c on change.
         3. AI visibility uses a separate array (below); passability reads the block
            planes (MOVE-DOM-027). The direct immediate-reference negative does not
            cover byte-wide tests of the high half.
@@ -137,6 +173,10 @@ reveal  permission to stamp is bit 3 of [[mapView+0x9b4]+0x38][player], and that
         0x004186e3)/4 from the dispatcher's own SUB/JMP. A wholesale copy carries no
         displacement in the bulk copy instruction.
 ```
+
+TERR-FOG-086 is partially retracted only for its individual-corner equivalence.
+The aggregate gate, field stores and latch described above remain supported;
+the admitted raw domain is separate from the known stamp/clear-produced states.
 
 **The AI's vision is a second implementation of this same algorithm, not this one**
 (`TERR-FOG-088`). It lives in an object embedded at `world+0x58ee8` — so `AI-SIGHT-006`'s byte
