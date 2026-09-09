@@ -5,7 +5,8 @@
 The palette loader consumes either a BMP color table at byte `0x36` or
 sixteen consecutive raw color tables. A table contains 256 four-byte BGR0
 entries. The consuming path selects the resource shape and shade-table mode.
-— PAL-FILE-001, PAL-MODE4-010
+— PAL-FILE-001, PAL-MODE4-010 (partially retracted only for its native-unreachability
+assertion; the resource and mode contract stands).
 
 <a id="two-shapes-told-apart-by-how-the-engine-opens-the-file"></a><a id="corpus"></a>
 
@@ -67,15 +68,22 @@ for level = 1 .. 16:                                 // table row = level - 1
         row[i] = pack(R, G, B) into the framebuffer's widths and shifts
 ```
 
-Mode-4 rules (`PAL-MODE4-010`):
+Mode-4 rules (PAL-MODE4-010, partially retracted only for its native-unreachability
+assertion; the predicate and local operations retain their instruction scope):
 
 - **No tint term appears on this arm**, on either branch. `useTint` is passed and ignored, so a
   `.16a` sprite does not change colour with the daylight cycle the way a `.256` unit does.
 - The `>> 4` / `/ 18` pair is **not a display mode**. `FUN_0044ba10` sets the flag that picks it
   from `GlobalMemoryStatus`: `dwTotalPhys < 24000000`. The same flag halves the companion
   destination table from 65 536 entries a row to 8 192. The condition is an environment check, not a palette-field value.
-- The table is only half of a `.16a` pixel. The other half is the destination table
-  `FUN_0044ba10` builds, and the two are complementary — [SPR16A](../spr16a/format.md).
+- Normal-memory source generation uses `/16` and the decoder selects destination
+  row `1+L`; their weights are complementary. The low-memory source branch uses
+  `/18`, while the decoder selects destination row `L` with `old >> 3` and no
+  added row. The normal complementarity rule does not apply to that branch.
+  — SPR16A-080; [sprite encoding](../spr16a/encoding.md).
+- The memory predicate does not establish whether a native original can run
+  in that system state. Native low-memory reachability remains Unknown; the
+  native-unreachability clause of PAL-MODE4-010 is partially retracted.
 
 ## The two shared projectile tables
 

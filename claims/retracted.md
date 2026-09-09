@@ -1,5 +1,15 @@
 # Overturn history
 
+## Sprite decoder boundary and literal scope
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `SPR16A-RLE-002` (width-wrap admission shorthand only) | cursor wraps at width | High | [EXP-0356](../experiments/EXP-0356-sprite-decoder-traces/), SPR16A-079 | Exact-width installed rows stand. The local threshold is signed>=, a run is not clamped, excess destination movement survives and row controls preserve a partial column. | **AMENDED** |
+| `SPR16A-PIX-011` (universal even-offset interpretation only) | each literal word as an even byte offset into the generated source LUT | High | [EXP-0356](../experiments/EXP-0356-sprite-decoder-traces/), SPR16A-080 | Installed literals remain even/in-range; the decoder itself uses the complete raw u16 byte offset without masking or alignment checks. Supplied guarded offsets do not validate the original allocation. | **NARROWED** |
+| `SPR16A-ALPHA-025` (universal destination row1+L,15 usable format steps and native-unreachability clauses only) | exact16-step blend with weights summing to16;15 usable steps; neither low-memory variant can be reached on a machine that runs this install | High | [EXP-0356](../experiments/EXP-0356-sprite-decoder-traces/), SPR16A-080, SPR16A-082 | Normal row1+L complementarity stands. The selector==1 loop uses rowL with old>>3, without the additional row. Literal word0 is executed and is not excluded by a format validation branch. Historical installed level0 absence stands. The native-unreachability clause is withdrawn: the memory-status import, comparison and selector write prove the predicate, not native feasibility. High remains for the observed predicate/local operations; native low-memory reachability, visibility and active packing remain Unknown. | **PARTIALLY RETRACTED** |
+| `PAL-MODE4-010` (native-unreachability clause only) | unreachable on any machine that can run the install | High | [EXP-0356](../experiments/EXP-0356-sprite-decoder-traces/), SPR16A-080 | The import call at0044ba1c, comparison at0044ba2c and selector write at0044ba47 establish the conditional instruction contract. The supplied-memory probe executes none of the native memory-status service, allocator or table builders and cannot establish which native system states run the original. Native reachability remains Unknown. Tint behavior, source generation, table-size observations, gate instructions and normal-memory/installed-corpus facts remain unchanged; their bounded instruction confidence remains High. | **PARTIALLY RETRACTED** |
+| `SPR256-RLE-022` (row-end shorthand only) | a row ends when the column counter reaches width; row control ends the frame if count exceeds rows remaining | High | [EXP-0356](../experiments/EXP-0356-sprite-decoder-traces/), SPR256-062 | The actual thresholds are signed column>=width and remaining-count<=0. The latter includes equality; no width clamp occurs and a partial column survives a row control. | **AMENDED** |
+
 ## CPlayer scalar copy and editor scope
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

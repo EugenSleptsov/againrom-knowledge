@@ -48,8 +48,8 @@ frameCount = number of frame records before the trailer         SPR256-COUNT-002
 ## Byte RLE
 
 `data[dataSize]` is a run-length stream of single-byte controls, `[2-bit opcode | 6-bit
-count]`. A cursor moves left→right and wraps to the next row at `width`; the background
-is transparent.
+count]`. Exact-width installed rows advance one row at `width`. The original
+does not clamp oversized runs or validate row-control position. — SPR256-062
 
 ```
 c & 0xC0 == 0x00   (0x00–0x3F)  literal      : emit next (c & 0x3F) bytes as indices
@@ -65,8 +65,48 @@ to transparent skip. Thus `0xc0` is an alias of `0x80`.
 - In a structurally complete frame, every row reaches exactly `width`,
   the stream produces `height` rows, and all `dataSize` bytes are consumed.
   — SPR256-RLE-008
-- Blank-row opcodes occur only at a row boundary (column 0).
+- Installed blank-row opcodes occur at column 0. A row control also executes at
+  a partial column, preserving it in the selected original decoders. — SPR256-062
 - "Transparent" here = *no pixel emitted*.
+
+## Selected original decoder operations
+
+The own-table receiver `00428e60`, vtable `00597418+0x18`, takes
+`(x,y,frame,level,mirror)` and selects `this.table + (level << 9)`.
+Its last argument chooses `0044db00` forward or `0044ea40` reversed.
+The corresponding `.16a` argument is a pointer and its source units are words.
+— SPR256-061
+
+After a byte control, literals consume `n` source bytes; skip/row controls
+consume none. Literal indices address `sourceTable + 2*index`. Contained runs
+write pairs with one dword store, reversing their order when mirrored, followed
+by a u16 store for an odd final pixel. These two decoders read no destination
+pixel. Zero and 255 both lookup/write. — SPR256-063
+
+Literal and skip counts accumulate without a width clamp. Signed column
+`>=width` resets the counter and adds `stride-direction*2*width` to the current
+destination, retaining any excess. Row controls subtract count from remaining
+height and return on signed `<=0` before moving the destination; otherwise add
+`count*stride`, preserving the partial column. Neither dataSize nor a source-end
+pointer is an argument. — SPR256-062
+
+A contained zero-count literal is a no-op. On a vertically visible clipped row,
+the per-byte loop instead executes before decrementing its count, including for
+zero. The finite probe stops at its source guard; this is not an original
+rejection rule. — SPR256-063
+
+Clipped literal runs read every horizontally excluded source byte but omit its
+lookup and write. Vertically excluded runs advance source by `n` without reading
+the literals. Fully disjoint rectangles return before reading a control.
+Reversed clipping checks each pixel; the tested split-run result is invariant,
+unlike the selected reversed `.16a` path. — SPR256-064
+
+The comparison population is 88 synthetic cases and frames 0 and 1 of
+`backpack/sprites.256` and `backpack/spritesb.256` from both preserved locales.
+All selected forward/reversed and contained/clipped access traces agree with
+separate pseudocode on supplied nonuniform memory. The `spritesb` stream is
+tested through the plain receiver here; its native overlay route, native
+framebuffer packing and captured pixels remain Unknown. — SPR256-065
 
 ## Palette (`SPR256-PAL-011`)
 

@@ -36,11 +36,12 @@ u32  trailer                       [31-bit frameCount][bit31 = has-palette?]
 ## Word RLE
 
 `data[dataSize]` is a run-length stream of **u16 LE control words**,
-`[2-bit op | 14-bit count]`. A cursor moves left→right and wraps to the next row at
-`width`; the background is transparent.
+`[2-bit op | 14-bit count]`. Exact-width installed rows advance one row at
+`width`. The original does not clamp runs or validate row boundaries; the
+operations below amend that shorthand. — SPR16A-079
 
 ```
-cw >> 14 == 0b00   literal   : the next n u16 words are 16-bit colour pixels
+cw >> 14 == 0b00   literal   : the next n u16 words are source-table byte offsets
 cw >> 14 == 0b01   blank rows: emit n fully-transparent rows (at a row boundary)
 cw >> 14 == 0b10   skip      : emit n transparent pixels in the current row
 cw >> 14 == 0b11   BLANK ROWS again — unused in ROM1 data, but the dispatch is two
@@ -56,7 +57,8 @@ cw >> 14 == 0b11   BLANK ROWS again — unused in ROM1 data, but the dispatch is
 
 - Each row's literal and skip counts sum to width. The stream describes
   height rows and has no remaining byte after the last row. — SPR16A-RLE-003
-- Blank-row opcodes start at column 0.
+- Installed blank-row opcodes start at column 0. The original also executes
+  a row control at a partial column and preserves that column. — SPR16A-079
 - The `0b11` quadrant takes the blank-row arm, because bit 14 is tested
   before bit 15; installed streams do not use this alias. — SPR16A-RLE-002 The count field is 14 bits (maximum 16383); smaller
   installed maxima are not encoding limits.
@@ -64,8 +66,10 @@ cw >> 14 == 0b11   BLANK ROWS again — unused in ROM1 data, but the dispatch is
 
 ## Literal-word colour — the display model (`SPR16A-PIX-011`)
 
-A literal u16 word is **not a colour**; it is an **even byte offset** into a runtime
-`[16][256]u16` LUT the executable builds from the file's palette. This forces:
+A literal u16 word is a raw source-table byte offset. Installed words are even
+and inside its `[16][256]u16` shape. The original does not mask high bits or
+reject odd offsets; the earlier universal wording is narrowed to the installed
+population. For that population: — SPR16A-PIX-011, SPR16A-080
 
 ```
 paletteIndex = (word >> 1) & 0xFF     // bits 1..8   (0..255)
@@ -74,7 +78,10 @@ src          = srcLUT[level][paletteIndex]      // palette scaled by (level+1)/1
 pixel        = src + destTable[1 + level][old_fb]   // u16 add, then framebuffer write
 ```
 
-**And the level is the pixel's alpha** (`SPR16A-ALPHA-025`). The destination
+**The normal-memory level is the pixel's alpha** (SPR16A-ALPHA-025, partially
+retracted for the low-memory generalization, 15-usable-steps limit and
+native-unreachability assertion;
+SPR16A-080). The destination
 table `FUN_0044ba10` builds has **17** rows and its row `k` is every representable pixel
 scaled by `(16 - k)/16`; the blitter's base skips exactly one row, so the row it uses for
 level `L` scales the old pixel by `(15 - L)/16` while the source row scales the art by
@@ -84,14 +91,76 @@ level `L` scales the old pixel by `(15 - L)/16` while the source row scales the 
 out = palette[index] * (level+1)/16  +  destination * (15-level)/16
 ```
 
-Level 15 is the only opaque value (its destination row is all zeros) and level 0 never
-ships, so a `.16a` pixel is between 2/16 and 16/16 of the art. Three installed projectile sheets use a single
+In the normal table, level 15 is the only opaque value (its destination row is
+all zeros). Installed level 0 absence does not exclude it from the decoder:
+literal word 0 executes the same lookup and write. Three installed projectile sheets use a single
 palette index and encode their variation through alpha (`SPR16A-PROJ-026`). Straight-alpha RGBA reproduces
-this exactly up to the framebuffer's 5-6-5 quantization; a binary mask cannot.
+the normal-memory weighting; native channel packing and captured pixel agreement
+remain Unknown. A binary mask cannot express the weighting. — SPR16A-080, SPR16A-083
 
 The `/18` source variant and a destination table quantized to 8 192 entries a row are **not
 a display mode**: `FUN_0044ba10` sets the flag that selects them from `GlobalMemoryStatus`,
-under 24 MB of physical RAM (`PAL-MODE4-010`).
+under 24 MB of physical RAM (PAL-MODE4-010). Its native-unreachability assertion
+is partially retracted: this predicate does not establish native feasibility,
+which remains Unknown.
+
+The low-memory decoder indexes destination row `L`, using `old >> 3`, without
+the normal branch's added row. Its source table uses the separate `/18` builder
+branch. The normal `1+L` complementarity formula does not apply. — SPR16A-080
+
+## Selected original decoder operations
+
+The own-table receiver `0042b970` takes `(x,y,frame,tableOverride,mirror)`.
+Zero override selects `this+0x1c`; other values are raw table pointers.
+The last argument selects `00451ae0` or `00451e50`. The `.256` class instead
+interprets that fourth argument as a table level. — SPR16A-078
+
+For positive finite geometry and nonwrapping arithmetic, start the destination
+at `surface + y*stride + 2*x`, plus `2*(width-1)` when reversed. Read each
+control as u16 and advance the source two bytes. A pixel skip advances the
+destination by `direction*2*n` and adds `n` to the consumed-column counter.
+A literal run does the same per pixel, with the lookup operation below.
+— SPR16A-078, SPR16A-079
+
+After an operation, signed consumed-column `>=width` resets that counter and
+adds `stride-direction*2*width` to the current destination. It advances only
+once; excess from an oversized run remains in the pointer. Row controls
+subtract `n` from remaining height and return on signed `<=0` before moving
+the destination. Otherwise they add `n*stride` and preserve the partial column.
+No dataSize or source-end argument is passed to these decoders. — SPR16A-079
+
+An executed literal reads old destination u16, source word `W`, destination
+contribution u16, and source contribution u16, then adds modulo 65536 and writes
+u16. These are byte offsets: — SPR16A-080
+
+```
+if lowMemorySelector == 1:
+    destOffset = 2*(old >> 3) + ((W << 5) & 0x3c000)
+else:
+    destOffset = 2*entriesPerRow + 2*old + ((W << 8) & 0x1e0000)
+destination = read16(destinationTable + destOffset)
+source = read16(sourceTable + W)
+write16(d, source + destination)
+```
+
+Clipping advances over excluded source words without reading them. The reversed
+clipped path uses the coordinate immediately beyond the run to trim its left
+tail, then uses the shortened count in the right test. A four-pixel run at
+`x=0` and clip `[0,3)` writes `3,2,1`; splitting it into `2+2` writes `2,1`.
+For clip `[1,4)`, the full run writes `3,2`. This path is not the assumed mirror
+of the forward clip algorithm. These are local instruction observations.
+— SPR16A-081
+
+A contained zero literal enters the decrementing loop. A clipped forward zero
+literal can enter after the row/horizontal tests; a clipped reversed nonpositive
+trimmed run skips the loop. Finite source guards stop the probes; the original
+has no corresponding source-bound rejection. — SPR16A-082
+
+The comparison population is 111 synthetic cases and frames 0 and 1 of
+`cursors/attack/sprites.16a` and `cursors/cast/sprites.16a` from both preserved
+locales. Supplied nonuniform memory agrees with separate pseudocode for the
+selected forward/reversed and contained/clipped paths. This does not supply
+native framebuffer packing or captured pixel agreement. — SPR16A-083
 
 Installed literal words leave bit 0 and bits 13–15 clear. Bit0 being zero
 makes the LUT offset even. This installed pattern is not an arbitrary-input
@@ -127,7 +196,10 @@ are not arbitrary-input admission limits. — SPR16A-RDR-017, SPR16A-BOUND-016
   up to the assumption that they are 5-6-5. The same residual applies to the `.16` glyph
   ramps. What is **no longer** open: the arithmetic of `src + dest` itself, and the pair of
   variants that used to be recorded here as display modes — they are a low-memory fallback
-  (`SPR16A-ALPHA-025`, `PAL-MODE4-010`).
+  (SPR16A-ALPHA-025, partially retracted for its low-memory generalization and
+  native-unreachability assertion; PAL-MODE4-010, partially retracted only for
+  native unreachability; SPR16A-080). The predicates and local operations stand;
+  native low-memory reachability remains Unknown.
 - **Which of the thirteen ramps a given UI string gets** — traced to the blit argument, not
   through the UI code that chooses it.
 - **The `^` escape** in the `.16` `DrawText` — a two-character sequence that diverts to a

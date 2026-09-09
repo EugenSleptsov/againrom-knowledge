@@ -29,7 +29,11 @@ constants.
 
 Installed `inventory/` .16a icons each have one 80×80 frame with bit 31 set.
 Literal levels are 1..15, corresponding to alpha 2/16..16/16 under
-`SPR16A-ALPHA-025`. These dimensions and levels describe the installed icon
+SPR16A-ALPHA-025's normal-memory arm; its low-memory generalization,
+format-level 15-step restriction and native-unreachability assertion are
+partially retracted. SPR16A-080 retains the local addressing contract;
+native reachability remains Unknown.
+These dimensions and levels describe the installed icon
 set, not all sprites: other .16a resources have mixed geometry, and adjacent
 .256 equipment sheets include zero-frame resources. — SPR16A-ICON-027,
 SPR16A-BOUND-016
@@ -48,7 +52,10 @@ The consumer-facing law is the draw's: a sheet must hold `Phases * 9` frames whe
 Absent values use the loader's `0x40` default; installed frames include
 12×12 and 64×96 dimensions.
 
-**How one of these sheets is drawn** (`SPR16A-ALPHA-025`, `REG-PROJ-087`). `A16` picks the extension *and* the C++ class —
+**How one of these sheets is drawn** (SPR16A-ALPHA-025, partially retracted for
+its low-memory generalization and native-unreachability assertion;
+SPR16A-080 retains the local addressing contract; REG-PROJ-087).
+`A16` picks the extension *and* the C++ class —
 the `.256` and `.16a` sprite vtables differ in exactly two slots, the destructor and `+0x18`, so
 the class is what chooses the blit. The registry's `Palette` is a **boolean**, "this sheet carries
 its own colour table": non-zero makes the loader build the sprite a 16-level lookup (mode 4, no

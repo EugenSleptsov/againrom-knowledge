@@ -11,6 +11,11 @@ A `.16a` literal selects a source shade-table entry and a destination blend
 level. A `.16` literal contains two four-bit text intensities. Neither is a
 literal framebuffer word. — SPR16A-PIX-011, SPR16A-FONT-013
 
+The `.16a` source offset is the complete raw u16; the normal and low-memory
+destination-table origins differ. Reversed clipping also depends on run
+partition. The selected decoder contract is in [encoding](encoding.md).
+— SPR16A-080, SPR16A-081
+
 ## Wire layout
 
 | Part | .16a | .16 |
