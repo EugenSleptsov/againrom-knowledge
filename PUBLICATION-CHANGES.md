@@ -59,3 +59,27 @@ and [SOURCE.md](SOURCE.md) says so.
 None of this reinstates an instruction listing, a shipped-content table or quoted game
 text. Confidence levels, statuses and Unknowns are restored to what the research record
 states, never raised.
+
+## ROM2 functional edition
+
+Snapshot k15 derives from accepted research
+`845a36f4276b7e0c23db2710895c3e2f7857729c`. Its 28 R2-ASSET claim rows now accompany
+the seven survey pages and both indices. All full Confidence/Evidence cells and
+27 Status cells are preserved. R2-ASSET-027 alone carries an explicit partial
+retraction of the false joint maxima attribution; the measured maxima remain.
+R2-ASSET-024's contradictory arithmetic/census expressions are repaired from the
+existing accepted field tables and results, with no new measurement.
+
+Unnecessary literal operations and diagnostic excerpts are independently
+expressed as functional rules. Earlier inline withdrawals, scope limits and
+Unknowns remain. No raw evidence, complete content table, title CSV, game payload
+or original executable material is exported. Private evidence identities remain
+traceable through SOURCE and the claim Evidence cells.
+
+The mandatory ROM2 export check covers exact source text in 12 pages, all 49 R2
+claim identities and their references, including the 28 asset rows and formal
+retraction scope. Omission of a row or ledger, metadata drift and reintroduced
+reviewed long lines fail independently of the unrelated editorial backlog.
+This finite check supplements semantic review; it does not certify arbitrary
+future paraphrases or the rest of the publication history. The k1 statements
+above describe that earlier edition and are retained as history.

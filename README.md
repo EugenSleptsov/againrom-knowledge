@@ -35,10 +35,10 @@ as free of original expression. See [the change record](PUBLICATION-CHANGES.md),
 - `SOURCE.md`: upstream snapshot identity and the scope of this public edition.
 - `scripts/`: project-authored, non-mutating publication-review tooling.
 
-ROM2 coverage is incomplete: the k1 export omitted `claims/rom2-asset.md` while retaining
-pages that depend on it. This edition records that gap rather than inventing replacement
-claims or copying an unreviewed private ledger. Such pages are not self-contained
-implementation authorities until their cited findings have been published.
+The ROM2 functional edition includes all 28 `R2-ASSET` claim rows and the seven
+bounded survey pages. Their claim dependencies are present; their full evidence
+remains in the private source named by [SOURCE.md](SOURCE.md). Layout/header
+coverage does not establish every field meaning, runtime consumer or protocol.
 
 ## Reading and checking
 

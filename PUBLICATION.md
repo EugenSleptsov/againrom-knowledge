@@ -83,6 +83,16 @@ be flagged. No automatic deletion or approved-all baseline is provided.
   review tooling, synthetic tests and read-only CI were added or corrected in the first
   pass.
 
+### Completed ROM2 functional edition
+
+The 28-row asset ledger and its dependent survey text have a bounded semantic
+review. Functional wording preserves complete confidence/evidence cells, earlier
+withdrawals and Unknowns. One false maxima attribution receives an explicit
+clause-scoped retraction; contradictory arithmetic/census prose follows the
+already accepted tables. No original payload, title CSV or instruction listing
+is added. The export checks source parity, claim dependencies and the reviewed
+removals. Supporting experiment artifacts remain private.
+
 ### Remaining review
 
 This edition is still a **partial pass**. Remaining work includes:
@@ -91,7 +101,6 @@ This edition is still a **partial pass**. Remaining work includes:
   ledger;
 - `claims/retracted.md`, while preserving exact retraction/narrowing scope;
 - copied/reconstructable content tables in other claim/format areas;
-- the missing public `R2-ASSET` ledger and dependent ROM2 format pages;
 - component-specific publication bases and acquisition/terms records;
 - a final semantic check that public claim IDs, confidence and Unknown boundaries still
   match the pinned private source after editorial shortening.
