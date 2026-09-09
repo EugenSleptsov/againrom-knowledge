@@ -35,6 +35,17 @@ SAV-ARCHREL-253, SAV-PTRMAP-035, SAV-HUMRESUME-460
 
 ## Required relations
 
+Preserve actor Diary arrays independently and retain the intended archive
+aliases. The typed member reader admits an existing object, so actor ownership
+does not require a distinct allocation. A bounded search found no ordinary
+actor-owned array consumer, but does not justify omitting its state. — SAV-847,
+SAV-982, SAV-984
+
+The fixed six-entry XP tail ends before actor `+1e4`. A conditional index6 in
+the located progress expression aliases that Diary pointer word; ordinary
+reach is unmeasured. Do not infer an extra safe slot from the expression's
+missing local upper check. — SAV-983
+
 | Surface | Writer obligation |
 |---|---|
 | Envelope | `blobEnd=16+blobBytes`; blob includes u32 `outWords` |
@@ -66,7 +77,7 @@ SAV-PROJSTORE-428, SAV-CAMPPROG-071, SAV-CAMPPOS-072
 | Eleven world-head values | Constructor zero, literal restore, named conditional consumers | All-path first-SAVE values and unnamed consumers |
 | Position/cell keys | Defined relations and class/path-specific repair | First use on paths without repair; safe unresolved-key placeholders |
 | Session and trailer raw state | Exact transfer and named repairs | Unnamed field meanings and valid new-state values |
-| Terminal campaign | Same counted grammar; separate terminal dispatch | A usable terminal city and its native consumer state |
+| Terminal campaign | Same counted grammar; credits/FAME close chain and gated reset/menu; selected F2/SAVE-dialog inhibition | Normal SAVE availability, current or retained campaign/documents, and native LOAD acceptance |
 
 Definition rows describe initial data; accepted current values are not
 necessarily derivable from those rows alone. Constructor zero, a zero seen in
@@ -74,6 +85,21 @@ a save, or another save's accepted value is not a general default.
 — SAV-HUMLOAD-445, SAV-HUMGAPS-449, SAV-HUMFIRST-465, SAV-HUMNEW-505,
 SAV-900, SAV-LIVEPROD-413, SAV-WHEADLIMIT-525, SAV-TOKENLOAD-094,
 SAV-CELLLOAD-113, SAV-790, SAV-791, SAV-892, SAV-928, SAV-929, SAV-932
+
+The received Diary word cache belongs to a separate client object. Its
+opcode186 replacement is a runtime projection, not an additional field in
+the serialized Diary grammar. Preserving both saved Diary arrays remains
+necessary; constructing a client cache does not prove native LOAD delivery,
+first refresh or panel redraw. — SAV-DIARY-042, SAV-995, SAV-998
+
+Terminal UI receiver bindings identify credits and the common manager;
+conditional dismissal selects FAME, then a menu message that requires a zero
+remaining UI mask before campaign reset. These are local instruction relations.
+The selected F2 and SAVE-dialog opening controls admit mask0/1, excluding
+retained credits/FAME bits. A separately aligned message442 SAVE call has no
+local mask test, so those controls do not prove global SAVE unavailability.
+No native terminal output supplies safe current-state values or a later LOAD
+acceptance witness. — SAV-970, SAV-971, SAV-972
 
 ## Compatibility and extensions
 

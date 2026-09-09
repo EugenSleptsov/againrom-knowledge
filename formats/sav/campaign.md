@@ -156,9 +156,34 @@ is a separate relation. — SAV-932
 
 Nonzero LastMission with selected mission divisible by ten reaches an earlier
 mission-end branch to score production and message `0x428`. It locally
-bypasses ordinary reward/advance and enters UI code with unresolved virtual
-callbacks. This does not establish a final usable city or terminal save.
+bypasses ordinary reward/advance and enters the terminal UI branch.
+This does not establish a final usable city or terminal save.
 — SAV-890
+
+The terminal handler adds the UI child at frame+11c to the manager at frame+cc.
+Constructor/vtable bindings select credits activation, then manager display;
+after those returns the handler sets mask40 in frame+3dc. This frame+11c is
+a UI pointer, distinct from campaign LastMission+11c. Resource success,
+mutable child/focus receivers and native arrival remain separate boundaries.
+— SAV-970
+
+A delivered terminal close notification clears mask40 and reads LastMission
+through frame+664. Nonzero requests the FAME screen, whose activation sets
+mask1000. Its selected close notification clears that bit and requests the
+menu message. That message requires the entire mask to be zero before the
+campaign reset and subsequent menu activation. Reset clears named campaign
+fields and requests the ordinary initial mission loader; its argument is not
+a terminal number. Earlier callbacks, remaining mask bits and queued
+delivery prevent an unconditional native credits-to-menu conclusion.
+— SAV-971
+
+The selected F2 control requires mask0/1 and mode2; the SAVE-dialog opening
+message independently requires mask0/1. Retained credits/FAME masks therefore
+inhibit these controls. A matching SAVE-dialog close result445 reaches the
+SAVE wrapper, but a separate message442 also reaches that wrapper without a
+local mask test. Its normal terminal producer/order is unproved. Actual
+terminal SAVE availability, current or retained campaign/documents, and
+acceptance of a later native LOAD remain Unknown. — SAV-972
 
 The inner registry loader rejects a request above
 `10*ScenarioMissionCount` before campaign stores/grants. Its outer higher-request

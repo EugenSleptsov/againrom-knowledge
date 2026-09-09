@@ -20,6 +20,11 @@ Humanoid/Human can also reference a separate Diary at actor `+1e4` through
 CArchive. Actor-owned Diaries default to a null owner; the two ownership
 routes are not interchangeable. — SAV-HUMAN-043, SAV-846
 
+The actor member's typed LOAD can return an existing archive object or a new
+factory result. The new object enters the archive table before virtual
+serialization; the type test permits a compatible descendant. The member
+does not imply a unique allocation or exclusive ownership. — SAV-984
+
 ## Initialization and index domain
 
 A fresh Diary sizes both arrays from the Units collection count and initializes
@@ -70,16 +75,60 @@ own array and writes 17 words under opcode 186:
 3. OR `min(lowByte(dword[i]>>1),7) << (4*(face-1))` into that word.
 4. If `Player+68>10`, select all `0xffff` instead.
 
-Null owner suppresses notification without suppressing mutation. Receiving UI
-and visible cadence remain Unknown. — SAV-845
+Null owner suppresses notification without suppressing mutation. — SAV-845
+
+## Client receipt and local refresh
+
+The Player ID selects a transport connection before serialization. The
+count-word packet serializes only opcode, dword count and words: 39 bytes
+for 17 words. Its concrete receiver reads the count and words into a static
+packet. Queue/refill/flush and native delivery remain separate boundaries.
+— SAV-994
+
+Opcode186 replaces the receiving client object's CWordArray at `+3f58`.
+It sizes from packet count and copies words; it performs no second Player
+lookup. The client constructor creates this array, and the frontend's
+`+d0` pointer supplies the dispatch receiver. This client array is separate
+from both serialized Diary arrays. — SAV-995
+
+The shared character/unit panel reads the cached word at
+`drawable+20 - 64`, when that signed index is in range. Its `drawable+e0`
+pointer supplies the client object. The byte at drawable `+24` selects a
+nibble by an x86 shift; the result replaces the earlier visibility fallback.
+A separate override forces7. Drawing and pointer-position text gates consume
+the selector. Nibble15 remains15; some drawing gates require exact7.
+These are conditional client reads, not proof of every drawable's binding
+or a native redraw schedule. — SAV-996
+
+Normal-return setup with nonnull Player `+34` calls the builder with that
+Player, independently of the setup argument's optional initialization arm.
+This extends the conditional opcode4 resume relation. Later attributed
+events retain the Diary mutation's existing notification gate. The other
+located builder call belongs to a text-command prefix branch, so it does
+not establish an additional ordinary LOAD/event producer. — SAV-997
+
+The opcode186 arm directly resizes/copies; it does not directly draw, post
+a message or invalidate a panel. Native delivery, static-packet interleaving,
+callback preservation, first-after-LOAD refresh and visible delay remain
+Unknown. — SAV-998
 
 ## Remaining scope
 
-Additional actor-owned Diary consumers remain Unknown. Other uses of the shared word accessor need not
-receive a Diary; one argument-taking path receives a fresh stack collection.
-— SAV-846, SAV-854, SAV-855
+The bounded actor receiver search reaches member SAVE and virtual destruction,
+but no ordinary actor-owned array consumer. It includes 85 complete bodies
+and the 56 Humanoid/Human slots through `+6c`. Whole-actor callees, callbacks
+and arbitrary aliases remain outside transitive closure. Shared accessor
+calls need not receive a Diary. — SAV-854, SAV-855, SAV-982
+
+The progress expression `actor+1cc+4*k` overlaps the Diary pointer word when
+`k=6`; its two branches do not locally impose an upper index of5. This is
+conditional scalar access to the pointer word, with native index reach and
+pointer change unobserved. It is not a read of either Diary array. The
+bounded negative therefore supplies no pointer-preservation rule. — SAV-983
 
 Indirect/computed/inlined access and unclassified receivers remain open.
 The word's gameplay meaning, full event attribution and the first post-LOAD
 consumer are Unknown. The wire grammar requires neither an owner self-reference
-nor equal/complementary arrays. — SAV-843, SAV-847, SAV-854, SAV-855
+nor equal/complementary arrays. Preserve both arrays and the archive relation;
+the local copy route supplies no normal actor consumer. — SAV-843, SAV-847,
+SAV-982, SAV-984

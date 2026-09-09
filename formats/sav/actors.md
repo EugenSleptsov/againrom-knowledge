@@ -49,6 +49,17 @@ that whole programme and adds no bytes in its own store arm. Inventory,
 equipment, Spellbook and Diary are separate constructs.
 — SAV-HUMAN-043, SAV-CARRY-050
 
+The actor Diary reference may resolve to an existing archive object. The
+typed LOAD does not establish exclusive ownership; a new object is registered
+before its virtual serializer. The bounded actor-method search reaches SAVE
+and destruction but no ordinary independent Diary array consumer. — SAV-982,
+SAV-984
+
+Actor `+1e4` also equals `+1cc+4*6`. The two selected progress branches lack
+a local index<=5 check, so index6 would address the Diary pointer word as a
+scalar. Native reach of that index and a resulting pointer change remain
+Unknown. It defines neither a seventh skill nor Diary array meaning. — SAV-983
+
 ## Scalar meanings
 
 | Runtime field | Wire width | Established meaning |

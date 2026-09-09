@@ -127,6 +127,20 @@ The `+50` constructor writes zero; other ordinary producers remain Unknown.
 LOAD still restores the saved value.
 — SAV-665
 
+## Diary client projection
+
+The restored Player Diary and the client's received word cache are separate
+objects. Opcode186 replaces the CWordArray in the supplied client dispatch
+receiver; its arm performs no second Player lookup. The frontend stores
+that client object at `+d0`. — SAV-995
+
+The conditional opcode4 resume setup uses its matched Player for the Diary
+builder when Player `+34` is nonnull and preceding calls return normally.
+The call is outside the optional initialization arm. Later attributed events
+use the existing Diary notification gate; the additional text-command call
+does not prove another ordinary refresh trigger. Native delivery and first
+refresh order remain Unknown. — SAV-997
+
 ## Tavern command prerequisite
 
 The reached command37 arm selects a Player by signed word `+04` and returns
