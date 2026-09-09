@@ -194,3 +194,37 @@ no-world LOAD clears `+40`, and `+48` is retained at that boundary. The `+68`
 second lookup uses its then-current word, so archive resolution alone does
 not prove its survival. Ordinary item-cast completion clears `+64/+68`.
 — SAV-908, MAGIC-ITEMKILL-117, ITEM-CASTSTATE-056
+
+### Consequence receivers
+
+The selected Unit callbacks `+48/+60/+64` are empty. Humanoid/Human use
+`004f7a0c/004f783f/004f78cc`; the latter two keep the source actor as the
+receiver of progress slot `+5c ->004f72d7`. Constructor and vtable provenance
+identify these classes. A restored address-map hit or actor type word does
+not validate an arbitrary receiver's class or allocation lifetime. — SAV-958
+
+The source callback pair belongs to actor manager `0050fca9`, after its
+admitted actor tick/removal work. Humanoid/Human `+48` can add victim `+1c`
+to source-owner Player `+38` and enter notification dispatch. It bypasses that
+helper for server `+0c==0`, a nonzero victim class predicate, or negative
+source HP. The manager then rereads signed victim `+48` and victim `+40`
+for `+60`, without another null/type/health check. Notification callbacks
+remain an unresolved mutation boundary. — SAV-959
+
+A `+60` refusal does not necessarily suppress the manager's later accounting.
+After it returns, the manager rereads the current source and owner, updates
+that Player's selected counter, and calls the Player-owned Diary with the
+victim. Missing victim owner or the paired multiplayer/owner gate can refuse
+progress while that later Diary operation still runs on the admitted prefix.
+Arithmetic and notification cuts limit the joined evidence to Medium;
+native awards and first post-LOAD recipients remain Unknown. — SAV-960
+
+Before the current actor's tick, the manager clears nonzero actor `+40` when
+the referenced source's `+14` is null. It dereferences that source to make
+the check; this is not an allocation-lifetime test. — SAV-962
+
+Before the callback pair, the removed victim's attached-list loop sets each reached
+Effect's counter `+42=1` and source `+44=0` before its tick callback. This is
+not a global walk of Effects referring to the removed actor. Nested removal,
+derived Effect and notification callbacks, actual destruction, full LOAD
+ordering and the `+68` second lookup remain open. — SAV-962

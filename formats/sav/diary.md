@@ -47,6 +47,20 @@ Standard damage can record its source in T `+40` before death; this does not
 establish a universal lethal-blow/every-kill interpretation.
 — SAV-843
 
+That Diary selection occurs after the source's `+48` and `+60` callbacks.
+The manager rereads the current victim `+40`, then source `+14` and Player
+`+40`; it does not use the separate actor-owned Diary. On an admitted prefix,
+the progress callback can refuse for its victim-owner gate while the later
+Player counter and Diary operation still run. Distinct source/Player/Diary
+controls execute those actual stores, with arithmetic and notification
+returns supplied. Their joined history is Medium. — SAV-960
+
+Earlier removal/Effect callbacks and later progress/notification effects
+remain lifetime boundaries. The measured clear applies to the removed
+victim's own attached Effect sources, not every reference to that actor.
+First native post-LOAD attribution and actual source destruction remain
+Unknown. — SAV-962
+
 Non-null Diary `+2c` admits notification when the dword increments to
 2,4,6,8,10,12,14,16. The downstream packet builder reads the supplied Player's
 own array and writes 17 words under opcode 186:

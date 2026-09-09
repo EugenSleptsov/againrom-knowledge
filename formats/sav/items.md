@@ -132,3 +132,17 @@ admit source virtual `+64`. Death instead reads Unit `+40` and dispatches
 source virtual `+48` before award virtual `+60`. Null periodic source can
 coexist with a mapped credited actor. Destruction, intervening callbacks and
 first native-consumer chronology remain Unknown. — SAV-909, SAV-910
+
+For the selected source classes, Unit `+64` is empty; Humanoid/Human `+64`
+keeps the Effect source as the progress `+5c` receiver. Conditional cases
+with different Effect source and victim credit reach that source's actual
+progress stores. Their numerical calculations and notification returns are
+supplied cuts, so a first native post-LOAD award remains Unknown.
+— SAV-958, SAV-961
+
+The death path's first source callback can enter Player mutation and
+notification before credit is reread for `+60`. Whole notification effects
+are unresolved; an unchanged source across that boundary cannot be assumed.
+The removed victim's own attached-list loop separately clears each reached
+Effect source before its teardown tick, without proving that every Effect
+which refers to the victim is cleared. — SAV-959, SAV-962

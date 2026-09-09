@@ -203,3 +203,24 @@ established by those local windows. — SAV-899
 First-SAVE values of these residual fields remain Unknown after intervening
 callbacks and indexed writes. Constructor clears do not supply a safe vector.
 — SAV-900
+
+The named creation UI hit-test returns one of five marker indices or no match.
+Its handler supplies skill index 1..5; draft initialization supplies 1. These
+inputs exclude the residual aliases on that path. Attribute and preset handlers
+forward stored selection+1 without a local bound. Other draft writes, current
+frame identity and subsequent admission remain separate conditions. — SAV-934
+
+The expanded modifier folds read capacity `da/db` into live `92` and secondary
+damage `f7/f8` into live `b7/b8`. Their four local bodies preserve the eleven
+residual bytes. Spellbook update loads its receiver as `u32[Human+140]`, uses
+that same Human as a read argument and each Spell as its write receiver: the
+derived Spell fields are bytes `09/0e/0f` and word `10`. The row-derived skill
+read uses a full 32-bit index. A separate write loads `mover = u32[Human+154]`
+and stores `u8[mover+0a] = u8[Human+8c]`. Aliased storage, numeric callees and
+the complete derive lifetime remain open. — SAV-935
+
+Before the new builder returns, the same Human reaches item callbacks, owner
+and group collections, further helper calls and state publication. Those handoffs
+do not establish an empty interval before SAVE. Old-item and attached-Effect
+receivers, allocation contents and later writes still prevent a general
+first-mission-SAVE value contract for the six residual spans. — SAV-936
