@@ -7,14 +7,16 @@ record layout, kinds and text handling from `rom.exe`'s registry class
 (`REG-FMT-031`, `REG-REC-032`, `REG-KIND-033`, `REG-KIND-034`, `REG-TEXT-036`,
 `REG-TEXT-037`); corrected
 per-key tables (`REG-VAL-043`); and the widened registry/roster tables
-(`REG-CUT-053`, `REG-ROSTER-052`).
+(`REG-CUT-053`, `REG-ROSTER-052`). The record-layout portion of REG-REC-032
+is retained; its lookup clause is partially retracted, as narrowed by REG-100.
 
 > **⚠ Correction (`REG-FMT-031`, `REG-REC-032`).** Everything published before this
 > correction placed the record
 > fields **4 bytes early**, so each key's name was paired with the **next** key's value.
 > The numbers were real; the key each belonged to was wrong. Any decoder written against
 > the old spec reads every scalar off by one key. See `claims/registry.md` → Standing
-> corrections.
+> corrections. The record-layout correction stands; the lookup clause of
+> REG-REC-032 is partially retracted, as narrowed by REG-100.
 
 Seen as: file nodes ending `.reg` inside a RES container. The install holds **44** of
 them in **12** containers (`REG-LOC-038`) — the five class registries in `graphics.res`,
@@ -56,7 +58,7 @@ call fills in from the file path, never from the file).
 | 0x00 | magic | `&YA1` = `0x31415926` LE; mismatch → the game's `"bad signature"` |
 | 0x04 | root `value` | index of the root's first child record |
 | 0x08 | root `size` | number of top-level children |
-| 0x0C | root `kind` | always **17** = `0x11` = subkey (bit 0) \| sorted (bit 4) — not a magic constant |
+| 0x0C | root `kind` | **17** = `0x11` in the measured install = subkey (bit 0) \| sorted (bit 4). The raw loader does not require this value (`REG-099`, `REG-101`). |
 | 0x10 | `R` | total record count |
 | 0x14 | — | read into the object but used by no accessor found; **Unknown** |
 
@@ -67,7 +69,10 @@ poolStart = 0x18 + R*32 + 4
 0x18 + R*32 + 4 + poolLen == payloadLen      exactly, on 44/44 registries
 ```
 
-## Record (32 bytes) — `REG-REC-032`
+## Record (32 bytes)
+
+The record layout in REG-REC-032 is retained; its lookup clause is partially
+retracted, as narrowed by REG-100.
 
 | Off | Type | Field | Notes |
 |-----|------|-------|-------|
@@ -169,8 +174,10 @@ reachable from the registry class — `MultiByteToWideChar` / `WideCharToMultiBy
 `LCMapStringA` / `GetACP` / `GetOEMCP` are called only from the statically-linked MFC/CRT,
 the `CharToOemA` / `OemToCharA` thunks have zero callers, and `setlocale` appears nowhere.
 
-The only byte transform anywhere on the path is the *name lookup*'s `_strnicmp`, whose
-fast path folds `A`–`Z` only and leaves bytes `>= 0x80` untouched.
+The unsorted name lookup's `_strnicmp` fast path folds `A`–`Z` only and leaves
+bytes `>= 0x80` untouched. The sorted lookup instead compares raw bytes with no
+case folding (`REG-100`). The CRT locale-dependent arm remains outside that
+conditional fast-path statement.
 
 > **Therefore a code page for `.reg` is a rendering choice of ours, not a property of the
 > format.** Names and string values are **opaque bytes**. Consumers that must display them
@@ -185,22 +192,50 @@ datum exercises a code page at all.
 
 ## Name matching, ordering and the 15-character clamp
 
-Keys are looked up by `_strnicmp` over **15** characters, case-insensitively in the ASCII
-range. Two keys agreeing in their first 15 characters are indistinguishable to the game.
-When a subkey's `kind` has bit 4 set, its children are assumed **sorted** and are found by
-`bsearch`; otherwise by linear scan.
+The parent kind's bit 4 selects two different comparisons. With bit 4 clear,
+`004ce8e0` linearly scans children using `_strnicmp(query, child+0x10, 15)`.
+With bit 4 set and a nonempty list, it copies at most 15 query bytes into a
+NUL-terminated temporary record and calls `bsearch` with `004ceaf0`. That
+comparator compares unsigned bytes to NUL, **case-sensitively**. A root or leaf
+case variant can therefore match in an unsorted container and miss in a sorted
+one. Nonzero CRT locale state is not covered by the unsorted ASCII-fold result.
+The lookup clause of REG-REC-032 and the comparator clause of REG-KEY-054
+are narrowed by this result. — REG-100
+
+The node-insert helper clamps a new name to 15 bytes plus NUL and marks an
+overlong input with kind bit 28; typed setters may later replace the kind.
+The raw loader does not clamp names. A 15-byte stored name
+matches a longer query sharing that prefix on both lookup routes; a raw name
+occupying all 16 bytes without NUL matches that query on the 15-byte linear
+route but misses the sorted route's truncated temporary key. Arbitrary
+unterminated names and comparison reads outside the record remain outside the
+valid producer-name domain. — REG-099, REG-100
 
 **Bit 4 is set on exactly one node per registry: the root** (`REG-KEY-054`). Over all 44
 registries the root's `kind` is `17 = subkey|sorted` 44/44 and **0 of the 512 subkey records**
 set it, so the `bsearch` path is reachable only for a top-level section name and every per-key
 lookup inside a section is a linear scan. The data honours the obligation that creates: the
-root's child list is sorted under the lookup's own comparator on **44/44** (only 81 of the 512
-non-root lists happen to be). Two consequences:
+root's child list passed the earlier **case-insensitive** ordering census on
+**44/44** (only 81 of the 512 non-root lists passed). That census did not test
+the actual sorted comparator and is not a new case-sensitive ordering census.
+The comparator and unconditional writer clauses are partially retracted;
+these flag and earlier ordering counts stand.
+Two consequences:
 
 - Sections are stored in **lexicographic**, not numeric, order — `MapObject1, MapObject10,
   MapObject11, …, MapObject2`. The order in which a loader's `"<Prefix>%d"` counter visits
   sections is **not** the record order.
-- A writer must emit root children sorted, or the game will `bsearch` an unsorted list.
+- A container advertising bit 4 must order its children for the case-sensitive
+  comparator. A container with bit 4 clear takes the linear route. — REG-100
+
+Neither lookup route checks a child's kind before matching its name. The linear
+route selects the first equal child; sorted duplicate blocks of 2, 3 and 4
+equal names select indices 0, 1 and 1 in the measured bsearch body. Lookup does
+not enforce the parent subkey bit or skip a child carrying bit 30. The selected
+integer getter checks only `kind & 0x0e == 2` after two name lookups; missing
+names return its caller's default, while a mismatched value type reaches the
+exception-throw boundary. These are accessor facts, not structural or
+application acceptance rules. — REG-101
 
 **The clamp, from the data side** (`REG-NAME-055`): over all 4 621 shipped records, name
 lengths run 1..15, **0** are 16 or longer, **69** are exactly 15, and **0 sibling pairs
@@ -208,6 +243,27 @@ anywhere in the install are indistinguishable** under the 15-character compare �
 never bites on shipped data. A 15-character key may still be a truncation of a longer authored
 name, and `rom.exe` sometimes carries the original: `MinimalGuardRan` → `MinimalGuardRange`,
 `AddPictureDocum` → `AddPictureDocument`, `ScenarioMission` → **`ScenarioMissionCount`**.
+
+## Raw parsing and writing of unrecognized entries
+
+The raw loader reads six header dwords, the full `R*32` record block, a pool
+length and the pool. It checks the signature and allocation results but does
+not enumerate names, validate child kinds, enforce ordering or deduplicate
+records. Framed synthetic roots and leaves before, between and after known
+names survive this boundary byte-exactly. Known lookups remain unchanged when
+those entries do not collide under the selected comparator and the advertised
+order remains true. This does not establish application LOAD acceptance.
+— REG-099, REG-100, REG-101
+
+The raw writer sorts through `004ce660`, then writes the supplied registry's
+header, complete record array and pool. Six tested unrelated root/leaf entries
+survive this direct round trip. Sorting can alter lookup behavior: a lowercase
+root matched the unsorted case-folding route before writing and missed the
+case-sensitive route after writing set the root's sorted bit. The sort helper's
+recursive candidate is indexed by `parent.value + parent.size`, rather than
+its loop counter; it does not establish a conventional recursive sort of every
+descendant. Internal insertion/copy helpers and an application's fresh-registry
+producer are separate paths. — REG-102
 
 ## Cross-checks that the framing has to satisfy
 

@@ -14,7 +14,7 @@ opens.
 | Format | Seen as | Nature | Status |
 |--------|---------|--------|--------|
 | **RES / LM** | `*.res`, `KIDS.LM` | Container archive, magic `26 59 41 31` | ☑ [specified](res/format.md) (core; `@4`/`@12`/node`@0` open) |
-| **REG** | `*.reg` (inside `.res`) | Nested archive / sprite manifest | ☑ [specified](reg/format.md) (`REG-FMT-031`, `REG-REC-032`, `REG-KIND-033`/`REG-KIND-034`, `REG-VAL-024`…`REG-VAL-029`, `REG-KEY-044`, `REG-ROSTER-052`, `REG-CUT-053`; 64 claim rows); `data/map.reg`'s own per-key table open |
+| **REG** | `*.reg` (inside `.res`) | Nested archive / sprite manifest | ☑ [specified](reg/format.md) (`REG-FMT-031`, `REG-REC-032` (record layout retained; lookup clause partially retracted), `REG-KIND-033`/`REG-KIND-034`, `REG-VAL-024`…`REG-VAL-029`, `REG-KEY-044`, `REG-ROSTER-052`, `REG-CUT-053`; 64 claim rows); `data/map.reg`'s own per-key table open |
 | **SPR256** | `*.256` (inside `.res`) | 8-bit paletted sprite, multi-frame | ◐ [structure](spr256/format.md) done (`SPR256-STRUCT-001`…`SPR256-CORPUS-006`); RLE/palette/roles open |
 | **SPR16A** | `*.16a`, `*.16` (inside `.res`) | 16-bit-word sprite | ☑ [specified](spr16a/format.md) (`SPR16A-STRUCT-001`, `SPR16A-RLE-002`, `SPR16A-RLE-003`, `SPR16A-PIX-011`); framebuffer packing + `.16` fonts open |
 | **PAL** | `*.pal` (inside `.res`) | Palette — the per-tier and per-owner recolour | ☑ [specified](pal/format.md) (both shapes, the shade-table build, the `Palette` selector and `face`; the owner index’s writer open) |

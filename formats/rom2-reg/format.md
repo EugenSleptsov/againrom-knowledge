@@ -7,6 +7,7 @@ survey. Unread payload semantics remain explicit; this is not complete decoding.
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-006`. Cross-reference
 only, not evidence: ROM1's own [`formats/reg/format.md`](../reg/format.md)
 (`REG-FMT-031`, `REG-REC-032`) and `RES-SCOPE-015` (found by magic, not by name).
+The cited ROM1 record layout is retained; its lookup clause is partially retracted.
 
 Seen as: any file-typed node, in any of the 11 `.res` containers, whose payload
 begins with magic `&YA1` — the same by-magic search RES-SCOPE-015 used on ROM1,

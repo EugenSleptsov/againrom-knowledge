@@ -1761,18 +1761,64 @@ the file stored verbatim.
   `SAV-PTR-003` locates 16 bytes *before* `bodyEnd` are **not** part of this region — they are the
   coded body's own last opcodes. — SAV-PTR-003
 - **`[bodyEnd + 0x100, storeEnd)` — embedded `&YA1` state store.** One nested `&YA1`, the
-  REG-style inline key-value variant (`SAV-EMB-004`, `REG-FMT-017`, `REG-REC-032`),
-  with header `@8 = 9` = the 9
+  REG-style inline key-value variant (`SAV-EMB-004`, `REG-FMT-017`, and the retained
+  record layout of `REG-REC-032`, whose lookup clause is partially retracted),
+  with header `@8 = 9` for the measured baseline = the 9
   top-level state keys `Character, CurrentState, Fog, GameOptions, Inventory, Objects,
   Projectiles, SpellBook, View`. Framing and value decode follow the REG format, so
-  `storeEnd = bodyEnd + 0x100 + 0x18 + 32R + 4 + poolLen`. The leaf set is fixed: 28 records /
-  19 leaves on a mid-mission save, 22 / 15 on a between-mission one, which lacks `Fog` and
-  `Projectiles`. — SAV-EMB-004, SAV-TAILEXT-062
+  `storeEnd = bodyEnd + 0x100 + 0x18 + 32R + 4 + poolLen`. The earlier corpus had 28 records /
+  19 leaves on its mid-mission saves and 22 / 15 on its between-mission save, which lacks
+  `Fog` and `Projectiles`. Those are corpus counts: the producer can also emit
+  `Objects/Group0` through `Group9` and top-level `Prj<id>` sections.
+  — SAV-EMB-004, SAV-TAILEXT-062, SAV-PROJSTORE-428, SAV-915
 - **`[storeEnd, EOF)` — the variable campaign record at application `+0x548`.** The state-store
   writer is followed immediately by `FUN_00489270` on the same file; both load paths make the
   inverse call `FUN_00489580` after consuming the store. The complete programme below closes at EOF
   on all 26 preserved owner saves. Their observed record sizes are 268 (19 files), 308 (1), 310
   (4) and 368 (2). — SAV-TAILEXT-062, SAV-CAMPTAIL-070, SAV-CAMPPROG-071
+
+### Unrecognized application-state entries
+
+The raw registry loader copies framed records and pool bytes without checking
+their names. Adding a noncolliding root or leaf before, between or after known
+names does not change the selected known lookups when the advertised order is
+correct. Bit 4 selects case-sensitive bsearch; without it, the 15-byte linear
+comparison folds ASCII case under the no-locale condition. Duplicate names,
+false sorted flags and known leaves with incompatible value kinds can change
+the result independently of raw parsing. — REG-099, REG-100, REG-101
+
+The two application consumers `00477650` and `00477c00` construct stack-local
+registries, load them, call the campaign reader on the same stream, consume
+named state and destroy the registry. The long consumer additionally reads
+projectile and fog state. The complete bodies pass named getter results to
+application fields and consumer helpers; they do not enumerate every root or
+leaf. Seven conditional runs of the long consumer's eight-scalar prefix
+transfer the same values with and without the unrelated entries. Whole LOAD,
+exception unwinding and subsequent callbacks remain unobserved. — SAV-914
+
+Ordinary SAVE `00478c40` constructs a fresh empty registry at `00478d0d` and
+populates it from current application/UI/world fields. Fixed names, live
+`Objects/Group<n>` lists and live `Prj<id>` records determine that output. At
+`00479401` it passes this registry to the YA1 writer, then writes the campaign
+record on the same file. The direct ownership flow reconstructs state; it does
+not pass the loaded registry to that writer. Loss of noncolliding entries that
+no producer requests is the bounded persistence inference, at Medium
+confidence; a complete ordinary native LOAD/SAVE cycle and hidden effects of
+unexpanded helpers remain Unknown. — SAV-915
+
+A direct call to the raw registry writer is a different boundary: the six
+tested unrelated entries survive it, although sorting may change later name
+matching. Raw round-trip survival therefore cannot establish application SAVE
+survival. — REG-102
+
+Raw parsing and even a getter return do not establish application acceptance.
+Both application bodies copy four `SpellBook/Shortcuts` dwords without testing
+the getter result or array count. The measured missing and empty cases leave
+the destination pointer zero and reach the long consumer's null read at
+`0047822d` in synthetic memory. One- and three-element arrays produce reads
+beyond their declared lengths; four and five cover the four reads. The actual
+OS allocator, exception presentation and whole-game response remain Unknown.
+— SAV-916
 
 ### Bounded extension-survival check
 

@@ -1,5 +1,13 @@
 # Overturn history
 
+## Embedded application-store comparison and population scope
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `REG-REC-032` (the blanket lookup-comparison clause only) | The lookup compares names over 15 characters using `_strnicmp`, so 15 significant characters. | High | [EXP-0337](../experiments/EXP-0337-application-store/EXP-0337.md), complete `004ce8e0`, `004ceaf0`, `00557030`, `00557140`; REG-100 and V029..V062 | Only the unsorted route uses the 15-byte case-folding comparator. The sorted route truncates its query to 15 bytes plus NUL, then compares stored bytes case-sensitively through NUL. Case variants and a raw 16-byte non-NUL name distinguish the routes. Record layout, stride, producer name clamp and corpus counts stand. | **PARTIALLY RETRACTED** |
+| `REG-KEY-054` (sorted-comparator identity and unconditional writer obligation only) | The root lists are sorted under the lookup's own comparator, described as case-insensitive ASCII over 15 characters; a writer must emit root children sorted. | High, based on the exhaustive corpus census and a reused consumer interpretation | [EXP-0337](../experiments/EXP-0337-application-store/EXP-0337.md), original lookup/comparator bodies; REG-100 and ordering controls V037..V048 | The actual sorted comparator is case-sensitive and NUL-terminated. The old 44/44 and 81/512 ordering counts describe the old case-insensitive instrument; no replacement case-sensitive corpus count is claimed. Sorting is a data obligation when bit 4 is advertised; a clear bit selects a linear scan. The 44-root/512-subkey flag census and numeric-versus-lexicographic distinction stand. | **PARTIALLY RETRACTED** |
+| `SAV-TAILEXT-062` (universal fixed state-store leaf-set implication only) | The state store's leaf set is fixed, with 28 records/19 leaves for mid-mission saves and 22/15 between missions. | High for the stated boundary and leaf set | [EXP-0337](../experiments/EXP-0337-application-store/EXP-0337.md), complete ordinary SAVE `00478c40`; SAV-915; prior SAV-PROJSTORE-428 | The complete producer has nonempty Objects/Group0..Group9 lists and Prj<id> sections driven by live collections. The two counts remain facts about the earlier measured corpus, not general record/leaf constants. The YA1 extent and three-region tail boundary are unchanged. | **NARROWED** |
+
 ## Effect source and actor credit across SAV
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
