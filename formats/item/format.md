@@ -464,8 +464,12 @@ boundary. Runtime stock is larger: the shop generates castSpell weapons with ids
 `{1,11,13,14,20}` and price-derived random power capped at 100. The two siege Units can apply their rider, but their plain Unit vtable uses empty cast,
 damage and kill award slots, so they gain no training.
 `Unit::Serialize` stores `actor+0x68` as an archive object reference and `actor+0x64` as a raw
-`u32`; a save during the temporary interval carries both bit patterns, but only `+0x68` is remapped.
-Whether the raw Spell pointer remains valid after any load is untested.
+`u32`. The world LOAD lifecycle explicitly resolves both fields through the
+saved-address map: hit replaces the value, miss clears it. This repairs the
+raw Spell key as well as the item reference. Later pointer validity and native
+resume remain untested. The+68 fixup looks up its then-current word; the
+archive-resolved reference is not proved to survive this second lookup.
+— SAV-908
 
 A separate post-cast arm destroys an item of kind `0x0e` and its `Spell`; the shipped staff does not
 have that kind. Prismatic Spray id 14 is route-dependent: caster admission applies the fan before

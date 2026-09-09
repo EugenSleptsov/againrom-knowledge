@@ -1,5 +1,13 @@
 # Overturn history
 
+## Effect source and actor credit across SAV
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `MAGIC-ITEMKILL-117` (portable actor identity inference only) | portable actor identity requires new state because the credited actor is not an archive object reference | High for serializer and local attribution programme; runtime validity unobserved | [EXP-0336](../experiments/EXP-0336-effect-attribution/EXP-0336.md), SAV-908 | Unit post-load00510dc0 explicitly passes raw Unit+40 to005240e0. The saved-address-map result replaces a hit or clears a miss. The raw wire primitive does not exclude this separate identity repair. Existing award/attribution gates and runtime Unknowns stand. | **PARTIALLY RETRACTED** |
+| `ITEM-CASTSTATE-056` (only+68 remapped clause) | but only +0x68 is remapped | High for serialized representation and mutation scope; runtime validity Unknown | [EXP-0336](../experiments/EXP-0336-effect-attribution/EXP-0336.md), SAV-908 | The world LOAD lifecycle repairs raw+64 through00527cb0 and+68 through00527cf0, with the same map-hit replacement/miss clear. Cast lifetime, wire widths, destructive-kind branch and later runtime Unknowns stand. | **PARTIALLY RETRACTED** |
+| `SAV-776` (004ff57d function identity and its asserted caller chain only) | FUN_004ff57d's sole caller is004fd09c, itself called only from004fcd16 | High for two located writers and asserted graph separation | [EXP-0336](../experiments/EXP-0336-effect-attribution/EXP-0336.md), SAV-910 | 004ff57d is inside the six-byte instruction at004ff579. The new export refuses it as a complete body and retains a bounded original-instruction window. The asserted function/caller chain is withdrawn; the two item writers' own-store observations remain, and a whole-builder graph is not substituted. | **PARTIALLY RETRACTED** |
+
 ## ROM2 maxima attribution
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

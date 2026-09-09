@@ -8,6 +8,25 @@ level; the addresses are in the cited claim rows. The actor's
 own fields are [`formats/hero`](../hero/format.md); the parameter table is
 [`formats/databin`](../databin/format.md).
 
+An attached ordinary Effect has source state at+44 separate from the target's
+credited actor at+40. Default Effect construction clears its source, copy
+preserves it, and continuous same-id refresh retains the old source. Template
+construction's null-parser arm is different: it does not write+44, and its
+ordinary reach/allocation value remains Unknown. — SAV-906
+
+The new-Effect SAV route uses the default factory and omits source+44 from its
+44-byte record. An archive back-reference preserves the loaded Effect alias.
+The selected post-load paths do not reconstruct its source. In contrast, the
+target's raw saved credit key is explicitly remapped on world LOAD, or cleared
+on a lookup miss; the no-world document arm clears it. — SAV-907, SAV-908
+
+For nonzero Token8 periodic damage, victim HP changes before source admission.
+A null source skips the source callback, negative source HP clears the source,
+and zero/positive HP admit virtual+64. A duration-only timer does not make that
+periodic call. Later death credit reads target+40 and can name a different actor;
+an intervening source+48 callback precedes the source+60 award. Native lifetime,
+later repairs and first-consumer chronology remain Unknown. — SAV-909, SAV-910
+
 `ftol` truncates toward zero (`0055458c`, rounding-control 11); `IDIV` truncates toward zero.
 `rand(n)` is `FUN_00504003`: `rand() * (n+1) >> 15`, uniform on `[0, n]` **inclusive**, 0 when
 `n == 0`. Runtime `Data.bin` column *i* is title *i+1* throughout.
@@ -448,7 +467,9 @@ the four filled fields do not remain unchanged.
 `Unit::Serialize` preserves training as six levels, six per-skill experience dwords and one
 aggregate. It also stores `actor+0x68` as an object reference, while `actor+0x64`, kill-credit
 `actor+0x40` and attribution `actor+0x48` are raw `u32`, raw `u32` and `u8`. The credited actor is
-therefore not remapped as an archive object reference on load.
+remapped separately through the saved-address map by the world LOAD lifecycle;
+the same lifecycle repairs+64/+68, with missing keys cleared. Wire representation
+does not establish pointer validity after later callbacks. — SAV-908
 
 **Prismatic Spray** (`FUN_004fe92e`) selects at most `min(power/20 + 2, 7)` total victims and
 applies to each in selected order. Its secondaries come from group sight; this count is not a

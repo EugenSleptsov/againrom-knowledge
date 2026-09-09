@@ -1,5 +1,35 @@
 # SAV save game (`Asg&`) — specification (partial)
 
+## Attached Effect source and actor credit
+
+The ordinary Effect factory clears transient source+44. Copy preserves it;
+continuous same-id refresh retains the old source while replacing the counter.
+Template construction has a separate failure arm that does not write+44.
+No allocation value or ordinary failure-path reach follows from that omission.
+— SAV-906
+
+Unit+20 is an archive list of typed Effect references. A new Effect invokes
+its default factory, then reads its44-byte body; that programme omits+44.
+A back-reference aliases the existing loaded object. The selected Effect
+post-load entry repairs position, and the selected Unit/Human lifecycle does
+not reconstruct an attached Effect source. Remaining duration and source
+identity are separate obligations. — SAV-907
+
+Raw-u32 Unit+40 is an old actor-address key. On the world LOAD lifecycle it is
+resolved through the saved-address map: hit replaces it, miss clears it.
+Raw Unit+64 and object-reference+68 also receive explicit map repair there;
+Unit+48 is retained at that boundary. The no-world document branch instead
+clears Unit+40. Wire primitive alone does not determine post-load identity.
+— SAV-908
+
+A nonzero Token8 periodic HP payload reads Effect+44 after changing HP; null
+skips source dispatch, negative source HP clears it, and zero/positive source
+HP admit source virtual+64. The death path instead consumes Unit+40 and has a
+source virtual+48 callback before its virtual+60 award call. A null periodic source can therefore
+coexist with a mapped credited actor. These are conditional local paths;
+destruction, intervening callbacks and native first-consumer chronology remain
+Unknown. — SAV-909, SAV-910
+
 ## Player identity and formation consumers
 
 The archive reference identifies the Player object to deserialize. Its saved
@@ -1342,9 +1372,12 @@ The related runtime context is already in `Unit::Serialize`. `actor+0x68` is sto
 archive object-reference primitive. Temporary `actor+0x64`, kill-credit `actor+0x40` and the signed
 attribution byte `actor+0x48` are stored and restored as raw `u32`, raw `u32` and `u8`. Ordinary
 item-cast completion clears `+0x64/+0x68`; a save during the live interval carries their bit
-patterns, but only `+0x68` is reconstructed as an object reference. The raw `+0x64` Spell pointer
-and credited actor at `+0x40` are not remapped. Their validity and consumption after any load,
-including same-process save/load, remain untested. — MAGIC-ITEMKILL-117, ITEM-CASTSTATE-056
+patterns. The world LOAD lifecycle also resolves raw `+0x64` and `+0x40`
+through the saved-address map, replacing a hit and clearing a miss; `+0x68`
+receives a separate fixup with that same rule. Native validity and later
+consumption remain untested. The +68 lookup uses its then-current word;
+survival of an already archive-resolved reference through that second lookup
+is not established by the wire primitive. — SAV-908, MAGIC-ITEMKILL-117, ITEM-CASTSTATE-056
 
 Progress belongs to the `Human` object whose body contains it. The enclosing group actor list holds
 that object, `Token+0x14` resolves its owning `Player`, and `Player+0x34` selects the primary
