@@ -25,8 +25,8 @@ bytes, plus an eight-byte extension when `kind == 0x21`.
 |-----|------|-------|-------|
 | +0x00 | u32 | **X** | `/256`, `0x80`-centred. **This is the axis the tile grid strides by 1** and the block plane's **low** byte — the same axis as `meta+0x00` and as the Buildings column `sizeX` (`ALM-OBJ-061`) |
 | +0x04 | u32 | **Y** | `/256`. The other axis: the grid's row index and the plane key's high byte |
-| +0x08 | u32 | **kind** | **the class**: a `structures.reg` `ID` (= section index + 1). Installed values are `1..66` (65 distinct, none zero); these are not field-width limits. `0x21` ⇒ an 8-byte extension follows; `0x22`/`0x23` ⇒ the `Shop` branch (below) |
-| +0x0c | u16 | **stock value cap** | the `Shop` branch stores `value × 1000` at the live object's `+0x70` and forwards it to the stock generator's `template+0x90` (`SHOP-CAP-004`). **Not a durability** — that label is retracted |
+| +0x08 | u32 | **kind** | Installed values are `1..66` (65 distinct, none zero). Full u32 equality to `0x21` selects the eight-byte extension; the loader stores low16, the walker tests that word for `0x22`/`0x23`, and either constructor receives low8. These are three different width boundaries (`ALM-127`) |
+| +0x0c | two raw bytes | **placement word** | Preserved at placement-record+0x06 on complete input transfer. Shop interprets signed i16 ×1000 as its stock price cap; Building only tests zero versus nonzero here. The universal durability label is retracted (`ALM-127`, `ALM-128`, `SHOP-CAP-004`) |
 | +0x0e | u32 | **owner** | low u16 used: a **1-based physical slot** in the type-5 array |
 | +0x12 | u16 | **trigger target id** | sign-extended into the live object's `+0x10`; it is the id a type-7 `Target_Structure` parameter names (`ALM-TRIG-046`) |
 | +0x14 | u32 | *ext, low axis* | present iff `kind == 0x21`. **Low byte only** → `obj+0x60`, the extent along the `+0x00` axis (`ALM-OBJ-062`). Bytes `+0x16`/`+0x17` are not consumed |
@@ -40,8 +40,8 @@ table arm. Installed extensions use class 33 and two nonzero extent bytes.
 `004e24f0`…`004e2503`; the names are the MFC runtime-class table's own, `SHOP-CLS-001`):
 
 ```
-kind == 0x22 or 0x23  ->  Shop,     0x74 bytes (FUN_00505cbd, vtable PTR_FUN_0059c828)
-anything else         ->  Building, 0x6c bytes (FUN_005042b6, vtable PTR_FUN_0059c738)
+stored kind word == 0x22 or 0x23 -> Shop, 0x74 bytes (00505cbd, vtable0059c828)
+any other stored kind word     -> Building, 0x6c bytes (005042b6, vtable0059c738)
 ```
 
 `0x22`/`0x23` are `structures.reg` `ID` 34/35 = **`Shop 1` / `Shop 2`**, the two `Usable`
@@ -58,6 +58,36 @@ table (`0x609be0`, guarded `kind != 0 && kind <= count − 1`), and that definit
 the footprint (`sizeX × sizeY` in tiles + the two per-cell masks), the HP pair and one
 further byte. That table is the **Buildings collection of `world.res:data/data.bin`**
 (`DAT-LOC-001`, `DAT-BLD-005`); the 1-based law is the file's own entry-0 skip.
+
+#### Placement-word consumers and production
+
+| Reached runtime class | Read and transform | Result before later simulation |
+|---|---|---|
+| Building, including the kind33 extension arm | Setup copies definition column3 into words +0x44 and +0x42. The walker tests signed placement-record+0x06 for zero; only zero is stored into object+0x42 | Zero overrides the initialized current field. Every nonzero word leaves it at the definition value; there is no proportional nonzero assignment. +0x44 remains the definition value (`ALM-128`) |
+| Shop, stored kinds34/35 | Sign-extend placement-record+0x06; multiply by1000; setter writes object+0x70 and forwards to template+0x90 | The template's price maximum receives the signed product. This operation does not clear the inherited +0x42 field. The campaign town has a separate producer (`ALM-128`, `SHOP-CAP-004`, `SHOP-MISSION-018`) |
+
+The loader stores a placement pointer in map+0x304. After constructing and
+registering the runtime object, the walker frees that placement and clears
+its array slot. The original nonzero Building word is not passed to its
+constructor or registration. Only the selected state above survives this
+walker; this is not an image-wide no-alias claim. Building's +0x14 virtual
+can later increment +0x42 for selectors15/16 under its existing counter and
+range predicates, so zero is not established as an irreversible state.
+No other runtime subclass is selected by this type4 walker. — ALM-127,
+ALM-128, UNIT-STRUCTZERO-080
+
+| Editor operation | Placement-word rule |
+|---|---|
+| Complete type4 read | Read2 bytes, sign-extend for the factory argument, then retain low16 at CStructure+0xf6 and +0xfa. Both ordinary and kind33 factories call the same initializer; the latter constructs an extent-capable editor object (`ALM-129`) |
+| Selected type4 write | For each object admitted as an editor CStructure, emit2 bytes directly from +0xf6. No per-word scaling, zero normalization or signed-range check occurs at this write site (`ALM-129`) |
+| Confirm existing-structure property | The selected handler opens dialog226 with +0xf6 sign-extended into its integer control1041. If accepted and the selected class remains nonzero, clamp the integer only above3000 at this local store, then retain low16 in +0xf6/+0xfa. A successful property confirmation can therefore change32767 to3000 before saving; an unchanged direct write retains0x7fff (`ALM-130`) |
+
+Full input transfer and successful factory admission are preconditions of
+the editor preservation rule. UI input validation, delivery of the selected
+property command, other editor producers, short-read recovery, archive
+backing-stream identity, and native behavior after the first field consumer
+remain Unknown. No shared health, charge or level interpretation follows
+for all structure definitions. — ALM-127, ALM-128, ALM-129, ALM-130
 
 ### type 5 — player/group roster (`ALM-GRP-020`, `ALM-GRP-041`)
 
