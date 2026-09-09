@@ -4,6 +4,17 @@ This page describes executable state, not a stored file format. Exterior contrac
 conditional on the named town pointer handler and paint hub being reached.
 Physical-pointer message delivery and audio-device results remain Unknown.
 
+## Tavern entry ordering boundary
+
+The located campaign tavern helper calls the command37 sender before its
+computed view activation. On the reached server command37 arm, Player+04
+selects the Player and a miss bypasses stock construction. A match first
+changes Player+38 for the refund and requests its event. That local ordering
+does not establish the earliest operation after a city click: earlier UI
+callbacks, transport, actual command category and active client key remain
+Unknown, as does the instruction behind the reported N3 tavern failure.
+(SAV-918)
+
 ## Selector and labels
 
 Message `200h` can reach town vtable `0059b000+4c`, wrapper `004b4c50`, then

@@ -1,5 +1,26 @@
 # SAV save game (`Asg&`) — specification (partial)
 
+## Tavern entry Player prerequisite boundary
+
+The reached tavern command37 arm selects a Player by its signed word+04,
+returning without stock construction when no match exists. The matched stock
+handler first adds the tavern refund to Player+38 and requests event67, even
+when the refund is zero. This order is local to the measured handler; earlier
+UI/transport and actual client-selected identity remain Unknown. (SAV-918)
+
+Constructor+04=0, new-roster registration and archive LOAD are distinct
+producers. Registration chooses a slot and derives or clears +2c. LOAD copies
+the saved word+04 literally, then the measured list path appends the returned
+Player pointer; those LOAD bodies do not directly call registration. Neither
+first-save values nor all post-LOAD mutations follow from that local negative.
+(SAV-919)
+
+Four exact-reader original resaves contain 3/3/1/1 Players. Both measured city
+files have one Player with +04=1, +08=1 and +28=0; their +44 values differ 0/2.
+Different campaign histories and unobserved client/dispatch state prevent
+failure attribution or a native-construction inference. The N3 tavern failure
+instruction and absolute first runtime consumer remain Unknown. (SAV-920)
+
 ## Attached Effect source and actor credit
 
 The ordinary Effect factory clears transient source+44. Copy preserves it;

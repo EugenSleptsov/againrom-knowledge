@@ -13,6 +13,21 @@ This is not a file format. It is the second half of the town building whose miss
 specified by `REG-SCN-064` / `REG-SCN-065`; it sits on `scenario.res::scenario.reg`,
 `scenario.res::npc.reg` and `world.res:data/data.bin`.
 
+## Entry and saved Player prerequisites
+
+The located campaign helper sends command37 before computed tavern activation.
+Its reached server arm resolves the command key against signed Player+04 and
+exits without stock construction on a miss. A match reaches the stock handler's
+refund: wrapped32-bit addition to Player+38, followed by event67 even when the
+refund is zero, before the old roster is inspected. This is a local static
+order. Earlier UI/transport effects, actual client key and absolute first
+runtime consumer remain Unknown. (SAV-918)
+
+The measured N3 and accepted city resaves each contain one Player with slot1;
+their colour+44 differs 0/2. Neither that difference nor the equal slot proves
+which operation failed. The four-file comparison is not native-construction
+evidence and supplies no additional witnessed tavern run. (SAV-920)
+
 ## At a glance
 
 ```
