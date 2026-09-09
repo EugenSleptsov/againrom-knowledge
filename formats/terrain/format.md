@@ -51,3 +51,16 @@ Metadata+0x0c storage at landscape P+0x2c shares the map reader's resolved
 stream wrapper. Complete lower reads transfer the four bytes unchanged;
 short reads can preserve part of the previous destination. Later P/M aliases,
 first use and semantic role remain Unknown. — TERR-STREAM-157
+
+The selected loader caller allocates 0x30 bytes for P; its constructor
+assigns vtable 0059a270.
+Publication and binder 00403fe8 retain P at view+0x80; the binder copies
+P+4/+8 into view dimensions and leaves P+0x2c untouched. On replacement,
+the original slot+4 binds 00484b40→00484eb0, which frees arrays at
+P+0x0c/+0x10/+0x14/+0x18 before the optional P free. Twelve bounded
+original-x86 cases preserve the scalar through binding and observe no scalar
+read in the executed destructor bodies. Allocator retention and the
+post-publication message 0041f24e are unclosed; its receiver is selected
+through session+0xd4, slot+0x48. Native LOAD, message delivery and first use
+remain Unknown. This P allocation is distinct from M and editor map E.
+— TERR-METALIFE-175

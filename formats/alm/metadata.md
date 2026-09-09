@@ -15,7 +15,7 @@ The offsets below are relative to the payload. The fixed reads total 632 bytes. 
 | +0x00 | u32 | **W** | map width — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x04 | u32 | **H** | map height (`W≠H` occurs, e.g. 112×144) — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x08 | f32 | **angle** | Radians; loaded into map `M+0x18` and terrain `P+0x20`. The terrain store fills four bytes of a double. Forced relight replaces it from the sun globals before the known read. Installed angles are whole degrees: `±45, ±44, ±18, 36, 28, 25, 22`; the common π/4 encoding is `0x3f490fda`. | ALM-META-027 (amended; payload-angle clause retained), ALM-META-091, ALM-META-092, ALM-CORP-093, TERR-LIGHT-149, TERR-LOAD-152 |
-| +0x0c | u32 | scalar (stored) | Loaded into map `M+0x1c` and terrain `P+0x2c`; no identified reader in the named direct-consumer paths. Installed values: `360,480,645,720,1080`. Meaning Unknown; numeric agreement with the sun clock does not identify a consumer. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
+| +0x0c | u32 | scalar (stored) | Loaded into map `M+0x1c` and terrain `P+0x2c`. A game map-copy constructor and the editor map-copy path read and preserve the four bytes in independent storage. The editor writes the word and its separate new-map constructor supplies a default. Gameplay meaning and native first use remain Unknown. Installed values are a corpus observation, not a validation range. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093, ALM-METACOPY-183, ALM-METAEDITOR-185, ALM-METADEFAULT-186 |
 | +0x10 | u32 | scalar (stored) | Loaded into map `M+0x20` and terrain ambient byte `P+0x1c`. Forced relight overwrites the terrain value before its known read. Installed values span `0..33`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x14 | u32 | scalar (stored) | Loaded into map `M+0x24` and terrain range byte `P+0x1d`; the four-byte terrain store also writes `P+0x1e/0x1f/0x20`. Relight replaces the range before its known read. Installed values span `27..64`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x18 | u32 | bitmask | **Terrain tile-group mask.** The map loader discards its local copy; terrain stores it at `P+0x28`. Bit i selects group `(i>>2)+1`, variants `(i&3)*4 .. +3`. Installed values use bits `0..12`: groups 1–3 and group 4 variants 0–3. | ALM-META-026, TERR-LOAD-152 |
@@ -173,12 +173,48 @@ how a bridge crosses water. Specified in [TERRAIN](../terrain/format.md) → "St
 The record-header opaque word is separate from metadata payload+0x08.
 No numeric interpretation follows from its bit-pattern census. — ALM-HEADER-098
 
-For payload+0x0c, the selected editor reader stores four bytes at object+0x1c
-and its writer submits four bytes from receiver+0x1c. The writer caller uses
-document+0x50. Publication between constructor and document, intervening
-control changes, and native round-trip preservation remain Unknown.
-— ALM-EDSCALAR-102
+For payload+0x0c, the editor loader wrapper returns the same E object whose
+address is installed at document+0x50. When E+0x0c is nonzero, the load handler also creates a map
+backup at document+0x54. The separate copy constructor explicitly copies
+E+0x1c to destination+0x1c. The writer caller selects document+0x50 and
+submits one four-byte item from that receiver+0x1c. Complete native load,
+intervening control changes, replacement and emitted-file preservation
+remain Unknown. — ALM-EDSCALAR-102, ALM-METAEDITOR-185
 
 The game and landscape read prefixes transfer this scalar unchanged only
 when their lower read completes. Resolving that stream edge does not close
 later map/landscape aliases or establish meaning. — TERR-STREAM-157
+
+### Metadata scalar lifetime bounds
+
+Game copy owner 00511dd4 reads M+0x1c at 00511f1c and stores the word in the
+destination at 00511f1f. The copy has independent scalar storage, but native
+entry into this owner remains unresolved. A global no-reader or no-copy
+interpretation is unsupported. — ALM-METACOPY-183
+
+Owning world constructor 00541510 publishes M at world+0x540d0, passes it to
+the grid ingest, then destroys and frees M before returning. It does not
+clear the holder in that body. The ingest callees 00548720 and 00547d40
+remain unexpanded with access to that alias. Borrowing constructor 005417f0 passes its
+caller-supplied M to the ingest. The selected four pre-teardown consumers
+reach seven embedded containers through 17 accessor bodies; their bounded
+M-relative search finds no access to M+0x1c. Returned record pointers,
+unresolved switches and post-return aliases remain separate frontiers.
+The list allocator 00570ba6 receives block-head addresses M+0x54/M+0x70;
+it does not receive the scalar address on these calls. — ALM-METALIFE-184
+
+The editor's new-map constructor 0044b890 writes 0x168 to E+0x1c. This is a
+creation default, not a constraint on loaded values. Twelve bounded slice
+controls record six actual incoming words and two fills immediately before
+the original store; every pair produces the same default. No exact scalar control
+was bound in the selected 16-command window. Unexpanded dialog, redraw and
+other command paths leave exposure and recomputation policy Unknown.
+— ALM-METADEFAULT-186 (amended control population)
+
+Landscape P is a distinct 0x30-byte object. Its binder stores the pointer at
+view+0x80 and copies dimensions, without copying the header. A subsequent
+old-P deletion through the constructor's actual vtable frees four arrays and
+P. Neither the binder nor those destructor bodies reads P+0x2c; the system
+free boundary receives P itself. The post-load message at 0041f24e remains
+unbound, so no first-use or global no-reader result follows.
+— TERR-METALIFE-175
