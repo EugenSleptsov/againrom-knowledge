@@ -262,3 +262,20 @@ code pointer to either loader, and one room painter consuming all fields. No
 `m` arm/step/draw body directly requests a sound. Computed filenames, targets,
 other school audio paths, delivered paint cadence, visible output and audible
 results remain open. (`TOWN-434`)
+
+## Tavern initial selection boundaries
+
+An empty collected mercenary list sets the inn's selection to -1. Its direct
+activation caption call and paint-time price refresh contain signed upper-bound
+checks that do not exclude this negative index. The local condition is High;
+preservation across intervening UI/resource calls is Medium. A nonempty NPC
+list does not change the measured empty-mercenary selection store. (SAV-929)
+
+Initial party selection is separate. Its helper returns the first primary
+party index with bit0x20, or -1, and activation then indexes the party array
+without checking that sentinel. A live marked party entry is therefore an
+additional local prerequisite. (SAV-930)
+
+These conditional instruction results do not establish the entire original
+click, resource lifetime, first paint or the location of the observed hang and
+closing. First-failure attribution remains Unknown. (SAV-932)

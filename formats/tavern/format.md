@@ -150,3 +150,37 @@ then:         hired[t] = 0 for all t
 Then every mercenary is removed from the world; only heroes survive the cull. So a squad that
 is wiped takes as many further missions to rebuild as it lost men, and only while it is left
 at home — taking it out again freezes it at its current strength.
+
+## Roster progress and selected-entry prerequisites
+
+Command37 constructs types 1..15 independently of the eligible shelf. Its
+fixed construction loops and empty-old-group conditional return do not prove
+all constructors or callbacks complete. A missing owner group differs from a
+valid empty group; cleanup needs a finite live chain. Identifier allocation
+has an unbounded first dword scan, and null actor allocation can reach an
+unchecked type store. Ordinary reach of those controls remains Unknown.
+(SAV-926, SAV-927)
+
+The client eligible collector can return empty. It still walks a nonempty
+document map, so coherent buckets and acyclic stable chains matter even when
+no type is eligible. Matching a supplied type does not validate its type-1
+pool index. (SAV-928)
+
+Activation copies the mercenary pointers, setting selection to 0 for nonzero
+count and -1 for zero. The separate NPC list supplies no fallback selection in
+that loop. Caption and price refresh admit -1 through signed upper-bound-only
+checks; the local zero-storage controls read data[-1]. Preserving that state
+through the complete intervening UI/resource work is Medium, and a later
+selection write remains a live alternative. (SAV-929)
+
+The separate party list must contain an entry marked with bit0x20. Its helper
+returns -1 if no marked entry exists; activation uses that index without an
+absent-selection guard. Nonempty mercenary stock does not supply this party
+prerequisite. (SAV-930)
+
+Eight matched owner-labelled resaves associate a nonempty saved eligible set
+with the two reported opening cases; the other six were reported closing.
+Documents do not change that bounded association. The ten total observations
+do not localize the original failure. Stock construction, list activation,
+selection and full click chronology remain separate results; attribution of
+the observed hang and closing remains Unknown. (SAV-931, SAV-932)
