@@ -1739,6 +1739,38 @@ shape or another carrier. — SAV-EXTSURV-239
 
 ### Campaign record after the state store
 
+Terminal main-campaign handling is a separate boundary from ordinary mission
+advancement. In the selected mission-end dispatcher, nonzero campaign `+0x11c`
+(`LastMission`) and selected `+0x118` divisible by ten take an earlier branch to
+the score producer and message `0x428`. That handler calls a separate UI routine
+with unresolved virtual callbacks. The ordinary reward/advance block is bypassed
+locally. This establishes neither a usable final city nor a terminal save
+document. The ordinary-progress statements below apply when their advance block
+is admitted. — **SAV-890**
+
+An absent successor must not be represented by an inferred increment alone.
+The inner registry loader rejects requests above ten times `ScenarioMissionCount`
+before its campaign stores and document-grant loops. Its outer higher-request
+caller nevertheless writes current `+0x04` and selected `+0x118` and returns
+success. Those two numbers can change while the older registry fields/documents
+remain on that conditional helper path. The terminal dispatcher can avoid this
+path, so it does not identify a naturally produced terminal value. — **SAV-891**
+
+The selected campaign writer/reader use the existing counted grammar and seven
+scalars; they contain no separate terminal wire arm or local rejection based on
+`LastMission`. After restoration, the first-point flag selects map point zero,
+or the selected mission resolves through the external mission-to-map-object
+registry. A missing mapping's selected lookup defaults to object one before
+converting to zero-based indexing. File/allocation callbacks and later UI work
+are acceptance boundaries. Original city LOAD of a terminal document remains
+Unknown. — **SAV-892**
+
+The bounded recursive preserved inventory has 129 paths/76 digests. Its 40
+no-world paths/32 digests all have `LastMission=0`, with current=selected 30 or
+40. Four document refusals and one header refusal remain in the denominator.
+No terminal-city witness or native acceptance result comes from this corpus.
+— **SAV-893**
+
 The base record is used once at the campaign head and again inside every child:
 
 ```text
