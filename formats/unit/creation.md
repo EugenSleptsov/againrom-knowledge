@@ -167,11 +167,13 @@ no text, so what it is *called* is not established (`UNIT-GATE-012`…`014`).
 
 ## Placement overrides
 
-The `.alm` spawner `FUN_004e26bb` applies one more block to the actor it has just built,
-after the difficulty adjustment above and after its own re-derivation call
-(`004e2d28 CALL dword ptr [EAX + 0x50]`). Every value in it comes from the map's type-6
-placement record, and every one is guarded, so an unauthored record changes nothing
-(`UNIT-PLACE-034`).
+The `.alm` spawner `FUN_004e26bb` applies guarded type-6 overrides after
+the difficulty adjustment. The four base-stat bytes precede its explicit
+re-derivation call (`004e2d28 CALL dword ptr [EAX + 0x50]`); current health,
+mana, +0xbe/+0xc0, protection and skill overrides follow that call.
+Sentinels suppress their individual stores. This is an ordering within the
+spawner, not an unconditional initialization or first-tick contract
+(`UNIT-PLACE-034`, `UNIT-PLACEFRONTIER-099`).
 
 | runtime record | actor | absent value |
 |---|---|---|
@@ -187,13 +189,33 @@ The two byte-run loops differ in one place: the protection loop initialises its 
 applied and only five of the six skill bytes are — `Skill.General`, slot 0 at `+0xa8`, is
 the one a placement record cannot set, although the record carries a byte for it and three
 shipped placements author it (`UNIT-PLACESKILL-086`, `UNIT-PLACERESIST-087`). Because the
-block runs after the re-derivation, it is the last word inside the spawner: on a non-hero
-the `spirit / 2` protection fill and its `+70` clamp have already run.
+two-run block follows the explicit re-derivation, its stores follow that local
+call. Human derive can rebuild protections and skills; Units bind the separate
+mana-floor routine instead (`UNIT-DERIVE-003`, `UNIT-PLACEFRONTIER-099`).
+No later native lifetime guarantee follows from this local order.
 
 Installed placements leave current mana and the actor+0xbe override absent.
 Other tail values can be authored, including actor+0xc0 and skill overrides;
 absence in most records does not remove their consumer rules.
 — UNIT-PLACEIDLE-088
+
+The placement flags have arm-specific scope. Inside the Human band, bit 0
+selects NPC. Ordinary Human constructors receive exactly `flags & 0x80`
+as a separate third argument; their initializer uses zero to allow the
+ordinary definition-equipment loop and nonzero to skip it. NPC passes zero
+there and uses a separate Hero-mode argument. The secondary-key/bit-2
+stores to actor+0x4b apply on the type-key Human arm, and only for a nonzero
+secondary low word on the definition-ID arm. Neither store applies to NPC
+or Units (`ALM-FLAGPATH-109`, `UNIT-PLACEGEAR-098`).
+
+The direct initialization caller processes structures and loot after the
+placement spawner. A loot item selected for actor equip can reach Human
+virtual +0x3c, then actor virtual +0x38, then Weapon virtual +0x38. Weapon
+equip directly invokes actor virtual +0x50 after installation, admitting
+another Human derive before initialization returns. This is a conditional
+original dispatch chain; no particular installed placement or native first
+tick was observed reaching it. First-tick override survival, complete actor
+lifetime and later save persistence remain Unknown (`UNIT-PLACEFRONTIER-099`).
 
 ## Unknowns
 

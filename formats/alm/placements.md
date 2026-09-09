@@ -94,11 +94,11 @@ runs are stat overrides, and installed bytes+0x2c..+0x3f do not use 0xff.
 | +0x04 | u32 | Y | `/256` |
 | +0x08 | i16 | **class** | a units.reg ID; installed IDs lie in 1..80 and are not section indices |
 | +0x0a | u16 | **class (2nd key)** | only consulted when `+0x08 ∈ {0x1a,0x1b}` or `≥ 0x40`; also the `npc.reg` index on the NPC path |
-| +0x0c | u32 | flags | bit 0 ⇒ resolve as an NPC; bit 2 sets the live unit's `+0x4b` high bit |
+| +0x0c | u32 | flags | arm-specific: bit 0 selects NPC inside the Human band; ordinary Human bit 2 controls actor+0x4b high bit behind the secondary-key rule below; bit 7 supplies a constructor equipment gate (`ALM-FLAGPATH-109`, `UNIT-PLACEGEAR-098`) |
 | +0x10 | u32 | **definition id** | present only when `formatVersion > 0x3da`; when nonzero and `!= 0xcdcdcdcd` it **overrides** `+0x08`/`+0x0a` (matched on the definition's parameter `0x18`). **But it is read only when `+0x0c` bit 0 is clear** — `FUN_004e26bb` tests the NPC flag *outside* the definition-id test, so a record carrying both takes the npc arm and this field is never read (`MISSION-ARM-006`) |
 | +0x14 | u32 | **owner** | low u16 used: 1-based physical slot in the type-5 array |
 | +0x18 | u32 | **type-8 link** | 1-based, bounded by `meta+0x2c`; `0` = none. The loader writes this record's `+0x40` word into entry `[value−1]` of `mapObj+0x2dc` |
-| +0x1c | u32 | — | installed values 0..14; not a field-width limit; **no reader in `rom.exe`** — role Unknown, and the surviving explanation is the editor's own loader (`ALM-TAILDIR-081`) |
+| +0x1c | u32 | — | installed values 0..14; not a field-width limit. No direct reader in the established game record-holder family; stream escape remains bounded. The editor reads, copies and writes an opaque dword. Meaning Unknown (`ALM-TAILDIR-081`, `ALM-PLACESTREAM-111`, `ALM-PLACEEDITOR-112`) |
 | +0x20 | u16 | **current health** | absent value `0xFFFF`; applied to `actor+0x94` (`UNIT-PLACE-034`). Optional in installed maps (`ALM-TAILU16-082`) |
 | +0x22 | u16 | — | absent value `0xFFFF`; authored on exactly the records `+0x20` is and with a different value set, and **no reader** (`ALM-TAILU16-082`) |
 | +0x24 | u16 | **current mana** | absent value `0xFFFF`; applied to `actor+0x9a` (`UNIT-PLACE-034`). Installed value 0xffff; the consumer exists but installed maps leave it absent (`UNIT-PLACEIDLE-088`) |
@@ -139,6 +139,52 @@ discriminator is the class key, not a flag, and the four arms are ordered:
 +0x08 <  0x1a, bit0 clear, +0x10 != 0  -> data.bin Humans on param 0x18, +0x10 being the id
 +0x08 <  0x1a, bit0 clear, +0x10 == 0  -> data.bin Humans on param 0x10 (typeID)
 ```
+
+### Placement flag consumers and initialization boundary
+
+The local flags consumers preserve the resolution order above. Constructor
+arguments and actor stores are distinct operations (`ALM-FLAGPATH-109`):
+
+| Selected arm | Constructor third argument | Secondary key and bit 2 |
+|---|---|---|
+| Human type key | exactly `flags & 0x80` | copy low byte to actor+0x4b, then replace its high bit from bit 2 |
+| Human definition ID | exactly `flags & 0x80` | same stores only when the secondary low word is nonzero; 0x100 passes despite its zero low byte |
+| NPC in Human band | literal zero; separate Hero mode is another argument | neither store above |
+| Units | different constructor, without this argument | neither store above |
+
+The Human initializer tests that third argument for zero. On the ordinary
+matched-definition path, nonzero skips the ten definition-equipment cells;
+zero allows their nonempty entries to construct/equip. A special identifier
+prefix can also suppress this loop, so zero alone does not promise equipment.
+This local gate does not establish native inventory or lifetime behavior
+(`UNIT-PLACEGEAR-098`). No purpose is assigned to the other 29 bits.
+
+The installed version-990 census has flags 0/1/4/5 on both roots. Counts are
+7297/14/782/1 across 8094 EN placements and 3913/14/63/1 across 3991 RU
+placements. Bit 7 is absent from this population; corpus absence does not
+make it invalid (`ALM-FLAGCORP-110`).
+
+The game stream wrapper forwards the interior record destination unchanged
+after clamping length. Its loose-file receiver forwards it to ReadFile;
+neither selected read body stores the destination durably. The archive
+receiver construction, imported service behavior and other aliases remain
+open. The holder-family negatives above are not global lifetime exclusions
+(`ALM-PLACESTREAM-111`).
+
+At version 990 the EN editor's paired reader and writer each transfer 28
+fields totaling 70 bytes. Wire+0x1c uses editor object+0x66; a reached copy
+constructor also copies that dword. The questioned tail members are
+wire+0x22/+0x26/+0x28/+0x2a to editor+0xfa/+0x10c/+0xf8/+0x10e,
+wire+0x30/+0x33/+0x34 to editor+0x112/+0x113/+0x114, and the six-byte
+wire+0x35 run to editor+0x118. Their field meanings and GUI property
+producers remain Unknown. Paired operations on a supplied object do not
+establish a native editor round trip (`ALM-PLACEEDITOR-112`).
+
+Spawner-return overrides are conditional state. The direct initialization
+caller later processes loot; its actor equip dispatch can reach Weapon
+equip and another Human derive. Actual first-tick survival, the complete
+actor lifetime and later save persistence remain Unknown
+(`UNIT-PLACEFRONTIER-099`).
 
 The definition lookup `FUN_004de63e` searches backwards, skips index 0,
 and returns 0 on a miss. A miss therefore returns a valid index rather than
