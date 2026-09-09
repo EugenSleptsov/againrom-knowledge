@@ -1271,6 +1271,27 @@ archive restore, starting-skill aliases and other lifecycle producers are not
 bounded by this table join. No safe zero vector follows. — SAV-HUMSEL-506,
 SAV-HUMNEWSAVE-507
 
+The mode-gated helper at `004fc2e8` is not an additional residual clear.
+After the selected hero-setup gate, it writes six words at `102..10c` and
+six bytes at `10e..113`, all 100, then calls Human derive through `+50`.
+Its own writes preserve the eleven selected bytes `bc/bd`, `da/db`, `e8/e9`,
+`f6`, `f7/f8`, `fc/fd` up to that dispatch. The callee's transitive execution
+and the later mission lifetime remain separate boundaries. — SAV-898
+
+The starting-skill input is distinct from active selector `b6`. Its local
+store is `word[a8+2*(index&255)] = lowByte(level)` after clearing slots 1..5.
+Indices 10/25/32/39/40/42 respectively overlap `bc/bd`, `da/db`, `e8/e9`,
+`f6/f7`, `f8`, `fc/fd`. The selected packet arm forwards its skill byte;
+ordinary production of these alias indices and earlier validation are not
+established by those local windows. — SAV-899
+
+The expanded creation frontier covers 24 bodies and two dispatcher windows.
+Local archive controls reach Write/Read with the original 24/64-byte buffers,
+but stop before those raw calls. They contain no allocation, complete Human
+creation or emitted SAV. Actual allocation survival, full intervening writes,
+ordinary residual consumers and first mission SAVE values remain Unknown.
+The earlier constructor clear supplies no safe first-save vector. — SAV-900
+
 The original-process instrument has reached only a startup path checkpoint:
 on a verified disposable EN copy, it redirected the original INSTALLDIR
 argument process-locally and observed the original CWD API return success.

@@ -457,6 +457,26 @@ neither negative/custom values nor archive, starting-skill and later lifecycle
 aliases. It does not establish a default vector. — SAV-HUMSEL-506,
 SAV-HUMNEWSAVE-507
 
+The mode-gated hero helper writes six defensive modifier words at `102..10c`
+and six resistance bytes at `10e..113`, all 100, then calls Human `+50`.
+Its own writes preserve the selected eleven residual bytes up to that call;
+the subsequent derive and elapsed mission lifetime are not a proved
+preservation interval. The gate tests nonzero server `+12c` or `+134`;
+their ordinary campaign settings remain Unknown. — SAV-898
+
+Starting-skill input is separate from active selector `b6`. Its local indexed
+word store can overlap all selected residual spans at indices
+10/25/32/39/40/42. The measured packet arm forwards the skill byte to creation,
+but that conditional transport does not prove an ordinary out-of-range source
+or a reached active-index consumer. — SAV-899
+
+The bounded 24-body creation frontier and original-instruction window controls
+still contain no observed allocation return or first mission SAVE. The nine
+selected modifier bytes are cleared at the earlier constructor cut; injected
+nonzero archive inputs cannot be called retained pre-clear allocation contents.
+Live-tail allocation survival, later writers, ordinary residual use and safe
+first-save values remain Unknown. — SAV-900
+
 The original-process checkpoint verifies only process-local startup-directory
 redirection in a disposable copy. It did not load the ordinary save present
 there or arm Human observations. First selected-field reads/writes after
