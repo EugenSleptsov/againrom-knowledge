@@ -59,7 +59,9 @@ Registration chooses a slot and sets `+2c = 1 << (slot mod 16)` only when
 byte as `lowByte(CPlayer+08+1)`, from the ALM type-5 colour word at wire `+00`.
 The Player constructor instead initializes `+44=0`; LOAD restores the saved
 byte without running the ALM-copy formula. Colour, slot ID and mask remain
-separate fields with separate producers.
+separate fields with separate producers. ALM-GRP-041 is partially retracted
+for its inherited universal owner interpretation; its colour-field mapping
+is retained here.
 — SAV-664, SAV-PLAYER-028, ALM-GRP-041, PAL-SHADE-012, PAL-SHADE-013,
 ALM-PLAYER-069
 

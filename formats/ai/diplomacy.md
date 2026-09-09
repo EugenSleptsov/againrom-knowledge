@@ -14,27 +14,40 @@ bits of it.
 | 1 | locked: combat may not turn this pair hostile. Forced on every diagonal. |
 | 2 | read (`AND …,0x7`) and unused by any shipped map. |
 
-**Row 0 and column 0 are not padding.** Column 0 holds each player's owner kind and row 0 marks
-the slot live; the join routine writes both and reads them back. A consumer that treats index 0 as
-unused loses the join rule.
+Column0 stores the low byte of `Player+0x28`, replaced with zero only when
+the complete dword equals2. Row0 marks the slot live. This projection is
+distinct from the full-word tests elsewhere: `0x100` produces column0 zero,
+whereas `0x102` produces two. — SESS-073
 
-### The six writers
+<a id="the-six-writers"></a>
 
-Ordered by when they run. Only the last two are symmetric, and only one of the six re-scans.
+### Named matrix writers
+
+These are distinct entry paths. Registration and the authored map-row writer
+have separate callers; native ordering is not inferred from this list.
+— SESS-073
 
 | # | when | routine | writes | symmetric? | respects bit 1? |
 |---|---|---|---|---|---|
 | 1 | map load | `FUN_004e1924` | the `.alm` type-5 record's sixteen `u16` at file `+0x2c` into columns 1…16 of that player's row (low byte only), then forces the diagonal to 2 | one way | n/a |
-| 2 | a player joins | `FUN_0053d8a0` | column 0 = owner kind (kind 2 stored as 0), row 0 = 1, then for every live slot one of four template bytes chosen by whether the two column-0 flags agree; forces the diagonal to 2 | both | no |
+| 2 | a player joins | `FUN_0053d8a0` | column0 = low byte of control, except full value2 maps to0; row0 = 1; template selection tests the two column0 bytes for zero; forces diagonal2 — SESS-073 | both | no |
 | 3 | a player leaves | `FUN_0053d9a0` | row 0 = 0 for that slot | n/a | n/a |
 | 4 | a mission join | `FUN_004d303e` / `FUN_004d8963` | clones a reference player's row *and* column, allies with it, forces neutrality or 2 between participants | both | no |
 | 5 | script action **10** | `FUN_00539be0` | `matrix[p0][p1] = (v &~ 3) + p2` | **one way** | **no — it clears it** |
 | 6 | session command **0x45** | `FUN_004d5dd8` | assigns the whole row `matrix[setter][*]` from a `u16` array in the command body, each element `& 7` | **one way** | **no** |
 | 7 | a blow landing, or a spell cast | `FUN_0053d9b0` | sets bit 0 (`OR AL,0x1`) in both directions, each direction **separately** gated on `(cell & 3) == 0` | both | **yes** |
 
-The template of writer 2 is four bytes at `session+0xa9bc`, set by the constructor to
-`{1, 1, 0, 0}`: with those values a joining player is hostile both ways to exactly the live
-players whose column-0 flag differs from his, and neutral to the rest.
+The template of writer2 is four bytes at `session+0xa9bc`, initialized to
+`{1,1,0,0}`. With that template, relations between different zero/nonzero
+classes are hostile both ways; two unequal nonzero bytes select the same
+class. The diagonal is forced to2. Registration calls this routine only
+when the session global exists, and map load has a separate later relation
+writer. — SESS-073
+
+These local template, live-slot, diagonal and leave operations retain
+AI-DIPLO-083, partially retracted for its universal owner interpretation
+and unequal-byte hostility rule. Those interpretations do not apply. Native join order remains
+Unknown.
 
 ### What a change reaches
 

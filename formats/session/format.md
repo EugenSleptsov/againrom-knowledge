@@ -191,6 +191,34 @@ is separate state on the `Player`. Its constructor sets it to zero, then partici
 sends opcode `0x67`, so the first playable client state and the first-sub-tick automatic save both
 carry 100 (`PARTY-MONEY-024`, correcting `SESS-START-034`'s former constructor-only reading).
 
+### Authored Player control and join
+
+`Player+0x28` retains the full authored dword when roster transfer copies
+`CPlayer+0x30`. Reuse requires server+0x0c zero, roster slot1 and exactly
+one manager entry; it selects the first entry and leaves its ordinal+0x08
+unchanged. A new entry receives the authored ordinal before registration.
+Participant factory instead queries `Self` only in mode zero, then writes
+control zero on its reused or new entry. Only a new entry is registered.
+Native order and object identity across these transactions remain Unknown.
+— SESS-072
+
+Manager registration derives the scan-mask word+0x2c only for control zero
+and clears it for nonzero control. Its matrix call is conditional on a
+nonnull session global. The matrix stores the control low byte, then forces
+that byte to zero only for complete value2. It chooses relations by the
+stored byte's zero/nonzero class. Thus `0x100` and `2` yield column0 zero,
+while `0x102` yields two; all three are nonzero to the manager's dword test.
+Map transfer precedes the new session's construction and the authored
+relation-row loop, so a matrix result cannot be inferred solely from the
+transfer store. — SESS-073
+
+Message96 emits full-word `!=0` as a bit, and its interface receiver changes
+only `CPlayer+0x30` bit0. Player persistence instead writes and reads four
+bytes unchanged on the selected buffered path. These projections do not
+establish a universal Boolean schema. Full native load/join, UI, save/reload
+and aliases outside the selected population remain Unknown. — SESS-074,
+SESS-075
+
 <a id="the-map-load-in-order"></a>
 
 ## Map-load sequence

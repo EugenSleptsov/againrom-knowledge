@@ -122,10 +122,11 @@ cell's. There is no heuristic and no distance term in any label.
 refuse long detours.** It applies to the static footprint-1 search when both hold
 (`005422fe`…`0054235d`):
 
-1. `actor+0x14` — the **owning `Player`** — has `+0x28 == 0`, which is true exactly when a *human
-   participant* owns the unit. Every scenario-authored owner carries 1, or 2 for a group whose
-   `HumanFriend` key reads `"Yes"`; the `Player` constructor's own default is 1, and the only
-   store of 0 in the image is the session-join path (`UNIT-OWNER-009`).
+1. `actor+0x14` — the owning `Player` — has a complete dword zero at+0x28.
+   A nonzero value whose low byte is zero does not qualify. This retains
+   `UNIT-OWNER-009`'s local predicate; its universal authorship/value-space
+   interpretation is partially retracted. Authored copies and serializer
+   load can supply the complete field. — ALM-140
 2. the **goal's own `tokenSize × tokenSize` footprint** is free of the mover's domain mask
    `mover+0x5` on the static plane `world+0x10000`. A `tokenSize <= 0` skips the scan and takes
    the override.

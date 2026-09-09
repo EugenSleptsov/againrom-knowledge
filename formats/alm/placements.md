@@ -89,24 +89,53 @@ backing-stream identity, and native behavior after the first field consumer
 remain Unknown. No shared health, charge or level interpretation follows
 for all structure definitions. — ALM-127, ALM-128, ALM-129, ALM-130
 
-### type 5 — player/group roster (`ALM-GRP-020`, `ALM-GRP-041`)
+### type 5 — player/group roster (`ALM-GRP-020`)
 
 `count = meta+0x1c`. **76-byte** fixed records. Every field below is a read
 boundary in the loader's case-5 sequence (`4+4+4+32+16×2 = 76`).
+This field map retains ALM-GRP-041, partially retracted for the
+inherited universal owner interpretation; the control field has the
+separate predicates below.
 
 | Off | Type | Field | Notes |
 |-----|------|-------|-------|
 | +0x00 | u32 | **colour slot** | → `player+0x08`, carried `+1` to `Player+0x44`; the unit body draw indexes the 17 shade objects with it (`ALM-PLAYER-069`, `PAL-SHADE-012`, `PAL-SHADE-013`). Sparse and unordered, e.g. `Cross.ALM` `8 2 3 5 1 6 4 13`. The owner lookup `FUN_004fb534` compares the record's own 1-based ordinal (below), **not** this word |
-| +0x04 | u32 | **human-participant flag** | `0`/`1` → `Player+0x28`, the word `UNIT-OWNER-009` reads as *a human participant owns this* (`ALM-GRP-041` as amended, `ALM-PLAYER-069`). Every campaign map authors `0` on record 0; every loose-map record and every record above ordinal 0 authors `1` |
+| +0x04 | u32 | **control word** | Four-byte Read destination `CPlayer+0x30`; complete copies reach `Player+0x28`. No Boolean validation occurs in these local transfers. The old 0/1 inventory is a corpus result; `UNIT-OWNER-009` is partially retracted for treating it as a general value/authorship bound. `ALM-139`, `SESS-072`, retained corpus/ordinal chain in `ALM-PLAYER-069` |
 | +0x08 | u32 | **scalar; effect Unknown** | Installed values 0/5000, with 0 on record 0; loaded into CPlayer+0x0c. It has a copy-constructor read, but no identified direct map-side consumer in the selected routine family. Computed pointers and whole-object move/serialize/copy paths are outside that negative; it is not established as inert or redundant with+0x04. — ALM-SCALAR-087, ALM-SCALAR-088, ALM-SCALAR-089 |
 | +0x0c | char[32] | **name** | NUL-terminated ASCII: `Self, Monsters, Villagers, Neutral, Enemy, Beasts, Guards, Peasants, Orcs, Trolls, …` |
 | +0x2c | u16[16] | **relations** | one per editor player slot (the editor caps at 16) — the diplomacy row |
 
-The object each record is loaded into is the interface `CPlayer`, RTTI object size `0x48`, vtable `0x0059a560` — **six dwords: five function entries and a null at `0x59a574`**; `0x59a578` begins the next class (`ALM-CPLAYER-090`). Its fields take the record's reads in order: `+0x08` the colour word, `+0x30` the human-participant flag, `+0x0c` the scalar above, `+0x10` the 32-byte name, `+0x34` the diplomacy `CWordArray`, and `+0x04` the loader-written ordinal. Both non-copy constructors leave `+0x0c` at `0` (`UNIT-VPLAYER-022`); the map loader writes the authored scalar or the absent-section default.
+The object each record is loaded into is the interface `CPlayer`, RTTI object size `0x48`, vtable `0x0059a560` — **six dwords: five function entries and a null at `0x59a574`**; `0x59a578` begins the next class (`ALM-CPLAYER-090`). Its fields take the record's reads in order: `+0x08` the colour word, `+0x30` the control word, `+0x0c` the scalar above, `+0x10` the 32-byte name, `+0x34` the diplomacy `CWordArray`, and `+0x04` the loader-written ordinal. Both non-copy constructors leave `+0x0c` at `0` (`UNIT-VPLAYER-022`); the map loader writes the authored scalar or the absent-section default.
 
 A record's **physical slot + 1** is what type-4 `+0x0e` and type-6 `+0x14` store
 (`ALM-OWN-039`); the loader itself writes `slot+1` to `player+0x04`. The
 `+0x00` color slot is a separate value.
+
+Both non-copy constructors initialize `CPlayer+0x30` to zero; its copy
+constructor preserves all four bytes. Type5 requests four bytes into it
+without testing the read result before the next field. A full transfer is
+conditional on the stream supplying four bytes; the wrapper's short-read
+boundary remains as stated by `ALM-STREAM-100`. — ALM-139
+
+Roster transfer reuses the manager's first Player only for roster slot1,
+server mode zero and manager count1. This reuse preserves `Player+0x08`;
+the new-object arm copies the authored ordinal before registration. Both
+arms copy the full control word. Participant join instead conditionally
+looks up `Self` and writes control zero on either its reused or new object.
+These local rules do not determine the native order of the two operations.
+— SESS-072
+
+| Consumer | Operation on the session word | Scope |
+|---|---|---|
+| Actor clauses | Whole-dword zero tests, including route-budget eligibility and victim experience exclusion | 27 catalogued owner reads include 26 predicate sites and one read whose flags/value die before the shared call; the set is bounded — ALM-140 |
+| Matrix join | Store low byte, then replace it with zero only for full word `2` | `0x100` maps to zero; `0x102` maps to two. Template selection tests the stored byte for zero — SESS-073 |
+| Interface message | Emit full-word `!=0`, then change only destination `CPlayer+0x30` bit0 | This message-derived CPlayer has a different origin from the authored record — SESS-074 |
+| Player persistence | Write/read the full dword through four-byte buffer operations | Full native save/reload is a separate observation — SESS-074 |
+
+The alias search does not cover every advanced pointer or whole-object
+copy. Native arbitrary-map admission, transfer/join identity, later UI and
+editor property authoring remain Unknown. The separate wire+0x08 scalar
+lifetime is unchanged by these control-word results. — SESS-075
 
 ### type 6 — placed units (`ALM-UNIT-018`)
 

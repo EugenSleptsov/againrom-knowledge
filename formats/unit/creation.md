@@ -135,13 +135,16 @@ Three of its fields are read outside the shop:
 
 | field | meaning | who reads it |
 |---|---|---|
-| `+0x28` | **0 = a human participant owns this unit**; 1 = a scenario-authored owner (also the constructor default); 2 = a group whose `HumanFriend` key is `"Yes"` | 25 sites, incl. the route budget (`MOVE-TERM-003`) and the experience payout (`HERO-KILL-027`) |
+| `+0x28` | Full control dword. Join writes0, the constructor writes1, and one scenario arm writes2; authored copies accept other patterns. `UNIT-OWNER-009` is partially retracted for its universal value/authorship interpretation | The bounded catalog has27 actor reads,26 of which feed predicates; zero gates route-budget eligibility and victim experience exclusion — ALM-140, SESS-072 |
 | `+0x38` | money (`SHOP-BUY-009`); defaulted to 100 on the join path | the shop |
 | `+0x58` | `95`, the percentage `vt+0x50` scales `manaMax` by into `actor+0xa0` | `FUN_004f5946`, `FUN_004f7dfc` |
 
-A unit owned by a human participant gets the **flat
-1000-generation** static route budget instead of `max(scalar, D>>2) + D`, and **killing** such a
-unit pays the killer **no experience** (`004f7910`…`004f7920`).
+Control zero reaches the footprint test for the flat1000-generation route
+budget; the override still requires that test to pass. A victim with control
+zero is excluded from experience payout. Nonzero values with a zero low
+byte, including `0x100`, remain nonzero at both dword consumers. These local
+predicates retain the supported clauses of the partially retracted
+`UNIT-OWNER-009`. — ALM-140
 
 ## Unit scaling setting
 
