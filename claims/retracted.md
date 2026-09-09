@@ -1,5 +1,11 @@
 # Overturn history
 
+## ROM2 maxima attribution
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `R2-ASSET-027` (EN Horror attribution of both maxima only) | EN Horror's full file dominates both the object and unit maxima | High for the measured maxima | [EXP-2003](../experiments/EXP-2003-rom2-alm-records/), R2-ASSET-017, R2-ASSET-027 | The same accepted row already names EN Beast for the 478-object maximum and EN Horror for the 1815-unit maximum. Horror's object count is 415. Only the attribution of both maxima to Horror is withdrawn; the five measured maxima, 16-slot player capacity, 0/83 header-gate comparison, confidence and bounded Unknowns stand. RU Horror is truncated with two differing prefix bytes; it does not independently supply the missing object/unit records. This is a maintenance correction of the existing statements, with no new measurement. | **PARTIALLY RETRACTED** |
+
 ## Drawable registration and cell composition
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

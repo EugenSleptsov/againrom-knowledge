@@ -47,14 +47,15 @@ A claim ID is permanent. Read the claim in its owning ledger and check
 
 | Area | Ledger |
 |---|---|
+| Asset layout and identity survey | [`rom2-asset.md`](rom2-asset.md) |
 | Engine-level observations | [`rom2-engine.md`](rom2-engine.md) |
 | Session/network observations | [`rom2-session.md`](rom2-session.md) |
 
-The source snapshot also contains `claims/rom2-asset.md`, but that ledger was not
-included in public snapshot `k1`. Public ROM2 format pages that depend on `R2-ASSET-*`
-therefore have incomplete public provenance until a separately reviewed functional
-edition of that ledger is published. Do not treat the missing ledger as silently
-approved or reconstruct it from other material.
+`claims/rom2-asset.md` carries the functional authorities for the six asset-layout
+surfaces in the seven-row ROM2 survey; the session-header authority is in
+`rom2-session.md`. The original public snapshot `k1` omitted the asset ledger.
+Each public snapshot's `SOURCE.md` identifies its contents and source commit;
+private experiment links preserve evidence identity without exporting evidence.
 
 ## Status and confidence
 

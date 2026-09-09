@@ -49,8 +49,8 @@ sides, not merely a value that happens to close.
 
 The widened group-C block is independently confirmed at instruction level in
 `allods2.exe`: the class whose real constructor runs a 7×`u16` (14-byte) zero-init
-loop also stamps the vtable whose own Serialize entry contains a literal `PUSH 0xe`
-(14) around its raw-block read/write call — three signals, tied to one compiled
+loop also stamps the vtable whose own Serialize entry passes the literal length
+14 to its raw-block read/write calls — three signals, tied to one compiled
 class by a directly-read vtable pointer, agreeing on 14. `R2-ASSET-029`.
 
 ### Per-group Ghidra identity
@@ -189,7 +189,7 @@ show 3–81 matches each, reported as same-shape hash-collision noise, not ident
 The noise reading is measured, not only argued, two ways. A self-collision census
 (the identical strict triple, joined against `allods2.exe`'s own function census)
 finds every discriminating address unique inside its own binary (matches itself
-only), while the wrapper matches 102 other functions and the SetSize shapes match
+only), while the wrapper has 102 matches including itself and the SetSize shapes match
 11 and 5. A relocation- and `rel32`-tolerant raw byte search of `a2server.exe`'s
 whole file image — an independent method sharing no code with the census —
 corroborates the 0 matches for the dispatcher and the 7 substantive Serialize
@@ -212,9 +212,10 @@ a whole — a root-wide search of all twelve `.exe`/`.dll` files in
 resource/configuration filenames, in ASCII and ASCII-case-insensitive matching;
 it occurs in no other binary in the root. The negative is scoped to
 `allods2.exe` itself (the map-reading binary Q5 asks about), not to the
-preserved root: `templates.bin` is referenced by the map editor and by nothing
-the game itself runs, which narrows toward H5-databin more than a single-binary
-absence does on its own. `R2-ASSET-025`.
+preserved root. The editor contains the literal name; a reader call site there
+was not traced, and a dynamically composed client/server path is not excluded.
+This amends the former statement about anything the game runs to the actual
+literal-search scope. `R2-ASSET-025`, `R2-ASSET-032`.
 `allods2.exe` does contain its own copy of the Data.bin loading shape
 `DAT-LOC-001` already publishes for `rom.exe`: a once-only guard flag, a loose
 file at a path ending `Data.bin` falling back to the same relative path inside
@@ -222,8 +223,8 @@ file at a path ending `Data.bin` falling back to the same relative path inside
 (`.txt` here, `.csv` on ROM1) then a `Data.bin` rewrite. **Correction, finding
 9:** the eleven table names and the two path literals are now confirmed read
 directly by a decompile of the function that reads them, `FUN_00501c9e` —
-called from the guarded entry point between its "Parsing .txt files" and
-"Writing new .bin file" messages, at the position ROM1's own `DAT-LOC-001`
+called from the guarded entry point between its table-parsing and binary-write
+diagnostics, at the position ROM1's own `DAT-LOC-001`
 places `FUN_004da351` — rather than inferred from their `.rdata` adjacency to
 the two `Data.bin` literals alone, which is how the original pass read them.
 Its only two callers are consistent with a one-time process/session-startup

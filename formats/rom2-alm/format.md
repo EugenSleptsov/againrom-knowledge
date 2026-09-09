@@ -7,10 +7,11 @@ survey. Unread payload semantics remain explicit; this is not complete decoding.
 Level 3. Promoted, evidence-backed claims only. Basis: `R2-ASSET-002` (file
 header, record-0 metadata), `R2-ASSET-003` (record chain past record 0,
 `recordCount`/`formatVersion`), `R2-SESSION-010` (code-side dispatcher arity,
-cross-referencing `R2-ASSET-003`'s record-type count from a running binary
+cross-referencing `R2-ASSET-003`'s record-type count through a static compiled-code read
 rather than a stored file), `R2-ASSET-017`, `R2-ASSET-018`, `R2-ASSET-019`,
 `R2-ASSET-020`, `R2-ASSET-021`, `R2-ASSET-022`, `R2-ASSET-023`, `R2-ASSET-024`,
-`R2-ASSET-027` (cross-game population/order, per-type payload layout, the
+`R2-ASSET-027` (partially retracted for the attribution of both maxima to Horror
+only; cross-game population/order, per-type payload layout, the
 `allods2.exe` record dispatcher, and map extents). Cross-reference only, not
 evidence: ROM1's own
 [`formats/alm/format.md`](../alm/format.md) (`ALM-HDR-001`, `ALM-FRAME-031`,
@@ -66,7 +67,7 @@ across `rom.exe`, `allods2.exe` and `a2server.exe`, each called exactly once
 by its own binary's per-record dispatch loop. Counting each dispatch loop's
 own jump-table targets directly: `rom.exe`'s has exactly 10 arms, both ROM2
 binaries' have exactly 13 — the same count this page already reports from
-record content, now read independently from running code rather than a
+record content, now read independently from static compiled code rather than a
 stored file. `R2-SESSION-010`.
 
 **Per-type payload-size formulas.** Replaying ROM1's own formulas (`ALM-SEC-004`,
@@ -81,8 +82,9 @@ field widths, read from `allods2.exe`'s dispatcher, against each file's own
 `formatVersion` reproduces the declared `payloadSize` on 154 of 154 type-6
 records in both games (48 at ROM2's two `formatVersion` values, 70 at ROM1's
 990). Types 10, 11 and 12 now have their own published per-type formulas as
-well (below); types 4, 7, 8, 9 have no published ROM1 per-type formula to
-replay. `R2-ASSET-003`, `R2-ASSET-024`, `R2-ASSET-023`.
+well (below). The later comparison also replays the published structural rules
+for types 4, 7, 8 and 9; that work is already complete within its stated scope.
+`R2-ASSET-003`, `R2-ASSET-018`, `R2-ASSET-024`, `R2-ASSET-023`.
 
 **ROM2's own order and typeId set strictly contain ROM1's.** ROM1's own two-root
 corpus (38 EN maps, 33 of 34 RU maps) carries typeId set `{0..9}` in one
@@ -181,11 +183,12 @@ contributor rather than a full reconciliation. `R2-ASSET-024`.
 and unit counts, and within an already-published, directly-read structural
 capacity on player count.** Measured against both games' own preserved-root
 corpora: `W`/`H` both cap at 256 in both corpora (not exceeded); `#objects`
-ROM2 max 324 vs ROM1 max 478; `#units` ROM2 max 785 vs ROM1 max 1815 — ROM2
-under ROM1's own maximum on both (ROM1's own maximum is carried by the EN
-root's `Horror.alm` alone: the RU root's own copy of that file declares the
-identical metadata value with no backing type-6/type-4 record, being a
-truncation of the EN file, `R2-ASSET-017`). `#players` ROM2 max 15 vs ROM1's
+ROM2 max 324 vs ROM1 max 478 (EN `Beast.ALM`); `#units` ROM2 max 785 vs ROM1
+max 1815 (EN `Horror.alm`) — ROM2 under ROM1's own maximum on both. The former
+attribution of both maxima to Horror is partially retracted; the values stand.
+The RU copy of Horror declares the identical unit count with no backing
+type-6/type-4 record, being a truncation with two differing prefix bytes,
+`R2-ASSET-017`. `#players` ROM2 max 15 vs ROM1's
 own observed corpus maximum of 9 — but ROM1's own type-5 record already
 documents a fixed 16-slot diplomacy-row field (`ALM-GRP-041`, `AI-DIPLO-005`)
 ROM1's own shipped corpus never filled past 9; ROM2's own type-5 record CONTENT
@@ -206,15 +209,16 @@ Field-level MEANING of the 3 additional record types' own per-element bytes
 offsets and destination collections, not only dispatch mechanism, but what
 each byte represents is undecoded. The mapped metadata, field widths and
 destination collections above are specified; the remaining per-field semantics
-are not implied by those layouts. Types4,7,8 and9 have no published ROM1 per-type
-size formula replayed by this survey; every other type does;
-which specific bytes of record 0's 28-byte true growth (`R2-ASSET-024`) the
+are not implied by those layouts. The structural rules for types 4, 7, 8 and 9
+are already replayed (`R2-ASSET-018`). Still Unknown: which specific bytes of
+record 0's 28-byte true growth (`R2-ASSET-024`) the
 file's own declared `payloadSize` (644, `R2-ASSET-002`) counts, versus which
 land in the 16-byte undeclared overhang — the total is accounted for
 field-by-field (`R2-ASSET-024`), the split between declared count and overhang
 is not, and is a save-path question this survey's load-path-only Ghidra pass
 cannot answer; whether ROM1's loader enforces any hard reject on `#players`
 above 9 specifically, as opposed to the type-5 record's own 16-slot field
-capacity; the ROM2 root binaries other than `allods2.exe` and
-`ROM2 Map Editor.exe`, and needles beyond the `templates.bin`/`Data.bin`
-families, for either string-search result on `formats/rom2-databin/format.md`.
+capacity. The root-wide literal-name search is already complete for its named
+population (`R2-ASSET-025`, `R2-ASSET-032`); spellings/routes beyond that search
+and the actual file consumer remain open as qualified on the
+[Data.bin page](../rom2-databin/format.md).

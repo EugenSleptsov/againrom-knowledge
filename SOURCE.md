@@ -2,13 +2,13 @@
 
 ## Snapshot
 
-Snapshot k14, exported from the private research repository at commit
-`ef75ad8edcac483cf55756e07a25a43e07b4cd5f`.
+Snapshot k15, exported from the private research repository at commit
+`845a36f4276b7e0c23db2710895c3e2f7857729c`.
 
 | Field | Count |
 |---|---:|
-| Claim ids | 2052 |
-| Retracted ids | 341 |
+| Claim ids | 2080 |
+| Retracted ids | 342 |
 | Format pages | 35 |
 
 Each count is recomputed from this snapshot's own exported ledgers, not carried
@@ -28,8 +28,10 @@ An `experiments/...` path cited inside claim text names the private research
 repository at the commit above. It is not a path inside this repository, and the
 unabridged evidence behind an omitted excerpt stays there.
 
-`claims/rom2-asset.md` is not exported, so public pages citing `R2-ASSET-*` have
-incomplete public provenance. The gap is recorded, not filled from private material.
+`claims/rom2-asset.md` carries the accepted functional edition. Its claim
+identities, confidence, amendments and evidence identities match this source;
+the ROM2 survey pages and their claim dependencies are present. The supporting
+experiment artifacts remain private under the evidence boundary above.
 
 ## History boundary
 

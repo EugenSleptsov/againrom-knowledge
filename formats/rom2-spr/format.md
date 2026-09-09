@@ -13,9 +13,9 @@ evidence: ROM1's own [`formats/spr16a/format.md`](../spr16a/format.md),
 
 Seen as: `.16a`, `.16`, `.256` (inside `.res` containers, mainly `graphics.res`)
 and `.pal` (same), found by the extension census over all 11 containers — every
-result below is the FULL population found that way, not a capped sample (the
-committed `spr-sample.tsv`/`pal-sample.tsv` files themselves cap at 8 rows per
-container/extension for size; the counts here do not).
+result below is the FULL population found that way, not a capped sample. The
+private sample listings cap their displayed rows at 8 per container/extension;
+the population counts here do not. `R2-ASSET-007`, `R2-ASSET-008`.
 
 ## `.16a` / `.256` result
 
