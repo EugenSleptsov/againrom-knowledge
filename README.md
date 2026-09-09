@@ -5,6 +5,30 @@ Mages II** file formats, interfaces and engine behaviour, with a small claim-rea
 tool. The project studies compatibility with independently obtained installations;
 this repository is not a distribution of either game or a decoder SDK.
 
+## SAV readiness
+
+This is delivery status for Againrom engine `5bccb0d`, not evidence about ROM1.
+AGS is the engine's native save format. "From scratch" means without an imported
+SAV or a copied SAV document; lawful installed game resources are still required.
+
+| Capability | Status | Exact scope |
+|---|---|---|
+| SAV writer alongside AGS | **Ready for the selected save workflow** | Town: AGS, SAV or both from one captured state. Mission: exact AGS, or SAV as an ordinary return to town with recovered HP/mana, retained XP/items/money and an unfinished, restartable mission. The live mission is unchanged. |
+| Full original SAV reader | **Accepted for city/world structural reading and the agreed restoration scope** | The complete known document is read, including the object graph and opaque fields. The 13-structure restoration milestone is accepted; the recorded EN/RU gate resumes all 62 discovered valid world saves with zero measured mismatches or refusals. Remaining field meanings, unobserved serializer classes and non-corpus gameplay behaviour are not declared complete. |
+| SAV creator from scratch | **Supported cities: ready. Full mission worlds: not ready** | The city producer constructs the document from current state without an imported SAV. The owner accepted the generated EN town case through tavern, SAVE, restart and LOAD. Complete source-free mission construction remains paused. |
+
+City SAV requires a supported settled campaign state, starting at main chapter30
+in the shipped campaign. Pre-town and completed-campaign states, incompatible
+graphs and other named writer limits refuse explicit SAV; AGS remains available.
+Original RU acceptance and arbitrary generated-state interoperability remain open.
+
+The converter separately supports bounded current-world SAV output from a previously
+imported mission. That path retains source authority for unresolved state; it is
+neither the mission save dialog's city-return policy nor a creator from scratch.
+See the [save workflow](https://github.com/EugenSleptsov/againrom-engine/blob/5bccb0de8535fed48940b9178ee74f879651e0c6/docs/1173/story.md),
+[converter](https://github.com/EugenSleptsov/againrom-engine/blob/5bccb0de8535fed48940b9178ee74f879651e0c6/pkg/game/saveconvert.go)
+and [SAV format reference](formats/sav/format.md).
+
 ## Sources and publication boundary
 
 The research source policy permits the owner's game installations, their runtime
