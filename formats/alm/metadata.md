@@ -15,14 +15,14 @@ The offsets below are relative to the payload. The fixed reads total 632 bytes. 
 | +0x00 | u32 | **W** | map width — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x04 | u32 | **H** | map height (`W≠H` occurs, e.g. 112×144) — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x08 | f32 | **angle** | Radians; loaded into map `M+0x18` and terrain `P+0x20`. The terrain store fills four bytes of a double. Forced relight replaces it from the sun globals before the known read. Installed angles are whole degrees: `±45, ±44, ±18, 36, 28, 25, 22`; the common π/4 encoding is `0x3f490fda`. | ALM-META-027 (amended; payload-angle clause retained), ALM-META-091, ALM-META-092, ALM-CORP-093, TERR-LIGHT-149, TERR-LOAD-152 |
-| +0x0c | u32 | scalar (stored) | Loaded into map `M+0x1c` and terrain `P+0x2c`. A game map-copy constructor and the editor map-copy path read and preserve the four bytes in independent storage. The editor writes the word and its separate new-map constructor supplies a default. Gameplay meaning and native first use remain Unknown. Installed values are a corpus observation, not a validation range. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093, ALM-METACOPY-183, ALM-METAEDITOR-185, ALM-METADEFAULT-186 |
+| +0x0c | raw 32-bit word | scalar (stored; numeric interpretation Unknown) | Loaded into map `M+0x1c` and terrain `P+0x2c`. A game map-copy constructor and the editor map-copy path read and preserve the four bytes in independent storage. The editor writes the word and its separate new-map constructor supplies a default. Gameplay meaning and native first use remain Unknown. Installed values are a corpus observation, not a validation range. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093, ALM-METACOPY-183, ALM-METAEDITOR-185, ALM-METADEFAULT-186 |
 | +0x10 | u32 | scalar (stored) | Loaded into map `M+0x20` and terrain ambient byte `P+0x1c`. Forced relight overwrites the terrain value before its known read. Installed values span `0..33`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x14 | u32 | scalar (stored) | Loaded into map `M+0x24` and terrain range byte `P+0x1d`; the four-byte terrain store also writes `P+0x1e/0x1f/0x20`. Relight replaces the range before its known read. Installed values span `27..64`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x18 | u32 | bitmask | **Terrain tile-group mask.** The map loader discards its local copy; terrain stores it at `P+0x28`. Bit i selects group `(i>>2)+1`, variants `(i&3)*4 .. +3`. Installed values use bits `0..12`: groups 1–3 and group 4 variants 0–3. | ALM-META-026, TERR-LOAD-152 |
 | +0x1c | u32 | **#players** | player-record count = `type5_size / 76` ; installed values `3..9` (editor caps at 16) | ALM-META-025 |
 | +0x20 | u32 | **#objects** | object-record count (base records; extensions are additional bytes, not records) | ALM-META-025 |
 | +0x24 | u32 | **#units** | unit-record count = `type6_size / 70` in the version-990 form | ALM-META-025 |
-| +0x28 | u32 | (unused) | Read and discarded; meaning Unknown. Type7 uses its own count words | ALM-META-025 |
+| +0x28 | raw 32-bit word | count-local residue, purpose Unknown | Read4 into EBP-0x50, overwritten by each complete internal type-7 count read. Short reads can retain prior bytes; this does not make it an external type-7 count | ALM-META-025 (discard shorthand narrowed), ALM-COUNT-195, ALM-STALE-196 |
 | +0x2c | u32 | **#type 8 records** | count used as the case-8 loop bound; `0 ⟺ type8 empty` | ALM-META-025 |
 | +0x30 | char[64] | **name** | NUL-terminated ASCII. Installed names use at most 21 bytes and can be empty; 21 is not a field-width limit. | ALM-META-010 |
 | +0x70 | u32 | scalar (stored) → `map+0xd4` | **Multiplayer-mode source:** `[0x005cd758]+0xc = (map+0xd4 > 1)`, read during player construction. A value 1 selects single-player loading even in a loose map such as RU `Horror.alm`; it does not identify `scenario.res` membership. A player-slot/MP-capacity interpretation beyond this Boolean consumer remains unestablished. | ALM-META-026, ALM-MODE-070 |
@@ -194,14 +194,16 @@ interpretation is unsupported. — ALM-METACOPY-183
 
 Owning world constructor 00541510 publishes M at world+0x540d0, passes it to
 the grid ingest, then destroys and frees M before returning. It does not
-clear the holder in that body. The ingest callees 00548720 and 00547d40
-remain unexpanded with access to that alias. Borrowing constructor 005417f0 passes its
+clear the holder in that body. The complete ingester and callees 00548720/00547d40
+now have bounded controls with independent scalar and held-pointer mutations;
+no scalar/alias-dependent world output occurs in that population. This does not
+close later aliases or native first use. Borrowing constructor 005417f0 passes its
 caller-supplied M to the ingest. The selected four pre-teardown consumers
 reach seven embedded containers through 17 accessor bodies; their bounded
 M-relative search finds no access to M+0x1c. Returned record pointers,
 unresolved switches and post-return aliases remain separate frontiers.
 The list allocator 00570ba6 receives block-head addresses M+0x54/M+0x70;
-it does not receive the scalar address on these calls. — ALM-METALIFE-184
+it does not receive the scalar address on these calls. — ALM-METALIFE-184, ALM-INGEST-201
 
 The editor's new-map constructor 0044b890 writes 0x168 to E+0x1c. This is a
 creation default, not a constraint on loaded values. Twelve bounded slice
@@ -218,3 +220,57 @@ P. Neither the binder nor those destructor bodies reads P+0x2c; the system
 free boundary receives P itself. The post-load message at 0041f24e remains
 unbound, so no first-use or global no-reader result follows.
 — TERR-METALIFE-175
+
+## Scalar transfer versus semantic closure
+
+A complete primary Read4 maps metadata+0x0c to M+0x1c; the separate light
+reader maps it to P+0x2c. The original explicit map-copy load/store preserves
+all four bytes in independent storage even after source poisoning. The browser
+instead skips this word and metadata+0x28 in its seek from payload+8 to+0x30;
+the light reader skips metadata+0x28 after its first seven scalar reads.
+These operations establish transport, not a time unit or complete gameplay role.
+— ALM-SCALAR-198
+
+Complete type-7 internal counts replace metadata+0x28 in their shared local and
+produce their own three array populations. Incomplete reads can leave metadata
+or a previous internal count there. Returned byte count, requested width, wrapper
+cursor, and destination contents must be tracked separately; a surviving byte is
+not necessarily from the current wire field. — ALM-COUNT-195, ALM-STALE-196
+
+Complete consumers and editor control/default producers are not established by
+those transfer tests. The previously identified world-held M alias, computed
+branches and P-bearing post-load message remain open. Metadata+0x0c's gameplay
+meaning and metadata+0x28's purpose outside the measured loops remain Unknown.
+— ALM-FRONTIER-200
+
+### Bounded ingest controls
+
+The 304 additional controls execute the original world ingest and both callees.
+They separate six map-scalar words from M/null/unmapped values in the held-pointer
+slot, across two fills, four synthetic shapes and two table variants. Five original
+classifier branches are visited; sixteen controls remove the observation bridges
+and retain identical output. Only the deliberately varied pointer word is excluded
+from the whole-world comparison. This is a finite no-output-effect result, not proof
+that no read is ever discarded or that the field is globally unused. The body
+copies world byte planes, not the map header. — ALM-INGEST-201
+
+Fresh original-editor controls place complete scalar Read4 output at E+0x1c
+and retain the old suffix after short lower transfers. An independent copy
+survives source poisoning and reaches the original buffered writer. The
+separate new-map store writes0x168 after the actual prior word and fill are
+verified at entry. Native UI, complete editor transactions and scalar units
+remain Unknown. — ALM-EDITORSCALAR-203
+
+The original editor produces metadata+0x28 by adding its action, condition
+and Trigger cardinalities. All64 triples0..3 under two fills write the sum
+through the buffered writer. The game's complete type7 reads still select
+the three internal count words for their own loops. Static arithmetic also
+establishes modulo2^32 addition; native SAVE remains unobserved.
+— ALM-EDITCOUNT-204, ALM-TRIGMETA-166
+
+The post-load P message has a conditional constructor-to-primary-frame chain.
+The application root getter first selects a nonzero app+0x20 override, then
+app+0x1c, otherwise a host fallback. Only the primary-frame branch binds the
+selected frame+0xd4 constructor and forwarding handler. The actual native app,
+override state, later member replacement and child receivers remain unbound;
+no P scalar consumer or field meaning follows. — ALM-FRONTIER-200

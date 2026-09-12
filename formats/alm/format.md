@@ -10,7 +10,8 @@ ALM-GRID-032
 
 The primary loader requires Tiles and Altitudes. Other records have individual
 absence, version and order rules. A map browser uses a different acceptance
-test. — ALM-REQ-055, ALM-REQ-056, ALM-ORD-057, ALM-RDR-059
+test. — ALM-REQ-055, ALM-REQ-056 and ALM-ORD-057 (type-7 count clauses
+partially retracted), ALM-RDR-059
 
 All integer fields are little-endian. File/payload offsets are distinct from
 the hexadecimal runtime member offsets used for loader destinations.
@@ -35,13 +36,19 @@ ALM-SEC-004, ALM-PLACE-033, ALM-TRIG-044, ALM-SACK-065
 Read the header, then dispatch records by typeId. The primary loader gates
 recordCount>=3 and version<=1001 and requires types 1/2. Metadata precedes
 its dependent records; type 2 precedes type 3. For the complete version 990
-form, write types `0,1,2,3,5,4,9,8,6,7`, derive metadata counts from the
+form, write types `0,1,2,3,5,4,9,8,6,7`, derive the documented counts for types 5/4/6/8 from their
 payloads and retain the documented caster/loot/unit ordering. A missing
 record supplies no instances even when metadata has a nonzero count.
 At version 1000 the main helper skips record-header reads while the editor
 reads five words in a different order; the browser/landscape helpers follow
 header length without testing this word. — ALM-HEADER-097
-— ALM-REQ-055, ALM-REQ-056, ALM-ORD-057, ALM-ORD-068, ALM-CORP-060
+— ALM-REQ-055, ALM-REQ-056 and ALM-ORD-057 (type-7 count clauses partially
+retracted), ALM-ORD-068, ALM-CORP-060
+
+For complete primary-reader type-7 reads, each of the three arrays is bounded
+by its own internal count, not metadata+0x28. Incomplete reads can retain old
+bytes in the shared local and must be distinguished from wire counts.
+— ALM-COUNT-195, ALM-STALE-196
 
 ## Reference map
 

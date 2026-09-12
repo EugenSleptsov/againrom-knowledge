@@ -283,6 +283,14 @@ three definition-id Humans retain table types outside the mission-end keep band
 
 ### type 7 — the trigger script: three counted arrays (`ALM-TRIG-044`…`047`)
 
+The primary loader reads each internal count into EBP-0x50 before that array's
+own comparison. Each complete Read4 replaces metadata+0x28 or the previous
+internal count; the resulting populations are A/C/T and the consumed size is
+`12 + 796*A + 796*C + 184*T`. Metadata+0x28 is not an additional loop bound.
+EOF or short lower reads may preserve old local bytes, including a prior count,
+which describes malformed-input execution rather than an alternative grammar.
+— ALM-COUNT-195, ALM-STALE-196
+
 The payload is **not** one list of nodes. It is three arrays, back to back, each preceded
 by its own `u32` count:
 
@@ -327,7 +335,7 @@ Parameter **type codes** (`ALM-TRIG-046`), and what a value of that type names:
 | Off | Type | Field |
 |-----|------|-------|
 | +0x00 | `char[64]` | name |
-| +0x40 | 64 B | opaque editor heap-address bytes; not a text field |
+| +0x40 | 64 B | opaque bytes; typed role and native producer Unknown (ALM-TRIGSTORAGE-163) |
 | +0x80 | `u32[3][2]` | three `(left, right)` **condition ids** — complete pairs in installed records |
 | +0x98 | `u32[4]` | up to four **action ids** |
 | +0xa8 | `u32[3]` | one **comparison code** per pair — `0 ==`, `1 !=`, `2 >`, `3 <`, `4 >=`, `5 <=`, dispatched through a 6-entry table; the three pairs are **ANDed with short-circuit** and a code above 5 is permanently false (`TRIG-CMP-006`) |
@@ -335,7 +343,16 @@ Parameter **type codes** (`ALM-TRIG-046`), and what a value of that type names:
 
 Trigger references contain node IDs, not array indices. Resolve action
 IDs within the action list and condition IDs within the condition list.
-— ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047
+— ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047 (amended: heap/non-text gloss withdrawn)
+
+The game and editor readers each transfer the complete184-byte record when
+the lower read completes. The game initializer and the editor no-buffer arm
+zero-fill all requested records. Editor growth preserves the old records and
+zero-fills only the newly added records; unused capacity is outside that span. Existing-record dialog initialization
+and apply copy46 dwords through dialog+0x338; the second64 bytes are at
+dialog+0x378..0x3b7. The writer submits one184-byte item per record. Native
+creation, UI/name-copy behavior and a durable editor round trip remain Unknown.
+— ALM-TRIGSTORAGE-163, ALM-TRIGEDITOR-164, ALM-TRIGZERO-165
 
 ### type 8 — authored loot, and type 9 — caster payload (`ALM-SACK-065`, `ALM-TRIG-049`)
 

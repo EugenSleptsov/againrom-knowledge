@@ -74,9 +74,12 @@ The three fixed-record sections carry their **count in the type-0 metadata**
 (`+0x1c`=type 5, `+0x20`=type 4, `+0x24`=type 6, `ALM-CNT-017`); the variable trigger
 sections carry their own count word.
 
-Also in the metadata, and load-bearing for a *writer*: `+0x28` and `+0x2c` are the loader's case-7
-and case-8 loop bounds, so all five of `+0x1c`..`+0x2c` must agree with the records actually present
-— a zero-length record needs a zero count or the sequential parse desynchronises. — ALM-REQ-056
+Metadata `+0x1c/+0x20/+0x24/+0x2c` supplies the counts for types 5/4/6/8.
+**Metadata +0x28 is not a type-7 loop bound after complete internal reads.**
+Type 7 reads three internal counts; type 9 reads its own count. Do not derive
+a metadata+0x28 writer obligation from type-7 cardinalities. An incomplete read
+can leave old bytes in the reused count local; that is not format semantics.
+— ALM-COUNT-195, ALM-STALE-196; ALM-REQ-056 (type-7 clause partially retracted)
 
 ## Acceptance contract — what a reader must and must not require
 
@@ -89,36 +92,43 @@ scheduler and derived-class overrides remain Unknown in this bounded route
 
 Read from `FUN_00512369` and its consumers (`ALM-REQ-055`, `ALM-REQ-056`, `ALM-ORD-057`,
 `ALM-RDR-059`). The engine's own names for the two mandatory records are in its error strings.
+The type-7 count clauses of ALM-REQ-056 and ALM-ORD-057 are partially retracted;
+the unrelated requirements below are retained.
 
 | record | absent → | why |
 |---|---|---|
 | **type 1** *(“Tiles”)* | **reject** — loader status 5, `"Tiles block not found"` | the world builder `FUN_00548550` reads `map+0x0c` as u16/cell with no null test |
 | **type 2** *(“Altitudes”)* | **reject** — loader status 6, `"Altitudes block not found"` | same, `map+0x14` as u8/cell |
 | type 3 | **default**: a `W·H` plane of zeroes | same consumer reads `map+0x10` as i8/cell; nonzero = “an object blocks this cell”, so all-zero is a valid empty plane |
-| type 5 | **default**: one group record — `new(0x48)`, `FUN_0048d9d0(1,1)`, then `CPlayer+0x0c = 5000` (`ALM-REQ-056`), which is the field a record's own `+0x08` fills (`ALM-SCALAR-087`). Every shipped map authors `0` in that position on record 0 (`ALM-SCALAR-089`) | the group list must be non-empty |
-| type 0 | **default**: `W = H = 16`, empty name and text, `+0x70 = +0x74 = 1` | but see the ordering rules — this default is only safe if types 1 and 4..9 are absent too |
-| type 4, 6, 7, 8, 9 | **skip** | their loops are bounded by type-0 counts (type 9's by its own first word), which are 0 when the records are absent |
+| type 5 | **default**: one group record — `new(0x48)`, `FUN_0048d9d0(1,1)`, then `CPlayer+0x0c = 5000` (`ALM-REQ-056`, type-7 clause partially retracted; player-default clause retained), which is the field a record's own `+0x08` fills (`ALM-SCALAR-087`). Every shipped map authors `0` in that position on record 0 (`ALM-SCALAR-089`) | the group list must be non-empty |
+| type 0 | **default**: `W = H = 16`, empty name and text, `+0x70 = +0x74 = 1` | see the actual dimension and metadata-count dependencies below; no type-7/type-9 count dependency on type 0 is established |
+| type 4, 6, 8 | **skip when absent** | their present-record loops use metadata counts; absence does not itself run a loop |
+| type 7, 9 | **skip when absent** | when present, they read their own internal counts; type 7 has three, not a metadata+0x28 bound — ALM-COUNT-195 |
 | `typeId >= 10` | **skip** by `Seek(payloadSize)`, no error | the switch's `default` arm |
 
 Header gates, in order: magic `M7R␀`; `recordCount >= 3`; `formatVersion <= 1001`. A duplicate
 `typeId` is **not** rejected — the case runs again and overwrites the pointer.
 
 **Ordering.** The permutation is not enforced, but three precedence relations are, because two
-lengths and five loop bounds are carried in state that only one earlier case writes:
+lengths and four metadata-count bounds are carried in state from earlier records:
 
 1. **type 0 before type 1** — the tile grid is allocated `W·H·2` from the *metadata's* `W`/`H`
    (default `16,16`), not from the record's own `payloadSize`.
 2. **type 2 before type 3** — type 3's allocation and read length is the **type-2 record's**
    `payloadSize`.
-3. **type 0 before types 4..9** — those cases' loop bounds are metadata fields.
+3. **type 0 before types 4/5/6/8 for their metadata-count bounds.** Type 7
+   reads its own three counts and type 9 its own first count. This removes only
+   the false count dependency, not other object/pointer ordering requirements.
+   — ALM-COUNT-195; ALM-ORD-057 (type-7 clause partially retracted)
 
 **Four readers ship, with three different acceptance tests** (`ALM-RDR-059`). Beside the loader,
 `rom.exe` has the `*.alm` browser scan's accept test — magic, `recordCount >= 2`, a type-0 record,
 and type-0 payload **`+0x70 >= 2`**, so a map below that threshold is silently unlisted
 (`ALM-META-058`) — and a light parser that handles typeIds 0..3 only, walks to EOF rather than by
 count, and treats its two header failures as advisory message boxes without stopping. `Map
-Editor.exe` carries that light parser's two literals and none of the loader's six; its own reader is
-unread.
+Editor.exe` has a separate reader and a distinct version-1000 header permutation;
+partial reader mechanics are established, but its complete native acceptance
+contract remains Unknown. — ALM-HEADER-097, ALM-FRONTIER-200
 
 ## End of file
 
@@ -200,7 +210,7 @@ The structural size relation is `20 + sum(20+payloadSize) = fileSize` for
 the standard complete form. Types 1 and 2 are required by the primary loader;
 the complete installed type set is not an acceptance requirement.
 — ALM-FRAME-031 (amended; framing retained), ALM-ORD-057, ALM-ORD-068, ALM-TRIG-044,
-ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047, ALM-CORP-060
+ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047 (amended: opaque-region gloss withdrawn), ALM-CORP-060
 
 ## Unknowns and compatibility
 
@@ -219,7 +229,7 @@ ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047, ALM-CORP-060
 — ALM-HDR-001, ALM-META-091, ALM-META-092, ALM-CORP-093,
 ALM-SCALAR-087, ALM-SCALAR-088, ALM-SCALAR-089, ALM-CPLAYER-090,
 ALM-TAILDIR-081, ALM-TAILU16-082, ALM-TAILVER-084,
-UNIT-PLACESKILL-086, ALM-TRIG-047, ALM-TRIG-049, ALM-TRIG-050
+UNIT-PLACESKILL-086, ALM-TRIG-047 (amended: opaque-region gloss withdrawn), ALM-TRIG-049, ALM-TRIG-050
 
 The placeable-definition source is [Data.bin](../databin/format.md), including
 footprints and actor fields. The earlier unknown source-file clause is
@@ -268,3 +278,46 @@ archive container+34 and later aliases remain open. — ALM-STREAM-100
 The preserved corpus contains 72 maps and 714 record headers. All file words
 are990; all 72 maps have equal raw record words internally. This equality is
 a corpus property. — ALM-CENSUS-101
+
+## Count provenance, header residue and closure boundary
+
+In the primary reader, metadata+0x28 first occupies EBP-0x50. Each type-7
+internal Read4 then writes the same slot before its own signed loop comparison.
+With complete reads, only the respective internal count determines the node,
+condition or trigger population. With EOF/short reads, metadata or a preceding
+count can survive in that slot. Do not infer a wire field's meaning from such
+residual bytes. — ALM-COUNT-195, ALM-STALE-196
+
+The ordinary primary record-header read places its final four bytes at
+EBP-0x24. A partial next header can preserve the previous word's unread suffix;
+the version-1000 helper preserves all of it without any read. The browser/light
+helper instead uses hdrLen after an eight-byte peek. None of these transfer
+mechanics establishes a numeric representation for the final word.
+— ALM-HDRREAD-197
+
+The primary upper version gate is unsigned <=1001, after unsigned recordCount>=3.
+The browser's header predicate instead requires unsigned count>=2 without a
+version check there. The light reader walks to EOF and treats count<2 as an
+advisory message rather than an early return. Primary payload thresholds are
+unsigned >=951, >=985, >=987, >=989 and >=990; evaluating an isolated window
+above1001 does not imply primary whole-file admission. — ALM-READERS-199
+
+Record-header+0x10's role and metadata+0x0c's complete gameplay-consumer chain
+remain Unknown. The retained M/P aliases, computed consumers and native editor
+producer/event population are not discharged by successful reader-prefix tests.
+— ALM-FRONTIER-200
+
+The complete editor header helper uses five Read4 calls at version1000,
+placing wire words0..4 at destination dwords2,4,0,3,1. Other tested values
+use one Read20. The helper does not validate returned counts before returning;
+short lower transfers retain old destination bytes. The last wire word is
+therefore at runtime header+4 at1000, not+0x10. Isolated helper controls do
+not imply whole-file version admission or a numeric field meaning.
+— ALM-EDITORHDR-202
+
+The post-load P message has a conditional constructor-to-primary-frame chain.
+The application root getter first selects a nonzero app+0x20 override, then
+app+0x1c, otherwise a host fallback. Only the primary-frame branch binds the
+selected frame+0xd4 constructor and forwarding handler. The actual native app,
+override state, later member replacement and child receivers remain unbound;
+no P scalar consumer or field meaning follows. — ALM-FRONTIER-200

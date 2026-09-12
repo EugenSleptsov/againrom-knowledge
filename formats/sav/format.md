@@ -27,6 +27,12 @@ SAV-FULLREAD-252, SAV-WRITERAUDIT-380
 | Campaign arrays, mission selection, markers and tavern eligibility | [Campaign](campaign.md) |
 | Emission sequence, required relations and compatibility limits | [Writing](writing.md) |
 
+The campaign score inputs `+124/+128` are raw saved words. Their located
+writers accumulate groups of16 simulation sub-ticks and received hostile
+corpse-stage transitions, respectively; their precise guards and reconstruction
+limits are in the campaign reference. LOAD does not locally clamp or recompute
+these counters. — FAME-021, FAME-022
+
 ## Notation
 
 All integer fields are little-endian. `u8/u16/u32` name wire widths;

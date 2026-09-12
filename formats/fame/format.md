@@ -96,10 +96,43 @@ object's `+e4`. With signed words `A = campaign+124`, `B = campaign+128` and
 `C = source+108`, it computes `C / (A * 10.0) * B` when A is nonzero, or
 `C * stored_binary64(2e-6) * B` otherwise, using the observed x87 instruction
 order. A helper truncates to a signed 64-bit integer and the producer stores
-the low 32 bits as score. Both other words remain zero. These offsets identify
-immediate inputs; their full upstream meaning and native floating-point
-control state are Unknown. The expression is not a promise of exact rational
-rounding at integer boundaries. — FAME-PRODUCER-014
+the low 32 bits as score. Both other words remain zero. The expression follows
+the original operation order and does not promise exact rational rounding at
+integer boundaries. — FAME-PRODUCER-014
+
+| Input | Established producer and unit | Boundary |
+|---|---|---|
+| A | Constructor/reset zero it; the admitted mission-completion arm adds signed trunc(simulation sub-ticks/16) before the terminal score call | Groups of16 sub-ticks; wall-clock seconds and the mission-entry clock baseline are not established |
+| B | Constructor/reset zero it; client reception increments for a hostile drawable whose old stage is below2 and whose new stage is2,3 or4 | A received corpse-stage transition, with no killer or once-per-ID test; stage1 death/fall and stage5 do not enter this increment |
+| C | Effective state-packet mask4 copies the raw simulation actor+130 dword to drawable+108 | Six-slot experience meaning requires the established Human/Humanoid source path; final cached class and latest delivery are unproved |
+
+Campaign SAVE/LOAD preserves A and B as raw four-byte words. The named addition
+and increment have no local range clamp. A freshly constructed CUnit starts
+at stage0, so a first received hostile corpse at stage2/3/4 can satisfy the B
+increment; repeated2-to3 cannot. Actual LOAD reconstruction order and any
+resulting additional count remain Unknown. — FAME-021, FAME-022
+
+C's raw projection does not establish a Human-class prerequisite. For the
+Human/Humanoid source path, the copied field is the stored aggregate of six
+experience slots, maintained by creation/gain/purchase/loss operations. Human
+LOAD separately restores the aggregate and slot values. This score path does
+not recompute them from levels or sum the party. The six-slot interpretation
+for other actor classes or an unproved final cached source remains Unknown.
+— FAME-023, HERO-XP-077, SAV-HEROXP-063
+
+The source cache is at `[[frame+d0]+3f54]`. One receiver assignment selects a
+new drawable when its map count is1, without an ownership predicate. Preview
+paths can also populate this cache, transfer a raw value into C or explicitly
+zero C in a temporary derive. A full new-game or LOAD ordering that guarantees
+the main hero and the latest experience at final scoring remains Unknown.
+— FAME-024
+
+A selected startup initializer requests x87 precision bits0200 (53-bit) and
+preserves incoming rounding bits. Its full control word and survival to the
+score call are unverified. The final conversion helper forces truncation only
+for its signed64 integer conversion and then restores the prior control.
+Native rounding, exceptional conversions and a safe upstream gameplay maximum
+remain Unknown. — FAME-025
 
 The fallback producer obtains names from UI string-table indices 263 through
 272. For the first nine it starts a score base at 70000, subtracts 7000 per

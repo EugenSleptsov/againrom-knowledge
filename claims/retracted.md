@@ -1,5 +1,13 @@
 # Overturn history
 
+## ALM type-7 loop sources and incomplete-read residue
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `ALM-REQ-056` (type7 external-count and associated type0-less safety clauses only) | type4/type6/type7/type8 loops are bounded by type0 fields; a type0-less file with any1 or4..9 is undefined on that basis | High | [EXP-0358](../experiments/EXP-0358-alm-headers-metadata/), ALM-COUNT-195, ALM-STALE-196 | Type7 uses three internal count reads into the reused local. Type9 has its own count. No type0-before-type7/9 count dependency follows. Short-read inheritance is residual storage, not an external format count. Other absence/default/corpus facts are retained. | **PARTIALLY RETRACTED** |
+| `ALM-ORD-057` (type7 in clause(c), and sole-writer assertion for EBP-0x50 only) | type0 must precede all types4..8; their count slots are written only by case0 | High | [EXP-0358](../experiments/EXP-0358-alm-headers-metadata/), ALM-COUNT-195 | The type7 slot is independently overwritten by all three internal count reads. Metadata-count dependency is types4/5/6/8; dimension/plane and caster/loot/unit pointer-order relations stand. No complete-map acceptance is inferred from removing this one false dependency. | **PARTIALLY RETRACTED** |
+| `ALM-META-025` (unconditional discard shorthand only) | metadata+0x28 is read-and-discarded | High for corrected counts; Unknown for field purpose | [EXP-0358](../experiments/EXP-0358-alm-headers-metadata/), ALM-STALE-196 | It is replaced by complete internal reads, but a short read can retain metadata bytes or the preceding internal count. The corrected complete-read loop source and Unknown purpose stand. | **NARROWED** |
+
 ## Sprite decoder boundary and literal scope
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
@@ -730,3 +738,9 @@ matching tier, then re-read every affected row against them.
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
 |---|---|---|---|---|---|
 | `ALM-METADEFAULT-186` (first-candidate author control population only) | Twelve bounded cases observe the same creation store after six different prior words/two fills. | High for the separate default producer | [EXP-0357](../experiments/EXP-0357-metadata-scalar-lifetimes/EXP-0357.md); corrected entry telemetry in `evidence/vectors.json` | In candidate `5cd3ac8fc863f1013236029347cc9b53b975007a`, all 12 creation slices entered with 0xdddddddd after source poisoning. The corrected witness reinitializes each word/fill and records the actual receiver and input immediately before 0044bb1a; all six words crossed with both fills now reach the store. The immediate 0x168 store, independent New/Open paths, and native UI/semantic Unknowns stand. | **PARTIALLY RETRACTED** — the first candidate's author input-population receipt was false; the new controls do not retroactively validate it |
+
+## Trigger opaque-region interpretation
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `ALM-TRIG-047` (second64-byte semantic gloss only) | Never a printable string; carries editor heap addresses | Unknown for the span, despite affirmative body wording | [EXP-0353](../experiments/EXP-0353-trigger-storage/); ALM-TRIGSTORAGE-163, ALM-TRIGEDITOR-164, ALM-TRIGZERO-165 | Original whole-record reads/copies/writer submissions and selected zero initialization establish an opaque carrier, not heap provenance or a universal non-text restriction. Keep the historical0-of421 corpus observation without claiming a rerun. The184-byte layout, ID reference counts, pair structure and subsequent TRIG-CMP-006/TRIG-FIRE-007 results stand. | **PARTIALLY RETRACTED** |

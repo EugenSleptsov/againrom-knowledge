@@ -41,3 +41,10 @@ TRIG-CMP-006, TRIG-FIRE-007
 
 Runtime member offsets identify original in-memory fields. Wire offsets and
 byte order are stated separately in the relevant layouts.
+
+The selected Trigger-binding block addresses three condition-ID pairs from
+record+0x80, four action IDs from+0x98, three comparisons from+0xa8 and the
+once word at+0xb4. It publishes separate compiled records. No direct access
+to the opaque+0x40..0x7f span is demonstrated in this block; forwarded key
+pointers, unexpanded calls and other aliases prevent a global no-use claim.
+— TRIG-BIND-063

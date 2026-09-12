@@ -56,8 +56,8 @@ SAV-CAMPAIGN-084, SAV-CAMPAIGN-085, SAV-CAMPAIGN-086
 | 3 | `+110` | AutoGetMission |
 | 4 | `+11c` | LastMission |
 | 5 | `+120` | First-MapPoint flag, computed on SAVE |
-| 6 | `+124` | Mission time |
-| 7 | `+128` | Raw value with an unnamed floating-point reader; nonzero producer Unknown |
+| 6 | `+124` | Accumulated groups of16 simulation sub-ticks at admitted mission completion |
+| 7 | `+128` | Received hostile corpse-stage transition counter; exact condition below |
 
 `+120=1` restores MapPoint zero. Otherwise selected mission `+118` resolves
 through the external mission-to-map-object registry. This stores a relation
@@ -66,10 +66,24 @@ separate application fields. — SAV-CAMPPOS-072, SAV-892
 
 `+114/+128` are raw passthrough, unlike computed `+120`. Constructors/reset
 zero them; the local campaign reader tail does not consume them again.
-The `+114` singleton chain reaches the three-way ALM placement law. `+128` has
-`00488c00` as a floating-point reader, but the producer of its nonzero saved
-values remains Unknown. Neither field is spare storage. — SAV-598, SAV-599, SAV-600,
-SAV-601, SAV-602, UNIT-GATE-012, UNIT-GATE-013
+The `+114` singleton chain reaches the three-way ALM placement law. Neither
+field is spare storage. — SAV-598, SAV-599, SAV-600, SAV-601, SAV-602,
+UNIT-GATE-012, UNIT-GATE-013
+
+The admitted completion arm adds signed trunc(simulation sub-ticks/16) to
+`+124` before its terminal-score predicate. This establishes groups of16
+sub-ticks, not wall-clock seconds or the exact mission-entry clock baseline.
+Constructor/reset zero `+124/+128`; SAVE/LOAD preserves both raw words.
+The named arithmetic and reader impose no positive-value or range clamp.
+— FAME-021
+
+The nonzero `+128` writer increments when client state reception changes a
+hostile drawable from old stage0/1 to stage2/3/4. Stage1 is the death/fall arm;
+stage5 takes another arm. The increment checks the local CPlayer relation row,
+with no killer or prior-ID predicate. New CUnit objects begin at stage0, so
+first receipt of an existing corpse can satisfy this condition; repeat2-to3
+cannot. The loaded counter baseline and subsequent native reconstruction order
+must not be replaced by a once-per-death assumption. — FAME-022
 
 ## Markers
 
@@ -202,5 +216,5 @@ Native terminal-city LOAD remains Unknown. — SAV-892
 Existing counts admit more entries of their existing shape. Added fields,
 changed widths or reordered fields are outside the original fixed programme;
 there is no version-selected campaign grammar arm. Preserve the programme or
-version an extension outside it. Unnamed `+114/+128` cannot be repurposed as
+version an extension outside it. Stored `+114/+128` cannot be repurposed as
 padding. — SAV-CAMPPROG-071, SAV-599, SAV-600, SAV-602
