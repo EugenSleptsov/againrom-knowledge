@@ -2,6 +2,35 @@
 
 [Reference](format.md)
 
+## Receive source before the light-reader path
+
+The frontend obtains a receive object through global manager005f22d0 and
+entries requested from manager+0x18b8. For each selected source S, the receive
+gate sums buffer+0x0f bytes under S+0x1030 locking. This value differs from
+the actual buffer remaining-length expression, B+0x7f8 minus B+0x7fc.
+The counter's meaning and native producer remain Unknown. — ALM-RECVSOURCE-207
+
+The source reader traverses the list at S+0x1014, requests copies from
+B+0x10+cursor, advances the cursor and requests removal/release of exhausted
+short buffers. Copy and release helpers remain boundaries. The immediate
+code does not prove an end-to-end complete read. — ALM-RECVREAD-208
+
+Received types6/7/8 select shared object006095a8. With its shown constructor
+vtable, the reader requests5 bytes at object+0x0a, then unsigned
+object+0x0e plus1 bytes at object+0x0f; it tests neither read return. Only
+type6 selects the frontend light-load arm, and only when view+0x80 is zero
+does that arm submit object+0x0f to0041f082. The actual input producer,
+complete string contents, later aliases and native ordering remain Unknown.
+— ALM-RECVOBJ-209
+
+The selected type4 request uses different shared object00609c38. Its shown
+serializer submits9 bytes from object+9 into an indexed send-side region.
+The later004ead90 body requests a lookup and adds the submitted size to a
+counter; it is not itself a payload-copy or list-append operation. The
+unexpanded storage/flush helpers do not establish delivery to the receive
+list or a causal type4-to-type6 pairing. These boundaries assign no new unit
+or gameplay meaning to an ALM metadata scalar. — ALM-SUBMIT-210
+
 ## type-0 metadata payload (632 bytes) — `ALM-META-008…ALM-META-010`
 
 The type 0 payload is 632 bytes: 48 bytes of scalar fields, a 64-byte map
