@@ -81,7 +81,7 @@ produces damage absorption and no immobilisation.**
 
 Duration before resistance is `ftol(1.025^power × SpellDuration × 16)` ticks — 160 at power 0, 262
 at 20, 549 at 50, 1890 at 100 on the shipped row — then multiplied by `(100 − target+0xca)/100`
-with a floor of one tick (`MAGIC-SING-019` d; a different clause of this id, the item-cast
+with a floor of one tick (`MAGIC-SING-019` d; a different clause of this id, the item-cast (Delivery/timing clause narrowed by MAGIC-CASTCLOCK-171.)
 universal reach, was retracted).
 
 Two further, spell-independent ways an actor stops acting, which a consumer must not confuse with

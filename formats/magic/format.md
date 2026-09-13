@@ -4,7 +4,7 @@
 
 Spell definitions, learned objects, actor state and cast inputs determine
 application and presentation. Effects have their own duration, ownership and
-action-gate rules. — MAGIC-SPELL-001, MAGIC-CAST-003, MAGIC-EFFMODE-009,
+action-gate rules. — MAGIC-SPELL-001, MAGIC-CAST-003, MAGIC-EFFMODE-009, (Delivery/timing clause narrowed by MAGIC-CASTCLOCK-171.)
 MAGIC-CADENCE-126, MAGIC-CADENCE-127
 
 Definition tables are in [Data.bin](../databin/format.md), actor state in
@@ -23,7 +23,7 @@ Ordinary power is `clamp(skill[Sphere]+Mind-30,0,100)`; item castSpell
 power takes its signed i16 path without that clamp. Cast gates run before
 application, which chooses immediate or projectile delivery and then the
 spell-specific effect/lifetime path. Presentation and action restrictions
-consume the resulting effects separately. — MAGIC-SPELL-001, MAGIC-CAST-003,
+consume the resulting effects separately. — MAGIC-SPELL-001, MAGIC-CAST-003, (Delivery/timing clause narrowed by MAGIC-CASTCLOCK-171.)
 MAGIC-EFFMODE-009
 
 ## Reference map

@@ -134,8 +134,15 @@ Spell::Cast(caster, target, x, y)                                   FUN_004fe6d3
   DeliverySystem == 2:  delay = distance(caster, target) / SpellEffectSpeed
                         Lightning and Prismatic Spray: delay = 5, flat
   else                  delay = 0
-  the apply is queued on the world object with that delay
+  send the cast-animation packet carrying that presentation delay
+  ordinary phase5 later prepares the simulation payload after charge
 ```
+
+The packet delay is not a simulation apply queue. Delivery2 creates a separate
+SpellTransport whose own countdown releases its child effect. IDs13/14 set that
+counter to10; ID14 selects and prepares its victim list during admission, while
+the later unit-target wrapper suppresses a duplicate. — MAGIC-DELIVERY-170,
+MAGIC-CASTCLOCK-171
 
 The cast itself runs through the actor's common action phases. Phase 0 loads charge
 `actor+0x134`; phase 5 applies when that countdown reaches zero; phase 7 loads relax

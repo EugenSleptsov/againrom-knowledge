@@ -1,5 +1,13 @@
 # Overturn history
 
+## Cast admission and transport timing
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `MAGIC-CAST-003` (queued-apply clause) | distance/speed or five-tick apply queued by004fe6d3 | High | [EXP-0362](../experiments/EXP-0362-cast-delivery/), MAGIC-CASTCLOCK-171 | That field belongs to the cast presentation packet. Phase5 reaches payload preparation later; its transport counter is independent. Mana cost remains correct. | **PARTIALLY RETRACTED** |
+| `MAGIC-CASTTICK-030` (universal application-at-windup shorthand) | effect applies at windup | High | [EXP-0362](../experiments/EXP-0362-cast-delivery/), MAGIC-DELIVERY-170, MAGIC-CASTCLOCK-171 | The timed call prepares payloads. Delivery2 adds transport expiry and child consumption before effect application. Call-site and client timing facts stand. | **NARROWED** |
+| `MAGIC-SING-019` (Prismatic never-queued/never-flies shorthand only) | Prismatic Spray is never queued and never flies | High | [EXP-0362](../experiments/EXP-0362-cast-delivery/), MAGIC-DELIVERY-170, MAGIC-CASTCLOCK-171 | Selection occurs during admission, but each selected victim's Apply prepares a transport with counter10. The fan and duplicate-prevention wrapper stand. | **PARTIALLY RETRACTED** |
+
 ## ALM type-7 loop sources and incomplete-read residue
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

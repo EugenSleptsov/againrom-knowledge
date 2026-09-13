@@ -94,7 +94,7 @@ Spell::Apply(caster, target, x, y)                                  FUN_004feadb
                                                  COPIED VERBATIM - the two stats are the only
                                                  fields not reduced. The power enters no
                                                  expression in this arm
-        Teleport                                 moves the caster to the target point
+        Teleport                                 attempts relocation; destination may veto it
 
   every lasting effect gets +0x3c = the kind, +0x3d |= 1 (duration), +0x40 = the magnitude,
   +0x42 = the ticks, +0x0c = the spell id, +0x0e = spellId*2 + 8 (an art index)
@@ -216,3 +216,18 @@ singleuse   8     applied once; does NOT raise a stat's cap byte (HERO derived-s
 
 Any of `1 / 2 / 4` also makes the effect dispatch read the magnitude as a **signed 16-bit** value at
 `+0x40`; without them it is a signed 32-bit value.
+
+## Teleport destination refusal
+
+An ordinary mage book cast spends its cost before the later teleport
+application. Relocation tests every footprint cell against mover+5 in the
+map's plane at+20000, then calls a separate placement predicate. Either early
+veto leaves Position unchanged. The teleport arm ignores that return and sends
+its0x20 update anyway; these paths contain no mana refund. Cast presentation
+was already produced, and the client picture60 route owns the two sprites.
+An insufficient-mana cast exits before those later paths. — MAGIC-TELEPORT-174
+
+The conditional proof executes separated original fragments with explicit
+predicate, occupancy, visibility and message-service stubs. It does not certify
+native reachability of every synthetic actor state, footprint-edge behavior or
+exact rendered frames. — MAGIC-TELEPORT-174

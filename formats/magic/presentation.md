@@ -73,7 +73,7 @@ editing `projectiles.reg`'s `ID`).
 
 ## Cast presentation and application tick
 
-Settled by `MAGIC-CASTANIM-029`, `MAGIC-CASTTICK-030`, `MAGIC-BURST-031`, `MAGIC-SENDER-032`.
+Settled by `MAGIC-CASTANIM-029`, `MAGIC-CASTTICK-030`, `MAGIC-BURST-031`, `MAGIC-SENDER-032`. (Delivery/timing clause narrowed by MAGIC-CASTCLOCK-171.)
 Section 10's parity rule is unchanged; this section says what each parity is *for*.
 
 **Every cast animates the caster.** The cast routine sends the picture message at the **start** of
@@ -95,7 +95,7 @@ index — and ends when `ticksLeft` reaches 0.
 ```
 simulation   windUp   = 8 ticks   (actor field; an equipped item may override it)
              recovery = 4 ticks   (same)
-             the effect is applied on tick windUp, counting the starting tick as 0;
+             the effect payload is prepared on tick windUp, starting tick counted as0;
              a melee strike lands on that same tick, in the other branch of one if
 
 client       the visible projectile is spawned on tick ShootDelay   (units.reg)
@@ -194,3 +194,14 @@ client-side runtime id, which rewrites the opcode to `0x8b`.
 ramped arm, and exactly the four picture ids with a special draw arm. A consumer may treat that
 column as "this spell throws something", but the number it produces is not the number the original
 draws with.
+
+## Simulation transport and presentation clocks
+
+A visible CProjectile does not deliver the simulation payload. Delivery2 uses a
+SpellTransport with a signed countdown: expiry enqueues its nested effect and
+retires the transport. It does not move Position or poll a sprite collision.
+The animation packet's five-tick value for IDs13/14 is separate from the
+simulation transport's counter10. Prismatic victim preparation runs during
+admission; ordinary phase5 preparation follows charge. Native first-frame
+ordering and visible impact alignment remain unmeasured. — MAGIC-DELIVERY-170,
+MAGIC-CASTCLOCK-171

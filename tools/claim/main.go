@@ -35,7 +35,7 @@ import (
 // topic segment. The topic segment may carry digits (SPR256, SPR16A), which is
 // what makes the naive [A-Z]+-[0-9]{3} pattern miss rows -- the same defect
 // that has made claims/registry.md's per-area counts go stale three times.
-// Anchor on the trailing -NNN instead.
+// Anchor on the trailing numeric suffix instead. Allocation floors can pass 999.
 //
 // THE TOPIC SEGMENT IS OPTIONAL, and requiring it cost a whole ledger. On
 // 2026-08-16 claims/town.md was published with 36 two-segment ids (TOWN-001 and
@@ -47,7 +47,7 @@ import (
 // status.sh, both widened the same day; this tool was not, because nothing had
 // asked it for a TOWN id yet. It is applied to a row's id cell alone (one call
 // site), so relaxing the middle group cannot over-match prose.
-var idRe = regexp.MustCompile(`\b([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-[0-9]{3})\b`)
+var idRe = regexp.MustCompile(`\b([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-[0-9]{3,})\b`)
 
 type row struct {
 	id    string

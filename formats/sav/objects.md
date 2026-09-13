@@ -147,3 +147,14 @@ A base programme can execute within a derived body without its own class tag.
 An embedded programme can likewise execute without a descriptor. Absence of a
 class name from a save does not make that programme unreachable.
 — SAV-PRODDIRECT-207
+
+## Saved cast continuation
+
+SpellTransport's final u16 at runtime+4c is its remaining delivery counter.
+The serializer preserves it beside the two typed children. Its own post-load
+method repairs Position and child references without resetting the counter.
+Tick subtracts1 and, when the signed result is<=0, enqueues the child, clears
+both child fields and marks the transport retired. Natural game0018 contains
+counter4 in its pending PointEffect/DirectDamage transport. Conditional isolated
+store/load/tick execution agrees; native full-process resumption and first-frame
+scheduler ordering remain Unknown. — SAV-CASTCONT-1006
