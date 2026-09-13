@@ -88,6 +88,11 @@ A text measurer must mirror the draw path's markup handling or widths can diverg
 
 ## Resource string tables
 
+[Pointer-hover help](hover.md) describes the common delayed display route,
+control-specific sources, line layout and the bounds of the control inventory.
+— TEXT-HOVER-048, TEXT-HOVERSET-049, TEXT-HOVERCHAR-050,
+TEXT-HOVERROOM-051, TEXT-HOVERTEXT-052, TEXT-HOVERPAINT-053
+
 The game loads multiple CRLF-delimited text resources into positional tables. Entries
 are addressed by table-local or global numeric indices depending on the consumer.
 Loading is byte-preserving; conversion happens when text is displayed or entered, not
