@@ -40,7 +40,7 @@ ALM-CORP-060
 | +0x04 | u32 | hdrLen | constant `20` (= this header's own length); read, not validated | ALM-SEC-002 |
 | +0x08 | u32 | payloadSize | payload byte length; the payload follows immediately | ALM-SEC-002 |
 | +0x0C | u32 | **typeId** | the record's type, `0..9`; **this is the word the loader's `switch` dispatches on** (10-entry jump table) | ALM-SEC-003 (amended; type dispatch retained), ALM-FRAME-031 (amended; framing retained) |
-| +0x10 | byte[4] | opaque word | Same raw bytes within each installed map; numeric representation and semantic role Unknown | ALM-HEADER-098, ALM-CENSUS-101 |
+| +0x10 | byte[4] | locally unconsumed word | No value consumer or surviving copy in the enumerated normal reader paths. Next complete overwrite/frame release ends local ownership. The editor writer supplies its own uninitialized stack slot. Numeric representation and original intent remain Unknown. | ALM-HEADER-098, ALM-CENSUS-101, ALM-HDRLIFE-206 |
 
 Each record payload starts immediately after its 20-byte header and has no
 additional type identifier. The loader reads the header with `Read(dest,0x14)`
@@ -217,7 +217,8 @@ ALM-TRIG-045, ALM-TRIG-046, ALM-TRIG-047 (amended: opaque-region gloss withdrawn
 | Field or path | Limit |
 |---|---|
 | Header dataSize | Installed `4*W*H+72`; ignored by the loader; writer accounting of 72 Unknown |
-| Type0 scalars +0x0c/+0x10/+0x14/+0x74 | Exact widths/destinations retained; general authoring meanings Unknown |
+| Type0 +0x0c | Editor Starting Time in minutes and its color consumer are established; complete ROM1 gameplay effect and native transactions remain Unknown — ALM-EDITTIME-205 |
+| Type0 scalars +0x10/+0x14/+0x74 | Exact widths/destinations retained; general authoring meanings Unknown |
 | Type5 +0x08 | Loaded to `CPlayer+0x0c`; copy use is known, complete gameplay consumer effect Unknown |
 | Type6 +0x1c/+0x22/+0x26/+0x28/+0x2a/+0x30/+0x33/+0x34/+0x35 | Known stored fields; no named read in the described original field-consumer set; authoring roles Unknown |
 | Trigger +0x40 | 64 raw bytes; no meaningful text grammar established |
@@ -302,10 +303,11 @@ advisory message rather than an early return. Primary payload thresholds are
 unsigned >=951, >=985, >=987, >=989 and >=990; evaluating an isolated window
 above1001 does not imply primary whole-file admission. — ALM-READERS-199
 
-Record-header+0x10's role and metadata+0x0c's complete gameplay-consumer chain
-remain Unknown. The retained M/P aliases, computed consumers and native editor
-producer/event population are not discharged by successful reader-prefix tests.
-— ALM-FRONTIER-200
+The editor interprets metadata+0x0c as Starting Time in minutes and uses it
+in its color pipeline. The identified normal game M/P paths do not read that
+scalar. Record-header+0x10 is locally unconsumed in the named readers. These
+are separate semantic results; neither native acceptance nor universal
+all-image non-use follows. — ALM-FRONTIER-200, ALM-EDITTIME-205, ALM-HDRLIFE-206
 
 The complete editor header helper uses five Read4 calls at version1000,
 placing wire words0..4 at destination dwords2,4,0,3,1. Other tested values
@@ -315,9 +317,19 @@ therefore at runtime header+4 at1000, not+0x10. Isolated helper controls do
 not imply whole-file version admission or a numeric field meaning.
 — ALM-EDITORHDR-202
 
-The post-load P message has a conditional constructor-to-primary-frame chain.
-The application root getter first selects a nonzero app+0x20 override, then
-app+0x1c, otherwise a host fallback. Only the primary-frame branch binds the
-selected frame+0xd4 constructor and forwarding handler. The actual native app,
-override state, later member replacement and child receivers remain unbound;
-no P scalar consumer or field meaning follows. — ALM-FRONTIER-200
+The post-load P route is bound for the constructor-produced application,
+frame, view and child families. Its identified view aliases and P getters
+use dimensions, planes and angle, with no scalar reader. Nonzero app+0x20
+still overrides the primary frame, and the host fallback is not a primary-frame
+identity proof. Native selection and external member replacement remain
+unobserved. — ALM-FRONTIER-200
+
+The complete named reader lifetimes include the incidental header address left
+in ESI and its private stack saves. The ordinary wire word is locally
+unconsumed; version1000 moves the editor destination to header+4, while the
+primary performs no header transfer. Original stream wrappers forward the
+destination without retaining it. The next complete overwrite or normal
+frame release ends local ownership. The editor writer's last word has no
+defined initializer on the shown path. These conclusions assume ordinary ABI,
+DF=0, constructor-produced receivers and in-bounds buffers. They establish
+neither a numeric type nor native I/O values. — ALM-HDRLIFE-206

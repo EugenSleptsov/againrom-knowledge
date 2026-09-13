@@ -44,7 +44,7 @@ The offsets below are relative to the payload. The fixed reads total 632 bytes. 
 | +0x00 | u32 | **W** | map width — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x04 | u32 | **H** | map height (`W≠H` occurs, e.g. 112×144) — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x08 | f32 | **angle** | Radians; loaded into map `M+0x18` and terrain `P+0x20`. The terrain store fills four bytes of a double. Forced relight replaces it from the sun globals before the known read. Installed angles are whole degrees: `±45, ±44, ±18, 36, 28, 25, 22`; the common π/4 encoding is `0x3f490fda`. | ALM-META-027 (amended; payload-angle clause retained), ALM-META-091, ALM-META-092, ALM-CORP-093, TERR-LIGHT-149, TERR-LOAD-152 |
-| +0x0c | raw 32-bit word | scalar (stored; numeric interpretation Unknown) | Loaded into map `M+0x1c` and terrain `P+0x2c`. A game map-copy constructor and the editor map-copy path read and preserve the four bytes in independent storage. The editor writes the word and its separate new-map constructor supplies a default. Gameplay meaning and native first use remain Unknown. Installed values are a corpus observation, not a validation range. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093, ALM-METACOPY-183, ALM-METAEDITOR-185, ALM-METADEFAULT-186 |
+| +0x0c | 32-bit word; signed integer in editor arithmetic | **Starting Time (editor minutes)** | Loaded into `M+0x1c`, terrain `P+0x2c` and editor `E+0x1c`. The editor requests slider positions0..96, loads signed `value/15` and accepts `position*15`. Its `(value/60)%24` lighting path reaches palette colors and render-buffer stores. Default360 is06:00. The identified normal game M/P paths do not read this scalar; a universal or native game effect remains unestablished. Native editor transactions are unobserved; slider bounds are not an ALM validation range. | ALM-EDITTIME-205, ALM-SCALAR-198, ALM-EDITORSCALAR-203 |
 | +0x10 | u32 | scalar (stored) | Loaded into map `M+0x20` and terrain ambient byte `P+0x1c`. Forced relight overwrites the terrain value before its known read. Installed values span `0..33`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x14 | u32 | scalar (stored) | Loaded into map `M+0x24` and terrain range byte `P+0x1d`; the four-byte terrain store also writes `P+0x1e/0x1f/0x20`. Relight replaces the range before its known read. Installed values span `27..64`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x18 | u32 | bitmask | **Terrain tile-group mask.** The map loader discards its local copy; terrain stores it at `P+0x28`. Bit i selects group `(i>>2)+1`, variants `(i&3)*4 .. +3`. Installed values use bits `0..12`: groups 1–3 and group 4 variants 0–3. | ALM-META-026, TERR-LOAD-152 |
@@ -221,34 +221,34 @@ destination at 00511f1f. The copy has independent scalar storage, but native
 entry into this owner remains unresolved. A global no-reader or no-copy
 interpretation is unsupported. — ALM-METACOPY-183
 
-Owning world constructor 00541510 publishes M at world+0x540d0, passes it to
-the grid ingest, then destroys and frees M before returning. It does not
-clear the holder in that body. The complete ingester and callees 00548720/00547d40
-now have bounded controls with independent scalar and held-pointer mutations;
-no scalar/alias-dependent world output occurs in that population. This does not
-close later aliases or native first use. Borrowing constructor 005417f0 passes its
-caller-supplied M to the ingest. The selected four pre-teardown consumers
-reach seven embedded containers through 17 accessor bodies; their bounded
-M-relative search finds no access to M+0x1c. Returned record pointers,
-unresolved switches and post-return aliases remain separate frontiers.
-The list allocator 00570ba6 receives block-head addresses M+0x54/M+0x70;
-it does not receive the scalar address on these calls. — ALM-METALIFE-184, ALM-INGEST-201
+Owning world constructor00541510 publishes M at world+0x540d0,
+ingests its planes, then destroys and frees M before returning without
+clearing that holder. Only its publication/reload instructions contain the
+literal holder displacement in the pinned image. The separate borrowing
+constructor uses its caller's M; mission and save-resume paths delete that M.
+Five pre-teardown consumers and both exact eight-entry placement switches
+use other map fields. The selected complete lifetimes contain no M+0x1c
+read. This is a result for the identified receivers and call conventions,
+not a global absence proof for arithmetic-built aliases or native callbacks.
+— ALM-METALIFE-184, ALM-INGEST-201, ALM-FRONTIER-200
 
-The editor's new-map constructor 0044b890 writes 0x168 to E+0x1c. This is a
-creation default, not a constraint on loaded values. Twelve bounded slice
-controls record six actual incoming words and two fills immediately before
-the original store; every pair produces the same default. No exact scalar control
-was bound in the selected 16-command window. Unexpanded dialog, redraw and
-other command paths leave exposure and recomputation policy Unknown.
-— ALM-METADEFAULT-186 (amended control population)
+The editor's new-map constructor0044b890 writes360 to E+0x1c. This is a
+creation default, not a constraint on loaded values. The Light dialog's
+Starting Time control reads signed minutes/15 and accepts position*15.
+Its time-to-color consumer identifies the default as06:00. The earlier
+sixteen-command search did not include this established control chain.
+Native control returns and SAVE transactions remain unobserved.
+— ALM-METADEFAULT-186, ALM-EDITORSCALAR-203, ALM-EDITTIME-205
 
 Landscape P is a distinct 0x30-byte object. Its binder stores the pointer at
 view+0x80 and copies dimensions, without copying the header. A subsequent
 old-P deletion through the constructor's actual vtable frees four arrays and
-P. Neither the binder nor those destructor bodies reads P+0x2c; the system
-free boundary receives P itself. The post-load message at 0041f24e remains
-unbound, so no first-use or global no-reader result follows.
-— TERR-METALIFE-175
+P. Neither the binder nor those destructor bodies reads P+0x2c. The
+allocator uses page descriptors outside the P payload. The actual whole-P
+renderer, additional view holders and sixty-three new P getters now have
+normal-path dispositions: dimensions, planes and angle are used, while this
+scalar is not read. Native ordering and universal all-image non-use remain
+Unknown. — TERR-METALIFE-175, ALM-FRONTIER-200
 
 ## Scalar transfer versus semantic closure
 
@@ -257,8 +257,10 @@ reader maps it to P+0x2c. The original explicit map-copy load/store preserves
 all four bytes in independent storage even after source poisoning. The browser
 instead skips this word and metadata+0x28 in its seek from payload+8 to+0x30;
 the light reader skips metadata+0x28 after its first seven scalar reads.
-These operations establish transport, not a time unit or complete gameplay role.
-— ALM-SCALAR-198
+These transfer operations alone do not establish a unit. The independent editor
+control and color chain establishes minutes on its Starting Time scale; a complete
+ROM1 gameplay role does not follow from that editor result.
+— ALM-SCALAR-198, ALM-EDITTIME-205
 
 Complete type-7 internal counts replace metadata+0x28 in their shared local and
 produce their own three array populations. Incomplete reads can leave metadata
@@ -266,11 +268,12 @@ or a previous internal count there. Returned byte count, requested width, wrappe
 cursor, and destination contents must be tracked separately; a surviving byte is
 not necessarily from the current wire field. — ALM-COUNT-195, ALM-STALE-196
 
-Complete consumers and editor control/default producers are not established by
-those transfer tests. The previously identified world-held M alias, computed
-branches and P-bearing post-load message remain open. Metadata+0x0c's gameplay
-meaning and metadata+0x28's purpose outside the measured loops remain Unknown.
-— ALM-FRONTIER-200
+The editor's Starting Time control and its palette/render-buffer effect are
+established independently of the transfer tests. ROM1's selected M and P
+consumers read dimensions, planes and other lighting fields; they do not
+inherit an editor effect merely because they retain the same wire word.
+Metadata+0x28's editor count-sum producer is established; its game purpose
+outside the measured loops remains Unknown. — ALM-FRONTIER-200, ALM-EDITTIME-205
 
 ### Bounded ingest controls
 
@@ -287,8 +290,9 @@ Fresh original-editor controls place complete scalar Read4 output at E+0x1c
 and retain the old suffix after short lower transfers. An independent copy
 survives source poisoning and reaches the original buffered writer. The
 separate new-map store writes0x168 after the actual prior word and fill are
-verified at entry. Native UI, complete editor transactions and scalar units
-remain Unknown. — ALM-EDITORSCALAR-203
+verified at entry. The separate control/consumer chain identifies the editor unit
+as minutes and the default as06:00. Native control returns and complete editor
+transactions remain unobserved. — ALM-EDITORSCALAR-203, ALM-EDITTIME-205
 
 The original editor produces metadata+0x28 by adding its action, condition
 and Trigger cardinalities. All64 triples0..3 under two fills write the sum
@@ -297,9 +301,9 @@ the three internal count words for their own loops. Static arithmetic also
 establishes modulo2^32 addition; native SAVE remains unobserved.
 — ALM-EDITCOUNT-204, ALM-TRIGMETA-166
 
-The post-load P message has a conditional constructor-to-primary-frame chain.
-The application root getter first selects a nonzero app+0x20 override, then
-app+0x1c, otherwise a host fallback. Only the primary-frame branch binds the
-selected frame+0xd4 constructor and forwarding handler. The actual native app,
-override state, later member replacement and child receivers remain unbound;
-no P scalar consumer or field meaning follows. — ALM-FRONTIER-200
+The post-load P route is bound for the constructor-produced application,
+frame, view and child families. Its identified view aliases and P getters
+use dimensions, planes and angle, with no scalar reader. Nonzero app+0x20
+still overrides the primary frame, and the host fallback is not a primary-frame
+identity proof. Native selection and external member replacement remain
+unobserved. — ALM-FRONTIER-200
