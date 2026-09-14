@@ -97,4 +97,23 @@ Unknown. — SAV-GRPSAVENEXT-572
 | **actor** | `+0x10` position, `+0x14` `Player`, `+0x4c` flags (bit 3 = off map), `+0x5c` combat target, `+0x94`/`+0x96` health, `+0xa4` sight (`u16`, 1/256 cell; `+0xa5` is its whole-cell high byte), `+0x12c` reach, `+0x144` state bits (`0x8000` invisible), `+0x154` mover, `+0x158` order block |
 | **order block** | `+0x00` guard post cell, `+0x02` current patrol waypoint, `+0x08` state, `+0x0c` target, `+0x14` stop distance, `+0x20` the group's assigned target, `+0x58`/`+0x5a` remembered attacker cell and its age, `+0x70` follow stop distance, `+0x71` see-invisible radius, `+0x90` the patrol waypoint list |
 | **group** | `0x48` bytes, a `CObList` (`+0x04` head, `+0x0c` count) in `player+0x24`. `+0x1c` the authored group id, `+0x3c` the AI record, `+0x44` the owning `Player` |
-| **group AI record** | `0x50` bytes. `+0x00` current guard post, `+0x20` the group order, `+0x24`/`+0x28` fine and cell centroid, `+0x2a` spread, `+0x2b` max member sight, `+0x2c` derived notice radius, `+0x2d` working radius, `+0x38` base radius, `+0x45` AI enable (default 1), `+0x4c` the patrol path |
+| **group AI record** | `0x50` bytes. `+0x00` current guard post, `+0x20` the group order, `+0x24`/`+0x28` fine and cell centroid, `+0x2a` spread, `+0x2b` max member sight, `+0x2c` derived notice radius, `+0x2d` working radius, `+0x38` base radius, `+0x45` activity count used as a nonzero gate (constructor 1; refresh below), `+0x48` force-activity dword, `+0x4c` the patrol path |
+
+
+## Spatial activity refresh
+
+Before Group dispatch, the regular driver calls0054f400 when receiver+b388 is
+zero. That session constructor ends with the override zero. The complete
+rebuild consumes its registered actor list twice: Player+28==0 actors mark
+coverage; other actors first reset their Group AI+45 and then increment it when
+covered or when the Group AI dword+48 is nonzero. Coverage is a five-by-five
+area in eight-map-cell blocks, with the four corners excluded. The Group byte
+counts represented active members, wraps at256, and is rebuilt on the next
+call. Groups absent from the supplied list are not reset. This is a proximity
+activation mechanism distinct from target acquisition and line of sight.
+— AI-ACTIVITY-324
+
+The named bodies establish the refresh and its driver position, not every
+actor-list enrollment/removal path, the first native post-LOAD event, or
+acceptance of source coordinates beyond the measured safe grid.
+— AI-ACTIVITY-324

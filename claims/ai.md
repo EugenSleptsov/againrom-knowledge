@@ -1,5 +1,11 @@
 # Claim registry — AI (target acquisition and the diplomacy matrix)
 
+## Spatial group activity
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-ACTIVITY-324 | **The regular activity rebuild derives Group AI+45 from spatially active members.** Driver005336a0 calls0054f400 on world+92ef4 before Group dispatch when its receiver+b388 is zero; its later gate reads that same override or Group AI+45. Complete0054f400 and0054f2c0 clear the grid, reset the byte for each represented actor whose Player+28 dword is nonzero, and mark coverage around actors whose control word is zero. Coverage uses map coordinates shifted right3, offsets -2..2 in both coarse axes, excluding the four corners. A second traversal increments the represented nonzero-control actor's Group byte when Group AI dword+48 is nonzero or its coarse cell is marked. It increments per actor, wraps the byte at256, retains groups absent from the supplied list, and rebuilds rather than accumulating over calls. Local constructor0052c400 ends with receiver+b388=0. | **High** for the named complete rebuilds, static driver/constructor joins,35 original-instruction vectors per identical EN/RU image and a rejecting branch mutation. Supplied actor-list lifecycle, first native post-LOAD scheduling, other indirect writers and border-coordinate admission remain **Unknown**. No permanent Boolean interpretation or global activation radius for all paths is claimed. | ✔ promoted | [EXP-0367](../experiments/EXP-0367-group-activation/) |
+
 ## Formation owner selection
 
 | ID | Claim | Confidence | Status | Evidence |
@@ -285,8 +291,7 @@ the primary does not.
    rows, so the gate is not the thing that makes the arm unreachable; `AI-STATE-043`'s missing
    writer for state `0x17` is.*
 6. **`grpAI`'s unread fields.** `+0x30`/`+0x34` are a latch and a counter the guard arm advances;
-   `+0x08`, `+0x09`, `+0x0a`, `+0x3c` are written but their consumers were not traced; nothing was
-   found that ever clears `+0x45`. ~~`+0x24`, `+0x2a`, `+0x2b`~~ — *sourced by [EXP-0094]*: they
+   `+0x08`, `+0x09`, `+0x0a`, `+0x3c` are written but their consumers were not traced; `+0x45` is now traced as a rebuilt spatial activity count (AI-ACTIVITY-324). ~~`+0x24`, `+0x2a`, `+0x2b`~~ — *sourced by [EXP-0094]*: they
    are `FUN_00533210`'s outputs, the group's **fine centroid** (`+0x24`), its **packed centroid
    cell** (`+0x28`), the **maximum Chebyshev spread** from a member to it (`+0x2a`), the maximum
    member `actor+0xa5` sight (`+0x2b`) and the maximum of the two summed (`+0x2c`). Only the
