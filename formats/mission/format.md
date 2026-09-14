@@ -48,8 +48,9 @@ that gives the player a unit writes both, plus a fresh group, plus `actor+0x14` 
                                           ; campaign path never is -- else a RANDOM array element,
                                           ; else rand 30..100 on each axis + a logged warning
 4. position the party      FUN_004f4604   ; walk player+0x20 in list order; hero (player+0x34)
-                                          ; exact at r=0; the rest within
-                                          ; r = ftol(max(5.0, sqrt(nUnits) + [0x0059bc50]))
+                                          ; first tries r=0; on failure uses the same radius
+                                          ; as every other member: R=trunc(max(5,sqrt(nUnits)+4))
+                                          ; transmitted as byte r=R&255
 5. import the .ini's own units             ; node named "Humans"; no shipped map has one
 ```
 
@@ -57,8 +58,15 @@ The order matters: step 3 reads what step 1 wrote, through the same object
 (`(server+0x44)+0x28` == `server+0x6c`).
 
 **Seating can fail, per unit, and the mission starts anyway.** `FUN_004f4604(x,y,r)` makes
-`r·r/2 + 2` random attempts inside `[x ± r/2] × [y ± r/2]`, then — only if `r > 0` — rasters that
-whole square, x outer, first free cell wins. If nothing is free it returns 0, the engine logs
+`floor(r·r/2) + 2` random attempts at each coordinate minus `floor(r/2)` plus an
+inclusive draw in 0..r. The y draw comes before the x draw. Then, only if r>0,
+it scans `[x ± floor(r/2)] × [y ± floor(r/2)]`, x outer and y inner, first free
+cell wins. At r=5 the random offsets are -2..+3 while the fallback is -2..+2.
+The hero tries the computed radius only after its radius 0 attempt fails.
+The caller takes the computed radius's low byte. Controlled population 63,504
+computes 256 and calls placement with 0; native reachability of that population
+is Unknown. Constants and controlled original execution: MISSION-SCATTER-053.
+If nothing is free it returns 0, the engine logs
 `"Error - can't place hero from previous mission on map."` **for any member, not just the hero**,
 and the walk carries on: the surplus stays in the collections and off the map. Nothing anywhere
 compares the party size against what the box can seat.
