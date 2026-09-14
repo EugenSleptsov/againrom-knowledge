@@ -126,7 +126,12 @@ The zero-low-palette cases are overlays and the two cursor exceptions below.
 
 A `spritesb.256` overlay has one frame per base `sprites.256` frame and
 uses the base sibling's palette. Its own low palette entries are zero.
-The exact runtime blend operation remains Unknown. — SPR256-OVL-014
+The recovered plain half-colour painter computes
+`((destination16>>1)&mask)+((palette16[index]>>1)&mask)` for opaque boundary
+pixels; masks are0x7bef (RGB565) and0x3def (RGB555). The backpack painter
+gates this overlay with Smoothing. Native full composition, mirrored paths
+and coverage of other drawable families remain Unknown. — SPR256-OVL-014,
+TOWN-SMOOTH-460
 
 - **Open anomaly** (SPR256-OVL-015): `cursors/attack.256` + `cursors/pickup.256` are the
   only zero-low-palette sprites with **no base sibling**; they carry their own partial
@@ -238,8 +243,9 @@ a C++ subclass with a 9- and a 14-frame nine-patch selector (`TERR-STRUCT-105`).
 
 ## Unknowns
 
-- The `spritesb` overlay uses the base palette; its exact composite operation
-  remains Unknown. — SPR256-OVL-014
+- The `spritesb` overlay uses the base palette; plain-loop half-colour arithmetic
+  is measured, while native full composition and unmeasured paths remain Unknown.
+  — SPR256-OVL-014, TOWN-SMOOTH-460
 - The attack/pickup resources have a nonzero reserved byte in the nominal
   palette region. That region is not an ordinary palette; the cause and
   corresponding decoder behavior remain Unknown. — SPR256-OVL-015,

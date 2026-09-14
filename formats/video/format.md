@@ -31,12 +31,14 @@ sample. Their payloads have no identified loop metadata. Looping and track
 succession are playback state. — VIDEO-MUSIC-001, VIDEO-MUSIC-002
 
 The program has fixed candidate lists for UI/game contexts and a separate
-mission/background family. Ordinary playback advances through a randomized
+mission/background family. Ordinary playback advances through its configured
 candidate order: a one-member list repeats, and a multi-member list advances
-through its shuffled order. Fixed-source mode can retain one candidate.
+through its order. Random Order off uses the sequential list; on performs
+one pairwise swap per candidate using two CRT random indices. Fixed-source
+mode can retain one candidate and is separate from that checkbox.
 The context-list assignment to named surface transitions retains Medium
 confidence. — VIDEO-MUSIC-003, VIDEO-MUSIC-004, VIDEO-MUSIC-005,
-VIDEO-MUSIC-006, TOWN-372
+VIDEO-MUSIC-006, VIDEO-MUSIC-056, TOWN-372
 
 Archive mounting follows the resource resolver and working-directory rules.
 A missing music archive is a recoverable resource condition. Enable/disable
@@ -107,3 +109,20 @@ runtime-computed sample/movie names and sidecar branches beyond the named
 consumers remain unspecified. No container writer or new audio/movie codec
 is defined by this behavioral contract. Standard payload production and
 bundled decoder internals are separate subjects.
+
+## Sound Options playback controls
+
+The track list uses the current player candidate bank, not all archive members.
+Titles come from the `main/text/tunes.txt` dictionary using normalized names
+without their six-character resource prefix. Selecting a row changes the
+selected index; Play separately enables music, reloads a different selection,
+applies gain and starts. Stop disables music and invokes the current-state
+stop or transition operation. Exact native title normalization and dictionary
+miss behavior, fade audibility and registry lifetime remain Unknown.
+— VIDEO-OPTIONS-057
+
+Random Order changes the ordinary candidate permutation immediately. Disabled
+uses0..n-1; enabled performs n swaps with two CRT rand()%n indices each.
+Without a playback buffer, the measured setter does not change mode, flag or
+permutation. This is not a switch to fixed-source playback.
+— VIDEO-MUSIC-056

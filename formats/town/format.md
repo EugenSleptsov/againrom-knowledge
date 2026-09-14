@@ -279,3 +279,32 @@ additional local prerequisite. (SAV-930)
 
 Native click continuation, resource lifetime, first paint and first-failure
 attribution remain Unknown. — SAV-932
+
+## Game Options consumers
+
+OK exports the tested Game Options values; Cancel alone leaves them unchanged.
+Smoothing, Shadows, Lighting and Animation have distinct flags. Committing
+Animation off also turns Lighting off. The global AutoCasting control emits
+an autohealing mode command, separate from selected-spell autocast.
+— TOWN-OPTIONS-457
+
+Autohealing modes No/Standard/Often (0/1/2) set mana-floor percentages100/50/0.
+The actor floor is truncated maximum mana times percentage divided by100.
+The recovered heal request requires current mana strictly above the floor;
+equality does not pass. Direct percentages3..100 are accepted by the command;
+invalid values leave the prior percentage. Complete targeting and scheduler
+rules remain separate from this threshold. — TOWN-AUTOHEAL-458,
+SAV-PLAYER-028, HERO-MP-006
+
+Shadows gates the named unit shadow pass without suppressing its body.
+Lighting gates the named dynamic-light body independently of day/night.
+Animation off freezes the tested scenery frame at0. These are bounded
+consumers; the full water, town, interface and moving-actor populations remain
+Unknown. — TOWN-GRAPHICS-459
+
+In the recovered backpack painter, Smoothing enables `spritesb.256` after
+its `sprites.256` base. Opaque indexed boundary pixels half-mix destination and palette colours
+in the original16-bit surface, masking each shifted half before addition:
+mask0x7bef for RGB565 or0x3def for RGB555. Clipped pixels remain untouched.
+This is an extra sprite pass; native complete-screen equivalence and coverage
+of every drawable family remain Unknown. — TOWN-SMOOTH-460, SPR256-OVL-014
