@@ -65,6 +65,53 @@ census run against it. Both siblings also have post-load hooks distinct from
 their own Tick that touch the same fields; no image-wide reader census was
 run for either. — MAGIC-SIBLINGREF-184
 
+## Ticking population, filter and removal
+
+The shared-list driver is `FUN_00510247`. Its container holds head/tail node
+pointers at its own+0x4/+0x8; each node holds next/payload at+0x0/+0x8. The
+walk uses the standard GetHeadPosition/GetNext idiom, and that idiom advances
+its own position past a node before the node's own loop-body processing runs,
+so the driver's own same-pass removal — always of the member it is currently
+processing — cannot corrupt the walk: the removal call chain is never handed
+the walk's own iterator, only the container and the member pointer, and the
+container it receives is the identical pointer the walk itself uses. Removal
+of some other member during the same pass, for instance by a Tick callee, is
+not covered by that negative: the live position is the next node, and nothing
+read excludes that node being the one removed. — MAGIC-187
+
+Before dispatching Tick, the driver reads exactly two fields on a member —
+its own+0x3c, and its own vtable pointer at+0x00, which the dispatch itself
+loads — plus, conditionally, the+0x14 field of whatever object+0x3c points
+at, which is not a field on the member. Neither branch the+0x3c-derived
+reads control skips the Tick call; every member the walk reaches is
+Tick-dispatched unconditionally. This confirms cast-time attachment remains
+the only target-specific gate: the driver adds no further filter of its own.
+— MAGIC-188
+
+The driver's own body writes exactly one field on a member,+0x3c, cleared to
+null under the same two-read condition; no other instruction in its body
+touches member memory as a write. It never reads or writes a member's+0x44
+at all, so a member whose+0x44 is null — including one left null by a
+load-time identity-map miss — is not filtered, skipped, or specially routed
+by this function; such a member reaches Tick exactly like any other. Whether
+Tick's own callee ever receives such a member is the separate reachability
+question the identity-repair section above leaves Unknown. — MAGIC-189,
+MAGIC-190
+
+Removal, when triggered by a nonzero+0x40 after Tick returns, happens inside
+the driver's own body, not deferred to a later pass: the driver calls a
+wrapper on the container, which calls a lookup primitive and, when that
+returns non-null, an erase primitive on the same container, and the wrapper
+then dispatches the member's own vtable+0x04 slot with an argument requesting
+destruction and release. That the lookup/erase pair unlinks the member from
+the list is inference from that call shape; neither primitive's body was
+read. The+0x04 slot was read for `PointEffect` only, where it is the
+scalar-deleting-destructor shape — real destructor, argument bit-0 test,
+conditional operator delete. A directly cast `AreaEffect` reaches the same
+registrar (MAGIC-TICKGATE-183), and no other class's own+0x04 slot was read
+here, so the convention is established for `PointEffect` and assumed, not
+shown, for any other member class. — MAGIC-187
+
 ## Application
 
 ```
