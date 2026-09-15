@@ -168,8 +168,9 @@ Not established here: field C beyond the figure-composition clause below; which 
 
 ## Figure composition and hit map (`HERO-FIGURE-057`…`HERO-FIGURE-064`)
 
-`FUN_0045ed10` builds up to twelve layers per figure and then draws each of them **twice**, into two
-caller-supplied surfaces bound in turn with `vt+0x28`:
+`FUN_0045ed10` builds primary/secondary equipment sheets and a face sheet. It
+fills a colour surface and, when supplied, a separate item-picking surface,
+binding them in turn with `vt+0x28`. The two passes have different layer sets:
 
 ```
   pass 1   vt+0x18 = FUN_00428e60   ->  FUN_0044ea40 / FUN_0044db00
@@ -203,6 +204,32 @@ and returns 1 for `bowman`, `archer`, `xbowman`, `axeman2h`, `swordsman2h`, `mag
 two-handed and ranged body. Predicate 1 → index **0** last; predicate 0 → index **1** last. Field D
 is the only field of the `u16` this routine reads.
 
+### Non-equipment hero background
+
+The hero fighter also draws `graphics\interface\heroback\backm.256` or
+`backf.256`. Loader `0046a100` creates these `.256` objects in globals
+`005ef990` and `005ef994`. The compositor admits them when
+`(drawable+0x18c & 3) == 1`: hero bit0 set, mage bit1 clear. Sex bit2 selects
+backf when set and backm when clear. Ordinary-human bit4 does not admit this
+layer, even with the same sex, face and worn items. This gate is not a check
+for the primary protagonist. — HERO-FIGURE-144, HERO-APPEAR-041, UNIT-PICT-035
+
+Draw order is optional `graphics\infowindow\horse.bmp`, hero background,
+fighter face, then equipment. The background draws at `(0,0)`, frame0,
+palette row 0, without mirroring. Setup uses its own embedded BGR0 palette
+with one packed-16-bit row and zero global colour additions; framebuffer
+channel packing remains an input. It does not use an owner-shade table.
+The selected EN/RU backm/backf payloads are identical: one 160×240 frame,
+3547 literal pixels and inclusive bounds `(31,123)..(115,199)`.
+— HERO-FIGURE-144
+
+This background contributes colour only. It is absent from the separate
+item-mask pass, so pixels covered only by it retain tag 0; overlapping
+equipment can supply its own tag. Neither background is drawn after
+equipment in this compositor. Native captured colours, untraced alias
+writes and decoration outside the compositor remain Unknown.
+— HERO-FIGURE-144
+
 **The list accessor has no bound.** `FUN_004687f0` is `[[0x005eb3d4] + ([list+0xc] + i)*4]`, six
 instructions, no test — and this caller runs only when slot 0 is **occupied**, so `D = 0` indexes at
 **−1**. A consumer must clamp at both ends; `D ≥ 26` runs off the other.
@@ -222,5 +249,5 @@ on the mage bit, the composed-figure bit, **whether slot 0 is occupied**, and th
 select different voice banks for armed and unarmed humanoids.
 
 Claims: `HERO-FIGURE-057`…`HERO-FIGURE-064`, `UNIT-FIGURE-032`, `ITEM-APPEAR-025`.
-Not established: what the effect-list keys `0x26`/`0x30` name; what `[0x005ef990]`/`[0x005ef994]`
-are; which garment each of indices 2..6 and 8..11 is.
+Not established: what the effect-list keys `0x26`/`0x30` name; which garment
+each of indices 2..6 and 8..11 is.
