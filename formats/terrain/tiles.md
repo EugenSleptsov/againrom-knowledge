@@ -4,11 +4,14 @@
 
 ## Location & format
 
-The terrain images live inside **`graphics.res`** (the `RES-MAGIC-001` `&YA1` archive) under the
-node prefix **`terrain.3d/`**. They are **standard 8-bpp Windows BMP** files (magic `BM`,
+The terrain images live inside **`graphics.res`** (the `RES-MAGIC-001` `&YA1` archive) under
+both **`terrain/`** and **`terrain.3d/`**. Each family has the same 53 names and
+geometry in EN and RU. They use **uncompressed 8-bpp Windows BMP** layout (magic `BM`,
 14-byte `BITMAPFILEHEADER` + 40-byte `BITMAPINFOHEADER`, 256-entry RGBQUAD palette,
-`bfOffBits = 1078 = 14 + 40 + 1024`) — read with any standard BMP decoder; ROM adds no
-wrapper. (`world.res` holds only terrain *config* — `data/map.reg` — not the images.)
+`bfOffBits = 1078 = 14 + 40 + 1024`). The 52 tile headers in each family
+understate file length by 1024 bytes; use the bounded geometric pixel span,
+which is present. Dirt has two trailing bytes. (`world.res` holds terrain
+config `data/map.reg`.) — TERR-LOC-001 (route wording amended), TERR-FAMILY-188
 
 | File(s) | Count | BMP W×H | 32×32 sub-cells | Role |
 |---------|-------|---------|------|------|
@@ -21,26 +24,60 @@ wrapper. (`world.res` holds only terrain *config* — `data/map.reg` — not the
 Each BMP is **32 px wide** and is a **vertical strip of 32×32 sub-cells** (top-to-bottom;
 BMP rows are bottom-up per the standard, so sub-cell `k` occupies the *k*-th 32×32 block
 counting from the strip origin the game reads — pixel byte offset `8 + k·0x400` into the
-loaded image buffer). There is a parallel **legacy non-3d** set at `terrain\tile*.bmp`
-that `rom.exe` can load instead; the flag `DAT_005e4418 & 2` selects the `terrain.3d` set,
-which is the shipped path.
+loaded image buffer). The resource families differ in both palettes and
+index data: 647,325 of 651,264 paired indices and 647,586 RGB samples differ
+per locale. All 53 pairs change 255 palette RGB entries. Every `terrain.3d`
+file shares one palette; the 52 ordinary tiles share another, and ordinary
+dirt differs from them in 41 RGB entries (reserved bytes equal).
+Corresponding EN/RU files are byte-identical within each family.
+— TERR-FAMILY-188
+
+For `terrain.3d minus terrain`, aggregate channel deltas are R -69..113,
+G -58..99 and B -58..164. Positive/zero/negative counts respectively are
+R 647,384/3,698/182, G 647,523/3,678/63 and B 647,533/3,680/51. These are
+decoded source RGB comparisons, not native rendered brightness. Geometry
+equality does not make the two sets interchangeable. — TERR-FAMILY-188
 
 ## Loader (`rom.exe FUN_00469620`)
 
-The only referrer of the terrain path strings. It builds `tileG-VV.bmp` (`%d-%d` /
+The loader builds `tileG-VV.bmp` (`%d-%d` /
 zero-padded `%d-0%d` for `V<10`) and loads each into a **128-slot pointer array `tiles[]`**
 at `DAT_005ef6c0`:
 
 ```
 tiles[(G-1)*16 + V]  <-  tileG-VV.bmp      G = 1..8, V = 0..15   (absent file -> null)
 DAT_005ef8d4         <-  dirt.bmp
-DAT_005ef8d8         =   (first non-null tile) + 0x14            (default handle)
+DAT_005ef8d8         =   first non-null block leader + 0x14     (object address)
 ```
 
-On disk only `tile1/2/3` (16 each) + `tile4` (0..3) exist, so slots for groups 5–8 and
-`tile4` V≥4 stay null. The loader then pre-composes the tiles into 256×256 DirectDraw work
-surfaces (`DAT_005eb5a8[]`) and a shared palette (built from the tiles' own palette) for
-8-bpp display.
+On disk only `tile1/2/3` (16 each) + `tile4` (0..3) exist. Source pointers and
+precomposed work surfaces have different lifetimes. If selector
+`005e4418 & 0x02` is nonzero, the loader first loads `terrain.3d` and, for a
+nonzero group mask, precomposes its work surfaces (`005eb5a8[]`). Graphics
+object `+b84 == 8` selects the palette/index arm; other values select the
+other surface arm. Both normal arms delete and zero all 128 temporary
+source pointers and dirt, then fall through to the ordinary `terrain/`
+loading block at `00469d75`. With the selector mask clear, the loader enters
+that ordinary block directly. The final source table therefore holds the
+ordinary pass's results. Final default-handle search tests indices
+0,4,...,124; it stores the first non-null block leader's address plus 0x14,
+or zero. — TERR-LOAD-002 (order and handle search amended), TERR-FAMILY-187
+
+This is sequential optional precomposition, not a recovery/fallback choice.
+Normal startup writes zero to `005e4418` before graphics initialization.
+The complete file-backed embedded-address census for this dword and its
+overlapping addresses finds 12 references, with one other direct write:
+`OR 1`, guarded by mask 0x02 and a nonzero graphics member `+12b0`.
+The mask-0x02 arm initializes an object whose call chain creates IDirect3D.
+Its `-systemmemory` and `-emulation` options change that object's members;
+`-safevideo` changes a separate global. These are not discovered setters
+of mask 0x02, nor proof that the branch is hardware-only. — TERR-FAMILY-187
+
+No setter of mask 0x02 was found in that address-form population. Computed
+pointers, bulk copies and native activation remain Unknown. Normal startup
+zero assumes the nonvolatile EBX convention across intervening calls; no
+native startup trace is claimed. The previous assertion that `terrain.3d`
+is the shipped route is withdrawn. — TERR-FAMILY-187
 
 **The loader takes one argument, and the map supplies it.** `FUN_00469620` is `cdecl` with a
 single dword, read at `[esp+0x558]` and used as a 32-bit mask: the body runs exactly 32
@@ -133,8 +170,13 @@ installed populations are not a new upper bound on the tile-word field.
 
 ## Tile draw sequence
 
+Source initialization follows the Loader section's selected-group mask and
+optional preceding precomposition. — TERR-FAMILY-187, TERR-LOAD-002
+
 ```
-# one-time: load terrain.3d/*.bmp into tiles[(G-1)*16+V], G=1..4, V=0..15; + dirt.bmp
+# one-time: apply the map's selected-group mask
+# if selector & 0x02: precompose terrain.3d sources, then release temporary bitmaps
+# final sources: terrain/*.bmp -> tiles[(G-1)*16+V]; terrain/dirt.bmp -> dirt
 def draw_cell(w, col, row):
     g   = (w & 0x1fff) >> 6
     b   = (w >> 4) & 3

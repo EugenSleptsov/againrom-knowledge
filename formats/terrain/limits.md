@@ -15,8 +15,13 @@ shared vision remains Medium: those writers do not establish the senders or the
 bit's name. The render fog save boundary follows `TERR-FOG-145`, not the
 withdrawn save-absence clause in `TERR-FOG-087`.
 
-- The 8-bpp display path and its palette quantization are not covered. The legacy
-  non-3d tile set is identified but not behaviorally specified.
+- Full 8-bpp display behavior and palette quantization remain incomplete.
+  Loader order and the two resource populations are specified by
+  `TERR-FAMILY-187` and `TERR-FAMILY-188`. The optional mask-0x02 Direct3D
+  branch has no discovered enabling writer in the complete embedded-address
+  census. Native activation, computed-pointer/bulk-copy writers and complete
+  graphics-mode lifecycle remain Unknown; source RGB is not a rendered-frame
+  or perceived-brightness measurement.
 - Runtime contents of the uncomputed brightness ring remain unobserved
   (`TERR-EDGE-025`). The camera clamp is specified by `SESS-VIEW-030`; it does
   not establish allocator residue.

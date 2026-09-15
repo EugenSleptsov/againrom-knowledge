@@ -2,13 +2,23 @@
 
 # Terrain graphics and cell rules
 
-Terrain draws the ALM Tiles and Altitudes planes through `terrain.3d` bitmap
-strips. Tile words select files and subcells; the terrain state also carries
-block planes, cell records, lighting and fog. — TERR-LOC-001, TERR-LOAD-002,
+Terrain draws the ALM Tiles and Altitudes planes through bitmap strips.
+The loader's final source table is filled by `terrain/`; selector mask
+`005e4418 & 0x02` optionally enables an earlier `terrain.3d/` precomposition
+pass whose temporary source objects are then deleted. The two families have
+equal paired geometry but different palettes and indexed pixels.
+— TERR-FAMILY-187, TERR-FAMILY-188
+
+Tile words select files and subcells; the terrain state also carries
+block planes, cell records, lighting and fog. — TERR-LOC-001 (route wording
+amended), TERR-LOAD-002 (order and handle search amended),
 TERR-IDX-003 (amended bit interval; arithmetic retained), ALM-GRID-012, ALM-GRID-013
 
-This reference describes the 3d terrain path, including its 16-bpp lighting
-and cell geometry. The 8-bpp and legacy non-3d paths remain incomplete.
+This reference describes decoded terrain paths, including 16-bpp lighting
+and cell geometry. Full 8-bpp behavior and native activation of the optional
+Direct3D branch remain incomplete. Startup writes a clear selector; no
+mask-0x02 setter was found in the stated absolute-address census. Computed
+writers and other native activation remain Unknown. — TERR-FAMILY-187
 ALM grid payloads begin after the full 20-byte record header.
 — ALM-FRAME-031 (amended; framing retained), ALM-GRID-032, TERR-GRID-027
 
@@ -18,7 +28,7 @@ ALM grid payloads begin after the full 20-byte record header.
 |---|---|
 | ALM Tiles | W×H u16 LE words selecting tile group/subcell and flags |
 | ALM Altitudes | W×H bytes; four neighboring vertices determine cell geometry |
-| terrain.3d strips | Palette-indexed tile pixels |
+| terrain and terrain.3d strips | Ordinary source pixels and optional precomposition inputs; equal paired geometry, unequal RGB |
 | Sun, visibility and cell state | Lighting tables, fog and passability |
 
 Load the planes and selected bitmap groups, build the lighting tables, then
