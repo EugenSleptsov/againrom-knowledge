@@ -23,6 +23,48 @@ periodic call. Later death credit reads target+40 and can name a different actor
 an intervening source+48 callback precedes the source+60 award. Native lifetime,
 later repairs and first-consumer chronology remain Unknown. — SAV-909, SAV-910
 
+## PointEffect target identity and caster non-persistence
+
+`PointEffect`'s own+44 is the target Unit, not a source: the live constructor
+writes its second argument straight into+44, and that field is the raw dword
+`PointEffect::Serialize` stores/repairs (`SAV-CLASSSER-174`). Identity repair
+happens once, inside `Serialize`'s own load arm; the class's separate post-load
+hook never re-touches+44. — SAV-1010
+
+`SpellEffect`'s own+0x3c (caster) is zero-written by every construction,
+including the one `Serialize`'s LOAD performs, and is not part of any
+`Serialize` body in the class family. A `PointEffect` therefore always has a
+null caster immediately after LOAD, independent of whether its own target
+lookup hits or misses. — SAV-1011
+
+`PointEffect::Tick`'s attribution tail dereferences+44 at two unconditional
+sites, with no null guard before either one: the entry dereference, and a
+second one reached when the entry dereference's own virtual call returns
+zero. A third read of+44, further into the same tail, is guarded by a null
+check on a cached copy; that guard covers only that one downstream use, not
+the two unconditional sites. The shared list registrar that both cast-time
+`Spell::Apply` and delivery-time `SpellTransport::Tick` use to admit a
+`PointEffect` to the ticking population performs no field access of its own.
+Cast-time attachment is the only place a *null target* is excluded, dropping
+construction outright when the spell has no target unit; a separate,
+target-blind exclusion also exists at delivery-system dispatch, but it does
+not inspect+44. Nothing downstream repeats the target-specific check.
+Whether a load-time identity repair miss (leaving+44 null on an already-live
+PointEffect) is reachable by any admitted native save/load population, and so
+whether either unconditional site can actually fault, is Unknown. —
+MAGIC-TARGETID-182, MAGIC-TICKGATE-183
+
+`AreaEffect`'s own+44 (a typed inner Effect reference) and `SpellTransport`'s
+own+44/+48 (`SAV-CASTCONT-1006`) are consumed through the standard typed
+archive-reference mechanism, not `PointEffect`'s raw identity dword needing
+`005240e0`'s explicit map lookup. That contrast is about the persistence
+mechanism, not about guard strength: AreaEffect's own consumer dereference is
+itself unconditional in its ordinary branch, and at least one further
+AreaEffect vtable method dereferences+44 with no null check and no caller
+census run against it. Both siblings also have post-load hooks distinct from
+their own Tick that touch the same fields; no image-wide reader census was
+run for either. — MAGIC-SIBLINGREF-184
+
 ## Application
 
 ```
