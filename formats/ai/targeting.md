@@ -110,3 +110,47 @@ the guard and engage arms do.
 
 **Two clauses suppress engagement entirely**, both requiring all three of `actor+0x4c & 4`,
 `actor+0x12c < 2` and a human-participant owner (`Player+0x28 == 0`).
+
+## What a refused route does to a pursuit order
+
+The route search sets one flag on failure, `mover+0x98`, with exactly three setters and one
+consumer — the per-actor order machine's own epilogue, which clears it unconditionally the tick it
+reads it (`AI-ROUTE-045`, `MOVE-GATE-039`). It is a plain one-shot boolean, not a counter: nothing
+accumulates a refusal count and nothing times one out. For any actor state outside the three the
+epilogue special-cases (teardown, patrol advance, one hard override), the response is the same on
+every refusal: `order+8 = 0` and a fresh reacquisition scan, `FUN_005327d0`.
+
+That scan's candidate filter is a raw Chebyshev cell distance (`AI-327`) — the same kind of metric
+the group scorers reach through their own routine (`AI-COST-071`), not the footprint-subtracted
+edge distance this page's selection sequence above uses. So an actor's own footprint size, and the
+footprint of whoever is blocking its route, play no part in *which* new victim the reacquisition
+scan can pick. Four things narrow the list: the reach threshold `actor+0x12c`, a running-nearest
+gate that drops any candidate farther than the nearest one seen so far, the living/dead partition
+that holds corpses back unless nothing living survives, and the diplomacy filter. The previous
+victim is not excluded by identity — only the pursuer's own self is. Footprint size re-enters
+exactly once, after a winner is already chosen: the same in-position test ordinary pursuit uses
+(above) decides whether the newly-acquired target is struck immediately or walked toward first.
+
+On total refusal — no candidate within reach survives the filters — the order kind still changes
+(`order+8 = 0` for a human-owned actor, `0xb` for an AI-owned one), but the stale target pointer at
+`order+0xc` is left exactly as it was: the scan's only write to that field sits inside the
+candidate-found branch, and the no-candidate exit never touches it (`AI-328`). The same happens on
+the found path when the engagement-suppression clause above fires: the target is written, then the
+order kind is put back to `0` (`AI-GUARD-007`). Inside the scan itself, the order kind and the flag
+that triggered the re-scan are the only fields reset; the AI-owner exit then calls one routine that
+`AI-328` does not cover, so what the whole tick resets is a wider question than this page answers.
+
+## What the group-level scorers call
+
+Group orders 1, 2, 3 and 5 re-score every member's target on every AI tick rather than holding one
+sticky (`AI-REISSUE-077`). Both scoring routines behind that re-score (`AI-COST-071`,
+`AI-REACH-072`) use a plain Chebyshev cell distance, and their complete outgoing call inventory is
+four direct targets and six virtual dispatches (`AI-329`). Neither body directly calls the route
+search, the occupancy-block builder, or the dynamic-plane claim setters that record a moving unit's
+reserved cell. That negative is an exhaustive read of both bodies, not an absence of search, but it
+covers the direct calls only: the six dispatches go through `vt+0x1c` and `vt+0x20`, the two slots
+`TERR-MOVE-055` reads out of the vtables as field getters, and no dispatch implementation was read
+for `AI-329`. On the evidence available, the group layer's periodic re-evaluation has no direct way
+to see whether a route to its chosen candidate exists or whether that candidate's cell is claimed
+by another mover; that information exists in the per-actor layer's `mover+0x98` flag above, which
+the group arms never consult.
