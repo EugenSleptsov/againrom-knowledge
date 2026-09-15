@@ -55,7 +55,7 @@ Spell        0x14 bytes, vtable 0x0059c670
   +0x00  vtable
   +0x04  pointer to the Data.bin Spells row   (restored from the id on load)
   +0x08  u8   spell id 1..28
-  +0x09  u8   Max Range   -- raised per cast
+  +0x09  u8   stored cast range -- initialized from Max Range; updated by 004fe13b -> 004fe25d
   +0x0a  u8   Defensive
   +0x0c  u16  Mana Cost
   +0x0e  u8   per-cast scratch: damage base
@@ -121,6 +121,61 @@ the `Data.bin` columns; a duration column multiplies by `1.025^100 = 11.81`; ran
 **3** cells and Teleport **33**; Prismatic Spray reaches **7 total victims**. Nothing overflows its store on the
 shipped table — the largest damage base is 43 and spread 87 against byte fields, the largest
 duration 6 312 against a `u16`.
+
+## Cast distance and client target form
+
+The shipped Fire Ball definition has Sphere1 and Max Range10. The resolver
+initializes Spell+9 from Max Range; the ordinary power producer calculates
+10+floor(clamp(skill[Sphere]+Mind-30,0,100)/30), hence10..13. Its general
+non-Teleport branch leaves a zero base unchanged. Player-command handlers
+and the unit-order constructor **copy the stored Spell+9** into order+0x14,
+replacing weapon reach. These copies do not prove that current power was
+recomputed before the distance decision. The inspected player handlers
+initially set parent state0x0d/0x0e and child order kind0; their later transition
+to kind8/9 and all range-refresh timing remain Unknown (`MAGIC-REACH-178`).
+
+For child order8, a non-self target must first match the mover's current
+facing. The typed actor predicate then uses Position cell bytes+0/+1,
+fractions+4/+5 and virtual+0x1c tokenSize. For each axis:
+
+```
+centre = u16(((size + 2*cell + 511) << 7) + fraction)
+gap = max(abs(centreCaster-centreTarget) - (sizeCaster+sizeTarget)*128, 0)
+distance = 1 + floor(max(gapX, gapY)/256)
+```
+
+The low byte of distance must be <= order+0x14. This is a maximum-axis
+footprint-gap comparison; it differs from the melee strike distance formula.
+Self-target bypasses facing and distance. Success installs action0x0d with
+Spell/target; failure reaches the unit approach entry (`MAGIC-REACH-179`).
+
+For child order9, facing comes from current Position+0/+1 to the point, but
+the distance is max(abs(dx),abs(dy)) from Position+2/+3. It does not use
+footprint size or fraction bytes in that metric. Success installs action0x0e
+with Spell/cell; failure reaches the point approach entry. Neither selected
+typed predicate nor its heading helpers reads the world or altitude. With
+matching facing, centred1x1 actors and stored range10, axis and diagonal
+distance10 admit and11 fail on flat/up/down synthetic height configurations;
+range11 and13 move the boundary to11/12 and13/14. This is conditional on
+reaching those child-order arms, not proof of unchanged whole-game casting
+when height changes (`MAGIC-REACH-180`).
+
+Ordinary Fire Ball click selection uses the **point** builder even over an
+actor: selector index1 has target-type0, click adds1, and the command remap
+retains spell2. An explicit unit-target cast order therefore does not describe
+the ordinary Fire Ball click. The selected spell cursor arm also has a
+separate visibility-field gate: four tile words OR/masked to0xc000 retain
+the cast choice; a different aggregate sets capability0x400 and changes it
+to move. Mixed0x8000/0x4000 corners satisfy the aggregate, so this is not an
+individual-corner visibility rule. These fragments have no caster-distance
+comparison (`MAGIC-REACH-181`).
+
+Unknown: gates between the parent AI state and these child orders; which
+power snapshot the next order receives; altitude-to-client visibility and
+projected screen-picking updates for a particular map; complete arrival and
+native release. Existing altitude-sensitive sight evidence does not supply
+that missing joined cast route. The local no-altitude result must not erase
+an upstream visibility or order gate.
 
 ## Cast sequence
 
@@ -200,11 +255,17 @@ Spirit  -> the mana pool, through manaMax        \ each in ONE hop, inside the d
         -> Control Spirit copies the TARGET's Spirit into the Ghost
 ```
 
-**Neither stat touches**: cast admission, the mana gate, the mana cost, the cast delay, the to-hit
-question, the damage or resistance arithmetic itself, mana regeneration (whose base is `manaMax`),
-effect stacking, or the spellbook — **the book's capacity is not bounded by a stat, what may be
-learned is not chosen by one, and learning is not gated by one**. There is no cooldown, no
-interruption and no failure chance on the cast; the only refusal is the mana gate.
+Neither stat is read directly by the mana-cost comparison in `Spell::Cast`
+(`004fe6d3`). In that specific body, the explicit refusal is the mana gate;
+there is no separate cooldown, interruption or random-failure check. These
+local observations do not describe the earlier order range/facing and client
+visibility gates. Mind contributes to the stored-range producer, while the
+refresh timing and which power snapshot an order receives remain Unknown
+(`MAGIC-REACH-178`, `MAGIC-REACH-179`, `MAGIC-REACH-180`, `MAGIC-REACH-181`).
+
+The separate spellbook result remains: **the book's capacity is not bounded
+by a stat, what may be learned is not chosen by one, and learning is not
+gated by one**.
 
 The blind spot this enumeration cannot close: a wholesale `REP MOVSD` copy of an actor would carry
 no displacement and no `disp:` sweep can see it.
