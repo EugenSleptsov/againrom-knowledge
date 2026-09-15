@@ -66,6 +66,56 @@ after other objects load. Do not replace these rules with one generic fixup.
 SAV-UNITPROG-156, SAV-HUMAN-043, SAV-SPELLBK-041, SAV-ORIGFAULT-335,
 SAV-PROJSTORE-428, SAV-CAMPPROG-071, SAV-CAMPPOS-072
 
+## What the original write path drops or mutates
+
+Three places in the write path emit fewer elements than the structure holds.
+Two of them are not losses and one is.
+
+The empty-group prune is not a serialization loss. The writer removes, from a
+qualifying Player's group collection, every group whose element count is 0. The
+argument to the removal is the group; the receiver is reloaded from the Player
+in the two instructions before the call, and is the Player's own live group
+collection — the same object the iterator is walking. The removal therefore
+mutates live memory rather than a serialization copy, memory loses the group
+too, and file and memory agree afterwards. A consumer must treat this as a live
+mutation of the save action, not as a wire omission.
+— SAV-1029, SAV-ROSTER-024, SAV-CITYSTORE-516
+
+The equipment array's skipped index 0 is not a loss. Over the whole image, the
+indexed form of that displacement is 18 instructions in 10 owners; exactly two
+of them can leave a non-null element, and one refuses a slot number of 0 at its
+own first test while the other runs inside the `1..12` loop. Every other indexed
+write stores zero. The slot is never filled, so skipping it drops nothing. The
+census finds only instructions whose encoded displacement is `0x198`; a write
+through a previously computed address would not appear in it.
+— SAV-1029, SAV-CARRY-050, ITEM-EQUIP-006
+
+The Spellbook's skipped index 0 is writable storage rather than unreachable
+storage, so whatever occupies it is dropped, and the difference from the
+equipment array is one guard instruction. The array setter has no test of the id
+at all beyond one against the current size: a short array is grown to `id+1` and
+the element stored unconditionally. The serializer then writes the element count
+and emits references from index 1, so an element at index 0 is written as a
+count with no reference. It comes back null rather than as residue: the load
+arm's own resize allocates the new span and zero-fills it through a call whose
+middle argument is the literal 0.
+
+Of the 33 sites that reach the setter, 25 push a literal id inside the spawn
+routine and one more pushes a literal outside it; a further site in the spawn
+routine takes its id from a table and skips the whole construct-and-store when
+the value is 0 or less. Seven sites push a non-literal index, and one of the
+seven was traced to that index's origin: the teach-spell effect arm uses the
+product of the effect's own magnitude field and the routine's second argument as
+the array index, its two preceding guards test only for a missing book and an
+already-occupied slot, and a zero factor yields index 0 — not a truncation
+artefact. The spell object built on that path is returned unconditionally; its
+id resolver takes a zero arm, emits a message and returns normally. The other
+six non-literal sites were not traced and neither add to nor subtract from this.
+Whether shipped effect data ever supplies a zero factor is Unknown: no
+effect-table census has been run, and no preserved save witnesses a Spellbook of
+count 1.
+— SAV-1029, SAV-SPELLBK-041, MAGIC-BOOK-002, MAGIC-SPELL-001
+
 ## Values without a complete authoring contract
 
 | Fields / relation | Known rule | Remaining Unknown |

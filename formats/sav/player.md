@@ -90,6 +90,15 @@ The full-tick reporter tests defeat before victory and acts only on
 `Player+3c` is the outcome retained in both document shapes.
 — SAV-FLAG-027
 
+The field's own wire instructions: the store reads the byte into `DL`, pushes
+it and calls the archive's one-byte write primitive; the load pushes the field's
+address and calls the one-byte read. `+3d` follows immediately through the same
+pair. Neither arm tests the value, so a byte outside `{0,1,2}` survives a round
+trip unchanged. The other progress-bearing field of a save, the campaign
+record's `+0x04` mission scalar, belongs to a different serializer in the
+uncompressed tail; the two never meet.
+— SAV-1027, SAV-FLAG-027, SAV-1030
+
 At session join, zero packet `+0a` and zero saved `+3d` admit placement of
 unseated retained actors. Placement replaces Position cell, packed cell,
 sub-cell and terrain, with possible further clamping. Seated actors are

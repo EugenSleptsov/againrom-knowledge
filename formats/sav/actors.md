@@ -49,6 +49,62 @@ that whole programme and adds no bytes in its own store arm. Inventory,
 equipment, Spellbook and Diary are separate constructs.
 — SAV-HUMAN-043, SAV-CARRY-050
 
+The array those twelve references come from is thirteen dwords wide, not
+twelve. The Humanoid constructor zero-fills `+198+4*i` for `i=0..12`, then six
+dwords at `+1cc+4*i` for `i=0..5`, then `+1e4` on its own — the same three
+widths the store arm uses, from one routine. The destructor walks `i=1..12` and
+deletes each non-null element, so the index the serializer skips is the index
+the destructor skips: element 0 is allocated storage that the load arm never
+writes, the store arm never emits and the destructor never frees. It is never
+filled either, because the only routine that can place a non-null item there
+refuses a slot number of 0 outright. What array indices 1 and 2 hold remains
+Unknown.
+— SAV-1028, SAV-HUMAN-043, SAV-CARRY-050, ITEM-EQUIP-006
+
+A roster record carries one 24-byte stat layout twice, the 22-byte layout once
+and the whole 64-byte modifier block, and one routine per layout is both its
+write site and its read site. Before the store/load split,
+`Unit::Serialize` reaches four fixed spans by a literal `ADD ECX,<offset>`:
+`+a6`, `+be`, `+114` and `+d4`. Three helpers serve them, and `+a6` and `+114`
+share one. Each helper tests store-or-load, then pushes a single literal length
+and calls either the archive's raw span write or its raw span read — `0x18`
+for the 24-byte layout, `0x16` for the 22-byte one, `0x40` for the modifier
+block. Store and load cannot disagree, and neither arm computes anything.
+
+Under the three-copy layout, `+a6` is the live copy and `+114` the base copy of
+one 24-byte stat record, `+be` is the live copy of the 22-byte defence record,
+and `+d4..+113` is the modifier block carrying both layouts' modifiers and the
+five scalar modifiers. The file therefore holds two records of one 24-byte
+layout, `0x6e` apart. The scalar words are stored folded, not raw: the store arm
+emits fourteen consecutive u16 from `+84` to `+9e`, then `+a0` and `+a4`, and
+the fold's five scalar adds land inside that set.
+
+For a consumer: both forms of the 24-byte layout are in the file. For the
+22-byte layout and for the five folded scalars the file carries live and
+modifier but no base, so a base is recoverable only by subtraction, and only as
+far as the fold is additive — one field of the 24-byte layout is assigned
+rather than added and is available only because the base copy is stored. The
+spawn adjustment writes the live copies and not the base copy, so live minus
+modifier is not in general the base.
+
+The live/base/modifier naming is carried from the actor-layout rows, not
+established on the wire; what the wire shows is one helper serving two spans of
+one width. What the individual bytes of the 22-byte and 64-byte spans mean
+beyond those field lists is Unknown.
+— SAV-1031, SAV-UNITPROG-156, SAV-CITYSTORE-516, SAV-HUMLOAD-445, HERO-MOD-016,
+UNIT-CTOR-004, UNIT-GATE-013
+
+A city-shape save's roster is measured end to end in decoded-stream
+coordinates. One preserved 6,110-byte stream: head `0..75`, Player list
+`75..5696`, the Player record `87..5696` whose fixed field run is `94..145`
+with `+3c` at 119, two group records at `149..3041` and `3041..4942`, two Human
+records at `248..3029` and `3131..4930`, the Player's own raw 32 at
+`4942..4974` and its Diary at `4974..5696`. Between the list head and the first
+Human there is a Player record and a group record and no count of characters:
+membership is the nesting, not a roster object. Each Human's variable-length
+parts tile the record with no residue under the programme above.
+— SAV-1028, PARTY-ROSTER-002, SAV-UNITPROG-156
+
 The actor Diary reference may resolve to an existing archive object. The
 typed LOAD does not establish exclusive ownership; a new object is registered
 before its virtual serializer. The bounded actor-method search reaches SAVE

@@ -120,6 +120,22 @@ SAV-CAMPAIGN-078, SAV-CAMPAIGN-079, SAV-CAMPAIGN-080, SAV-CAMPAIGN-081,
 SAV-CAMPAIGN-082, SAV-CAMPAIGN-083, SAV-CAMPAIGN-084, SAV-CAMPAIGN-085,
 SAV-CAMPAIGN-086
 
+The base record's `+0x04` mission scalar is not written through the archive's
+insertion operator. `FUN_00486e80` loads the archive vtable's `+0x40` slot and
+calls it with the field's own address and the literal length 4; `FUN_00486f20`
+mirrors it through the `+0x3c` slot with the same pointer and length. Neither
+routine touches a Player. The other progress-bearing field of a save,
+`Player+0x3c`, is written by a different serializer into a different half of the
+file, so progress is split across two routines and a consumer that implements
+one restores half of it.
+
+Both calls are indirect and the vtable's contents are not resolved, so raw write
+and raw read are role names here. What supports them is that the store routine
+takes one slot and the load routine the adjacent one with identical arguments,
+and that the actor stat-span helpers branch on the same store/load test and
+reach a matching pair of primitives by direct call.
+— SAV-1027, SAV-CAMPPROG-071, SAV-CAMPAIGN-077
+
 ## Mercenary state
 
 Mercenaries `+9c` is the current main mission's shelf, not a cumulative union.

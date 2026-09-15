@@ -58,6 +58,27 @@ respectively. The dead list is not `world+0xc`. Every top-level list uses a
 plain u32 count and complete archive references; an empty list is four bytes.
 — SAV-ROSTER-024, SAV-SHAPE-023, SAV-DOC-053, SAV-657
 
+## Load-side validation
+
+The load arm validates almost nothing, and this is a property of the whole arm
+rather than of one field. After the store/load split the arm holds 24
+conditional branches and the enclosing routine has one exit instruction, so
+there is no error return for a rejection to reach. Exactly one value is
+substituted: a world-head difficulty outside `1..3` is discarded and the
+constructor's value kept. The Player list is read with no count test and no
+return test, so a count of 0 yields an empty roster and the arm continues. A
+`Player+0x3c` outside its own `{0,1,2}` domain is restored literally. A trailer
+discriminator other than `0xBADFACE1` skips the following global read and falls
+into the same common tail. None of these is a refusal.
+
+This covers semantic malformation — an empty count, an out-of-range enum, an
+unrecognised discriminator. It does not cover a truncated stream: the archive
+read primitives are outside this reading, and a throw raised inside one would
+not appear as a branch in the arm. Whether the arm's permissiveness becomes a
+fault downstream is Unknown; no consumer instruction that dereferences an
+emptied record without a guard has been named.
+— SAV-1030, SAV-HEAD-025, SAV-FULLREAD-252, SAV-ROSTER-024
+
 ## City and world shapes
 
 Both shapes contain the entire roster, dead-list framing and trailer.
@@ -69,6 +90,41 @@ restores and detaches actors without constructing terrain. The narrowed
 placement-latch claim supplies no universal relation between `Player+3d` and
 the city/world discriminator.
 — SAV-CITY-030, SAV-ROSTER-024, SAV-SHAPE-023, SAV-POSTLOAD-220
+
+Two preserved city-shape streams are measured end to end. File-absolute, the
+3,544-byte stream: header `0..20`, word-coded document `20..2219`, label block
+`2219..2475`, embedded store `2475..3234`, uncompressed campaign record
+`3234..3544` with all 310 bytes consumed across 36 fields. The 3,223-byte
+stream: `20..1940`, `1940..2196`, `2196..2955`, `2955..3223`, all 268 bytes
+across 27 fields. Decoded, the two streams are 6,110 and 5,592 bytes: head
+`0..75`, Player list `75..5696` and `75..5178` with one Player each, dead-actor
+list of count 0, then the world-present discriminator at decoded offset 5,700
+and 5,182 respectively, value 0. That offset is measured, not inferred.
+— SAV-1026, SAV-CITY-030, SAV-SHAPE-023
+
+No counted collection in either city-shape stream is sized by, or indexed by,
+the mission space. Every variable-length collection carries its own count: 44
+of them in the 3,544-byte stream, 40 in the 3,223-byte one, each count read off
+the stream. The largest count anywhere is 119, six times per save — the
+`CDWordArray` at `Diary+04` and the `CWordArray` at `Diary+18` of each of the
+three Diary records a city save holds. 119 is the Units table's row count and
+the subscript is the actor's class-dependent Units/Humans definition ordinal,
+not a mission. The next largest is 19, the Spellbook, subscripted by spell id;
+then 12, the carried container; every other count is 5 or less. The campaign
+record's largest is 15. Every remaining span whose byte length is not an element
+count is a fixed structure span whose length is a literal inside the emitting
+helper. Both streams stand at campaign mission 30. A consumer must not look for
+a completed-mission bitmap or a mission-indexed list in a city save: campaign
+progress is the campaign record's own `+0x04` scalar plus one byte per Player at
+`+0x3c`.
+
+What this does not settle: a short list can carry mission ids as values without
+being subscripted by them. `Unit+15c`, `Unit+178`, `Group+20`,
+`*(Group+3c)+4c` and `*(*(Unit+158)+90)` are counted here and none of their
+element meanings is established, and the interiors of the fixed spans are not
+decomposed.
+— SAV-1026, SAV-CAMPAIGN-077, SAV-667, SAV-668, SAV-844, SAV-662,
+MAGIC-SPELL-001
 
 The roster is nested as Player -> Groups -> actors -> owned/equipped objects.
 Group records are direct inline programmes, with no class tag. The map producer
