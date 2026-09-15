@@ -122,6 +122,26 @@ leaves a bounded set of reachable glyph records that more than one keystroke seq
 can reach. A compatible save/editor implementation should preserve the stored bytes
 rather than replacing them solely from rendered appearance. — `TEXT-COLL-025`
 
+## Save-label entry
+
+The SAVE/LOAD chooser's list-item label is not the character-name control's bounded,
+filtering class above. Its recognized producer path is a generic list-control item-text
+copy that filters no byte value other than the NUL terminator, distinct from the
+character-name entry's rejection of control bytes below the printable range.
+— `TEXT-SAVELABEL-057`
+
+The character-name control's own vtable is referenced nowhere in the executable image by
+a full instruction-reference search, ruling out that specific class as the save-label
+producer for any construction reached through the literal-vtable-store idiom this
+codebase uses elsewhere; a class constructed by some other means is not excluded by this
+search. — `TEXT-SAVELABEL-055`
+
+The byte-indexed display-conversion selector documented above for other text surfaces is
+not called, directly or through its only wrapper, by any traced save-label chooser code
+path; which mechanism, if any, draws this field's bytes on screen, and whether EN and RU
+differ in a byte-to-glyph mapping for this field specifically, are open. —
+`TEXT-SAVELABEL-054`
+
 ## Character-generation and UI labels
 
 ROM1 mixes three presentation mechanisms:
@@ -157,7 +177,9 @@ The published rules do not establish:
 - safe behaviour for arbitrary malformed byte values or out-of-range font indices;
 - semantic equality of every EN/RU string-table entry;
 - a universal UI labelling mechanism;
-- coverage of strings embedded in every possible non-text resource type.
+- coverage of strings embedded in every possible non-text resource type;
+- what mechanism draws the save-label chooser's field, and whether it maps a byte to a
+  glyph differently between EN and RU for that field.
 
 ## Decode and encode sequence
 

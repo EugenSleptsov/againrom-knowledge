@@ -22,6 +22,18 @@ selection-to-writer path passes only the NUL-terminated string. Bytes after
 the first NUL can be stale destination-buffer residue on fresh SAVE; they
 have no source-preservation guarantee. — SAV-LABELTAIL-236
 
+At the one SAVE dialog construction site read, label buffer offset 0 is
+explicitly reset to an empty string before construction; whether every
+construction path does this was not enumerated. — SAV-SAVELABEL-1016
+
+The SAVE dialog's in-memory staging area for this buffer is twice the
+on-disk buffer's width; only the first half reaches disk, matching the
+256-byte label in the physical tail above. — SAV-SAVELABEL-1017
+
+A lawful save in the preserved owner corpus carries a byte above 0x7F as
+live, pre-terminator label content; a reader must not assume the label
+buffer holds only printable ASCII. — SAV-SAVELABEL-1018
+
 ## State roots and production
 
 The baseline world producer has nine roots:
