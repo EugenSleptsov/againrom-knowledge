@@ -45,6 +45,10 @@ check on a cached copy; that guard covers only that one downstream use, not
 the two unconditional sites. The shared list registrar that both cast-time
 `Spell::Apply` and delivery-time `SpellTransport::Tick` use to admit a
 `PointEffect` to the ticking population performs no field access of its own.
+Both of `SpellTransport::Tick`'s own two calls to that registrar compute the
+identical container operand, instruction-for-instruction, that both of
+`Spell::Apply`'s own calls compute — read directly, not assumed from the
+shared function name. — MAGIC-197
 Cast-time attachment is the only place a *null target* is excluded, dropping
 construction outright when the spell has no target unit; a separate,
 target-blind exclusion also exists at delivery-system dispatch, but it does
@@ -105,12 +109,13 @@ returns non-null, an erase primitive on the same container, and the wrapper
 then dispatches the member's own vtable+0x04 slot with an argument requesting
 destruction and release. That the lookup/erase pair unlinks the member from
 the list is inference from that call shape; neither primitive's body was
-read. The+0x04 slot was read for `PointEffect` only, where it is the
-scalar-deleting-destructor shape — real destructor, argument bit-0 test,
-conditional operator delete. A directly cast `AreaEffect` reaches the same
-registrar (MAGIC-TICKGATE-183), and no other class's own+0x04 slot was read
-here, so the convention is established for `PointEffect` and assumed, not
-shown, for any other member class. — MAGIC-187
+read. The+0x04 slot was read for `PointEffect` and `SpellTransport`, where
+each is the scalar-deleting-destructor shape — real destructor, argument
+bit-0 test, conditional operator delete, at two distinct thunk addresses. A
+directly cast `AreaEffect` reaches the same registrar (MAGIC-TICKGATE-183),
+but its own+0x04 slot was not read by either experiment, so the convention
+is shown for two of the three member classes and remains assumed, not
+shown, for `AreaEffect`. — MAGIC-187, MAGIC-197
 
 ## Application
 

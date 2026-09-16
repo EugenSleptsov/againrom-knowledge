@@ -180,3 +180,22 @@ both child fields and marks the transport retired. Natural game0018 contains
 counter4 in its pending PointEffect/DirectDamage transport. Conditional isolated
 store/load/tick execution agrees; native full-process resumption and first-frame
 scheduler ordering remain Unknown. — SAV-CASTCONT-1006
+
+A SpellTransport, and the child it hands off on delivery, are held alive by
+the same single container every directly-cast PointEffect/AreaEffect uses —
+not a transport-private list — confirmed by instruction comparison at all of
+Tick's own registrar calls, not assumed from the shared function name.
+— MAGIC-197
+
+Over a corpus more than double the size searched when the above was
+established (129Asg& save paths / 76 SHA-distinct, against the prior 55/31,
+a population that includes at least a dozen documented or self-named
+project-produced fixtures, none of which contributes a hit), the witness
+count for SpellTransport, PointEffect and Effect_DirectDamage is unchanged:
+one distinct digest, the same `game0018.sav`. n=1 stays n=1. AreaEffect,
+previously a zero-witness class, now has one: a record in a separate save,
+ROM1's own output but written from a document this project had modified
+before ROM1 loaded it. Neither the record's own graph position (a direct
+cast, or a nested reference reachable through `SpellTransport+0x48`'s own
+`objref<AreaEffect>` above) nor its fields were decoded; not graded.
+— SAV-1037
