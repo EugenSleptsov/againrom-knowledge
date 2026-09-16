@@ -138,9 +138,21 @@ search. — `TEXT-SAVELABEL-055`
 
 The byte-indexed display-conversion selector documented above for other text surfaces is
 not called, directly or through its only wrapper, by any traced save-label chooser code
-path; which mechanism, if any, draws this field's bytes on screen, and whether EN and RU
-differ in a byte-to-glyph mapping for this field specifically, are open. —
-`TEXT-SAVELABEL-054`
+path. — `TEXT-SAVELABEL-054`
+
+Neither the byte-indexed selector's own draw functions nor this image's GDI text-out
+import surface is reached by any traced save-label chooser code path either, and the MFC
+GDI-wrapper vtables that would carry the latter are themselves never constructed. By
+elimination among these named mechanisms, the field's pixels are consistent with native
+Win32/MFC list-control default painting outside this executable's own code — an
+elimination among catalogued candidates, not a positive trace, and it does not exclude an
+uncatalogued in-game draw routine reached only by virtual dispatch this search cannot
+enumerate. Because the two lawful executables are the same file, EN and RU cannot differ
+in a mechanism this image does not exhibit for this field. What the draw path does with a
+byte outside 7-bit printable ASCII, and what bounds the field's *drawn* (as opposed to
+retrieved) length, both require observing a running original and are not established by
+static analysis. — `TEXT-SAVELABEL-058`, `TEXT-SAVELABEL-059`, `TEXT-SAVELABEL-060`,
+`TEXT-SAVELABEL-061`
 
 ## Character-generation and UI labels
 
@@ -178,8 +190,15 @@ The published rules do not establish:
 - semantic equality of every EN/RU string-table entry;
 - a universal UI labelling mechanism;
 - coverage of strings embedded in every possible non-text resource type;
-- what mechanism draws the save-label chooser's field, and whether it maps a byte to a
-  glyph differently between EN and RU for that field.
+- whether the save-label chooser's byte-to-glyph mapping can differ between EN and RU for
+  this field: the two lawful executables are byte-identical (`TEXT-SAVELABEL-061`), so any
+  such difference would have to come from outside `rom.exe` — this image's own draw
+  mechanism is eliminated by `TEXT-SAVELABEL-058`/`-059`, so the mapping is a property of
+  whatever paints the field, not settled by that elimination;
+- which native control paints the save-label chooser's field (a catalogued in-image
+  mechanism is excluded by elimination, `TEXT-SAVELABEL-058`/`-061`, but the specific
+  native control is not identified), what it does with a byte outside 7-bit printable
+  ASCII, and what bounds the field's drawn length — all three need a running original.
 
 ## Decode and encode sequence
 
