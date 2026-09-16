@@ -96,7 +96,7 @@ The shared character/unit panel reads the cached word at
 pointer supplies the client object. The byte at drawable `+24` selects a
 nibble by an x86 shift; the result replaces the earlier visibility fallback.
 A separate override forces7. Drawing and pointer-position text gates consume
-the selector. Nibble15 remains15; some drawing gates require exact7.
+the selector. Nibble15 remains 15; some drawing gates require exact7.
 These are conditional client reads, not proof of every drawable's binding
 or a native redraw schedule. — SAV-996
 
@@ -121,7 +121,7 @@ and arbitrary aliases remain outside transitive closure. Shared accessor
 calls need not receive a Diary. — SAV-854, SAV-855, SAV-982
 
 The progress expression `actor+1cc+4*k` overlaps the Diary pointer word when
-`k=6`; its two branches do not locally impose an upper index of5. This is
+`k=6`; its two branches do not locally impose an upper index of 5. This is
 conditional scalar access to the pointer word, with native index reach and
 pointer change unobserved. It is not a read of either Diary array. The
 bounded negative therefore supplies no pointer-preservation rule. — SAV-983

@@ -289,7 +289,7 @@ an autohealing mode command, separate from selected-spell autocast.
 — TOWN-OPTIONS-457
 
 Autohealing modes No/Standard/Often (0/1/2) set mana-floor percentages100/50/0.
-The actor floor is truncated maximum mana times percentage divided by100.
+The actor floor is truncated maximum mana times percentage divided by 100.
 The recovered heal request requires current mana strictly above the floor;
 equality does not pass. Direct percentages3..100 are accepted by the command;
 invalid values leave the prior percentage. Complete targeting and scheduler
@@ -298,7 +298,7 @@ SAV-PLAYER-028, HERO-MP-006
 
 Shadows gates the named unit shadow pass without suppressing its body.
 Lighting gates the named dynamic-light body independently of day/night.
-Animation off freezes the tested scenery frame at0. These are bounded
+Animation off freezes the tested scenery frame at 0. These are bounded
 consumers; the full water, town, interface and moving-actor populations remain
 Unknown. — TOWN-GRAPHICS-459
 

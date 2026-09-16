@@ -108,7 +108,7 @@ rebuild consumes its registered actor list twice: Player+28==0 actors mark
 coverage; other actors first reset their Group AI+45 and then increment it when
 covered or when the Group AI dword+48 is nonzero. Coverage is a five-by-five
 area in eight-map-cell blocks, with the four corners excluded. The Group byte
-counts represented active members, wraps at256, and is rebuilt on the next
+counts represented active members, wraps at 256, and is rebuilt on the next
 call. Groups absent from the supplied list are not reset. This is a proximity
 activation mechanism distinct from target acquisition and line of sight.
 — AI-ACTIVITY-324

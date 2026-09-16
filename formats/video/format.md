@@ -122,7 +122,7 @@ miss behavior, fade audibility and registry lifetime remain Unknown.
 — VIDEO-OPTIONS-057
 
 Random Order changes the ordinary candidate permutation immediately. Disabled
-uses0..n-1; enabled performs n swaps with two CRT rand()%n indices each.
+uses 0..n-1; enabled performs n swaps with two CRT rand()%n indices each.
 Without a playback buffer, the measured setter does not change mode, flag or
 permutation. This is not a switch to fixed-source playback.
 — VIDEO-MUSIC-056

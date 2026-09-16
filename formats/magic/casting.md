@@ -126,7 +126,7 @@ duration 6 312 against a `u16`.
 
 The shipped Fire Ball definition has Sphere1 and Max Range10. The resolver
 initializes Spell+9 from Max Range; the ordinary power producer calculates
-10+floor(clamp(skill[Sphere]+Mind-30,0,100)/30), hence10..13. Its general
+10+floor(clamp(skill[Sphere]+Mind-30,0,100)/30), hence 10..13. Its general
 non-Teleport branch leaves a zero base unchanged. Player-command handlers
 and the unit-order constructor **copy the stored Spell+9** into order+0x14,
 replacing weapon reach. These copies do not prove that current power was
@@ -155,13 +155,13 @@ footprint size or fraction bytes in that metric. Success installs action0x0e
 with Spell/cell; failure reaches the point approach entry. Neither selected
 typed predicate nor its heading helpers reads the world or altitude. With
 matching facing, centred1x1 actors and stored range10, axis and diagonal
-distance10 admit and11 fail on flat/up/down synthetic height configurations;
-range11 and13 move the boundary to11/12 and13/14. This is conditional on
+distance10 admit and 11 fail on flat/up/down synthetic height configurations;
+range11 and 13 move the boundary to 11/12 and 13/14. This is conditional on
 reaching those child-order arms, not proof of unchanged whole-game casting
 when height changes (`MAGIC-REACH-180`).
 
 Ordinary Fire Ball click selection uses the **point** builder even over an
-actor: selector index1 has target-type0, click adds1, and the command remap
+actor: selector index1 has target-type0, click adds 1, and the command remap
 retains spell2. An explicit unit-target cast order therefore does not describe
 the ordinary Fire Ball click. The selected spell cursor arm also has a
 separate visibility-field gate: four tile words OR/masked to0xc000 retain
@@ -195,7 +195,7 @@ Spell::Cast(caster, target, x, y)                                   FUN_004fe6d3
 
 The packet delay is not a simulation apply queue. Delivery2 creates a separate
 SpellTransport whose own countdown releases its child effect. IDs13/14 set that
-counter to10; ID14 selects and prepares its victim list during admission, while
+counter to 10; ID14 selects and prepares its victim list during admission, while
 the later unit-target wrapper suppresses a duplicate. — MAGIC-DELIVERY-170,
 MAGIC-CASTCLOCK-171
 

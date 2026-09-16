@@ -27,7 +27,7 @@ ALM-CORP-060
 | 0x04 | u32 | **hdrLen** | `= 20` — this header's **own length**, and it is *used*: the header helper peeks 8 bytes, seeks back, then reads `dword[cursor+4]` bytes. At offset 0 that reads 20 | ALM-HDR-001, ALM-FRAME-031 (amended; framing retained) |
 | 0x08 | u32 | dataSize | Installed version-990 value `4·W·H + 72`; the loader ignores it. The writer-side meaning of 72 is Unknown | ALM-HDR-001 |
 | 0x0C | u32 | **recordCount** | the loader's loop bound, gated `≥ 3` and nothing more; `= 10` in every authored map, `= 4` in `ru/Horror.alm` | ALM-META-024, ALM-FRAME-031 (amended; framing retained), ALM-CORP-060 |
-| 0x10 | u32 | **formatVersion** | Installed value990; primary/editor unsigned upper gate1001 and conditional payload thresholds951,985,987,989,990. The1000 helper rule differs by reader; see below | ALM-META-024, ALM-FRAME-031 (amended; framing retained) |
+| 0x10 | u32 | **formatVersion** | Installed value990; primary/editor unsigned upper gate1001 and conditional payload thresholds951,985,987,989,990. The 1000 helper rule differs by reader; see below | ALM-META-024, ALM-FRAME-031 (amended; framing retained) |
 
 `W`,`H` themselves live in the [type 0 record payload](metadata.md), not the header.
 `rom.exe` `FUN_00512353` reads this header as one `Read(dest, 0x14)`.
@@ -249,14 +249,14 @@ distinct quantities. — ALM-CORP-060, UNIT-AREAPOP-075, UNIT-STRUCTCELL-070
 ## Reader and writer distinctions
 
 The main and editor readers test file+0x10 as an unsigned word. Their payload
-read thresholds are951 (two Unit words),985 (one Unit byte),987 (one Unit
+read thresholds are 951 (two Unit words),985 (one Unit byte),987 (one Unit
 dword),989 (one type8 dword) and 990 (one type9 dword). These tests describe
 read programs, not successful complete maps at every value. — ALM-HEADER-097
 
-At1000, main00512332 makes no record-header read and preserves its destination.
+At 1000, main00512332 makes no record-header read and preserves its destination.
 Editor0044d580 reads wire words 0..4 into header dwords2,4,0,3,1 respectively.
 Other values select20-byte reads. The browser and landscape helper instead
-peeks8 bytes, rewinds8, and requests hdrLen bytes without a version test.
+peeks 8 bytes, rewinds 8, and requests hdrLen bytes without a version test.
 Short or oversized headers have no new safety guarantee. — ALM-HEADER-097
 
 Record-header final-word mutations in the selected main/landscape prefixes
@@ -277,7 +277,7 @@ therefore requires a complete lower read. The loose-file receiver is resolved;
 archive container+34 and later aliases remain open. — ALM-STREAM-100
 
 The preserved corpus contains 72 maps and 714 record headers. All file words
-are990; all 72 maps have equal raw record words internally. This equality is
+are 990; all 72 maps have equal raw record words internally. This equality is
 a corpus property. — ALM-CENSUS-101
 
 ## Count provenance, header residue and closure boundary
@@ -301,7 +301,7 @@ The browser's header predicate instead requires unsigned count>=2 without a
 version check there. The light reader walks to EOF and treats count<2 as an
 advisory message rather than an early return. Primary payload thresholds are
 unsigned >=951, >=985, >=987, >=989 and >=990; evaluating an isolated window
-above1001 does not imply primary whole-file admission. — ALM-READERS-199
+above 1001 does not imply primary whole-file admission. — ALM-READERS-199
 
 The editor interprets metadata+0x0c as Starting Time in minutes and uses it
 in its color pipeline. The identified normal game M/P paths do not read that
@@ -313,7 +313,7 @@ The complete editor header helper uses five Read4 calls at version1000,
 placing wire words0..4 at destination dwords2,4,0,3,1. Other tested values
 use one Read20. The helper does not validate returned counts before returning;
 short lower transfers retain old destination bytes. The last wire word is
-therefore at runtime header+4 at1000, not+0x10. Isolated helper controls do
+therefore at runtime header+4 at 1000, not+0x10. Isolated helper controls do
 not imply whole-file version admission or a numeric field meaning.
 — ALM-EDITORHDR-202
 

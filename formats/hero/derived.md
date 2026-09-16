@@ -178,7 +178,7 @@ payload contents are not established. Both pairs reach raw SAV writes, but
 the constructor clear does not close later Effect/indexed writes or first-save
 values. — SAV-HUMALLOC-504, SAV-HUMNEW-505, SAV-HUMNEWSAVE-507
 
-The156 shipped nonempty Human weapon-definition cells per root all join to
+The 156 shipped nonempty Human weapon-definition cells per root all join to
 attackType1..5. Weapon equip copies the low byte only for signed type below 10;
 every type at least 10 and removal set active selector 0. Thus positive type 10/42
 does not yield the known tail aliases. This finite producer bound excludes

@@ -64,7 +64,7 @@ further byte. That table is the **Buildings collection of `world.res:data/data.b
 | Reached runtime class | Read and transform | Result before later simulation |
 |---|---|---|
 | Building, including the kind33 extension arm | Setup copies definition column3 into words +0x44 and +0x42. The walker tests signed placement-record+0x06 for zero; only zero is stored into object+0x42 | Zero overrides the initialized current field. Every nonzero word leaves it at the definition value; there is no proportional nonzero assignment. +0x44 remains the definition value (`ALM-128`) |
-| Shop, stored kinds34/35 | Sign-extend placement-record+0x06; multiply by1000; setter writes object+0x70 and forwards to template+0x90 | The template's price maximum receives the signed product. This operation does not clear the inherited +0x42 field. The campaign town has a separate producer (`ALM-128`, `SHOP-CAP-004`, `SHOP-MISSION-018`) |
+| Shop, stored kinds34/35 | Sign-extend placement-record+0x06; multiply by 1000; setter writes object+0x70 and forwards to template+0x90 | The template's price maximum receives the signed product. This operation does not clear the inherited +0x42 field. The campaign town has a separate producer (`ALM-128`, `SHOP-CAP-004`, `SHOP-MISSION-018`) |
 
 The loader stores a placement pointer in map+0x304. After constructing and
 registering the runtime object, the walker frees that placement and clears
@@ -80,7 +80,7 @@ ALM-128, UNIT-STRUCTZERO-080
 |---|---|
 | Complete type4 read | Read2 bytes, sign-extend for the factory argument, then retain low16 at CStructure+0xf6 and +0xfa. Both ordinary and kind33 factories call the same initializer; the latter constructs an extent-capable editor object (`ALM-129`) |
 | Selected type4 write | For each object admitted as an editor CStructure, emit2 bytes directly from +0xf6. No per-word scaling, zero normalization or signed-range check occurs at this write site (`ALM-129`) |
-| Confirm existing-structure property | The selected handler opens dialog226 with +0xf6 sign-extended into its integer control1041. If accepted and the selected class remains nonzero, clamp the integer only above3000 at this local store, then retain low16 in +0xf6/+0xfa. A successful property confirmation can therefore change32767 to3000 before saving; an unchanged direct write retains0x7fff (`ALM-130`) |
+| Confirm existing-structure property | The selected handler opens dialog226 with +0xf6 sign-extended into its integer control1041. If accepted and the selected class remains nonzero, clamp the integer only above 3000 at this local store, then retain low16 in +0xf6/+0xfa. A successful property confirmation can therefore change32767 to 3000 before saving; an unchanged direct write retains0x7fff (`ALM-130`) |
 
 Full input transfer and successful factory admission are preconditions of
 the editor preservation rule. UI input validation, delivery of the selected
@@ -458,7 +458,7 @@ Failed actor lookup skips the rest of that record. Thus A=12 reaches both
 searches only when the actor lookup succeeds; it is not a pair of independent
 operations. A=8 needs no nonzero coordinate. A=0x8000 does not pass A<4.
 The later linked-item arm requires not N and L and treats nonzero A as
-arithmetic data: kind low8(A+43). The local store maps212/213/65535 to255/0/42;
+arithmetic data: kind low8(A+43). The local store maps 212/213/65535 to 255/0/42;
 this does not establish that every resulting kind is valid at later consumers.
 
 `ALM-T9ACTOR-176` fixes the inputs. The key is full32 B|(C<<16) for both

@@ -15,7 +15,7 @@ bits of it.
 | 2 | read (`AND …,0x7`) and unused by any shipped map. |
 
 Column0 stores the low byte of `Player+0x28`, replaced with zero only when
-the complete dword equals2. Row0 marks the slot live. This projection is
+the complete dword equals 2. Row0 marks the slot live. This projection is
 distinct from the full-word tests elsewhere: `0x100` produces column0 zero,
 whereas `0x102` produces two. — SESS-073
 
@@ -30,7 +30,7 @@ have separate callers; native ordering is not inferred from this list.
 | # | when | routine | writes | symmetric? | respects bit 1? |
 |---|---|---|---|---|---|
 | 1 | map load | `FUN_004e1924` | the `.alm` type-5 record's sixteen `u16` at file `+0x2c` into columns 1…16 of that player's row (low byte only), then forces the diagonal to 2 | one way | n/a |
-| 2 | a player joins | `FUN_0053d8a0` | column0 = low byte of control, except full value2 maps to0; row0 = 1; template selection tests the two column0 bytes for zero; forces diagonal2 — SESS-073 | both | no |
+| 2 | a player joins | `FUN_0053d8a0` | column0 = low byte of control, except full value2 maps to 0; row0 = 1; template selection tests the two column0 bytes for zero; forces diagonal2 — SESS-073 | both | no |
 | 3 | a player leaves | `FUN_0053d9a0` | row 0 = 0 for that slot | n/a | n/a |
 | 4 | a mission join | `FUN_004d303e` / `FUN_004d8963` | clones a reference player's row *and* column, allies with it, forces neutrality or 2 between participants | both | no |
 | 5 | script action **10** | `FUN_00539be0` | `matrix[p0][p1] = (v &~ 3) + p2` | **one way** | **no — it clears it** |
@@ -40,7 +40,7 @@ have separate callers; native ordering is not inferred from this list.
 The template of writer2 is four bytes at `session+0xa9bc`, initialized to
 `{1,1,0,0}`. With that template, relations between different zero/nonzero
 classes are hostile both ways; two unequal nonzero bytes select the same
-class. The diagonal is forced to2. Registration calls this routine only
+class. The diagonal is forced to 2. Registration calls this routine only
 when the session global exists, and map load has a separate later relation
 writer. — SESS-073
 

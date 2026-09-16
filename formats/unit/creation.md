@@ -135,7 +135,7 @@ Three of its fields are read outside the shop:
 
 | field | meaning | who reads it |
 |---|---|---|
-| `+0x28` | Full control dword. Join writes0, the constructor writes1, and one scenario arm writes2; authored copies accept other patterns. `UNIT-OWNER-009` is partially retracted for its universal value/authorship interpretation | The bounded catalog has27 actor reads,26 of which feed predicates; zero gates route-budget eligibility and victim experience exclusion — ALM-140, SESS-072 |
+| `+0x28` | Full control dword. Join writes 0, the constructor writes 1, and one scenario arm writes 2; authored copies accept other patterns. `UNIT-OWNER-009` is partially retracted for its universal value/authorship interpretation | The bounded catalog has 27 actor reads,26 of which feed predicates; zero gates route-budget eligibility and victim experience exclusion — ALM-140, SESS-072 |
 | `+0x38` | money (`SHOP-BUY-009`); defaulted to 100 on the join path | the shop |
 | `+0x58` | `95`, the percentage `vt+0x50` scales `manaMax` by into `actor+0xa0` | `FUN_004f5946`, `FUN_004f7dfc` |
 

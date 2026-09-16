@@ -102,8 +102,8 @@ integer boundaries. — FAME-PRODUCER-014
 
 | Input | Established producer and unit | Boundary |
 |---|---|---|
-| A | Constructor/reset zero it; the admitted mission-completion arm adds signed trunc(simulation sub-ticks/16) before the terminal score call | Groups of16 sub-ticks; wall-clock seconds and the mission-entry clock baseline are not established |
-| B | Constructor/reset zero it; client reception increments for a hostile drawable whose old stage is below2 and whose new stage is2,3 or4 | A received corpse-stage transition, with no killer or once-per-ID test; stage1 death/fall and stage5 do not enter this increment |
+| A | Constructor/reset zero it; the admitted mission-completion arm adds signed trunc(simulation sub-ticks/16) before the terminal score call | Groups of 16 sub-ticks; wall-clock seconds and the mission-entry clock baseline are not established |
+| B | Constructor/reset zero it; client reception increments for a hostile drawable whose old stage is below 2 and whose new stage is 2,3 or 4 | A received corpse-stage transition, with no killer or once-per-ID test; stage1 death/fall and stage5 do not enter this increment |
 | C | Effective state-packet mask4 copies the raw simulation actor+130 dword to drawable+108 | Six-slot experience meaning requires the established Human/Humanoid source path; final cached class and latest delivery are unproved |
 
 Campaign SAVE/LOAD preserves A and B as raw four-byte words. The named addition
@@ -121,7 +121,7 @@ for other actor classes or an unproved final cached source remains Unknown.
 — FAME-023, HERO-XP-077, SAV-HEROXP-063
 
 The source cache is at `[[frame+d0]+3f54]`. One receiver assignment selects a
-new drawable when its map count is1, without an ownership predicate. Preview
+new drawable when its map count is 1, without an ownership predicate. Preview
 paths can also populate this cache, transfer a raw value into C or explicitly
 zero C in a temporary derive. A full new-game or LOAD ordering that guarantees
 the main hero and the latest experience at final scoring remains Unknown.

@@ -56,7 +56,7 @@ SAV-CAMPAIGN-084, SAV-CAMPAIGN-085, SAV-CAMPAIGN-086
 | 3 | `+110` | AutoGetMission |
 | 4 | `+11c` | LastMission |
 | 5 | `+120` | First-MapPoint flag, computed on SAVE |
-| 6 | `+124` | Accumulated groups of16 simulation sub-ticks at admitted mission completion |
+| 6 | `+124` | Accumulated groups of 16 simulation sub-ticks at admitted mission completion |
 | 7 | `+128` | Received hostile corpse-stage transition counter; exact condition below |
 
 `+120=1` restores MapPoint zero. Otherwise selected mission `+118` resolves
@@ -71,7 +71,7 @@ field is spare storage. — SAV-598, SAV-599, SAV-600, SAV-601, SAV-602,
 UNIT-GATE-012, UNIT-GATE-013
 
 The admitted completion arm adds signed trunc(simulation sub-ticks/16) to
-`+124` before its terminal-score predicate. This establishes groups of16
+`+124` before its terminal-score predicate. This establishes groups of 16
 sub-ticks, not wall-clock seconds or the exact mission-entry clock baseline.
 Constructor/reset zero `+124/+128`; SAVE/LOAD preserves both raw words.
 The named arithmetic and reader impose no positive-value or range clamp.

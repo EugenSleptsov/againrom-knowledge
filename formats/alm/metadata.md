@@ -16,8 +16,8 @@ short buffers. Copy and release helpers remain boundaries. The immediate
 code does not prove an end-to-end complete read. — ALM-RECVREAD-208
 
 Received types6/7/8 select shared object006095a8. With its shown constructor
-vtable, the reader requests5 bytes at object+0x0a, then unsigned
-object+0x0e plus1 bytes at object+0x0f; it tests neither read return. Only
+vtable, the reader requests 5 bytes at object+0x0a, then unsigned
+object+0x0e plus 1 bytes at object+0x0f; it tests neither read return. Only
 type6 selects the frontend light-load arm, and only when view+0x80 is zero
 does that arm submit object+0x0f to0041f082. The actual input producer,
 complete string contents, later aliases and native ordering remain Unknown.
@@ -44,7 +44,7 @@ The offsets below are relative to the payload. The fixed reads total 632 bytes. 
 | +0x00 | u32 | **W** | map width — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x04 | u32 | **H** | map height (`W≠H` occurs, e.g. 112×144) — read into the map object | ALM-HDR-001, ALM-META-024 |
 | +0x08 | f32 | **angle** | Radians; loaded into map `M+0x18` and terrain `P+0x20`. The terrain store fills four bytes of a double. Forced relight replaces it from the sun globals before the known read. Installed angles are whole degrees: `±45, ±44, ±18, 36, 28, 25, 22`; the common π/4 encoding is `0x3f490fda`. | ALM-META-027 (amended; payload-angle clause retained), ALM-META-091, ALM-META-092, ALM-CORP-093, TERR-LIGHT-149, TERR-LOAD-152 |
-| +0x0c | 32-bit word; signed integer in editor arithmetic | **Starting Time (editor minutes)** | Loaded into `M+0x1c`, terrain `P+0x2c` and editor `E+0x1c`. The editor requests slider positions0..96, loads signed `value/15` and accepts `position*15`. Its `(value/60)%24` lighting path reaches palette colors and render-buffer stores. Default360 is06:00. The identified normal game M/P paths do not read this scalar; a universal or native game effect remains unestablished. Native editor transactions are unobserved; slider bounds are not an ALM validation range. | ALM-EDITTIME-205, ALM-SCALAR-198, ALM-EDITORSCALAR-203 |
+| +0x0c | 32-bit word; signed integer in editor arithmetic | **Starting Time (editor minutes)** | Loaded into `M+0x1c`, terrain `P+0x2c` and editor `E+0x1c`. The editor requests slider positions0..96, loads signed `value/15` and accepts `position*15`. Its `(value/60)%24` lighting path reaches palette colors and render-buffer stores. Default360 is 06:00. The identified normal game M/P paths do not read this scalar; a universal or native game effect remains unestablished. Native editor transactions are unobserved; slider bounds are not an ALM validation range. | ALM-EDITTIME-205, ALM-SCALAR-198, ALM-EDITORSCALAR-203 |
 | +0x10 | u32 | scalar (stored) | Loaded into map `M+0x20` and terrain ambient byte `P+0x1c`. Forced relight overwrites the terrain value before its known read. Installed values span `0..33`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x14 | u32 | scalar (stored) | Loaded into map `M+0x24` and terrain range byte `P+0x1d`; the four-byte terrain store also writes `P+0x1e/0x1f/0x20`. Relight replaces the range before its known read. Installed values span `27..64`; this is not a validation bound. | ALM-META-026, ALM-META-091, ALM-META-092, ALM-CORP-093 |
 | +0x18 | u32 | bitmask | **Terrain tile-group mask.** The map loader discards its local copy; terrain stores it at `P+0x28`. Bit i selects group `(i>>2)+1`, variants `(i&3)*4 .. +3`. Installed values use bits `0..12`: groups 1–3 and group 4 variants 0–3. | ALM-META-026, TERR-LOAD-152 |
@@ -232,10 +232,10 @@ read. This is a result for the identified receivers and call conventions,
 not a global absence proof for arithmetic-built aliases or native callbacks.
 — ALM-METALIFE-184, ALM-INGEST-201, ALM-FRONTIER-200
 
-The editor's new-map constructor0044b890 writes360 to E+0x1c. This is a
+The editor's new-map constructor0044b890 writes 360 to E+0x1c. This is a
 creation default, not a constraint on loaded values. The Light dialog's
 Starting Time control reads signed minutes/15 and accepts position*15.
-Its time-to-color consumer identifies the default as06:00. The earlier
+Its time-to-color consumer identifies the default as 06:00. The earlier
 sixteen-command search did not include this established control chain.
 Native control returns and SAVE transactions remain unobserved.
 — ALM-METADEFAULT-186, ALM-EDITORSCALAR-203, ALM-EDITTIME-205
@@ -291,7 +291,7 @@ and retain the old suffix after short lower transfers. An independent copy
 survives source poisoning and reaches the original buffered writer. The
 separate new-map store writes0x168 after the actual prior word and fill are
 verified at entry. The separate control/consumer chain identifies the editor unit
-as minutes and the default as06:00. Native control returns and complete editor
+as minutes and the default as 06:00. Native control returns and complete editor
 transactions remain unobserved. — ALM-EDITORSCALAR-203, ALM-EDITTIME-205
 
 The original editor produces metadata+0x28 by adding its action, condition

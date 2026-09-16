@@ -40,7 +40,7 @@ SPR16A-BOUND-016
 
 ## Projectile sheets
 
-The31 installed projectiles.reg rows select 24 .16a sheets and 7 .256 sheets
+The 31 installed projectiles.reg rows select 24 .16a sheets and 7 .256 sheets
 through the A16 key. Frame geometry is uniform within each of those sheets.
 The extension is selected by the registry. — SPR16A-PROJ-024
 
