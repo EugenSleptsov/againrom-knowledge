@@ -253,3 +253,15 @@ null case above, not nothing. The class hierarchy a load-time typed
 reference depends on (SpellTransport is a SpellEffect, one hop) is
 confirmed by a direct read of the class descriptor chain, independent of
 the base-Serialize-call route used elsewhere in this section. — SAV-1048
+
+Neither PointEffect's own post-load hook nor AreaEffect's own contains any
+call to the shared list's registrar or its append primitive, in either
+class's own complete body. This extends the SpellTransport finding above —
+LOAD-time field binding is a one-time event, and the post-load method's own
+repair is entirely the child's own doing — to the other two classes in this
+family: no post-load hook anywhere in this family re-registers a
+doubly-referenced child into the shared container, each hook only
+null-guards its own class-specific field and, when present, dispatches that
+field's own post-load hook once. Across all three classes, LOAD-time field
+binding and LOAD-time container membership are each set exactly once, and
+no post-load hook revisits which owns which. — SAV-1050

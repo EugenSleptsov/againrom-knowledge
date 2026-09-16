@@ -107,15 +107,59 @@ the driver's own body, not deferred to a later pass: the driver calls a
 wrapper on the container, which calls a lookup primitive and, when that
 returns non-null, an erase primitive on the same container, and the wrapper
 then dispatches the member's own vtable+0x04 slot with an argument requesting
-destruction and release. That the lookup/erase pair unlinks the member from
-the list is inference from that call shape; neither primitive's body was
-read. The+0x04 slot was read for `PointEffect` and `SpellTransport`, where
-each is the scalar-deleting-destructor shape — real destructor, argument
-bit-0 test, conditional operator delete, at two distinct thunk addresses. A
-directly cast `AreaEffect` reaches the same registrar (MAGIC-TICKGATE-183),
-but its own+0x04 slot was not read by either experiment, so the convention
-is shown for two of the three member classes and remains assumed, not
-shown, for `AreaEffect`. — MAGIC-187, MAGIC-197
+destruction and release. The lookup primitive locates the node holding a
+given payload without touching the payload; the erase primitive unlinks that
+node from the doubly-linked list, symmetric for both the head/tail and the
+interior case, then hands the node — not the payload — to a container
+method that frees it by position, unread past that confirmation. Removal
+is: locate the node holding that payload; unlink and free that node only
+if one is found; then, independently, delete the payload whenever the
+payload pointer is non-null. The two steps carry different guards, and a
+payload that is not in the container is deleted without being unlinked. A
+bulk remove-all routine is a second caller of the removal wrapper,
+clearing the whole container one member at a time through the identical
+wrapper rather than a separate bulk free path. The+0x04 slot was read for `PointEffect`, `AreaEffect` and
+`SpellTransport`: each is the scalar-deleting-destructor shape — real
+destructor, argument bit-0 test, conditional operator delete — at three
+distinct thunk addresses, closing the earlier gap left assumed for
+`AreaEffect`. — MAGIC-187, MAGIC-197, MAGIC-216
+
+Each class's own real destructor deletes exactly the fields it owns, never a
+sibling class's own offset, read as complete instruction sequences rather
+than assumed from the shared thunk shape above. `PointEffect`'s own real
+destructor conditionally deletes and clears only+0x48, its own inner Effect
+payload; `AreaEffect`'s own conditionally deletes and clears only+0x44, its
+own inner Effect payload; neither ever reads the other offset. All three
+sibling real destructors call one shared base destructor, which installs no
+vtable of its own and does nothing but forward one level further, to a base
+that touches only two unrelated offsets — neither+0x44 nor+0x48 anywhere in
+that further base's own body — though that base's own last call, an unread
+further base destructor on the same object, remains uncensused as a
+possible second deleter. `SpellTransport`'s own real destructor is
+structurally different: it treats+0x44 and+0x48 as two
+independent owning pointers, each put through the identical
+dispatch-then-clear block the single-field classes above use, once per
+field, in the one body. On the one delivery path traced, Tick's own hand-off
+of exactly one field to the shared registrar is immediately followed, still
+inside Tick's own body, by an unconditional clear of both fields, so this
+destructor's own dispatch never runs against a field the container has
+already been given; a `SpellTransport` destroyed before its own delivery
+countdown completes still holds a live, unregistered child and this
+destructor deletes it correctly. Whether a producer this experiment did not
+trace can ever leave both fields simultaneously non-null at the moment the
+countdown completes — which would leave the non-primary field cleared by
+Tick without being deleted or registered — is Unknown; the only writers of
+either field this experiment located are the constructor (unconditional for
++0x44, always zero for+0x48) and the archive's own LOAD arm. —
+MAGIC-213, MAGIC-214, MAGIC-215
+
+Neither `PointEffect`'s own post-load hook nor `AreaEffect`'s own contains
+any call to the shared registrar or the append primitive, extending the
+identical, already-published absence for `SpellTransport`'s own post-load
+hook to the other two classes in this family: no post-load hook in this
+family re-registers a doubly-referenced child into the shared container:
+each hook only null-guards its own field and forwards a repair call to
+whatever it already holds. — MAGIC-213, SAV-1050
 
 A save LOAD puts a rebuilt `SpellEffect`-lineage member into a container reached by the identical displacement formula as this list
 during the archive's own load arm, not in a later pass and not on the first
