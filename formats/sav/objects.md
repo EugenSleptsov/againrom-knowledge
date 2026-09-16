@@ -17,7 +17,7 @@ and any newly introduced class descriptor. Offsets name the runtime source.
 | `Humanoid` | Unit; raw 24 from `+1cc`; `objref` at `+198+4*i`, `i=1..12`; `objref` at `+1e4` |
 | `Human` | Humanoid; own store arm adds no bytes |
 | `Effect` | Token; u8 `+3c`; u8 `+3d`; u32 `+40`; u8 `+0c` |
-| `Effect_DirectDamage` | Effect; raw 24 from `+48` |
+| `Effect_DirectDamage` | Effect; raw 24 from `+48` (shares its shape with the [attack block](actors.md#unit-programme); only `+13/+14/+15` have a located writer here) |
 | `SpellEffect` | Token; u8 `+40`; u8 `+41` |
 | `PointEffect` | SpellEffect; `objref<Effect>` at `+48`; raw u32 `+44` |
 | `AreaEffect` | SpellEffect; u8 `+48,+49,+4a,+4b`; u16 `+4c`; `objref<Effect>` at `+44` |
@@ -36,8 +36,30 @@ These sequences are the schema-1 `.data` Token lineage. PointEffect LOAD
 immediately remaps its trailing raw `+44` key: hit installs the pointer;
 miss writes null. No extra bytes are consumed. Outpost's array has only the
 `CObject` runtime descriptor; its element meanings remain Unknown.
+
+`Effect_DirectDamage`'s raw 24 bytes at `+48` are not a separate shape: the
+same constructor family that builds the [attack block](actors.md#unit-programme)
+at live `+a6` and base `+114`, and the same resolver pair that reads the
+live `+a6` copy, reach this span too. The positions those resolvers read
+(`+00`, `+0e`..`+15`) carry that block's own `toHit`/`dmgBase`/`dmgSpread`/
+`active` names, structurally present but with no located writer here; the
+six skill `u16` at `+02`..`+0d` are named from the shared constructor alone,
+and no located reader touches them at either embedding. Only `+13/+14/+15`
+(damage minimum, spread, school) have a located writer for this class, by
+five near-identical setters dispatched from the spell-apply routine; LOAD
+copies the raw 24 bytes as one transfer and does not re-run them, so a
+reloaded effect's damage triple is frozen at save time regardless of which
+construction path built the object. `+16/+17` have no located writer beyond
+the shared constructor's own partial zero-init and no located reader at
+all. The class's descriptor creator field (`SAV-TOKENLOAD-093`) is a bare
+wrapper around the same constructor a live cast uses directly; the archive
+dispatch that reads that field during LOAD is not traced (`SAV-1011`). One
+corpus-witnessed record (n=1 of 31 SHA-distinct preserved saves) agrees:
+`+00`/`+0e..+12` are `0x00`, `+13/+14/+15` are `0x04/0x04/0x01`, and
+`+16/+17` hold nonzero save-time heap residue, `0xc6/0x02`.
 — SAV-MEMBER-036, SAV-HUMAN-043, SAV-CLASSSER-172, SAV-CLASSSER-173,
-SAV-CLASSSER-174, SAV-CLASSSER-175, SAV-CLASSSER-176, SHOP-SAVE-015
+SAV-CLASSSER-174, SAV-CLASSSER-175, SAV-CLASSSER-176, SHOP-SAVE-015,
+SAV-1032, SAV-1033, SAV-1034
 
 ## Fixed extents and variable extents
 
