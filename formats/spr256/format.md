@@ -223,6 +223,24 @@ ships), `k = 1` on 25 (none does, and `frames − TW·FH` is then 0, so a destro
 re-draws its intact art). The two exceptions are `bridge1v` and `bridge2`, whose drawable is
 a C++ subclass with a 9- and a 14-frame nine-patch selector (`TERR-STRUCT-105`).
 
+## Backpack sheet frame selection (`SPR256-077`)
+
+As with every `.256` sheet (see above), frame meanings come from the consuming registry and
+drawable, not the file; no claim in this repository reads `backpack/sprites.256`'s own bytes,
+so its frame count and any addressing scheme inside the file are unestablished here. The
+recovered painter (`TOWN-SMOOTH-460`, `FUN_00459d30`, CBackPack's own vtable `+0x28` slot)
+reads the frame index from `CBackPack+0x20` at both its draw calls — the base draw and the
+Smoothing-gated boundary/overlay draw — pushed in the same argument position, third of five
+and third of six respectively, that `TERR-LIGHT-059` and `SPR256-061` name as the `frame`
+argument for this blitter family, through a loaded sprite object sharing their named vtable
+identity (`SPR256-077`). The sibling `+0x2c` slot is a separate shadow draw and was not shown
+to read this field.
+
+What writes `CBackPack+0x20`, and from what [Sack field](../item/sacks.md#ground-sack-drawn-frame),
+is item-domain and is not repeated here. Because the sheet's own frame count is unestablished,
+whether the frame-index clamp at 5 (`ITEM-136`) saturates at the sheet's last frame or
+addresses past populated frames is not resolved by any claim here.
+
 ## Known variants / exceptions
 
 - **No-palette variant** (6 projectile arrows): the 1024-byte palette is absent;

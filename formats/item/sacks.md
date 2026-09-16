@@ -51,6 +51,59 @@ container is poured into `actor+0x7c` one unit at a time, the sack is unregister
 There is no per-item take from a sack in the protocol, and no capacity, distance or ownership
 test at execution.
 
+## Ground-sack drawn frame
+
+The [backpack sheet](../spr256/format.md#backpack-sheet-frame-selection-spr256-077) has a
+client-side frame field, `CBackPack+0x20`, separate from the Sack's own `+0x1c`. A client
+message dispatcher's opcode `0x7a` case writes it: it copies a message byte into
+`CBackPack+0x20` and clamps it to 0..5. A dispatcher-wide scan finds five further
+`mov [reg+0x20], src` stores outside this case, one already published as a different
+message's Building field and four of unverified object class, so this case is shown to write
+the field, not shown to be its only writer. — `ITEM-136`
+
+The producer found for that opcode is a generic notify routine's Sack branch, reached only
+after a null/non-null recipient split, a null-object exit, and a virtual call through a
+vtable slot where only a zero return proceeds (Sack's own slot there always returns zero) —
+this is not a direct `IsKindOf` gate at entry, the class test comes after that vtable check.
+Past the gate it reads the recomputed `Sack+0x1c` (the same field the Sacks table above
+lists) and writes `_ftol(log10(Sack+0x1c))` — not a literal threshold table — into the
+message byte the dispatcher copies. Neither weight nor a contained-item count is read
+anywhere in that routine. A per-byte-offset scan of the whole `.text` section for both a
+direct-immediate and a register-mediated write of that opcode found one direct site (this
+routine's own) and no register-mediated candidate; neither scan can catch a value computed by
+arithmetic or loaded from a table, so this is the sole producer found, not a proof there is
+only one. — `ITEM-137`
+
+Because `_ftol` truncates toward zero rather than flooring, and `log10(x)` for `x` on
+`[1, ∞)` is non-negative, truncation and flooring agree over that whole range — but "the
+input is non-negative" does not by itself exclude zero, and `Sack+0x1c = 0` is a real point in
+the domain. `log10`'s own zero-input branch does not compute an ordinary logarithm: it
+discards the operand and returns the extended-precision negative-infinity bit pattern with an
+internal error code 2; a negative-input branch returns a quiet-NaN pattern with error code 1.
+That branch is reachable at the instruction level rather than excluded by type: the load is
+`FILD dword ptr`, a SIGNED 32-bit read, so a negative operand is representable. Whether the
+recomputed field can ever hold one is bounded by `ITEM-SACK-010`'s own recompute and was not
+verified here. What `_ftol` produces from
+either error value, and hence what frame a zero-value Sack draws, was not traced.
+
+The mapping ascends in six bands at the powers of ten — `Sack+0x1c` in `[1, 10)` gives index
+0, `[10, 100)` gives 1, `[100, 1000)` gives 2, `[1000, 10000)` gives 3, `[10000, 100000)`
+gives 4, and `100000` and above clamp to 5 — a ladder at fixed decimal thresholds, not a
+smooth curve, and the same `fldlg2`/`fxch`/`fyl2x`/`_ftol` idiom the shop screen's price
+plaque selector uses for its own digit-count index (`SHOP-SCREEN-037`). No sign flip, table
+reversal or subtraction from a fixed frame count sits anywhere between the `fyl2x` result and
+the clamped store, so within this ladder a larger recomputed value never yields a lower frame
+index. Whether a higher index also draws a visibly *bigger* sack sprite is a separate,
+unmeasured question: it depends on the backpack sheet's own frame ordering, which no claim in
+this repository establishes, so the index direction is decoded fact while the visual-size
+direction remains an owner report this experiment did not verify against the sheet. This
+mapping's reach is also bounded by `ITEM-137`'s own scope: it describes the producer that scan
+found, not every path that could write the opcode. One concrete trigger path from a value
+change to this notifier call is read end to end: the death/drop wrapper `FUN_0050f6d2`
+through the shared create/merge routine and the sack registry lookup to that notify call
+(`TRIG-DROPALL-024` independently reaches the same wrapper chain for its own purpose); whether
+every value change reaches the notifier by some other path was not traced. — `ITEM-138`
+
 ## Death
 
 `FUN_004f4f5d`, in order:
