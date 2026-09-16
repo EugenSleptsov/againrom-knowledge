@@ -174,12 +174,30 @@ class name from a save does not make that programme unreachable.
 
 SpellTransport's final u16 at runtime+4c is its remaining delivery counter.
 The serializer preserves it beside the two typed children. Its own post-load
-method repairs Position and child references without resetting the counter.
+method calls the Position rebind and dispatches each child's own post-load
+hook, without resetting the counter.
 Tick subtracts1 and, when the signed result is<=0, enqueues the child, clears
 both child fields and marks the transport retired. Natural game0018 contains
 counter4 in its pending PointEffect/DirectDamage transport. Conditional isolated
 store/load/tick execution agrees; native full-process resumption and first-frame
 scheduler ordering remain Unknown. — SAV-CASTCONT-1006
+
+The two typed children are bound during LOAD to a freshly resolved archive
+reference, not a raw copy of an on-disk value: the serializer's own LOAD arm
+calls the same typed-reference resolver used for every other archive
+reference in this format, once per field, with each field's own class
+descriptor. The post-load method's own child repair is entirely
+the child's own doing — it null-guards each field and, only when present,
+dispatches that child's own post-load hook; it does not itself write either
+field. Both fields are therefore set exactly once, during the LOAD arm, and
+never rewritten afterward on this path. — SAV-1042
+
+The class remains a single-digest corpus witness (`game0018.sav`) after an
+independent re-run of the population `SAV-1037` already searched (129 paths,
+76 SHA-distinct); no writer path in that population emits a second one. The
+one witnessed record is resolved into a live object by the archive's own
+per-element load loop for the container holding it, through the identical
+typed-reference mechanism named above. — SAV-1043
 
 A SpellTransport, and the child it hands off on delivery, are held alive by
 the same single container every directly-cast PointEffect/AreaEffect uses —

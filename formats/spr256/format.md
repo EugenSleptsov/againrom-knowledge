@@ -55,12 +55,12 @@ does not clamp oversized runs or validate row-control position. — SPR256-062
 c & 0xC0 == 0x00   (0x00–0x3F)  literal      : emit next (c & 0x3F) bytes as indices
 c & 0xC0 == 0x40   (0x40–0x7F)  blank rows   : emit (c & 0x3F) fully-transparent rows
 c & 0xC0 == 0x80   (0x80–0xBF)  transparent  : emit (c & 0x3F) transparent pixels
-c & 0xC0 == 0xC0   (0xC0–0xFF)  == 0x80 (loader aliases it); unused in data  RLE-009/020
+c & 0xC0 == 0xC0   (0xC0–0xFF)  == 0x80 (loader aliases it); unused in data
 ```
 
 The decoder tests `0x00`, then `0x40`, and sends both remaining quadrants
 to transparent skip. Thus `0xc0` is an alias of `0x80`.
-— SPR256-RLE-020, SPR256-RLE-022
+— SPR256-RLE-009, SPR256-RLE-020, SPR256-RLE-022
 
 - In a structurally complete frame, every row reaches exactly `width`,
   the stream produces `height` rows, and all `dataSize` bytes are consumed.

@@ -117,6 +117,18 @@ but its own+0x04 slot was not read by either experiment, so the convention
 is shown for two of the three member classes and remains assumed, not
 shown, for `AreaEffect`. — MAGIC-187, MAGIC-197
 
+A save LOAD puts a rebuilt `SpellEffect`-lineage member into a container reached by the identical displacement formula as this list
+during the archive's own load arm, not in a later pass and not on the first
+Tick. The container-level `Serialize` clears the list, reads a count, then
+resolves each element through the typed archive-reference mechanism and
+appends it with the identical primitive the Tick/Apply-time registrar above
+uses. A separate pass walks the same list again after the whole document
+loads and dispatches each present member's own post-load hook, but that pass
+inserts nothing; whatever it walks was already there. Whether the container
+this load arm reaches and the container the Tick-time registrar reaches are
+the same runtime object, not merely the same displacement formula applied to
+different base pointers, is not established. — MAGIC-202
+
 ## Application
 
 ```
