@@ -129,6 +129,14 @@ this load arm reaches and the container the Tick-time registrar reaches are
 the same runtime object, not merely the same displacement formula applied to
 different base pointers, is not established. — MAGIC-202
 
+The STORE arm of that same container-level `Serialize` writes a count and
+then one generic write call per element, carrying only the element pointer;
+no instruction in the loop pushes a class descriptor, unlike the LOAD arm's
+own per-element resolution. Class identification on a STORE is deferred
+entirely to the generic write call itself, which looks up the element's own
+runtime class through its vtable rather than being told in advance which
+class to expect. — MAGIC-209
+
 ## Application
 
 ```

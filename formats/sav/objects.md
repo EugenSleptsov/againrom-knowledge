@@ -217,3 +217,39 @@ before ROM1 loaded it. Neither the record's own graph position (a direct
 cast, or a nested reference reachable through `SpellTransport+0x48`'s own
 `objref<AreaEffect>` above) nor its fields were decoded; not graded.
 — SAV-1037
+
+For a load-time binding to resolve at all, a writer must have put something
+on the wire for it. The generic archive object writer takes a null pointer
+and a real object pointer down two different paths: null becomes a bare
+zero-value tag with no class information at all; a real object either
+becomes a compact back-reference index, if this exact pointer already
+occurred anywhere earlier in the archive, or, on its own first occurrence,
+the object's own class descriptor followed by a recursive dispatch into that
+object's own Serialize — but only when that class descriptor has not itself
+already been registered by an earlier object or class write anywhere in the
+archive. Objects and classes share one running index counter, not two:
+class registration (`CArchive::WriteClass`) reads, stores into and
+post-increments the identical counter object registration
+(`CArchive::WriteObject`) uses, so a class already written once, by any
+object, is thereafter referenced by every later object of that class as the
+same compact back-reference index a repeated object pointer gets, never a
+second name write; the LOAD side mirrors this in the identical shape for
+both `ReadClass` and `ReadObject`. The same generic mechanism, not a
+container-specific or class-specific one, serves both the container's own
+per-element writes and a SpellTransport's own two child writes. Within the
+five writer/reader bodies this mechanism was traced through, a null
+child and a never-otherwise-assigned back-reference index are the identical
+wire value, by construction of the running index counter's own starting
+point; no other code that writes into that counter, or might reset it
+mid-archive, was searched for, and whether the allocator itself guarantees
+a never-indexed slot's zero value, versus every traced write path merely
+producing that result, is Unknown. Every write call therefore writes
+something; nothing is silently omitted for a null child. — SAV-1047
+
+SpellTransport's own STORE arm calls this generic writer unconditionally on
+both typed child fields, with no null test anywhere in the arm; whichever
+child is absent at STORE time, the writer still runs and still writes the
+null case above, not nothing. The class hierarchy a load-time typed
+reference depends on (SpellTransport is a SpellEffect, one hop) is
+confirmed by a direct read of the class descriptor chain, independent of
+the base-Serialize-call route used elsewhere in this section. — SAV-1048
