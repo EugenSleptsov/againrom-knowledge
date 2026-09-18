@@ -37,6 +37,35 @@ including the one `Serialize`'s LOAD performs, and is not part of any
 null caster immediately after LOAD, independent of whether its own target
 lookup hits or misses. — SAV-1011
 
+The archive's own create/factory dispatch for that LOAD-path construction is
+now traced rather than assumed: `CArchive::ReadObject` resolves the class
+descriptor and calls through its own+0xC field, which, for all four lineage
+classes, reaches the identical base constructor that zero-writes+0x3c — this
+confirms, from the dispatch itself, that LOAD-path construction is one of the
+two constructors already read zero-writing the field, for every class in the
+lineage, not only the one candidate structurally guessed at before. The base
+`Serialize` every concrete body in the family calls first also touches no
++0x3c at any offset in either its STORE or LOAD arm, closing the one level of
+the inheritance chain the per-class `Serialize` reading above did not itself
+check. — SAV-1054, SAV-1055
+
+`PointEffect`'s and `AreaEffect`'s own per-tick attribution tails each
+dereference the recorded caster's own pointee up to three times; the first,
+feeding a "definition" test on the caster's own+0x3c (a different field on
+the caster's own class, not this one), runs with no liveness check on the
+caster performed first, while every later use of the caster in either tail is
+preceded by an explicit caster+0x14 liveness check. The shared Tick driver
+below already runs the identical check on this same field before either tail
+is dispatched at all, so the unguarded read is reached with a stale caster
+only inside the window between the driver's own check for a member and
+that member's own Tick call completing; whether a caster can become invalid
+inside it is Unknown. Neither tail writes+0x3c anywhere in its own body, and a direct-call
+census of the two base constructors that zero-write it finds that every
+direct caller is a construction path. No writer beyond the four already
+known (the two base constructors, `Spell::Apply`, and the Tick driver's own
+conditional clear above) was found in the functions read; no image-wide
+write-site census of the field was run. — MAGIC-217, SAV-1056
+
 `PointEffect::Tick`'s attribution tail dereferences+44 at two unconditional
 sites, with no null guard before either one: the entry dereference, and a
 second one reached when the entry dereference's own virtual call returns

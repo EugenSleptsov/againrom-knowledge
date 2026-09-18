@@ -37,6 +37,12 @@ immediately remaps its trailing raw `+44` key: hit installs the pointer;
 miss writes null. No extra bytes are consumed. Outpost's array has only the
 `CObject` runtime descriptor; its element meanings remain Unknown.
 
+`SpellEffect`'s own row, and the three rows built on it, list every field
+that class family's own `Serialize` touches beyond `Token`'s own head. The
+shared base these rows reach first, `Token::Serialize`, touches only
+Token-head fields; it never touches `+3c`. — SAV-CLASSSER-173,
+SAV-CLASSSER-174, SAV-CLASSSER-175, SAV-1054
+
 `Effect_DirectDamage`'s raw 24 bytes at `+48` are not a separate shape: the
 same constructor family that builds the [attack block](actors.md#unit-programme)
 at live `+a6` and base `+114`, and the same resolver pair that reads the
@@ -52,8 +58,14 @@ reloaded effect's damage triple is frozen at save time regardless of which
 construction path built the object. `+16/+17` have no located writer beyond
 the shared constructor's own partial zero-init and no located reader at
 all. The class's descriptor creator field (`SAV-TOKENLOAD-093`) is a bare
-wrapper around the same constructor a live cast uses directly; the archive
-dispatch that reads that field during LOAD is not traced (`SAV-1011`). One
+wrapper around the same constructor a live cast uses directly. The archive's
+own dispatch mechanism that reads a class's creator field during LOAD is
+traced generically for the `SpellEffect` lineage — `CArchive::ReadObject`
+resolves the class descriptor and calls through its own `+0xC` field
+(`SAV-1055`) — but `SAV-1055`'s own raw descriptor-dword read does not cover
+this class's own descriptor, so that generic mechanism is corroborated for
+`Effect_DirectDamage` only by `SAV-TOKENLOAD-093`'s own separate reading,
+named above. One
 corpus-witnessed record (n=1 of 31 SHA-distinct preserved saves) agrees:
 `+00`/`+0e..+12` are `0x00`, `+13/+14/+15` are `0x04/0x04/0x01`, and
 `+16/+17` hold nonzero save-time heap residue, `0xc6/0x02`.
