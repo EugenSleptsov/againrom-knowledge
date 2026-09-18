@@ -200,17 +200,31 @@ raised by one in the node allocator, lowered by one in the node freer, and retur
 class's own `GetCount`. The `AddTail` behind `AddMember` is taken on the group itself, so the
 counted list is the group's base and not the patrol list embedded at `group + 0x20`.
 
-**The removal is per SUB-tick, not per full tick, and it comes after the script pass.** The
-sub-tick body ticks every actor on the on-map list and, for one whose tick left it dead
-(`actor+0x54 == 0x10`), removes it from its group **before** unlinking it from the world and
-appending it to the dead list. The tick driver takes the phase from `server+0x04` before the
-sub-tick increments it, so on the phase-6 iteration the whole script pass runs first and the reap
-follows in the same iteration. A member that dies during the script pass is gone from the group
-by the end of that sub-tick, and the next pass is sixteen sub-ticks away: **no pass ever sees a
-corpse in a group.**
+**The removal is per SUB-tick, not per full tick, and it comes after the script pass — but its
+own trigger is teardown, not death.** The sub-tick body ticks every actor on the on-map list and,
+for one whose own per-tick routine has just torn it down (`actor+0x54 == 0x10`), removes it from
+its group **before** unlinking it from the world and appending it to the dead list. The tick
+driver takes the phase from `server+0x04` before the sub-tick increments it, so on the phase-6
+iteration the whole script pass runs first and the reap follows in the same iteration. A member
+torn down during the script pass is gone from the group by the end of that sub-tick, and the next
+pass is sixteen sub-ticks away: **no pass ever sees a torn-down actor in a group.**
 
-The population checks read current list membership. Death removal updates that
-list in the same sub-tick, before the next script pass.
+The population checks read current list membership. Teardown removal updates that list in the
+same sub-tick, before the next script pass; death alone does not — a merely dying actor's own
+per-tick routine force-clears `actor+0x54` to `0`, never to `0x10`, on every tick it is not yet
+torn down (`HERO-DYINGTICK-145`).
+
+**The population checks and the group's own order-issuing arm read the identical list, so both
+see a dying (corpse-stage) member for the whole dwell between the killing blow and teardown, not
+just the sub-tick death lands on.** The removal test this section cites (`actor+0x54 == 0x10`) is
+the reap sweep's own trigger, and it is teardown, not death. `group + 0x0c` (check 1's own field,
+above) is the same `CObList` the order-5 per-member arm walks — count `[ebp+0xc]`, head `[ebp+4]`
+inside `FUN_005371e0` — so a dying member counted by check 1 or check 8 is the same member the
+order machinery still walks, and while that arm's own candidate-list gate is open it keeps
+rewriting the member's own pending-order byte once every full tick with no test of its health or
+death stage (`AI-332`). "No pass ever sees a [torn-down actor] in a group" therefore holds only for
+teardown; a merely dying, corpse-stage member is present and reachable, by both the population
+checks and the order machinery, for the same window — until teardown, not until death.
 
 Two lifetime rules go with it. An emptied group is **destroyed** when its owning player's
 `+0x28` is zero (a human participant) and **kept** otherwise, so a scenario group survives its

@@ -208,6 +208,27 @@ Stage zero admits key repair in the fresh order object for
 class/lifetime checks. Other stages skip that repair. — SAV-ACTORINPUT-547,
 SAV-HUMRESUME-460
 
+The repaired list excludes both the pending-order byte `ord+0x08` and the order-progress byte
+`ord+0x09`; neither is touched by stage zero's own repair or by any other located LOAD-side
+writer, and `Order::Serialize` copies its own fixed-size block through one raw archive
+read/write pair, so a saved value at either offset sits unchanged after LOAD. A dying,
+not-yet-torn-down actor (signed `+94 <= 0`, stage `+13c != 0`, `+54 != 0x10`) carries `ord+0x08`
+confined to `{0x00, 0x0b}` and `ord+0x0c` zero across the permitted archive's own 48 such
+records — 59 saves read from 7 of the eleven pinned directories, 4 original and 44 ROM1 resaves
+of Againrom-produced/modified documents (`SAV-1059`) — because the per-tick routine's dying
+branch never reaches the order machine that would otherwise consume either field, on any dying
+tick. A crossing actor is action state `+54 == 1` **and** order-progress `ord+0x09 == 3`
+together, not state `1` alone: `MOVE-STEP-040`'s own progress-3 arm is what sets state 1 for a
+transit, and state `1` is also the arrival state of two idle-turn order arms at a different
+progress value. It carries its own attack-cycle countdown `actor+0x6c` — an actor
+field, outside this repaired order-object list regardless — cancelled, not frozen: every
+state-`1` tick stores the attack sub-phase `+58 = 0` and never reaches the dispatch span that
+reads or advances `+6c`, so a crossing actor's own countdown sits stale through the crossing and
+is overwritten, not resumed, at the next charge start. Of the permitted archive's alive
+population, 38 state-1/progress-3 (crossing) records exist, and every one carries
+`actor+0x6c = 0`: the corpus holds no example of a crossing actor with a live countdown. —
+HERO-DYINGTICK-145, HERO-CROSSHOLD-146
+
 Exact Humanoid's null definition is not established as safe: its shared Unit
 `vt+58` uses `+3c+8` without a local null guard. Exact-class acceptance, loaded
 reach and the first frame/move/save chronology remain Unknown.

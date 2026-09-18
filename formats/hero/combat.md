@@ -154,6 +154,23 @@ an order also requires the actor to be FACING the target before state 3 is enter
 out of reach -> a move-to-actor order and state 1; the strike sub-phases run only in state 3
 ```
 
+**State 1 and state 3 are mutually exclusive, and a crossing tick cancels the attack-cycle's
+own phase rather than freezing it.** The order machine's own crossing arm forces
+`actor+0x54 = 1` unconditionally while a cell boundary is being crossed and clears it to `0`
+(idle), not directly to `3`, on arrival. Every state-`1` tick's own walk handler stores the
+attack sub-phase `actor+0x58 = 0` before jumping to the shared tail, without ever executing an
+instruction inside the span holding all six of state `3`'s own `actor+0x6c` writers, so a
+crossing tick cannot itself read or advance the countdown. That `+0x58 = 0` store cancels the
+phase: the sub-phase switch's own `0` arm never reads `actor+0x6c` on any later tick either — it
+either exits untouched or starts a fresh charge, which overwrites `actor+0x6c` with a new base
+before anything else reads it. So the countdown's old value sits stale through a crossing and is
+overwritten, not resumed, at the next charge start. A crossing actor is action state `1` **and**
+order-progress `3` together, not state `1` alone (`MOVE-STEP-040`'s own progress-3 arm is what
+sets state 1 for a transit; state `1` is also the arrival state of two idle-turn arms at a
+different progress value). Of the permitted archive's alive population, 38
+state-1/progress-3 (crossing) records exist, and every one carries `actor+0x6c = 0` — the corpus
+contains no example of a crossing actor carrying a live countdown (`HERO-CROSSHOLD-146`).
+
 The start routine itself does **not** reject out-of-reach targets: it computes distance for
 extra delay. Application rechecks reach (`HERO-CADENCE-115`, `UNIT-STRUCTREACH-063`). The
 Building branch reads only combat bytes `+0x13/+0x14`, with a positive-spread gate and flat

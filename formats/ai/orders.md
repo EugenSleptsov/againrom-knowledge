@@ -121,6 +121,26 @@ rate, the order machine executes it at cell rate.
 | `0xf` | reach `ord+0x0a` within `ord+0x14`, then `actor+0x54 = 0xf` | the cell, `ord+0x14` |
 | `3`, `0xd`, `0xe` | empty — the switch's own default | — |
 
+**`FUN_005310e0` (this table's own dispatcher) never runs while an actor is dying.** The per-tick
+routine's dying branch exits through its own shared tail before reaching the four instructions
+that call it, on every tick from the first health-`<=`-0 tick to teardown, not only the first
+(`HERO-DYINGTICK-145`). So `ord+0x08` on a dying actor is not frozen at whatever this table's own
+machine last wrote it to: while a group order-5's own candidate-list gate is open, its per-member
+arm keeps rewriting `ord+0x08` once every full tick regardless — for a member with no
+group-assigned target, `0xb` (this table's own idle row) when the owning player is a non-human
+participant, or a call into the heal AI (with no `ord+0x08` store on that path) when the owner is
+a human participant; a member that does carry a group-assigned target goes through the
+pursuit/engage writer (`5`/`6`/etc., this table's own rows) instead — with no test anywhere in
+either arm of the receiving member's own health or death stage (`AI-332`). The arm writes no
+literal `0`. Group membership does not end at the health threshold this table's own state
+machine reacts to: a dying actor stays a walked member until teardown, not until death (`AI-332`).
+The permitted archive's own dying population — 59 saves in 7 of the eleven pinned directories, 4
+original and 44 ROM1 resaves of Againrom-produced/modified documents (`SAV-1059`) — is confined
+to `{0x00, 0x0b}` for `ord+0x08`, with every `0x0b` in the resave population and every original at
+`0x00`; `0x0b` matches the non-human-participant, null-target branch's own direct store,
+consistent with that on the resave population only. No dying record in that corpus carries `5` or
+`6`, though the mechanism argument above does not depend on that absence.
+
 The in-position test that `5`, `6` and `8` share is **not** a centre-to-centre distance: it is the
 actor's current facing equal to the 8-way direction to the target, **and** an edge-to-edge distance
 that subtracts both token sizes, so two touching actors measure 1. Reach is re-read from
