@@ -66,6 +66,24 @@ known (the two base constructors, `Spell::Apply`, and the Tick driver's own
 conditional clear above) was found in the functions read; no image-wide
 write-site census of the field was run. — MAGIC-217, SAV-1056
 
+The caster this "liveness" check reads is, per its own established naming, a
+`Unit`/`Human` object in the general case, and its own `+0x14` is the same
+field `Token`'s wire format carries on every class in this family — but at
+least one cast path (the building-associated type9 arm) constructs a distinct
+`VirtualCaster` object instead and copies its own `+0x14` from the source
+Building's own `+0x14` at construction, so the caster's own concrete class is
+Unknown in general, not established as `Unit`/`Human` by any cited row. A
+runtime writer does zero an already-constructed object's own `+0x14`, inside
+a removal/detach routine distinct from every construction path and from every
+function the combat-death teardown traces; `+0x14` is therefore not
+exclusively a construction-time default, and whether that runtime zero is the
+same owning-Player field cleared on removal or a liveness-adjacent meaning is
+Unknown — this does not discriminate between the two, and is graded Unknown,
+not Medium. Across 70 admitted saves, every saved `Human`/`Unit` owner
+reference is resolved, none zero; this is compatible with either meaning of
+the constructed/removed zero, not itself discriminating. — MAGIC-219,
+SAV-1058
+
 `PointEffect::Tick`'s attribution tail dereferences+44 at two unconditional
 sites, with no null guard before either one: the entry dereference, and a
 second one reached when the entry dereference's own virtual call returns
@@ -86,6 +104,25 @@ Whether a load-time identity repair miss (leaving+44 null on an already-live
 PointEffect) is reachable by any admitted native save/load population, and so
 whether either unconditional site can actually fault, is Unknown. —
 MAGIC-TARGETID-182, MAGIC-TICKGATE-183
+
+`PointEffect`'s own tail reads `+0x14` five times, not three, and
+`AreaEffect`'s own tail three: an early, unrelated read on the object the
+attached `Effect` payload's own `+0x44` points at (`PointEffect` only,
+clearing that reference when zero); the guarded read proper, on the cached
+target copy, at the site the null check on that copy immediately precedes;
+the caster's own `+0x14`, twice, gating the credit write and the final notify
+call; and, in `PointEffect`'s own tail only, one further, independent read of
+the target's own `+0x14` immediately before the final notify call. The
+guarded read and this further target read are both the target `Unit`'s own
+owning-Player field — the same field and meaning already established for the
+actor path generally, not a field on `PointEffect` or on the caster.
+`Token`'s own copy constructor is also a located reader of the six classes'
+own `+0x14`, copying a source object's own field into the object under
+construction. `UNIT-OWNER-009` is partially retracted for treating its value
+space as a universal authorship bound; the identification this cites
+(`actor+0x14` names the owning `Player`) is the retained
+local-ownership-chain reading, not the retracted universal claim. — SAV-1060,
+UNIT-OWNER-009
 
 `AreaEffect`'s own+44 (a typed inner Effect reference) and `SpellTransport`'s
 own+44/+48 (`SAV-CASTCONT-1006`) are consumed through the standard typed

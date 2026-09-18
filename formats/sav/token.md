@@ -26,6 +26,31 @@ Unit calls Token without adjusting `this`. The mask is not a class discriminator
 SAV-636, SAV-653, SAV-654, SAV-678, ITEM-VALUE-115,
 SHOP-CONSUME-073
 
+`+14`'s "actor owner" meaning is established for the actor (Unit/Human) path
+by a spawn/placement-time assignment writer, not by construction: Token has
+four own constructors, not two — two zero-constructors, a copy constructor
+and an owner constructor — and every construction path traced for the
+`SpellEffect`/`Effect` lineages (`SpellEffect`, `PointEffect`, `AreaEffect`,
+`SpellTransport`, `Effect`, `Effect_DirectDamage`) reaches one of these four;
+the two zero-constructors write the field to zero, the copy constructor
+copies it from a source object, and the owner constructor writes it from an
+argument. `Unit`'s own constructors reach the same shared layer and write no
+`+0x14` of their own. A separate runtime writer, outside every construction
+path, zeros an already-constructed object's own `+0x14` inside a
+removal/detach routine — so the field is not exclusively a construction-time
+default, and whether that runtime zero is the same "owner" meaning cleared
+on removal or a liveness-adjacent meaning is Unknown. Over the full current
+admitted save corpus, nonzero is observed only on `Effect` (18 of 192
+instances, one save, an independently confirmed original) and resolves,
+every instance, to the `Human` object that structurally contains that
+`Effect` — reached through an equipped `Armor`, `Weapon` or `Shield` record
+in that `Human`'s own body — a self-referential owning-actor back-pointer,
+not a `Player` and not the separate `SpellEffect+0x3c` caster field. Four of
+the other five classes show one saved instance each, all the constructed
+zero (one of the four drawn from a ROM1 resave of a produced document rather
+than an unmodified original); `SpellEffect` has no record in the admitted
+corpus at all. — SAV-1058, SAV-1059, SAV-1060, MAGIC-219
+
 ## Position
 
 | Position offset | Type | Meaning |
