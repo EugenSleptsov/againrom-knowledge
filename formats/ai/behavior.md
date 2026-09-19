@@ -21,7 +21,7 @@ defines what each arm does.
 | 1 | **guard**: build the list, clip it to the notice radius around the group centroid, score it, engage; a targetless member walks back to **its own post `ord+0x00`** (not the centroid) and, once there and idle, takes the idle-turn order `ord+0x08 = 0xb`. This is the order the load walk gives **every other** player's groups |
 | 2 (`Swarm`) | build the list, score it, then per member: engage the scored target; else walk to the commanded cell `grpAI+0x0a` if not already standing on it and idle; else cast (scenario owner) or run the heal AI (a human participant's unit). **No formation and no spread** |
 | 3 (`Stand Ground`) | **stand ground**: build the list with **no radius clip**, score it with the *reach-bounded* scorer, engage what is already in reach and otherwise turn on the spot. There is no walk anywhere in the arm. This is the order the load walk gives the **player's own** groups |
-| 4 (`Move`) | walk each member to **its own** `ord+0x0a` — the arm ignores the cell the dispatcher passes it; the destination arrives from the command's setter. On arrival: stop, clear the route list, set the stop distance to the member's reach, re-acquire |
+| 4 (`Move`) | walk each member to **its own** `ord+0x0a` — the arm ignores the cell the dispatcher passes it; the destination arrives from the command's setter. On arrival: stop, clear `mover+0x90`, set the stop distance to the member's reach, re-acquire |
 | 5 (`Swarm 2`) | **arm 4 with a pre-emption.** The arm builds the candidate list and reads its element count, `AImanager+0xbb4`: **zero — nothing visible — and it tail-calls arm 4 with both arguments forwarded**; non-zero and it runs 2's body without the walk. The command's setter is arm 4's setter to the byte (one immediate apart), so the per-member state the fallback runs on is arm 4's own. **A vetoed group is not the same as a blind one:** candidates present but all vetoed by the preference matrix leaves every `ord+0x20` at 0 inside this arm, and both of its zero-target branches — idle turn plus optional cast, or the heal AI — **stand still** |
 | 0x11 (`Roam`) | keep a Group-AI cell in `grpAI+0x0a`; re-roll when the farthest member's distance is **< 10** or byte counter`+0x15` is **> 50**, by stepping **20 cells** in one of eight random compass directions and rejecting anything outside the playable rectangle; reset the counter on acceptance, call arm 5 evaluation and increment the counter after normal return |
 | 0xff | forced when the group is empty: run the standing acquisition for each member |
@@ -33,14 +33,36 @@ not a proved copy into member destinations. Swarm2 forwards the cell only on
 its zero-candidate Move fallback; Move ignores that argument and uses each
 member's current `ord+0x0a`. Reached movement can depend on member order and
 called helpers. These bodies establish neither guaranteed wandering motion
-nor absence of all other wander paths. — AI-ROAM-025, AI-SWARM2GATE-107,
-AI-MOVE-023
+nor absence of all other wander paths. (`AI-MOVE-023`'s own gloss for one field
+this Move arm reads, `mover+0x90`, is superseded — see the occupied-destination
+paragraph below.) — AI-ROAM-025, AI-SWARM2GATE-107, AI-MOVE-023
 
 Group order 2 has three named producers: the script Swarm subcommand and
 the routines at `00538250` and `00534680`. Callers of the latter two routines
 remain Unknown. Pursuit, cast and pickup use the per-actor order field
 `ord+0x08`; they are not values written to the group-order field by the
 player-command or script-authoring paths. — AI-ORDER-031, AI-ORDER-294
+
+When a Move member's own `ord+0x0a` destination is occupied by another actor
+but not itself impassable, the arm's own arrival test is not reached true by
+the ordinary path: the static search behind the walk is occupancy-blind and
+resolves the route onto the literal occupied cell as it would any open one,
+so the member's own cell never equals it and the same move re-issues every
+tick — except in the race `MOVE-WAIT-008` names, where two units whose
+dynamic routes were computed before either claimed the cell can both end up
+standing on it, and the arm latches normally there. Nothing directly measures
+how long the destination has been occupied; the only path that can still end
+the wait is the walk arm's own periodic dynamic re-search (`FUN_00549a90`),
+which can raise the give-up flag, but only near a route's own end and only
+when its own inner search comes back empty against the goal — whether that
+happens for an isolated occupied-but-open cell is Unknown, not excluded. An
+impassable destination is a different mechanism, not a worse case of the same
+one: the static search's own substitution step tries a labelled cell near the
+goal first, and the member walks to and latches at that substitute; only when
+no such cell exists does the search's own resolved endpoint collapse onto the
+actor's current cell, and only then does the arm's tail treat the very next
+tick as an arrival, against the collapsed cell, not the requested one. —
+AI-335, MOVE-072
 
 The **actor state** (`actor+0x50`) is a 27-arm switch. **Its value at construction is `0xb`, guard.**
 The arms a consumer needs:
@@ -79,7 +101,9 @@ first list ends up empty **the whole second list is moved back**. A group that c
 therefore has a candidate list and will attack one.
 
 **5. Score, assign, and forget.** Each member is given the cheapest candidate in `ord+0x20`, or 0.
-This happens on every evaluation: there is no memory of last tick's target anywhere.
+This happens on every evaluation: there is no memory of last tick's target anywhere. On an exact
+cost tie the **first**-scanned candidate keeps the assignment — the opposite convention from
+standing acquisition's own tie rule (`AI-340`).
 
 **6. The list's element count is a decision input, and it is read at two widths.** Group order 5
 branches on the full dword `+0xbb4`; the scorer tests only its low byte, as it does for the group's
@@ -155,6 +179,21 @@ multiplayer load.
    no class varies it.
 4. With nothing to fight: away from the post, walk back; at the post, run the standing acquisition.
 
+**Which survivor is engaged starts from distance to the post, not from any authoring or
+diplomacy order, but "the first survivor" is a list head, not always the nearest.** The
+occupancy-block builder visits candidate cells by increasing Chebyshev ring outward from the
+post; within a ring the four edges interleave per cross-axis offset rather than running edge by
+whole edge, so a smaller-radius candidate always precedes a larger-radius one, but among
+candidates tied at the same ring distance the append order is the interleave, not a clean
+south/north/east/west block (`AI-336`). A cell qualifies by the **static** plane's own bit-5
+"a cell record exists" test, not a dynamic-plane occupancy read, and the enumerated actor is the
+cell record's own `+4` slot. Neither the block builder nor its diplomacy filter tests health or
+dying stage, so a body not yet torn down stays list-eligible; the selector itself
+(`FUN_0052e940`, read whole by `AI-332`) engages the list head with no health test on its own
+default path, so a dying-but-not-torn-down candidate there is engaged ahead of a living hostile
+placed later in the interleave — three named exceptions (a low-reach human-owned mage, a
+threat-cache draw, an AI-owned mage's own cast check) leave that default path (`AI-337`).
+
 **This is what ends a pursuit.** Nothing inside a pursuit order measures elapsed time, health, or
 the distance the pursuer has covered; the decision is re-taken from scratch every group tick, and
 its only geometric input is *post to target*. Back a target out of the 5-cell block and the actor
@@ -169,7 +208,17 @@ set before the first tick ran.
 
 The second terminator is the route search: when it returns an empty path the mover sets
 `mover+0x98`, and the order-progress epilogue cancels the order and re-acquires within **reach**.
-A consumer that omits this will leave units frozen against unreachable targets.
+A consumer that omits this will leave units frozen against unreachable targets. The pursuit's own
+walk routine has no `MOVE-WAIT-008`-style wait state for a step refused only by another body
+standing on the destination cell — three named exits skip its own stepper call instead (not
+centred; already within stop distance; the current route already matches both stored endpoints) —
+and its own direct static-search failure setter fires only on a total search failure, the same
+self-collapse the Move arm's own occupied-destination paragraph above describes. But the same
+routine also calls the dynamic-plane re-search that can raise `mover+0x98` through the gate that
+paragraph names, aimed this time at the target's own contact ring rather than a single cell, so
+"never on mere occupancy" does not hold in general: what a pursuit held because every approach to
+the target is occupied (an escorted target, for instance) actually does is Unknown, not identical
+to an ordinary in-progress walk (`MOVE-073`).
 
 This actor guard path does not define the Group Roam program above. An unordered actor stands on its post
 until something hostile comes into the block around that post. Guard is the whole of motion for a

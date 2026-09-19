@@ -16,7 +16,9 @@
 4. **Selection.** Minimise the footprint-aware edge distance `d` (1 = touching), with `d + 1`
    for a flying candidate when the decider does not fly; break ties on the 16-way turn cost from
    the mover's current facing. Seed the best distance at `reach + 1`, and **discard the winner
-   if its distance exceeds `actor+0x12c`**.
+   if its distance exceeds `actor+0x12c`**. On a full tie — identical distance and identical turn
+   cost — the **later**-scanned candidate replaces the earlier one, the opposite convention from
+   the group-level scorer's own first-wins tie rule (`AI-340`).
 5. **Outcome.** A winner sets `order+8 = 6`, `order+0xc = target`, `order+0x14 = reach`. No
    winner: a human participant's unit tries to heal; an AI-owned unit goes to the guard state,
    which walks it back to its post whenever it is farther from the post than `actor+0xa5`.

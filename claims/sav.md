@@ -705,3 +705,12 @@ evidence, without a SAV-prefixed row of their own — `formats/sav/actors.md` al
 cites non-`SAV`-prefixed IDs freely, so no SAV-stem row was needed to update it. A
 returned range stays retired; the next free `sav.md` id is therefore past it, at
 `SAV-1064`.
+
+`EXP-0386` was allocated ids `1064`..`1065` of `claims/sav.md` (2 ids) and spent none.
+**`SAV-1064`..`SAV-1065` (2 ids) are returned unused**, none ever reissued: Part 2's
+own guard-post/SAV-coverage question (the brief's Q7) is answered entirely by
+citation — `AI-GRPGUARD-074`, `AI-POST-095`, `AI-POST-097`, `AI-LOAD-099`,
+`AI-GUARD-021`, `AI-PATROL-018`, `AI-SIGHT-006` and `SAV-PATROLCURSOR-571` already
+give the complete field/routine/tick account this experiment's own read set adds
+nothing to (`AI-337`, `claims/ai.md`), so no SAV-prefixed row was needed. A returned
+range stays retired; the next free `sav.md` id is therefore past it, at `SAV-1066`.
