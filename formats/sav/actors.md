@@ -229,6 +229,13 @@ population, 38 state-1/progress-3 (crossing) records exist, and every one carrie
 `actor+0x6c = 0`: the corpus holds no example of a crossing actor with a live countdown. —
 HERO-DYINGTICK-145, HERO-CROSSHOLD-146
 
+A creature's three class-spellbook slot pairs (`ord+0x78`..`+0x8c`, [MAGIC](../magic/casting.md),
+`AI-341`) sit inside `Order::Serialize`'s own raw `0x94`-byte span but are not among the
+key-repaired offsets above, so LOAD carries whatever the archive stored there unrepaired. No writer
+other than `FUN_004f59de`'s spawn setup and `Order::Serialize`'s own raw LOAD copy was found; the
+disambiguation covers the AI module — so the carried value and a hypothetical class-derived rebuild
+are currently byte-identical whenever nothing else has changed the slots since spawn (`SAV-1066`).
+
 Exact Humanoid's null definition is not established as safe: its shared Unit
 `vt+58` uses `+3c+8` without a local null guard. Exact-class acceptance, loaded
 reach and the first frame/move/save chronology remain Unknown.

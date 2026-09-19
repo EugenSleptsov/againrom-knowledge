@@ -226,18 +226,74 @@ stale latch, then repeats. With a zero latch, refusal continues to be attempted 
 
 ## AI cast selection
 
-Only a **mage** reaches the choice (`actor+0x4c & 4`, plus `[actor+0x14]+0x28 != 0`), and then:
+**A creature can reach a cast through two of at least four independent mechanisms, not only the
+Mind-gated mage check below.** The two this page traces are the engage selector's own three-slot
+loop and the Mind-gated walk. Two more are already published elsewhere: the defender's own Heal
+path (`FUN_0052d600`, `AI-FOLLOWHEAL-118`) and `FUN_0052ed30` → `FUN_0053e840` (`AI-340`);
+`FUN_0052eb60`, which calls `FUN_0052eea0` twice, has not been read at all (`EnumRefs
+callto:52eea0`: 13 hits / 8 owners).
+
+For an actor without the mage bit, the engage selector's own three-slot loop over
+`ord+0x78`/`+0x7c`/`+0x80` (each paired with a probability dword at `ord+0x84`/`+0x88`/`+0x8c`) is
+unconditional inside `FUN_0052e940`; a mage-bit actor with reach `< 2` and owner `+0x28 == 0` skips
+it instead (`AI-341`). The loop draws one independent `rand()` per non-empty slot and compares it
+against that slot's own stored threshold — the threshold is the class's Probability column scaled
+by 327 (`UNIT-SPELL-007`), so a slot's own match probability is `P = p·327/32768` (99.8 % at
+`p = 100`) — a match short-circuits straight into the cast dispatcher (`FUN_0052e6d0`) with the
+slot's spell id; no mage bit, no Mind gate, no mana or `Defensive` filter, and the loop always runs
+all three slots so a later slot's match can overwrite an earlier one (`AI-341`). These three slots
+are not a separate cache: they are the same class-spellbook columns ([UNIT](../unit/format.md),
+`UNIT-SPELL-007`) every one of the twelve spellbook classes carries, set once at spawn; within the
+AI module, no writer other than that spawn setup and `Order::Serialize`'s own raw LOAD copy on a
+SAV load was found (`AI-341`, `SAV-1066`). Of the twelve unit classes `FUN_004f59de` sets up, only
+Dragon and Daemon receive the mage bit there that can reach the second mechanism below; a Human
+with positive streamed `ManaMax` also carries the same bit through a different writer
+(`HERO-CLASS-013`, `MAGIC-AI-012`). Only when the loop finds no match does the actor fall through
+toward the mage-only choice.
+
+Only a **mage** reaches that choice (`actor+0x4c & 4`, `[actor+0x14]+0x28 != 0`, and a non-null
+target after acquisition, `0052ea33`), and then:
 
 ```
-if (Mind > 59 and rand()*100/0x8000 < 30):  hand back to the action dispatcher, cast nothing
+if (Mind > 59 and rand()*100/0x8000 < 30):
+        re-run the engage selector (FUN_0052e940) in full; this call itself orders nothing, but
+        the re-entered call can find a slot match, or reach this same branch again and recurse
 otherwise, over ids 1..28 through Spellbook::Get:
         keep a spell iff  ManaCost <= current mana  AND  Defensive == 0
-        pick one uniformly, order it
+        if the kept list is non-empty: pick one uniformly, order it
+        if it is empty: cast id 28 (Slow) anyway if the spellbook holds it — unfiltered by mana
+                or Defensive, because it is only the walk's own last-tested id, not a deliberate
+                fallback spell — otherwise cast nothing
 ```
 
-So **a monster never casts a defensive spell**, never chooses by school, skill or power, and Mind
-above 59 makes it cast *less often*, not better. `0x8000` is the AI class's own RNG range, so both
-rolls are exact.
+So **a monster never casts a defensive spell** through the ordinary pick, never chooses by school,
+skill or power, and Mind above 59 makes it cast *less often*, not better. `0x8000` is the AI
+class's own RNG range, so both rolls are exact. The "hand back" branch re-runs the engage selector
+rather than simply returning, so this tick can still end in a cast through that selector's own slot
+loop, or recurse into the same Mind-gated choice again. The "otherwise" branch is a second,
+independent cast attempt over the full spellbook (not the three slots above) that can itself issue
+an order (`MAGIC-AI-012`).
+
+The two mechanisms do not share one choke point. `FUN_0052e6d0`'s own 28-entry jump table
+(`0x52e8c4`, keyed by spell id) sends 16 of its 28 ids to the shared writer `FUN_0052eea0`, which
+writes `ord+0x08 = 8`, the Spell pointer at `ord+0x30`, and the target at `ord+0x28` (`MAGIC-221`) —
+the same fields [ORDERS](../ai/orders.md) documents for a player-issued cast; 10 ids reach a kind-9
+order (`ord+0x08 = 9`, target's own cell at `ord+0x3c`) that `FUN_0052e6d0` writes itself, bypassing
+`FUN_0052eea0`; the remaining 2 ids write no order at all, only `ord+0x60 = 1`. A null
+`Spellbook::Get` lookup writes nothing, not even `ord+0x60` (`MAGIC-221`). The per-slot loop's own
+match reaches this table through `FUN_0052e6d0`; the Mind-gated walk's own match bypasses
+`FUN_0052e6d0` entirely and calls `FUN_0052eea0` directly, so it can only ever produce a kind-8,
+target-actor order — never the kind-9, target-cell order the slot path's own table arms can
+produce for the identical spell id (`MAGIC-221`).
+
+Parity with a player-issued cast is Medium at best, and execution past order-write was not traced.
+One difference is visible without tracing execution: every creature cast writes `ord+0x60 = 1`
+(`0052e8b0`, `0053e735`, `FUN_0052d600` per `AI-FOLLOWHEAL-118`), which the player command state
+arms at `0x52d08e`/`0x52d0ab` do not, and no published row names a reader of `ord+0x60`. The slot
+path also issues its order with no mana test at selection, unlike the Mind-gated walk and
+`FUN_0052d600`. Whether a creature's cast is otherwise charged, cooled down or range-checked the
+same way as a player's is Unknown; `ord+0x60` and the slot path's own missing mana test are named
+here as untraced differences, not confirmed absences (`MAGIC-AI-012`, `MAGIC-221`).
 
 ## Mind and Spirit
 
