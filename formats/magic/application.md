@@ -29,7 +29,10 @@ later repairs and first-consumer chronology remain Unknown. — SAV-909, SAV-910
 writes its second argument straight into+44, and that field is the raw dword
 `PointEffect::Serialize` stores/repairs (`SAV-CLASSSER-174`). Identity repair
 happens once, inside `Serialize`'s own load arm; the class's separate post-load
-hook never re-touches+44. — SAV-1010
+hook never re-touches+44. SAV-1010's target-registration gloss is retracted:
+the constructor's `005449b0` call copies target Position into the effect's
+Position; it is not list registration. The target store/repair remains valid.
+— SAV-1010, SAV-1068
 
 `SpellEffect`'s own+0x3c (caster) is zero-written by every construction,
 including the one `Serialize`'s LOAD performs, and is not part of any
@@ -82,7 +85,8 @@ Unknown — this does not discriminate between the two, and is graded Unknown,
 not Medium. Across 70 admitted saves, every saved `Human`/`Unit` owner
 reference is resolved, none zero; this is compatible with either meaning of
 the constructed/removed zero, not itself discriminating. — MAGIC-219,
-SAV-1058
+SAV-1058 (partially retracted only for the SpellEffect-to-Token constructor
+identity; the `+14` stores cited here remain valid)
 
 `PointEffect::Tick`'s attribution tail dereferences+44 at two unconditional
 sites, with no null guard before either one: the entry dereference, and a
@@ -103,7 +107,28 @@ not inspect+44. Nothing downstream repeats the target-specific check.
 Whether a load-time identity repair miss (leaving+44 null on an already-live
 PointEffect) is reachable by any admitted native save/load population, and so
 whether either unconditional site can actually fault, is Unknown. —
-MAGIC-TARGETID-182, MAGIC-TICKGATE-183
+MAGIC-TARGETID-182, MAGIC-TICKGATE-183 (partially retracted for the Position
+registration gloss and delivery-admission wording; the target gate remains valid)
+
+### Direct cast-admission field sources
+
+The selected PointEffect caller writes its own `+0c` from Spell `+08`,
+`+0e=2*(Spell+08)+9`, and `+41=1` exactly when cached Spell `+0a` is zero.
+Delivery 1 appends this object. Delivery 2 constructs a SpellTransport whose
+Position source is caster Position and whose `+44` holds the child; it
+appends the transport. The selected transport constructor keeps `+48=0`.
+No direct transport caller store copies the child's `+0c/+0e/+40/+41` into
+the transport. Its inherited `+0e/+40/+41` stores are `0/0/1`; its own
+`+0c` and both objects' `+08` remain without direct assignment in this graph.
+— MAGIC-225, SAV-1068, SAV-1069, MAGIC-ATTRGATE-118, MAGIC-215
+
+Other delivery values skip wrapping and registration after child construction
+has already happened. MAGIC-TICKGATE-183's former no-construction wording is
+retracted for that suffix. The direct registrar links a payload pointer
+without dereferencing it. These results cover the two selected cast
+constructors and their direct admission windows; allocator behavior, arbitrary
+aliases, unexpanded helper callbacks and later writes before first SAVE
+remain Unknown. — MAGIC-225, MAGIC-TICKGATE-183
 
 `PointEffect`'s own tail reads `+0x14` five times, not three, and
 `AreaEffect`'s own tail three: an early, unrelated read on the object the

@@ -49,7 +49,28 @@ not a `Player` and not the separate `SpellEffect+0x3c` caster field. Four of
 the other five classes show one saved instance each, all the constructed
 zero (one of the four drawn from a ROM1 resave of a produced document rather
 than an unmodified original); `SpellEffect` has no record in the admitted
-corpus at all. — SAV-1058, SAV-1059, SAV-1060, MAGIC-219
+corpus at all. SAV-1058 is partially retracted for claiming both SpellEffect
+bases call the first Token constructor; its two Token `+14` zero stores
+remain valid. — SAV-1058, SAV-1059, SAV-1060, MAGIC-219
+
+## PointEffect and SpellTransport cast construction
+
+The selected PointEffect chain reaches Token `004f241e`; the selected
+SpellTransport chain reaches Token `004f24d4`. Both reach the three-field
+Token reset and zero `+14`. Their direct constructors do not write Token
+`+08` or `+0c`. The embedded-list construction at `+20` does not overlap
+those fields. The shared SpellEffect layer writes type word `+0e=0`.
+These are direct instruction facts, not universal first-SAVE values.
+— SAV-1068
+
+PointEffect copies target Position through `005449b0`; SpellTransport copies
+its Position argument through `00544980`. The native transport caller passes
+caster Position. Both copy `+00..+05` and `+08..+0b`, leaving destination
+Position `+06/+07` untouched. Token's saved-address key is the allocation's
+address, not a constant field default. Allocator contents, alias/callback
+writes and changes before the first SAVE remain Unknown. Direct admission
+fills PointEffect `+0c` from the Spell; it does not fill the transport's own
+`+0c`, and neither selected path fills its own `+08`. — SAV-1068, MAGIC-225
 
 ## Position
 

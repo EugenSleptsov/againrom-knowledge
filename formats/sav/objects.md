@@ -43,6 +43,15 @@ shared base these rows reach first, `Token::Serialize`, touches only
 Token-head fields; it never touches `+3c`. — SAV-CLASSSER-173,
 SAV-CLASSSER-174, SAV-CLASSSER-175, SAV-1054
 
+For the selected PointEffect and SpellTransport cast constructors, the common
+SpellEffect bytes are explicit stores: `+40=0` and `+41=1` in both reached
+base variants. PointEffect's direct caller replaces `+41` with 1 exactly when
+cached Spell `+0a` is zero; the transport caller does not replace its own
+common bytes. A child and its transport therefore need not carry the same
+`+41`. These constructor/admission sources do not establish first-SAVE
+invariants: allocation/alias boundaries and later writes remain Unknown.
+— SAV-1069, MAGIC-ATTRGATE-118, MAGIC-225
+
 `Effect_DirectDamage`'s raw 24 bytes at `+48` are not a separate shape: the
 same constructor family that builds the [attack block](actors.md#unit-programme)
 at live `+a6` and base `+114`, and the same resolver pair that reads the
