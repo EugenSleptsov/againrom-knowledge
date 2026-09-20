@@ -25,6 +25,16 @@ repair waits until Sacks and triggers exist. Actor/Building/SpellEffect keys
 are already bound before terrain construction. — SAV-CELLLOAD-108,
 SAV-CELLLOAD-109
 
+The shared map builder's actor-key index takes existing pointers from the
+global actor manager, dead manager and each Player's actor collection. Its
+three local passes use actor `+8` as the key and do not filter by health or
+death stage. This index is distinct from the ALM placement records; fresh
+mission entry separately reaches the placement spawner. The selected
+world-present LOAD route establishes no actor addition from a placement
+missing from archived memberships. Missing-key initialization, external
+callbacks and the first ordinary tick remain open, so neither archive-only
+population nor additive ALM spawning is an all-path rule. — SAV-1074
+
 ## Block array
 
 ```text
