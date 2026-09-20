@@ -130,6 +130,31 @@ LOAD binds it to the fresh terrain. Session then transfers exactly 4,374 bytes.
 The no-world branch has no session/trigger block. Outcome nevertheless survives
 in Player `+3c`. — SAV-SESS-031, SAV-FLAG-027
 
+### Timer fields in the 48-byte head
+
+| Session-wire offset | Width | Session offset | Located use |
+|---:|---:|---:|---|
+| 1416 | 8 | `+18` | Constructor destination of the performance-frequency query |
+| 1432 | 4 | `+28` | Unsigned divisor for the order routine's elapsed-counter calculation |
+
+The retained order routine `005310e0` fixes its timer base at session `+08`.
+At `005317b9` it divides the low 32-bit counter difference by session `+28`,
+after clearing EDX. A nonzero divisor cannot overflow that unsigned quotient;
+zero causes the local divide fault regardless of the counter difference.
+SAVE and LOAD carry the field directly inside the raw head. This identifies
+a local compatibility invariant, not a completed native LOAD trace or a
+proof that LOAD leaves the field unchanged until this instruction. — SAV-1078
+
+The retained constructor calls `0052b2b0`, which queries the frequency into
+session `+18` and stores helper `00557690`'s low return into `+28`. Its arguments
+are that frequency and 1000. Interpreting the helper as unsigned division is
+Medium: its body is outside the retained audit. All 26 session-bearing files
+in the measured 23-EN/four-RU preserved-save population contain 10,000,000 and
+10,000 at these two fields; the remaining EN file has no world/session.
+These values are a bounded corpus observation, not a universal Windows or
+cross-host SAV constant. Other head fields and later writers remain open.
+— SAV-SESS-031, SAV-1079
+
 ## Session repair and trigger constants
 
 LOAD restores every trigger slot before rebuilding the map's trigger programme.

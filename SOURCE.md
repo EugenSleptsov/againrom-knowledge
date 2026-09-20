@@ -2,12 +2,12 @@
 
 ## Snapshot
 
-Snapshot k70, exported from the private research repository at commit
-`2321b7e1153ab53e207d8579031350d63966b95c`.
+Snapshot k71, exported from the private research repository at commit
+`775eec5977746f78d715075549311c3f506d8704`.
 
 | Field | Count |
 |---|---:|
-| Claim ids | 2332 |
+| Claim ids | 2334 |
 | Retracted ids | 378 |
 | Format pages | 116 |
 
