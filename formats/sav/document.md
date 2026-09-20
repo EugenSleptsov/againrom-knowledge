@@ -197,3 +197,23 @@ No general post-load reset or nonzero ordinary producer is established for
 these eleven values. Undecoded locations, aliases, computed calls and
 unexpanded callees remain open.
 — SAV-WHEADWATCH-524, SAV-WHEADLIMIT-525
+
+A bounded transition reading closes two local leaves: entry's call on
+`world+30` has no object store or call, and the later `world+170` accessor only
+reads its dword. Mission-return cleanup
+receives the pointer loaded from `world+14`, whose constructor value is
+`006099d0`; its three local clears are on that manager. Ordinary SAVE passes
+the current global world pointer to the outer writer, which saves and reloads
+that same argument for the document serializer. These local facts do not
+prove identity or field preservation across intervening calls. — SAV-1070
+
+The twelve-body expansion leaves the return's `world+6c -> 005180c0 ->
+00570858` alias with arguments 0/-1. The last routine is the known word-array
+sizing entry; its complete zero-size write/call footprint on this receiver
+remains unexpanded. The return callback and other external effects also
+remain open. A separate `world+48 -> 0051c440 -> 005721c4` chain writes through
+the returned pointer only on the conditional mission-overlay path. That path
+is not an ordinary shipped-campaign witness, and the selected random-scatter
+arm is campaign-excluded. Both preservation and intervening mutation still
+fit the bounded ordinary-route evidence; it supplies no all-path first-SAVE
+vector. — SAV-1071, SAV-667, TRIG-INI-012, ITEM-SPAWN-026, ITEM-SPAWN-027
