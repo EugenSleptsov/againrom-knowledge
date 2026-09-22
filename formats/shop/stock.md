@@ -167,6 +167,11 @@ Mission150        LastMission = 1
 `AutoGetMission` (default **-1**, `00487b1e`/`00487b30`) ships **once** in the whole campaign, and
 `LastMission` (default 0) once. Values identical in the live, EN and RU roots.
 
+A fourth, owner-supplied pre-release data root ships `LastMission=1` **twice** — `[Mission90]`
+and `[Mission150]`, against EN/RU's `[Mission150]` alone — while keeping the same 24-section
+chapter structure (`REG-INNSTAGE-117`). `record+0x11c`'s reader was never located on any root, so
+no runtime consequence is claimed for the second occurrence.
+
 
 ## The stock lifecycle
 

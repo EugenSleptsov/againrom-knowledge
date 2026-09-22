@@ -2,7 +2,7 @@
 
 [Reference](format.md)
 
-## The other registries (`REG-CUT-053`, `REG-SFX-057`, `REG-NPC-058`, `REG-SCN-059`, `REG-AI-060`)
+## The other registries (`REG-CUT-053`, `REG-SFX-057`, `REG-NPC-058`, `REG-SCN-059`, `REG-AI-060`, `REG-INNCLOSE-116`, `REG-INNSTAGE-117`)
 
 `data/map.reg` has no complete published per-key table; the named consumers
 below define only their own keys.
@@ -71,8 +71,34 @@ below define only their own keys.
   AddTextDocument, AddHero, AddPictureDocument, AutoGetMission and LastMission.
   Installed ranges are ShopMinPrice 0..5000, ShopMaxPrice 1000..10000000 and
   Payment 700..700000; these are data values, not limits. NPC references name
-  npc.reg sections. MercenaryCount's meaning remains Unknown; it is not
-  established as the roster length. TotalMissions has no named literal consumer.
+  npc.reg sections. MercenaryCount is a 15-element pool indexed by mercenary
+  type, 1..15, which is also the `[npc<t>]` section number; it is neither per
+  mission nor a roster length (`REG-SCN-067`). TotalMissions has no named
+  literal consumer.
+
+  **Cross-root closure of `InnNPC`/`InnMission` against the shipped inn text, and per-stage
+  divergence across a third comparison population, over four roots — the live/EN/RU triple this
+  page's other rows already cover plus a fourth, owner-supplied pre-release data snapshot**
+  (`REG-INNCLOSE-116`, `REG-INNSTAGE-117`): the 24-section structure and the 14-key vocabulary above are identical
+  on all four; EN's registry addressing is closed against the shipped `text/inn/npc/*.txt` set in
+  both directions, RU's leaves 7 shipped files unaddressed, and the pre-release root addresses 20
+  files it does not ship. The pre-release root's per-stage arrays disagree with EN/RU at 5 of 13
+  non-empty stages (Mission30/40/50/60/90); which other keys move disagrees per stage — Mission30
+  moves `ShopMaxPrice` alone, Mission60 moves `ShopMaxPrice` but not `Mercenaries`, Mission90 moves
+  `Mercenaries` but not `ShopMaxPrice` — no fixed subset of keys moves together at every
+  disagreeing stage. `InnNPC`/`InnMission` are unequal length at exactly one of 39 stage×root pairs
+  measured (Mission40, pre-release root).
+
+  **The tavern reader `FUN_00480fd0` is bounded by `InnNPC`, not by `InnMission`** (`REG-118`):
+  it is entered only when the record's selection index is at or past `InnNPC`'s own size, reads
+  both arrays at `idx = curSel − InnNPC.Size()`, and no instruction in either compiled build
+  compares that index against `InnMission`'s own size. Whether real input can drive the
+  selection index far enough to expose the pre-release root's shorter `InnMission` at Mission40
+  is not established either way; the function that would set that bound was not reached. Below
+  that bound the same selection index instead reaches the mercenary roster `MERC-HIRE-003`/
+  `MERC-TYPE-001` already describe — a separate array reached through the same static field, not a
+  second `InnNPC` — so the inn's selectable range is mercenary rows first, then per-NPC rows once
+  `curSel >= InnNPC.Size()`; why one field serves both readings is not established (`REG-118`).
 
 - **`scenario.res::globalmap.reg`** (`REG-SCN-059`) — `[General] ObjectCount = 35` matching
   **35** `[MapObject<n>]` sections (1-based), each `MapPoint` = 2 ints, `MapRect` = 4 ints, 5

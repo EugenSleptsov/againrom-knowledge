@@ -152,6 +152,34 @@ Human shape can come from hiring, authored map placement or scripted transfer.
 Creation-order IDs are session-local rather than a provenance tag.
 — SAV-617, SAV-622, SAV-629
 
+The working pool at `+60` is the tavern's own headcount storage, and both
+tavern readers — the shelf filter and the inn's count/price preview — read the
+same element of it. The preview also reads the pristine array at `+74` into a
+second value. The server's per-head price factor is a different storage: an
+element of the command `0x38` vector. Nothing inside the tavern writes the
+pool; hire and dismiss touch only the hire flags at `+88`, and the pool's
+elements change at the record reset, at mission end and on LOAD.
+— MERC-POOL-011, MERC-POOL-012
+
+SAVE reads the count once from the working array's `m_nSize` at `+64` and
+writes both payloads under it. The pristine array's own `m_nSize` at `+78` is
+never read, so a second count between the two payloads is a shape this writer
+cannot produce and a reader must not expect one. — SAV-1084
+
+LOAD sizes both arrays from the document's count and reads both payloads out of
+the document. Neither campaign load driver calls the record reset or the record
+constructor, and neither reads `[General] MercenaryCount`; the registry
+sections they do read are Objects and Projectiles, both pushed as literals,
+and the General section is pushed nowhere on either driver. A restored pool is
+therefore the document's own, not a recomputation from campaign state and not a
+constructor default, and a serialized count of 0 leaves both arrays empty with
+a NULL `m_pData` that nothing on the load path repopulates. — SAV-1085
+
+Across 119 admitted saves over the four ROM1 roots and the preserved owner
+saves, the serialized element count is 15 without exception, and the two arrays
+are equal in every file but one. Corpus agreement of that kind does not exclude
+a producer the corpus never exercises. — SAV-1086
+
 ## Tavern eligibility and selection
 
 The stored main-mission shelf is narrowed to permanently unlocked types before

@@ -34,7 +34,8 @@ operation or establish the native construction prerequisites. — SAV-920
 type t            1..15, the [npc<t>] section number and the MercenaryCount subscript
                   t = 1,2  -> Unit  "Catapult", "Ballista"
                   t = 3..15 -> Human "NPC%02d_%d" % (t, level(mission))
-pool[t]           runtime, starts at [General] MercenaryCount[t-1]
+pool[t]           campaign record +0x5c, fifteen u16; starts at [General] MercenaryCount[t-1];
+                  written to a save and restored from one
 hired[t]          0/1; persists in a save between a hire and mission end (SAV-614, SAV-615),
                   cleared at the end of every mission
 enabled           a set of t, grows only, from [Mission<n>] EnableMercenary on completion
@@ -147,6 +148,39 @@ then:         hired[t] = 0 for all t
 Then every mercenary is removed from the world; only heroes survive the cull. So a squad that
 is wiped takes as many further missions to rebuild as it lost men, and only while it is left
 at home — taking it out again freezes it at its current strength.
+
+## Pool storage and persistence
+
+The pool is one fifteen-element `CWordArray` inside the campaign record at `+0x5c`
+(`m_pData +0x60`, `m_nSize +0x64`). The shelf filter and the inn's count/price preview read
+the same element of it, `m_pData[t-1]`; the preview also reads the pristine array beside it
+(`+0x70`, `m_pData +0x74`) into a second value, so the inn holds both the current and the
+full headcount and prices on the first. The server's own per-head factor is a different
+storage: an element of the command `0x38` vector, whose contents are `pool[t] * hired[t]`.
+— MERC-POOL-011, MERC-HIRE-003
+
+Nothing inside the tavern writes the pool. Hire and dismiss set and clear one dword in the
+hire-flag array at `+0x84` and touch nothing else. The stored headcounts change at three
+events — the record reset, which copies `[General] MercenaryCount` onto them; mission end;
+and a LOAD — and the array's storage is additionally created at record construction and
+released at record destruction. Neither reader range-checks its subscript against `m_nSize`.
+— MERC-POOL-012
+
+A SAVE writes the pool as one count taken from the working array's `m_nSize`, then both
+arrays' payloads under that same count, so the two can never carry different lengths on the
+wire. A LOAD sizes both arrays from the document's own count and reads both payloads out of
+the document. No load path re-reads `MercenaryCount` and no constructor supplies a default,
+so a loaded pool survives unchanged — including one that disagrees with the registry — and a
+serialized count of 0 loads as two empty arrays that nothing repopulates. — SAV-1084, SAV-1085
+
+## Bio text and voice
+
+Each mercenary type's flavor bio lives at `main.res::text/inn/mercenary/npc<NN>.txt`, with voice
+at `speech.res::inn/mercenary/npc<NN>p<N>.wav`. Over this experiment's three data roots (EN, RU
+and a fourth, owner-supplied pre-release snapshot), the fourteen bio text files ship on all three
+alike — 0 asymmetric — but voice does not: most `inn/mercenary/*.wav` parts are EN/RU-only, two
+differ EN-vs-RU inside the same bio, and where the pre-release root does carry mercenary voice its
+byte size matches EN's exactly rather than RU's (`TAVERN-MERCVOICE-008`).
 
 ## Roster progress and selected-entry prerequisites
 

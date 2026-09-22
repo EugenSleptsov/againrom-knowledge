@@ -202,3 +202,20 @@ language-carrying inputs are the event files and `main.res::text/main.txt`, whic
 lines on both roots** — the indices 77/140/141 are compiled constants and a root with a
 different line count would break them. The event corpora differ by three files, all RU-only:
 `m100/event09`, `m130/event07`, `m150/event10`.
+
+A fourth, owner-supplied pre-release data root's event corpus is not a subset of either shape: it
+carries files for exactly three missions (41, 51, 91), three of which (`m41/event10-12`) exist on
+neither preserved install, and every other mission's events are entirely absent from it. Where a
+scene is shared with that root its `<npc=..>` speaker sequence usually matches, and every
+disagreement that does occur is a same-length substitution, never a reorder or a length change.
+EN and RU disagree with each other more often and in all three ways: same-length substitution,
+pure reorder of the same speaker multiset, and outright length change, where one root's tag
+sequence has a different element count from the other's (`TEXT-BATTLEROOT-063`).
+
+The inn's own dialogue entry (`FUN_00480fd0`, one of this page's six `FUN_004217be` call sites)
+shows the same shape one level down: the "nothing to offer" zero arm never advances `InnMission`
+regardless of its text, but that text is not uniformly backward-only — it splits by root: the
+pre-release root's three shipped instances are recap with no forward-pointing content, while
+EN/RU's three each add some (one pair as an explicit reciprocal proposal) (`DLG-ZEROARM-029`); and
+text/voice presence for its own NPC family does not track 1:1 across roots, in either direction
+(`DLG-INNVOICE-030`).
