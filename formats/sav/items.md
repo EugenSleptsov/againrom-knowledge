@@ -100,6 +100,12 @@ Armor on row 0. A written Weapon therefore names a row from 1 to 27 that has a
 parameter array, and correcting the Weapon row alone does not make such a
 document load. — SAV-1089
 
+An Armor on row 0 in the Humanoid equipment array faults the same way, at
+`0050cb38` in the Armor compact-record arm, reached from walker `004e873b`'s
+loop over `actor+0x198+4i`. In one generated document the only such Armor sat
+at index 7; changing its row byte from 0 to 15, together with the Weapon's,
+let LOAD reach the map. No original Armor carries row 0. — SAV-1091
+
 ## Equipment order
 
 | Path | Local order |

@@ -85,6 +85,10 @@ first receipt of an existing corpse can satisfy this condition; repeat2-to3
 cannot. The loaded counter baseline and subsequent native reconstruction order
 must not be replaced by a once-per-death assumption. — FAME-022
 
+`+110` = 0 in a mission-10 document leaves the party on the world map after
+the quest; with 20, the value every original mission-10 save carries, the
+next mission starts. What mission 0 resolves to is Unknown. — SAV-1094
+
 ## Markers
 
 ```text

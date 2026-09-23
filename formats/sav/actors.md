@@ -267,6 +267,27 @@ Frontend, world, phase and command callbacks precede the selected actor suffix,
 so the first actual restored mover event, its value and native timing remain
 Unknown. — MOVE-EVENT-060, MOVE-EVENT-061, SAV-FIRSTMOVE-880
 
+Because the mover is transferred raw, a document with rotation speed `+a` = 0
+terminates the original with an integer divide by zero at `0054a2bf` on the
+first turn of an ordinary move. Original Humans carry 15..22 and Units 8..22.
+A written mover block needs a nonzero rate. — SAV-1092
+
+### Start state a written mission document needs
+
+Hero control on the first LOAD depends on the document, not on the process
+that loads it. A generated mission-10 document without control regained it
+when the human participant's subtree took an original resave's values: hero
+sub-cell `+4/+5` 128,128, no pending move order, an empty `+0x178` word list,
+the hero's 462-byte block after that list and its 19-byte block,
+Player body `+57`, group AI `+0x48` and session wire 1400..1415. Which byte of
+that set decides control is Unknown. — SAV-1095
+
+An AI start state of zeros (post 0,0, 19-byte block `+4` 0, mover `+08/+09`
+0,0, group centre and guard radius 0, diplomacy template 0) coincides with an
+AI fight at mission start that the original start does not show. Copying the
+mission-start original's values removed it; which field drives it is Unknown.
+— SAV-1096
+
 ## Dead actors and source references
 
 Dead actors leave the owner graph and remain in the exact top-level dead list.
