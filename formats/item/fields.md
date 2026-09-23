@@ -24,11 +24,13 @@ container 0x24 : CObList        no vtable of its own; one per actor and one per 
 
 ## Item fields
 
-The bounded per-class Item definition lookup does not extend unchanged to
-actors. Unit uses its saved Units row without a bounds check; exact Humanoid
-leaves a null definition; Human uses its saved Humans row only below type 33,
-otherwise row 5. Its saved row byte is not rewritten. — ITEM-DEF-002,
-SAV-ACTORBIND-544
+Only class Item bounds its definition lookup by the collection size; Armor,
+Shield and Weapon index their collection unchecked. The shared bounded lookup
+that ITEM-DEF-002 described is partially retracted for those three classes.
+Neither item lookup extends unchanged to actors. Unit uses its saved Units row
+without a bounds check; exact Humanoid leaves a null definition; Human uses
+its saved Humans row only below type 33, otherwise row 5. Its saved row byte
+is not rewritten. — SAV-1088, ITEM-DEF-002, SAV-ACTORBIND-544
 
 Only the fields this specification pins. `+0x00..+0x3b` is the `Token` base, whose head
 `FUN_00510e5c` serializes as `SAV-TOKEN-034`'s 37 bytes.

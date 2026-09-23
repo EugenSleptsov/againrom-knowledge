@@ -70,6 +70,36 @@ The Spell programme stores these fields and its new identity key. Same Item
 identity does not preserve nested Spell identity; numerical address reuse can
 hide a new allocation. — ITEM-SPELLMOVE-132
 
+## Definition binding
+
+The saved row byte `+0c` selects the definition entry `+3c` at every load.
+
+| Class | Collection | Range check |
+|---|---|---|
+| Item | `0x609b7c` | Compares with the collection size |
+| Armor | `0x609b54` | None: `[coll+4] + 0x3c*row` |
+| Shield | `0x609b40` | None: `[coll+4] + 0x3c*row` |
+| Weapon | `0x609b68` | None: `[coll+4] + 0x3c*row` |
+
+Weapons has 28 runtime entries. Row 0 is never serialized from `Data.bin`,
+and row 23 carries no parameter array. The Weapon compact-record arm reads
+parameter 15 of the entry without a guard. The resume route after the document
+has been read projects the actor at Player `+34`. When that actor's `Unit+0x74`
+Weapon is on row 0, the original terminates with an access violation at
+`0050e47e`. Which Human that actor is, and so which other Humans' slots are
+reached at resume, is Unknown. A row of 28 or more indexes past the array.
+Whether another routine rejects such a row before first use is Unknown.
+— SAV-1088, SAV-1087, SAV-1089
+
+Across 119 original saves, the 2471 Weapons carry rows 2–26 only; none carries
+row 0 or a row of 28 or more. No original Armor or Shield carries row 0. In one
+generated document, changing only the `Unit+0x74` Weapon's row byte from 0 to
+13 moved the fault from `0050e47e` to `0050cb38`, the Armor compact-record
+arm, reached from the Humanoid equipment array. That document also holds an
+Armor on row 0. A written Weapon therefore names a row from 1 to 27 that has a
+parameter array, and correcting the Weapon row alone does not make such a
+document load. — SAV-1089
+
 ## Equipment order
 
 | Path | Local order |

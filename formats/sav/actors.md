@@ -180,8 +180,9 @@ The restored row byte `+0c` and type word `+0e` are separate selectors. Let
 
 The arithmetic wraps at 32 bits and has no collection-size check. The fixed
 Human row-5 branch covers every zero-extended word 33..65535. These branches
-do not rewrite the selectors; Item has a different size-checked lookup.
-— SAV-ACTORBIND-544
+do not rewrite the selectors. Class Item has a size-checked lookup; Armor,
+Shield and Weapon have an unchecked stride-`0x3c` lookup (see
+[Items](items.md#definition-binding)). — SAV-ACTORBIND-544, SAV-1088
 
 Unit copies lowByte(`+148`) to `+14c`; exact Unit then clears the byte,
 Humanoid preserves it, and Human retains a nonzero byte only with a nonnull
