@@ -72,7 +72,7 @@ documents:
 | Missing rows | Observed effect |
 |---|---|
 | border rows `1f/1f` and footprint rows `25/25` (static/dynamic; a 6,400-row zero-based array written instead) | buildings not drawn, together with a zero Building publication mask and type word; which field drives it is not separated — SAV-1093 |
-| static bit 0x20 at the four sack cells (originals `20/20`) | the sack lookup fails: trigger `Get sack` sees no sack and fires at LOAD, and a click on a sack is refused. Whether a click-initiated pick-up completes once the rows are present is Unknown. A pick-up issued while the hero already stands on the sack's cell can still succeed; that path is Unknown — SAV-1097 |
+| static bit 0x20 at the four sack cells (originals `20/20`) | the sack lookup fails: trigger `Get sack` sees no sack and fires at LOAD, and a click on a sack is refused. With the rows present, a click walks the hero to the sack and completes the pick-up, and the trigger fires on that pick-up. A pick-up issued while the hero already stands on the sack's cell can still succeed; that path is Unknown — SAV-1097 |
 | a row at every cell record (static `payload+1 \| 0x20`, dynamic `\| 0x40` with a ground occupant) | no unit collision; the rows restore it. Bit 0x40 alone is not separated from bit 0x20 on those cells — SAV-1098 |
 
 ## Cell table
