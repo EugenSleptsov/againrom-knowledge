@@ -64,6 +64,12 @@ through the external mission-to-map-object registry. This stores a relation
 to campaign map data, not an X/Y coordinate. `View/X` and `View/Y` in YA1 are
 separate application fields. — SAV-CAMPPOS-072, SAV-892
 
+A census of `+120` over 54 organically-numbered original mission saves finds it
+set on 22 and not a pure function of the selected mission: two saves share the
+same selected/main mission with opposite flag values. The writer and reader
+instructions for the field are Unknown; no existing claim traces them.
+— SAV-1099
+
 `+114/+128` are raw passthrough, unlike computed `+120`. Constructors/reset
 zero them; the local campaign reader tail does not consume them again.
 The `+114` singleton chain reaches the three-way ALM placement law. Neither
@@ -87,7 +93,16 @@ must not be replaced by a once-per-death assumption. — FAME-022
 
 `+110` = 0 in a mission-10 document leaves the party on the world map after
 the quest; with 20, the value every original mission-10 save carries, the
-next mission starts. What mission 0 resolves to is Unknown. — SAV-1094
+next mission starts. — SAV-1094
+
+`+110` = 0 still takes the same `!= -1` fork as a real mission number and calls
+the routing loader (`FUN_00488460`) with request 0; against any nonzero current
+main-progress record this is the documented lower-request no-op (`+110`'s own
+sole reader is monotone, above), so the call itself writes nothing. What the
+routing fork's own reader does next with that zero return — travel to the
+current mission's own map object, or take the same city/object-0 arm the `-1`
+default uses — is Unknown; neither reading is excluded by an observed world map
+with nothing further, since both leave the party there. — SAV-1104
 
 ## Markers
 

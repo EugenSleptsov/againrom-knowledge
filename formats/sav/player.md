@@ -54,6 +54,17 @@ this copy. Constructor `+04=0`, new-roster registration and LOAD are distinct
 producers; the located LOAD/list bodies do not invoke registration.
 — SAV-PLAYERIDENT-830, SAV-919
 
+On a plain single-player mission LOAD the Player/client list is populated by
+this pure archive copy-in, with no selection step inside the traced LOAD
+bodies. The one documented mechanism that does select an active Player by name
+match (an existing-Player search retaining the first accepted name) scopes
+itself to the return-to-game/client-description route, not this LOAD route.
+No claim traces a call from the mission-command dispatcher — the routine
+issuing the first post-LOAD command — to either that mechanism or an
+equivalent specific to this route; whether "the" restored player is the first
+or only list entry by convention, rather than through any search, is untested.
+— SAV-1105
+
 Registration chooses a slot and sets `+2c = 1 << (slot mod 16)` only when
 `+28==0`, otherwise zero. The ALM-to-session path separately assigns the colour
 byte as `lowByte(CPlayer+08+1)`, from the ALM type-5 colour word at wire `+00`.

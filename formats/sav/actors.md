@@ -279,14 +279,20 @@ that loads it. A generated mission-10 document without control regained it
 when the human participant's subtree took an original resave's values: hero
 sub-cell `+4/+5` 128,128, no pending move order, an empty `+0x178` word list,
 the hero's 462-byte block after that list and its 19-byte block,
-Player body `+57`, group AI `+0x48` and session wire 1400..1415. Which byte of
-that set decides control is Unknown. — SAV-1095
+Player body `+57`, group AI `+0x48` and session wire 1400..1415. Player body
+`+57` alone and the group's own AI block `+0x48` alone are each individually
+insufficient; the remaining hero Token/block/word-list/session subgroup, taken
+together, is sufficient. Which single byte within that subgroup decides control
+is Unknown. — SAV-1095, SAV-1100
 
 An AI start state of zeros (post 0,0, 19-byte block `+4` 0, mover `+08/+09`
 0,0, group centre and guard radius 0, diplomacy template 0) coincides with an
 AI fight at mission start that the original start does not show. Copying the
-mission-start original's values removed it; which field drives it is Unknown.
-— SAV-1096
+mission-start original's values removed it. The driver is the actor's own
+16-byte personal AI-start record, not its owner's AI group's 12-byte block:
+reverting the personal record alone reproduces the fight regardless of the
+group's state, and reverting the group alone does not, regardless of the
+personal record's state. — SAV-1096, SAV-1101
 
 ## Dead actors and source references
 

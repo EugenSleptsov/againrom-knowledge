@@ -65,6 +65,14 @@ has known framing but Unknown element meaning and ordinary mutation/consumer
 rules outside its constructor and LOAD, including computed access.
 — SAV-GRPFLD-060, SAV-GRPLIST-807
 
+An exhaustive direct-call census of the shared list class's two mutation entry
+points (18 sites) finds none targeting Group `+20` specifically; every site
+targets a different field of a different object. Only the constructor and
+`Group::Serialize` touch `+20` directly — construction and archive round-trip,
+not population. 0 of 567 corpus Group records ever carry a nonzero `+20`
+element count, so this framework has no populated instance to read element
+meaning from. — SAV-1107
+
 ## Dispatch and patrol state
 
 | State | Local consumer or producer |

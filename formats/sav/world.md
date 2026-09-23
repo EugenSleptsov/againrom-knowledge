@@ -56,6 +56,19 @@ map-only low block bits and cells outside the sweep are omitted. Construct
 ALM planes first, then apply the saved rows. A zero baseline loses terrain
 blocking. — SAV-BLOCK-011, SAV-BLOCK-012, TERR-PASS-049, TERR-PASS-053
 
+Water (terrain class 8) is blocked at ingest by a hardcoded test, never from
+the registry `Pass*` values — but not independent of this array: LOAD applies
+every saved row's static/dynamic byte raw over both planes after ingest, so a
+saved row covering a water cell with static bit 0 clear would make that cell
+passable at runtime, the same way a generated document's rows are already
+shown overwriting the ingested border. One substituted mission-10 document,
+already correct on every other block-array rule above, was reported
+impassable by a native check; two other substituted documents in the same kit
+carried rows over the same range and were not checked for water. Whether the
+array's own sparse override ever locally clears a water cell in a shipped or
+generated document is not cross-checked against that map's own water cells.
+— SAV-1103
+
 The original writer has a fixed u16 count here, unlike the following table.
 No wide-count arm is specified for this array. The fixed sweep window does
 not expand for a wider map. — SAV-BLOCK-011, TERR-PASS-053
@@ -73,7 +86,7 @@ documents:
 |---|---|
 | border rows `1f/1f` and footprint rows `25/25` (static/dynamic; a 6,400-row zero-based array written instead) | buildings not drawn, together with a zero Building publication mask and type word; which field drives it is not separated — SAV-1093 |
 | static bit 0x20 at the four sack cells (originals `20/20`) | the sack lookup fails: trigger `Get sack` sees no sack and fires at LOAD, and a click on a sack is refused. With the rows present, a click walks the hero to the sack and completes the pick-up, and the trigger fires on that pick-up. A pick-up issued while the hero already stands on the sack's cell can still succeed; that path is Unknown — SAV-1097 |
-| a row at every cell record (static `payload+1 \| 0x20`, dynamic `\| 0x40` with a ground occupant) | no unit collision; the rows restore it. Bit 0x40 alone is not separated from bit 0x20 on those cells — SAV-1098 |
+| a row at every cell record (static `payload+1 \| 0x20`, dynamic `\| 0x40` with a ground occupant) | no unit collision; the rows restore it. Static 0x20 and dynamic 0x40 were not separated by any run. Dynamic 0x40 composes movement mask `0x41` directly; bit 5 (static 0x20) is in none of the three constructor-set masks, but it gates the cell-record lookup that dynamic bit 6/7 is recomputed from, so an indirect bit-5-to-collision path is not excluded — SAV-1098, SAV-1102 |
 
 ## Cell table
 
@@ -185,6 +198,15 @@ Later `0053b870` repairs session `+a9c0` (wire bytes 1852..1855) to the live
 session address. It contains no register-array access and is not a call to
 the adjacent register writer. Whole-LOAD execution, arbitrary indices and
 unexpanded helpers remain separate boundaries. — SAV-710, SAV-711
+
+After a complete mission LOAD on a fresh process, a firing check or pattern
+reads this array in a state built from (1) the wholesale wire restore above,
+run only while the global session pointer is still null, then (2) one slot
+written at the binder's own advancing cursor for every check in the map's own
+compiled data that uses opcode `0x10002`. An in-session reLOAD with the
+pointer already set skips step (1). Which slot(s) a specific map's own
+triggers read, and whether that map's check data invokes the `0x10002` arm at
+all, are per-map facts this composition does not supply. — SAV-1106
 
 ## Reconstruction inputs
 
