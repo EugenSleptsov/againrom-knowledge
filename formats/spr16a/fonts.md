@@ -91,6 +91,61 @@ and EN editor suffix references, loader paths and selected class methods
 identified no frame-record writer. Memory copying, diagnostic count output
 and conversion to a system bitmap do not establish one. — SPR16A-073
 
+### Text pixel composition — draw-time dispatch, two routines, not interchangeable
+
+Which pixel-write rule a drawn glyph gets is decided at draw time by the
+sprite object's own vtable, not stored per font file — but the two text draw
+routines are not two equally-valid paths to the same result: one of them
+crashes on a font4 sprite before producing a pixel, so each routine draws
+exactly one sprite class in working code. — TEXT-065, TEXT-067, TEXT-071
+
+- Font1-3 (`.16`-class) reach the opaque `.16` byte blitter above (no
+  destination read) through the primary draw routine (`DrawText`). Through
+  the second draw routine their equivalent vtable slot is a bare no-op (one
+  instruction, `RET`) — font1-3 draw no pixels at all through that routine.
+  — TEXT-065, TEXT-067
+- Font4 (`.16a`-class) reaches a genuine blend against the destination pixel
+  — the published `.16a` alpha compositor — but only through the **second**
+  draw routine's own vtable slot (`vt+0x18` → `FUN_0042b970` →
+  `FUN_00451ae0`/`FUN_00451e50`), not through `vt+0x34`/`vt+0x14`. — TEXT-067,
+  SPR16A-FONT-094
+- The primary draw routine's own font4 call site (`vt+0x34`) is not merely
+  argument-count-short against its resolved receiver, it unconditionally
+  dereferences a null pointer before any pixel work, on every call: the
+  primary routine always supplies a literal zero in the exact stack slot that
+  receiver reads as a pointer and dereferences. The two routines therefore
+  split by sprite class as a matter of working code, not just as an
+  observation: the primary routine draws `.16`-class fonts (font1-3) only,
+  and font4 is drawn, where it is drawn at all, through the second routine.
+  Which callers/screens actually invoke the second routine with font4 active
+  remains open — no caller-side census was run. — TEXT-071
+
+Neither draw routine writes a glyph more than once for an ordinary character
+— there is no outline/shadow primitive inside the text-drawing code itself.
+The one exception, drawing a `~` as a rule instead of a glyph, substitutes a
+different pixel-producing call rather than adding a second one alongside the
+glyph call. — TEXT-068
+
+No surviving claim in this repository asserts anti-aliasing, supersampling or
+sub-pixel filtering anywhere in the sprite/text pixel path, within the bounded
+search this repository has run (three search terms, both draw routines' full
+bodies); one claim that once did is retracted. Apparent smoothing is either
+the pre-graded intensity levels already baked into the `.16` atlas, or font4's
+destination blend above — not established as a filter applied at draw time
+within that search. — TEXT-069
+
+Colour reaches a pixel differently by font class. Font1-3 select among a
+small, caller-chosen fixed set of ramps (above), built by a subsystem outside
+both draw routines, not recomputed per call. Font4, drawn through the second
+routine's receiver, takes a table-pointer argument: a non-zero caller value
+overrides the table, a zero value falls back to a pointer stored on the
+sprite object itself — not a level shift. (A level-shaped, bit-shifted
+argument does exist elsewhere in this receiver family, in the code the
+primary draw routine cannot safely reach for font4; it does not describe
+font4's actual draw-time colour mechanism.) Neither path inserts a separate
+text scaling stage; both compose directly into the active framebuffer's own
+channel-mask format. — TEXT-066, TEXT-070
+
 ### `.16` glyph pixel grammar (SPR16A-FONT-013)
 
 A `.16` glyph record has the same `[u32 w][u32 h][u32 dataSize][data]` shape, but `data` is a
