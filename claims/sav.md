@@ -13306,6 +13306,162 @@ after load was not traced.
 order sorted by npc id or mission, for which no sort exists between the array
 read and the append.
 
+## Original resave of a between-missions SAV
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-1113 | In one original resave, the Group AI `+0x4c` and Order `+0x90` dwords hold raw heap-pointer bits. LOAD overwrites them without reading them, so 0 and any other value load alike. | High | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
+| SAV-1114 | Item Token `+0x08` is a pending pickup-announcement flag. `00509229` publishes it as record bit `0x40` and clears it, and the client posts a "Picked up" line for it on the carried-container arm. | High / Medium | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
+| SAV-1115 | In one original resave, 35 Item Token `+0x08 = 1` words came back 0. Token LOAD and SAVE copy the word literally, so a publication between LOAD and SAVE cleared them. | High / Medium | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
+| SAV-1116 | For the four Humans of one mission-140 SAV pair, the derive speed formula reproduces the saved speed word and mover byte. The pair cannot show whether the original re-derives after LOAD. | High / Medium / Unknown | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
+
+### SAV-1113
+
+- Input population: one Againrom-written between-missions SAV at main mission
+  140 and the owner's original resave of it. Each holds one Player and four
+  Humans.
+- Body `0xdd` is byte `0x4c` of the first Group's AI raw80. The Player name
+  starts at `0x51`, the Group count sits at `0x8b`, the Group list Count at
+  `0x8f` and the raw80 at `0x91`. The field is AI `+0x4c`, the pointer to the
+  AI word list.
+- Human record start `+0x1f7` is byte `0x90` of the Order raw148, which begins
+  at record `+0x167` when the Effect list and both route lists are empty. They
+  are empty in all four Humans. The field is Order `+0x90`, the pointer to the
+  order word list (`SAV-EMBED-039`).
+- STORE writes each pointer inside its raw block (`005390f6`, `00539203`). It
+  then serializes the list through that pointer.
+- LOAD deletes the constructor's list and reads the raw block. It then
+  allocates a fresh `0x1c`-byte list (`0053915f`, `00539260`), constructs it
+  when the allocation is nonnull (`00539179`, `0053927a`) and stores the result
+  at `+0x90` or `+0x4c` (`0053919d`, `0053929e`) before loading the elements. The saved bits are never dereferenced (`SAV-1066`,
+  `SAV-GRPAI-563`).
+- The resave values are `0x0304e4b0`, `0x0304e6b0`, `0x030114c0`, `0x03051360`
+  and `0x03052960`. Each occurs once in its body. None equals any of the
+  body's 120 identity keys: 119 Token heads and the Player. They are the
+  addresses of the lists the original held at SAVE.
+- Evidence files: `evidence/q2-pointer-words.tsv`,
+  `evidence/diff-attribution.tsv`, `evidence/listings.txt`.
+
+**Confidence.** High. Two alternatives are excluded. A saved reference is
+excluded because both LOAD arms overwrite the word before any read and no
+value matches an identity key. A computed scalar is excluded because STORE
+dispatches the list's `vt+8` through the same word (`00539102`..`00539113`,
+`0053920c`..`0053921a`) and LOAD stores the new list's address there. The weakest input is the record offsets,
+which rest on the savdoc programme walk.
+
+### SAV-1114
+
+- `00509229` sets compact-record byte `+4` bit `0x40` when Item Token `+0x08`
+  is nonzero. It then stores `+0x08 = 0` (`005092a5`..`005092bc`). It does this
+  for every record it writes. Its 10 direct call sites lie in `004e873b`,
+  `004e8af4`, `004e8bf5` and `004e8cde`.
+- The located setters are the pickup stamp `004f4e9b` (`= 1`) and the merge OR
+  `0050e9c5` (`ITEM-GROUNDMOVE-130`, `ITEM-MERGE-129`).
+- Producer `004e8af4` writes `msg+0x9 = 0x76` and `msg+0xc = 2`, with the count
+  at `msg+0xd`. The client loop that reads records from `msg+0x13` (`0041330e`)
+  copies byte `+4` to display `+8` (`004133d3`). On every record, whether or not
+  the entry was appended (`00413509`, `0041357d`, `0041358c` all reach
+  `004135ef`), it tests `+8 & 0x40` (`004135fa`) and clears the bit
+  (`0041360e`). It then posts
+  global string 85 and the item name to the message line for `0xbb8` ms
+  (`004136ca`..`004136e7`). When the count exceeds 1 it also posts strings 86
+  and 87 with the count.
+- EN string 85 is `Picked up`. RU string 85 is `Вы подняли:`.
+- The twelve-slot equipment arm (`HERO-APPEAR-048`) carries the bit, and the
+  search below found no message test for it.
+- EXP-0256's anchor labels `wire-flags-equipment` (`004133d3`) and
+  `wire-flags-inventory` (`00413aec`) are swapped: `004e8af4` sends subtype 2,
+  which the client dispatch `004130ae` routes to `0x4130b5`.
+- Evidence file: `evidence/listings.txt`. Also cites `ITEM-STARFLAG-096`.
+
+**Confidence.** High for the named writer, the clear, the client test and the
+string selection. Each is an instruction in the listing. The clear-and-post
+sequence at `00413605`..`004136e7` excludes the reading that bit `0x40` is
+only a display flag. Medium for the absence of other writers and readers of
+Item `+0x08`. The search covered three populations:
+
+- the 11 direct calls of container iterator `00521940`;
+- the 10 direct calls of `00509229`;
+- client instructions below `004d0000` that test or mask `0x40` within four
+  instructions of a `[reg+8]` operand, which gave one hit.
+
+**Unknown.** Computed receivers, other iterators and dword-width tests lie
+outside that search. Writers outside it also exist: Item constructors
+`00507f42`/`00507fb3` store `+8 = 0` (`00507f9e`, `00508036`), and the Item
+clone slot `vt+0x44` reaches Token copy constructor `004f26fd`, which copies
+`+8` (`004f276e`..`004f2771`).
+
+### SAV-1115
+
+- The input carries `+0x08 = 1` on 35 Item records. 33 sit in the four Humans'
+  `+7c` containers (15 Armor, 18 Weapon). 2 are equipped Armor.
+- The resave carries 0 on all 35. The other 84 Token heads are 0 in both
+  files.
+- `00510e5c` writes `+0x08` literally on STORE (`00510ebd`) and reads it
+  literally into `+0x08` on LOAD (`00510f58`).
+- The only located writer of 0 is `00509229` (`SAV-1114`). Actor entry
+  `004e7de3` reaches it for carried and equipped Items subject to class,
+  recipient ownership and type gates (`SAV-POSTLOAD-222`). All four Humans of
+  this pair pass them.
+- Each Human's Token `+18` publication mask goes from 0 to 2, so a send path
+  published the four Humans to a recipient during the owner's session. This
+  does not name the clearing call.
+- Prediction: entering play from the input in the original posts one
+  "Picked up" line for each flagged carried Item, up to 33, and none for the
+  two equipped Items. Entering play from the resave posts none. The first
+  half is refuted if no such line appears.
+- Evidence files: `evidence/q1-item-token08.tsv`,
+  `evidence/q1-item-token08-summary.tsv`, `evidence/listings.txt`.
+
+**Confidence.** High for the 35-record measurement and for the literal LOAD
+and SAVE arms. Medium that a `00509229` publication cleared the words. It is
+the only zeroing writer in `SAV-1114`'s bounded search, but the resave cannot
+separate session entry from a later publication.
+
+**Unknown.** The message prediction has not been observed.
+
+### SAV-1116
+
+- Speed is stored twice: as Unit `+0x8c` (row 17, fifth u16) and as the mover
+  byte `*(+0x154)+0x0a` inside raw180.
+- Derive `004f7dfc` (`vt+0x50`) computes speed in six steps:
+  1. Cap Reaction at `(i8)mod[+0xd5] + 50`.
+  2. Set speed to Reaction when Reaction is below 12, otherwise to
+     `Reaction/5 + 12`.
+  3. Add 10 for type word `0x13` or `0x15`.
+  4. Set load to `+0x8e` plus half of container `+0x20`, or to `0x7d00` when
+     container `+0x20` is at least `0xfa00` (`004f8203`), and capacity to capped
+     Body `x10 + 1`. When load is at least capacity, subtract `load/capacity`,
+     with a floor of 6.
+  5. Add `i16 mod[+0xd8]` (`004f54f8`). When speed is then negative, zero
+     `mod[+0xd8]`, not speed. After that, add `mod[+0xda]` to capacity `+0x92`.
+  6. Copy the low byte to the mover (`004f85e3`).
+- From each file's own fields the formula gives Danath 20 (`25/5+12-1+4`),
+  Naira 20, Brian 18 (`39/5+12-1`) and Fergard 16. The saved `+0x8c` and the
+  saved mover byte equal these in both files. So do the saved load and
+  capacity words.
+- The traced Human LOAD bodies do not call derive (`SAV-HUMLOAD-445`,
+  `SAV-LOADHOOK-879`).
+- Derive has no direct call and two raw vtable-slot occurrences.
+- None of the 49 `call [e?x+0x50]` sites lies in the body of the entry join
+  `004d303e` or of actor entry `004e7de3`. Their callees were not searched.
+- SAVE writes the live `+0x8c` word and the live raw180 mover byte. On either
+  model the four Humans hold 20, 20, 18 and 16 after LOAD.
+- Evidence files: `evidence/q3-speed.tsv`, `evidence/listings.txt`. Also cites
+  `HERO-SPEED-008`, `ITEM-LOAD-005` and `MOVE-RATE-053`.
+
+**Confidence.** High for the per-Human values. The formula is read at
+instruction level and every input comes from the file. Medium that the traced
+Human LOAD bodies and the bodies of `004d303e` and `004e7de3` contain no derive
+call. The search covers direct calls and the `e?x+0x50` form, attributes each
+site by a backward frame scan, and does not follow callees.
+
+**Unknown.** Whether the original re-derives after LOAD. The join reaches
+derive through `0x4d403c` on actors it constructs (`0x4f8e78` → `0x4f9065` →
+`004f965b`; `0x4fc2e8` → `004fc34a`); no search established whether any
+session-entry path derives a loaded Human. Town entry was not identified, and
+any later derive trigger is also open.
+
 ## Open questions
 
 - Whether a Building or Sack Position terrain key is used, replaced or

@@ -14,7 +14,7 @@ Every Token-derived body begins with these 37 bytes, serialized by
 | `12` | u32 | `+04` | Runtime creation-order ID |
 | `16` | u8 | `+0c` | Registry/definition selector; class-specific use |
 | `17` | u16 | `+0e` | Type word; Human LOAD compares it with `0x21` |
-| `19` | u32 | `+08` | Low word is the map-unit ID on the mapped producer path |
+| `19` | u32 | `+08` | Low word is the map-unit ID on the mapped producer path; on an Item, see [Item Token `+08`](#item-token-08) |
 | `23` | u16 | `+18` | Recipient publication mask in located send paths |
 | `25` | u32 | `+1c` | Item value/price; other classes' meanings Unknown |
 | `29` | u32 | `this` | Object's saved-address identity key |
@@ -52,6 +52,15 @@ than an unmodified original); `SpellEffect` has no record in the admitted
 corpus at all. SAV-1058 is partially retracted for claiming both SpellEffect
 bases call the first Token constructor; its two Token `+14` zero stores
 remain valid. — SAV-1058, SAV-1059, SAV-1060, MAGIC-219
+
+## Item Token `+08`
+
+On an Item, Token `+08` is a pending pickup-announcement flag. Pickup sets it to
+1 and a merge ORs it into the retained Item. The compact item-record writer
+publishes it as record bit `0x40` and then stores 0. The client's
+carried-container arm posts a "Picked up" line for that bit. Both archive arms
+copy the word literally, so a saved 1 survives LOAD until its first
+publication, the only clearing writer located. — SAV-1114, SAV-1115
 
 ## PointEffect and SpellTransport cast construction
 

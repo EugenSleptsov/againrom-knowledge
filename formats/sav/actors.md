@@ -36,6 +36,15 @@ padding. Sources are offsets in the actor unless an indirection is shown.
 | 24 | u8 presence; if nonzero, direct Spellbook | `*(+140)` |
 | 25 | Four u32, then u8 | `+5c,+64,+44,+40,+48` |
 
+Row 10's bytes `0x90..0x93` are Order `+90`, the pointer to row 11's list.
+STORE writes its live bits; LOAD replaces it with a fresh list before row 11.
+Any saved value, including 0, loads alike. — SAV-1113
+
+Speed sits in row 17's `+8c` and in byte `+0a` of the row 9 Mover block. The
+traced LOAD bodies do not recompute it, and SAVE writes both live values.
+Whether the original re-derives speed after LOAD is Unknown; on one mission-140
+pair the derive formula reproduces the saved values. — SAV-1116
+
 The six raw block writes in rows 5..10 total 462 bytes. SAVE first copies
 `u8 +14c` into `u32 +148`; this is a local SAVE mutation. Presence producers
 emit 0/1 while the load arms accept every nonzero byte. The inventory presence

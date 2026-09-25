@@ -46,6 +46,12 @@ MAGIC-ATTACH-016, MAGIC-DMG-005
 | New Sack | Adopts supplied container and constructs a separate Sack Position |
 | Existing Sack | Drains and deletes supplied container |
 
+Publishing an Item's compact record clears its Token `+08` pickup flag after
+sending it as bit `0x40`. Actor entry reaches that writer for carried and
+equipped Items subject to class, recipient ownership and type gates. An Item
+it does not publish keeps a saved 1 through session entry. No other clearing
+writer was located. — SAV-1114, SAV-1115, SAV-POSTLOAD-222
+
 Quantity-one draining can split a stack. Death reaches both Sack branches.
 No branch establishes copying Sack/actor Position into contained Items;
 actor callbacks and aliases remain outside the local no-write result.

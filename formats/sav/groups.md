@@ -18,6 +18,10 @@ it has no archive class tag or saved-address definition of its own.
 | 6 | u32 | Group `+40`, remapped key |
 | 7 | u32 | Group `+44`, remapped owner key |
 
+Byte `0x4c` of the AI raw80 is the AI word-list pointer. STORE writes its live
+bits; LOAD replaces it with a fresh list before reading the list. Any saved
+value, including 0, loads alike. — SAV-1113
+
 Members are written head-to-tail and loaded with append. Changing Group
 detaches an actor first and appends it anew. List position does not identify
 an actor; a Group can split or combine without changing its actors' keys.
