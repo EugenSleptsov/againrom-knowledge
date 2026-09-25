@@ -1,13 +1,15 @@
 # Claim registry
 
-This file is the public index of claim ledgers. The detailed research chronology,
-confidence-review notes, experiment write-ups, disassembly and raw evidence live in this
-private research repository, indexed by [`docs/REGISTRY-LOG.md`](../docs/REGISTRY-LOG.md);
-they are not part of the public functional edition.
+This file indexes the claim ledgers and defines how a claim is written. The
+detailed research chronology, confidence-review notes, experiment write-ups,
+disassembly and raw evidence live in this private research repository, indexed
+by [`docs/REGISTRY-LOG.md`](../docs/REGISTRY-LOG.md); they are not part of the
+public functional edition.
 
-A claim ID is permanent. Read the claim in its owning ledger and check
-[`retracted.md`](retracted.md) for later correction or narrowing. The command
-`go run ./tools/claim <ID>` performs both lookups without loading a whole ledger.
+A claim ID is permanent. `go run ./tools/claim <ID>` prints one claim with its
+retraction entries; `-l <ledger>` lists a ledger's headlines and `-k <regexp>`
+searches every ledger. Corrections and narrowings are recorded in
+[`retracted.md`](retracted.md).
 
 ## ROM1 ledgers
 
@@ -57,16 +59,66 @@ surfaces in the seven-row ROM2 survey; the session-header authority is in
 Each public snapshot's `SOURCE.md` identifies its contents and source commit;
 private experiment links preserve evidence identity without exporting evidence.
 
-## Status and confidence
+## How a claim is written
 
-- `✔ promoted` — the claim is also used by a public format/specification page.
-- `● active` — current claim not promoted into a format page.
-- `✖ retracted` — former wording has been corrected, narrowed or refuted; see
-  [`retracted.md`](retracted.md).
+A ledger opens with its scope and any terms its claims share, then groups
+claims under topic headings. Each topic holds an index table and one card per
+claim, in the same order.
 
-Confidence records the strength and scope of the research evidence. It is not a legal
-clearance, a compatibility guarantee or permission to redistribute original game
-material.
+```markdown
+  ## Topic
+
+  | ID | Claim | Confidence | Status | Evidence |
+  |---|---|---|---|---|
+  | AREA-TOPIC-NNN | One sentence a reader can build on, scope included. | High | ● active | [EXP-NNNN](../experiments/EXP-NNNN-slug/) |
+
+  ### AREA-TOPIC-NNN
+
+  The facts behind the headline: offsets, sizes, addresses, counts and the
+  population measured, as short sentences or a list.
+
+  **Confidence.** What rules out the live alternatives; a separate grade for each
+  clause that differs from the cell.
+
+  **Unknown.** What the evidence leaves open.
+
+  **Amended.** Which clause a later claim or retraction changed, and where.
+```
+
+- **Claim** is one sentence of at most 240 characters. It carries the scope
+  when the fact holds only for a searched population, a locale or a code path.
+- **Confidence** is a grade only: `High`, `Medium`, `Low` or `Unknown`. When
+  clauses differ, each grade that applies appears once, in that order, joined by
+  ` / `; the card's **Confidence.** paragraph says which clause has which.
+  A retracted claim with no standing grade carries `—`.
+  Confidence records the strength and scope of the research evidence. It is not
+  a legal clearance, a compatibility guarantee or permission to redistribute
+  original game material.
+- **Status** is one marker, optionally followed by qualifiers in parentheses,
+  separated by commas:
+
+  | marker | meaning |
+  |---|---|
+  | `✔ promoted` | a format page also states the claim |
+  | `● active` | current, not stated by a format page |
+  | `✖ retracted` | the whole claim is withdrawn; [`retracted.md`](retracted.md) holds the correction |
+
+  | qualifier | meaning |
+  |---|---|
+  | `amended` | a later claim extended, corrected or narrowed a clause |
+  | `partially retracted` | a clause is withdrawn; the rest stands |
+  | `superseded` | a later claim replaces a clause |
+  | `contested` | two readings stand; the card names both |
+  | `branch candidate` | published from a bounded branch candidate whose confidence review had not passed |
+
+  `amended`, `partially retracted`, `superseded` and `contested` require an
+  **Amended.** paragraph in the card.
+- **Evidence** links the experiments whose evidence earned the claim.
+- A card stays under 8 KB; `tools/claim -check` refuses a longer one.
+- The card holds facts, not their history. Git and the experiment record carry
+  how a fact was found; another claim is cited by its ID rather than restated.
+  **Confidence.**, **Unknown.** and **Amended.** appear only when they have
+  content.
 
 ## Publication boundary
 

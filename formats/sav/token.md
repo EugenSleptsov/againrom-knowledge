@@ -145,7 +145,8 @@ The later session join walks Building and Sack managers. Both senders read
 cell and sub-cell through full-coordinate getters. Sack sends full words;
 Building shifts right eight and emits cell bytes. Neither sender uses packed
 `+02`, unmanaged `+06` or terrain `+08`. Earlier Position use can precede
-these mandatory-prefix consumers. — SAV-POSTLOAD-221
+these mandatory-prefix consumers. — SAV-POSTLOAD-221 (its no-world corpus
+count is superseded by SAV-SUFF-300; the sender result stands)
 
 Before entry, nonzero campaign `+6b8` can call the ordinary wrapper
 `004d2551`; nonzero server `+2c` admits the same sub-tick used by normal pacing.
