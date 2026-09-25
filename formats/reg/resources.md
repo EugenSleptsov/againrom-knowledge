@@ -89,16 +89,16 @@ below define only their own keys.
   disagreeing stage. `InnNPC`/`InnMission` are unequal length at exactly one of 39 stage×root pairs
   measured (Mission40, pre-release root).
 
-  **The tavern reader `FUN_00480fd0` is bounded by `InnNPC`, not by `InnMission`** (`REG-118`):
-  it is entered only when the record's selection index is at or past `InnNPC`'s own size, reads
-  both arrays at `idx = curSel − InnNPC.Size()`, and no instruction in either compiled build
-  compares that index against `InnMission`'s own size. Whether real input can drive the
-  selection index far enough to expose the pre-release root's shorter `InnMission` at Mission40
-  is not established either way; the function that would set that bound was not reached. Below
-  that bound the same selection index instead reaches the mercenary roster `MERC-HIRE-003`/
-  `MERC-TYPE-001` already describe — a separate array reached through the same static field, not a
-  second `InnNPC` — so the inn's selectable range is mercenary rows first, then per-NPC rows once
-  `curSel >= InnNPC.Size()`; why one field serves both readings is not established (`REG-118`).
+  **The tavern reader `FUN_00480fd0` is bounded by the inn view's mercenary count, not by
+  `InnMission`** (`REG-118`, bound corrected by `TOWN-468`): it is entered only when the
+  selection index is at or past the mercenary count, reads `InnMission` and `InnNPC` at
+  `idx = curSel − mercCount`, and no instruction in either compiled build compares that index
+  against `InnMission`'s own size. `REG-118`'s reading of that bound as `InnNPC.Size()`, and of the
+  mercenary array as `InnNPC`'s data, is partially retracted: the view and the campaign document
+  are two objects. Below the bound the selection reaches the mercenary roster `MERC-HIRE-003`/
+  `MERC-TYPE-001` describe, so the selectable range is mercenary cells first, then one per-NPC
+  cell per `InnNPC` element (`TOWN-468`). Whether real input can drive the selection index far
+  enough to expose the pre-release root's shorter `InnMission` at Mission40 is not established.
 
 - **`scenario.res::globalmap.reg`** (`REG-SCN-059`) — `[General] ObjectCount = 35` matching
   **35** `[MapObject<n>]` sections (1-based), each `MapPoint` = 2 ints, `MapRect` = 4 ints, 5

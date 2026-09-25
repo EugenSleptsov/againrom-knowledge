@@ -212,3 +212,43 @@ prerequisite. (SAV-930)
 A saved eligible set does not establish successful stock construction, list
 activation or full click completion. The original first failing operation
 across those paths remains Unknown. — SAV-931, SAV-932
+
+## Roster presentation
+
+The roster lists mercenary cells first, then one talk-only cell per `InnNPC`
+element in array order at position `mercCount + j`. List position `i` is rect
+`i` of the grid [TOWN](../town/format.md#tavern-roster-grid-and-number-grouping)
+specifies. — TOWN-467, TOWN-468, SAV-1112
+
+The mercenary cells are the live `CUnit` stock in the order of the document
+actor-map walk: buckets from index 0, each chain from its head, with head
+insertion keyed by `(id & 0xffff) >> 4`. The `Mercenaries` list, the unlock
+list and the pools decide membership only, not order. A save stores none of
+the stock ids that fix the order: tavern entry sends the command that rebuilds
+types 1..15 in fixed type order after any load. Where the id-block split falls
+is fitted to one original screenshot and is Medium. — TAVERN-ORDER-015,
+SAV-1111, MERC-CMD-007, SAV-918, SAV-926
+
+| cell kind | background | sheet | text | animation |
+|---|---|---|---|---|
+| mercenary | `manback.bmp` | `Unit<type>` | grouped price at the top, `working/pristine` pool at the bottom; a glyph when the type is hired | selected cell only |
+| talk-only | `ManBackTalk.bmp` | `HeroMage` or `HeroFighter` for a Hero object, else `Unit<+0x15b>` | none | selected cell only |
+
+The selected cell steps `(frame+1) % frameCount` when more than 125 ms have
+passed on one global clock both loops reset; other cells hold their frame.
+While the selection is −1, which activation stores when no mercenary is
+eligible, neither loop draws any cell. — TOWN-468 A talk object is the
+live actor passing the npc section's `Flags` terms, or else a synthesised
+object whose `+0x15b` is the npc id. A synthesised non-Hero candidate without a
+shipped `Unit<id>` sheet aborts the original with a fatal load message; npc90
+and npc59 are the shipped candidates in that position, and whether a live stock
+mercenary always answers them is Medium. — TAVERN-TALKPIC-016
+
+Selecting a talk-only cell shows statistics in the left panel only when the
+object's `+0x18c` bit `0x40` is clear. A synthesised object is created with
+`0x48`, so it shows no statistics; a live actor's class flags clear the bit.
+That the bit survives the object's lifetime is Medium. Below the panel a
+synthesised `Hero` or `Human` object shows its composed face figure; one with
+neither, npc2 in the shipped campaign, takes the `infowindow` picture arm, and
+which picture it shows is Unknown.
+— TAVERN-TALKSTATS-017

@@ -219,6 +219,11 @@ working-pool entry. — MERC-SHELF-002, SAV-928
 | Caption / price refresh | Signed checks `selection <= count-1` / `selection < count` admit -1; neither is a lower-bound check |
 | InnNPC | Separate append loop; it does not supply an empty-mercenary fallback selection |
 
+The persisted `InnNPC` order is the talk-only cells' order, at roster
+position `mercCount + j`. The campaign record names which mercenary types are
+offered but not their cell order: that comes from the ids of stock units built
+after load, which the record does not store. — SAV-1111, SAV-1112
+
 The local empty-selection stores and indexed consumers are established.
 Whether selection/storage survive intervening UI/resource calls unchanged
 remains conditional. Do not infer a universal empty-save failure from the

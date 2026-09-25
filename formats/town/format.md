@@ -186,6 +186,33 @@ the next episode first draws that cached last picture and then selects
 `br0002.bmp`, unless a reload or another writer intervenes. No catch-up loop
 is present in either measured animation gate. (`TOWN-408`, `TOWN-410`, `TOWN-411`)
 
+## Tavern roster grid and number grouping
+
+The roster child fills 18 rects of 48x64 in its constructor, bottom row
+first. List position `i` is column `i%6` and row `⌊i/6⌋` counted up from the
+bottom: `x = 176 + 48·(i%6)`, `y = 480 − 64·(⌊i/6⌋+1)`. Paint and hit test
+address the rect at `0x60 + 0x10·i`. The ÷3 slot formula `TOWN-065` published
+is retracted. — TOWN-467
+
+Mercenary cells come first and talk-only cells after them; the hit test covers
+both halves and stores the selection. The bound below which a selection is a
+mercenary is the mercenary count, not the `InnNPC` size. — TOWN-468
+
+Nineteen call sites in nine routines group a decimal string with commas: the
+character generator's remaining points and stat cost, the hall of fame score,
+the tavern button values and mercenary price, one item-grid money cell, the
+shop grid quantity and price, the shop button values and the school widget
+values. Grouping inserts `,` before each three trailing digits and keeps a
+leading `-` or `+` without a comma after it (`-1000` → `-1,000`, `-999` →
+`-999`). The tavern pool count, the hall of fame rank and the generator's
+`"%s = %d"` text are drawn ungrouped; the character/unit panel calls no
+grouping. Whether a second grouping routine exists is Medium. — TOWN-469
+
+`graphics.res` ships 28 inn sheets per root: `HeroFighter`, `HeroMage`,
+`Unit1`..`Unit15`, `Unit29`, `Unit30`, `Unit32`, `Unit41`..`Unit44`,
+`Unit52`, `Unit61`, `Unit62`, `Unit64`. The sheets above 15 are keyed by npc
+id; that 29, 42, 43, 44 and 61 serve talk cells is Medium. — TOWN-470
+
 ## Tavern lifetime and sound boundary
 
 Entry reloads all four arrays and resets each index and cached picture to the
