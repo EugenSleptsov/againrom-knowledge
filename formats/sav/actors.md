@@ -307,6 +307,31 @@ reverting the personal record alone reproduces the fight regardless of the
 group's state, and reverting the group alone does not, regardless of the
 personal record's state. — SAV-1096, SAV-1101
 
+### Client drawable after LOAD
+
+The session-entry join sends every tick-list actor, and every dead-list actor
+below stage 5, through the actor-state sender with a full mask. The client
+state arm creates a drawable for an unknown runtime id whose message passes
+the owner, class and `0x4001` tests. The drawable's position is the one the
+message names. — SAV-1118
+
+The sender names the Token Position only when both sub-cell bytes `+4/+5` are
+`0x80`. Otherwise it names the mover word `*(+154)+06` as a cell centre. An
+actor that is still mid-step when the entry send reads it gets its drawable
+at the mover cell while the simulation keeps it at its Position. For a
+restored actor that is the saved mover cell only if no tick before the entry
+send moved it. The pre-entry tick runs when campaign `+0x6b8` is nonzero, and
+the number of ticks before the send was not established. Whether the client
+shows the drawable was not read. Ordinary move messages add deltas to the
+drawable and do not restore an absolute position. — SAV-1119
+
+Mission-141 documents of this project carry three Units with a non-centred
+sub-cell and mover word 0, among them map unit 57; unless the pre-entry tick
+moves it first, its drawable is created at map cell 0,0 (Medium). None of 76
+distinct original-written documents of the owner save tree holds an actor
+whose mover cell is more than one cell from its Position (Medium).
+— SAV-1120, SAV-1121
+
 ## Dead actors and source references
 
 Dead actors leave the owner graph and remain in the exact top-level dead list.

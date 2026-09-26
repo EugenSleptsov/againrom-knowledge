@@ -13382,6 +13382,10 @@ read and the append.
 | SAV-1114 | Item Token `+0x08` is a pending pickup-announcement flag. `00509229` publishes it as record bit `0x40` and clears it, and the client posts a "Picked up" line for it on the carried-container arm. | High / Medium | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
 | SAV-1115 | In one original resave, 35 Item Token `+0x08 = 1` words came back 0. Token LOAD and SAVE copy the word literally, so a publication between LOAD and SAVE cleared them. | High / Medium | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
 | SAV-1116 | For the four Humans of one mission-140 SAV pair, the derive speed formula reproduces the saved speed word and mover byte. The pair cannot show whether the original re-derives after LOAD. | High / Medium / Unknown | ● active | [EXP-0401](../experiments/EXP-0401-town-resave-fields/) |
+| SAV-1118 | After LOAD, session entry sends every tick-list actor with a full mask. The client state arm creates a drawable for an unknown id whose message passes the owner, class and `0x4001` tests, at the message position. | High / Medium / Unknown | ● active | [EXP-0402](../experiments/EXP-0402-loaded-actor-drawing/) |
+| SAV-1119 | The actor-state sender names the Token Position only for a centred sub-cell, else the mover cell `+06`. An actor mid-step at the entry send gets its drawable created at the mover cell; the simulation keeps its Position. | High / Medium / Unknown | ● active | [EXP-0402](../experiments/EXP-0402-loaded-actor-drawing/) |
+| SAV-1120 | In `game9271.sav` troll 57 is mid-step with mover cell 0,0: unless a tick moves it before the entry send, its drawable is created at 0,0. Troll 168 is centred; its drawable is created at 62,62. | Medium / Unknown | ● active | [EXP-0402](../experiments/EXP-0402-loaded-actor-drawing/) |
+| SAV-1121 | Over 76 distinct original-written documents (100 admitted files) of the owner save tree, 69 mid-step actor records all have a mover cell at most one cell from their Position. | Medium / Unknown | ● active | [EXP-0402](../experiments/EXP-0402-loaded-actor-drawing/) |
 
 ### SAV-1113
 
@@ -13529,6 +13533,156 @@ derive through `0x4d403c` on actors it constructs (`0x4f8e78` → `0x4f9065` →
 `004f965b`; `0x4fc2e8` → `004fc34a`); no search established whether any
 session-entry path derives a loaded Human. Town entry was not identified, and
 any later derive trigger is also open.
+
+
+### SAV-1118
+
+- Session-entry join `004d303e` has one caller, `004d5dd8` (`004d82cb`). It
+  calls `004e9b4e` (`004d347e`). `004e9b4e` calls sender `004e7de3` with mask
+  `-1` for the Player's `+34` actor, for every element of the tick list
+  `[0x00609558]+4` (`004e9bb0..004e9bbf`) and for every element of the dead
+  list `*(world+0x14)+0xc` whose stage `+13c` is below 5 (`004e9c1b`).
+- The sender reduces the mask in four places:
+  - it clears `0x1000` when the class is not `0x1a`, `0x1b` or `0x45`
+    (`004e7edf`);
+  - it keeps `0x507b` for a non-humanoid actor not owned by the recipient
+    (`004e7e9e`);
+  - it keeps `0x50fb` for a humanoid not owned by the recipient whose type
+    `+0e` lies outside `[0x21,0x3f]` (`004e7f11`);
+  - it clears `0x2` when `+9c` is 0 (`004e7f2b`).
+  Bits `0x4000`, `0x1` and `0x20` survive each reduction. The packet is emitted
+  when `mask & 0xff7fff7f` is nonzero (`004e861b`). Token `+18`
+  (`004f28a8`/`004f28d0`) gates only the Effect-list and `+4c` bit `0x08`
+  extras after the packet, not the packet itself.
+- Client arm `00410e0e` (opcodes `0x6c`, `0x6e`, `0x6f`, `0x70`) drops the
+  message when the owner byte exceeds view `+9a8` or names a null view
+  `+9a4` slot (`0041121c`, `0041128a`), or when a non-hero class has no table
+  entry (`0041134d..00411364`). It looks the runtime id up in view `+9b8`.
+  For an absent id it drops the message unless mask bits `0x4001` are both set
+  (`004114b9`), then allocates a `0x1b0`-byte drawable (`00411536` or
+  `00411597`) and inserts it. It stores the message position at drawable `+8`
+  and `+c` (`00411890`, `004118ae`).
+- The LOAD route `00477c00` runs the optional pre-entry tick (`00477e5b`) and
+  then pumps the client dispatcher (`00477f01`) until the session starts.
+- Evidence files: `evidence/static/d-server.txt`,
+  `evidence/static/callers.txt`, `evidence/static/r-client-state.txt`,
+  `evidence/static/r-load-pump.txt`. Also cites `SAV-POSTLOAD-220`,
+  `SAV-POSTLOAD-221`, `SAV-678`, `MOVE-TICK-013`, `ANIM-MSG-005`.
+
+**Confidence.** High for the named instructions and the one-caller join. Medium
+that the client state arm is the only route that creates an actor drawable.
+
+**Unknown.** Whether the pre-entry tick runs for a given document, and how many
+server ticks separate LOAD from the entry send. Other drawable allocation
+sites exist and none was shown to run at LOAD: `0x1b0` allocations with the
+state arm's constructor `0045ae30` at `00421f95`, `0047af4f` (it inserts into
+view `+9b8` under fixed id 1) and `0047b660`, and the dispatcher arms `0x82`
+(Building objects in the same `+9b8` map) and `0x86`, `0x8b`, `0x8c`
+(`0x14c` objects).
+
+### SAV-1119
+
+- In `004e7de3`, mask bit `0x20` sends the Token Position through getters
+  `005449e0`/`005449f0` (`cell<<8 | sub`) only when `00545c30` returns 1
+  (`004e7fd4`, `004e7fdb`). `00545c30` returns 1 exactly when Position
+  sub-cell `+4` and `+5` are both `0x80`.
+- Otherwise the sender reads mover word `*(actor+154)+06`: its low byte and
+  its high byte each become `(cell<<8)+0x80` (`004e801f..004e808f`). Mover
+  `+06` is the cached route cell (`MOVE-CLAIM-007`).
+- The client arm stores those two values at drawable `+8/+c`. A sweep of the
+  dispatcher's own body `004104e8..004186e3` (7,325 instructions) finds 38
+  instructions whose destination is `[reg + 0x8]` or `[reg + 0xc]`
+  (`evidence/static/dispatcher-disp8-c-writes.txt`). Two write the `0x1b0`
+  drawable, at `00411890` and `004118ae`. Two write Building objects of arm
+  `0x82` (`00412bd9`, `00412bf6`), six write the `0x14c` objects of arms
+  `0x86`, `0x8b` and `0x8c`, and the rest write Item entries, hash-map nodes
+  and counts and one view field. Move arm `0x6b` (`0041453c`) looks the id
+  up, drops an unknown id, and writes action, facing and duration with a
+  per-direction delta; it writes no absolute position.
+- Arrival routine `005495f0` re-centres Position; its mask `-1` send
+  (`0054986d`) lies in the arm gated by cell type `0x1a` (`00549788`), not on
+  every arrival.
+- Of 51 direct sender calls (`evidence/static/r-send-sites.txt`), those with
+  an immediate mask that includes bit `0x20` push `-1`, `0x20` or
+  `0xbf7fff7f`. They include entry, joins, spawns, trigger instants 16 and 17
+  (`004f4865`, `004f4905`) and the `0x1a` arrival arm. Several sites push a
+  register whose value was not traced.
+- Consequence: an actor that is still mid-step when the entry send reads it
+  gets its drawable at the mover cell, while the simulation keeps it at its
+  Position. For a restored actor that is the saved mover cell only if no tick
+  before the entry send moved it. The pre-entry tick runs when campaign
+  `+0x6b8` is nonzero, and the number of ticks before the send is
+  `SAV-1118`'s Unknown. Whether the client shows the drawable was not read.
+- Evidence files: `evidence/static/d-server.txt`,
+  `evidence/static/r-client-state.txt`, `evidence/static/r-client-move.txt`,
+  `evidence/static/r-send-sites.txt`,
+  `evidence/static/dispatcher-disp8-c-writes.txt`. Also cites
+  `AI-CENTRE-101`, `MOVE-CLAIM-007`, `SAV-POSTLOAD-221`.
+
+**Confidence.** High for the Position/mover branch. It excludes the rival that
+the sender always names the Position: the branch at `004e7fdb` selects the
+mover arm on a non-centred sub-cell. Medium for reading the restored bytes as
+the state at the entry send, because the pre-entry tick is not excluded.
+Medium for "stays misplaced until a later position send": the census of later
+senders reads the pushed mask at each direct call site, not the reach of each
+caller, and the `+8/+c` sweep covers direct writes in the dispatcher's own
+body only; its callees and the per-frame animation driver were not searched.
+
+**Unknown.** Whether fog of war or line of sight hides the drawable; which
+later event first corrects the drawable in play.
+
+### SAV-1120
+
+- `game9271.sav` (this project's document, mission 141): map unit 57, runtime
+  id 37, class 68, has Position cell 60,59, sub-cell `0x48,0x80`, and mover
+  word `+06` = 0. If the entry send reads these bytes, it names cell 0,0 and
+  its drawable is created at map cell 0,0. Map unit 168, runtime id 68, class
+  68, has sub-cell `0x80,0x80` and its drawable is created at its Position
+  62,62.
+- The same file has two more such Units: map unit 30, class 80, cell 56,15,
+  sub-cell `0xee,0xee`, and map unit 75, class 64, cell 16,23, sub-cell
+  `0xee,0xee`. All three have mover word 0 and AI state `+50` = `0x0a`.
+  `dragontooth.sav` has the same three records with AI state `0x0b`. Of the
+  72 Unit/Humanoid/Human records in each file (62 Unit, 10 Human), these three
+  are the only non-centred ones.
+- In the original resave `game0001.sav`, both trolls are centred: unit 57 at
+  60,61 with mover word 60,61 and unit 168 at 62,62. Both drawables are
+  created at their Positions. `game0002.sav` agrees. `dragontoothresaved.sav`
+  has one non-centred actor, one cell from its mover cell.
+- The owner's observation after LOAD of `game9271.sav` fits unit 168 as the
+  one troll seen, standing in guard state `0x0b` with `+54` 0, and unit 57,
+  patrol state `0x0a` walking a nine-cell route, as the unseen attacker.
+- Evidence files: `evidence/trolls.tsv`, `evidence/inputs-actors.tsv`,
+  `evidence/census/noncentred.tsv`. Also cites `AI-STATE-011`.
+
+**Confidence.** Medium. The file bytes and the rule of `SAV-1119` give the
+predicted drawable cells exactly, and one owner run agrees. No run changed one
+byte group alone, and the pre-entry tick could move unit 57 before the send.
+
+**Unknown.** Whether unit 57 is still non-centred at the entry send; whether its
+drawable is shown or later corrected in play.
+
+### SAV-1121
+
+- Population: every `.sav` under the owner save tree, 113 files
+  (`evidence/q4-population.tsv`). 13 are excluded by path as project-written
+  (a `generated` or `engine-from` path) or as the `EXP-0261` directory's six
+  MANIFEST-labelled generated candidates. One more,
+  `story-1073-original-acceptance/game0000.sav` (`bbee204a…`), is excluded by
+  content: its bytes equal six excluded project-written files. Of the 99
+  remaining files, 23 are byte-identical copies of earlier files and are
+  counted once. That leaves 76 distinct original-written documents; some come
+  from sessions seeded by a project document (`seeded`).
+- The 76 documents decode completely and hold 2,779 actor records. 69 have a
+  non-centred sub-cell. Their mover cell equals the Position cell for 33 and
+  is one cell away for 36. None is farther.
+- Evidence files: `evidence/q4-population.tsv`, `evidence/census/summary.tsv`,
+  `evidence/census/noncentred.tsv`.
+
+**Confidence.** Medium. A finite-corpus census over the named population.
+
+**Unknown.** Whether an original save can hold a non-centred actor with a far
+mover cell, for example during a teleport or a trigger return.
 
 ## Open questions
 
