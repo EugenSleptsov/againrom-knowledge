@@ -32,8 +32,8 @@ Two vocabularies meet here and are kept apart.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | PARTY-OWN-001 | Ownership is one pointer, `actor+0x14`, to a `Player`; the `Player` carries two identities, its slot `+0x04` and the map's type-5 id word `+0x08`. | High | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
-| PARTY-ROSTER-002 | There is no party object and no member list: the roster is `Player` → group collection → group → the group's own actor list, and membership is containment. | High / Medium / Unknown | ● active (amended) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
-| PARTY-FLAG-003 | On the client, side membership is the dword flag word `CUnit+0x18c`: the end-of-mission cull keeps bit 0, the tavern tally reads bit 4 (mercenary), and bit 1 splits that bucket. | High / Medium / Unknown | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-ROSTER-002 | There is no party object and no member list: the roster is `Player` → group collection → group → the group's own actor list, and membership is containment. | High / Medium / Unknown | ● active (amended, superseded) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-FLAG-003 | On the client, side membership is the dword flag word `CUnit+0x18c`: the end-of-mission cull keeps bit 0, the tavern tally reads bit 4 (mercenary), and bit 1 splits that bucket. | High / Medium / Unknown | ● active (amended) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 | PARTY-CULL-004 | At the end of every mission the client document is cut down to one player and its own surviving player characters; everything else is destroyed. | High | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 
 ### PARTY-OWN-001
@@ -174,11 +174,11 @@ kill list as the failed-test arm at `00420398`.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| PARTY-CARRY-005 | What crosses a map change is one compressed `CArchive` graph with one root actor plus sixteen bytes of `Player` scalars, the same bytes in the network packet and the `.chr` file. | High | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-CARRY-005 | What crosses a map change is one compressed `CArchive` graph with one root actor plus sixteen bytes of `Player` scalars, the same bytes in the network packet and the `.chr` file. | High | ● active (amended) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 | PARTY-LOSS-006 | The carry importer re-homes the actor: a carried character arrives at full pools, off the map, with no position, order or route, and named after the account. | High / Medium / Unknown | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
-| PARTY-MERC-007 | Mercenaries do not cross a map change as objects; what crosses is a count per type in the tavern's mission record, so one party needs two persistences. | High | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
-| PARTY-SESSION-008 | Apart from three zeroing stores, `FUN_004cfdb0` is the only writer of the world, player-list and actor-registry globals; that the server is rebuilt at every mission boundary is contested. | High / Medium / Unknown | ● active (contested) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
-| PARTY-GROUP-009 | A client's group is the one whose `Player` the client is assigned, named by slot and nothing else; hiring a mercenary changes no ownership field. | High / Medium | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-MERC-007 | Mercenaries do not cross a map change as objects; what crosses is a count per type in the tavern's mission record, so one party needs two persistences. | High | ● active (amended) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-SESSION-008 | Apart from zeroing stores, `FUN_004cfdb0` is the only writer of the player-list and actor-registry globals; the world global has three writers, and the campaign's mission-to-mission edge does not rebuild the server. | High / Medium / Unknown | ● active (superseded) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-GROUP-009 | A client's group is the one whose `Player` the client is assigned, named by slot and nothing else; hiring a mercenary changes no ownership field. | High / Medium | ● active (amended) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 
 ### PARTY-CARRY-005
 
@@ -196,10 +196,14 @@ kill list as the failed-test arm at `00420398`.
 - The same 16 + N bytes are written to `chr\<profile>\<u><u>.chr` (format
   string `0x5c5df8`) when the profile name at `player+0x64` is non-empty, and
   to `<u><u>.chr` when it is not.
-- The client re-sends them: `FUN_0042008d` builds the identical `0xbe` packet
-  out of `campaign+0x114` / `campaign+0x118` (`FUN_0047bd50` at `0047bda4`,
-  guarded by `[ESI+0x118] != 0` at `0047bd93`). When the blob is absent it
-  sends the chargen message `0x48` instead (`FUN_0041fd61`).
+- The client re-sends them: `FUN_0042008d` builds a `0xbe` packet in the same
+  static buffer out of `campaign+0x114` / `campaign+0x118` (`FUN_0047bd50` at
+  `0047bda4`, guarded by `[ESI+0x118] != 0` at `0047bd93`). When the blob is
+  absent it sends the chargen message `0x48` instead (`FUN_0041fd61`).
+- The client's packet carries the stored bytes at `pkt+0x0e` (`004200e4`) and
+  their word count at `dword+0x0a` (`004200fb`), but its header differs from
+  the exporter's: it stamps its own slot at `word+0x05` (`004200b4`,
+  `PARTY-GROUP-009`) and writes `word+0x07 = 0` (`004200bb`).
 - The server's arm (`FUN_004d5dd8` at `004d7eb6` / `004d7f15`) can take the
   payload from the wire or read a `.chr` off disk into the same packet field
   before calling the importer.
@@ -212,6 +216,12 @@ owners, 0 orphan. The single root is the single `WriteObject` at `004cf56f`.
 The 16 bytes are one `memcpy` with a named source, and the importer assigns
 those four dwords back to the same four `Player` offsets at
 `004cfaa6`…`004cfac1`.
+
+**Amended.** The client packet is corrected ([`retracted.md`](retracted.md)).
+The former wording called it "the identical `0xbe` packet". EXP-0077's listing
+of `FUN_0042008d` puts the slot at `word+0x05` and zero at `word+0x07`, where
+the exporter puts the slot at `word+0x07` (`004cf64c`). The 16 + N payload
+bytes are unchanged.
 
 ### PARTY-LOSS-006
 
@@ -275,26 +285,23 @@ and the width of its elements.
 
 - The world is the object `[0x005cd758]`; `SESS-*` claims call it the server
   singleton.
-- `FUN_004cfdb0` is the only writer of the three globals the roster lives in:
-  `[0x005cd758]` (the world), `[0x00609544]` (the player list) and
-  `[0x00609558]` (the actor registry). The only other writes are
-  `FUN_004cec1d`'s three `MOV …,0x0`.
-- Published reading: nothing survives in memory, because the single-player
-  server is destroyed and rebuilt at every mission boundary. `FUN_004762a0`
-  allocates `0x174` bytes, calls `FUN_004cec1d` on the old world and
-  `FUN_004cfdb0` on the new one. A carry is therefore a serialization or it
-  does not happen.
-- Contesting reading (EXP-0100, `PARTY-PERSIST-014`): the premise has no
-  instruction behind it. `FUN_004762a0` makes both constructor calls on the
-  object it has just allocated (`004762d6`/`004762ee`, both `MOV ECX,EAX`), so
-  it builds one world and destroys none. It has five call sites, and the
-  per-mission starter `FUN_00477c00` is not one of them; `FUN_004d00e9` runs on
-  the existing object (`00477dc8`). What stands is the global-writer
-  enumeration, not the cadence, and therefore not the conclusion "a carry is
-  therefore a serialization or it does not happen".
-- What replaces the rebuild is `FUN_004d00e9`, read whole by `SESS-LOAD-009`,
-  which holds the mission-number parse and the save-versus-map branch. The
-  routine finishes by zeroing `world+0x00` and `world+0x04`, the two counters
+- `FUN_004cfdb0` is the only writer of the player list `[0x00609544]` and the
+  actor registry `[0x00609558]`, apart from `FUN_004cec1d`'s `MOV …,0x0`
+  stores.
+- The world global `[0x005cd758]` has three writes (`PARTY-PERSIST-014`):
+  `004762f0` in the allocator `FUN_004762a0`, `004cfea9` in `FUN_004cfdb0`, and
+  `0047635e`, the teardown `FUN_00476340`'s `= 0`. None is in `FUN_004cec1d`.
+- `FUN_004762a0` allocates `0x174` bytes and makes both constructor calls,
+  `FUN_004cec1d` and `FUN_004cfdb0`, on the new object (`004762d6`/`004762ee`,
+  both `MOV ECX,EAX`): it builds one world and destroys none. The per-mission
+  starter `FUN_00477c00` is not among its five callers and runs `FUN_004d00e9`
+  on the existing object (`00477dc8`).
+- The campaign's mission-end arm reaches no `FUN_00476340`, and `FUN_004e2327`
+  then reuses the surviving human `Player` (`PARTY-PERSIST-028`). A carry across
+  that edge is therefore not only a serialization.
+- `FUN_004d00e9`, the routine `FUN_00477c00` calls, is read whole by
+  `SESS-LOAD-009` and holds the mission-number parse and the save-versus-map
+  branch. It finishes by zeroing `world+0x00` and `world+0x04`, the two counters
   `SESS-TICK-004` names and `SAV-HEAD-025` measures in the file, and by setting
   `world+0x2c = 1` (`004d0519`). That is the flag the save writer tests to
   decide whether a world half exists at all (`SAV-SHAPE-023`).
@@ -302,23 +309,30 @@ and the width of its elements.
   ship: no `.ini` entry exists in any of the eight `.res` archives (0 of 4 080
   entries), and no `World` directory exists on disk.
 
-**Confidence.** Medium for the lifecycle, demoted by EXP-0100: the
-global-writer enumeration is `EnumRefs refto:` over three addresses with 0
-orphan hits and stands, but "destroyed and rebuilt at every mission boundary"
-was read off `FUN_004762a0`'s two constructor calls, and both are on the new
-object. High for `world+0x2c`'s single write. High for the `.ini`'s absence: a
-whole-corpus enumeration of archive entry names plus a directory listing, the
-instrument class `AGENTS.md` calls immune.
+**Confidence.** Medium for the single-writer statement on `[0x00609544]` and
+`[0x00609558]`: it rests on an `EnumRefs refto:` sweep with 0 orphan hits whose
+output is not in EXP-0077's committed record, and the sweep's third address,
+re-enumerated by `PARTY-PERSIST-014`, has writers outside `FUN_004cfdb0`. High
+for `world+0x2c`'s single write. High for the `.ini`'s absence: a whole-corpus
+enumeration of archive entry names plus a directory listing, the instrument
+class `AGENTS.md` calls immune.
 
 **Unknown.** What `FUN_004e0b0c` does when the file is missing, and therefore
-what a shipped campaign loses by its absence.
+what a shipped campaign loses by its absence. Which addresses
+`FUN_004cec1d`'s zeroing stores write: the EXP-0077 and EXP-0100 records hold
+no listing of them.
 
-**Amended.** Contested by EXP-0100 (`PARTY-PERSIST-014`,
-[`retracted.md`](retracted.md)). The lifecycle half, graded High when
-published, is Medium. The retraction entry (verdict AMBIGUOUS) finds no
-instruction behind the premise and leaves the conclusion's falsity
-unestablished: whether the shipped campaign's mission-to-mission edge reaches
-the teardown `FUN_00476340` was not read there.
+**Amended.** Two clauses are superseded ([`retracted.md`](retracted.md)).
+`PARTY-PERSIST-014` (EXP-0100) replaces the writer set of `[0x005cd758]`; the
+former wording made `FUN_004cfdb0` the only writer of all three globals apart
+from `FUN_004cec1d`'s three `MOV …,0x0`. `PARTY-PERSIST-028` (EXP-0165)
+replaces the lifecycle: it reads the mission-end arm the AMBIGUOUS entry left
+unread, and that arm reaches no `FUN_00476340`. The withdrawn text read:
+"nothing survives in memory, because the single-player server is destroyed and
+rebuilt at every mission boundary", "calls `FUN_004cec1d` on the old world" and
+"A carry is therefore a serialization or it does not happen". The lifecycle was
+graded High when published and Medium after EXP-0100. The player-list and
+actor-registry writers, `world+0x2c` and the `.ini`'s absence stand.
 
 ### PARTY-GROUP-009
 
@@ -333,7 +347,7 @@ the teardown `FUN_00476340` was not read there.
   owner is the player it was created for. The hire flag
   `dword[record+0x88 + (t−1)·4]` lives in the campaign mission record, not on
   any unit.
-- The three ways a unit becomes a player's are one mechanism and two origins:
+- The three ways a unit becomes a player's are one mechanism and three origins:
   the field is always `actor+0x14`, and it is written by the map loader for
   what the map gives, by the spawner for what is bought, or by the importer for
   what is brought.
@@ -345,15 +359,21 @@ as a live value at the call site, and the lookup that produced it was not
 traced to its own compare. The discriminator is one listing of
 `FUN_004d5dd8`'s `0xbe` prologue.
 
+**Amended.** The origin count is corrected ([`retracted.md`](retracted.md)).
+The former wording read "one mechanism and two origins" beside the three
+writers it names: the map loader, the spawner and the importer. The count is
+three, one per writer. The slot stamp, the slot resolution and the hire's
+non-effect on ownership are untouched.
+
 ## Where a player's units come from
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| PARTY-ORIGIN-010 | The party is two `Player` containers: the group list `+0x24` is saved, and the flat index `+0x20` is derived from it on load and read only by the placement walk. | High | ● active | [EXP-0100](../experiments/EXP-0100-party-origin/) |
-| PARTY-WRITE-011 | Eleven routines write the player's two containers by call, and the group-list and group-member appends share one owner set, so the two containers are always written together. | High / Medium / Unknown | ● active | [EXP-0100](../experiments/EXP-0100-party-origin/) |
+| PARTY-ORIGIN-010 | The party is two `Player` containers: the group list `+0x24` is saved, and the flat index `+0x20` is derived from it on load and is the list the placement walk places from. | High | ● active (partially retracted) | [EXP-0100](../experiments/EXP-0100-party-origin/) |
+| PARTY-WRITE-011 | Eleven routines write the player's two containers by call, and the group-list and group-member appends share one owner set, so the two containers are always written together. | High / Medium / Unknown | ● active (amended) | [EXP-0100](../experiments/EXP-0100-party-origin/) |
 | PARTY-INSTALL-012 | Giving a player a unit is one straight-line sequence of five writes, duplicated rather than shared at every entry point; a mercenary spawn writes four, without the hero pointer. | High / Medium | ● active | [EXP-0100](../experiments/EXP-0100-party-origin/) |
 | PARTY-GATE-013 | No hero, no mission: `FUN_004d303e` rejects a client whose `Player+0x34` is null, and that is the only membership test on the way in. | High | ● active | [EXP-0100](../experiments/EXP-0100-party-origin/) |
-| PARTY-PERSIST-014 | The single-player carry has a memory arm: `FUN_004e2327` can reuse the surviving `Player` for the new map's slot 1, and the campaign start selects that arm. | Medium | ● active | [EXP-0100](../experiments/EXP-0100-party-origin/) |
+| PARTY-PERSIST-014 | The single-player carry has a memory arm: `FUN_004e2327` can reuse the surviving `Player` for the new map's slot 1, and the campaign start selects that arm. | Medium | ● active (amended) | [EXP-0100](../experiments/EXP-0100-party-origin/) |
 
 ### PARTY-ORIGIN-010
 
@@ -371,7 +391,12 @@ traced to its own compare. The discriminator is one listing of
   `[player+0x20]` and stamps `actor+0x14` (`005113bd`, `005113f6`, `005113f9`,
   `00511404`). That is why `SAV-PLAYER-028`'s seventeen fields contain `+0x24`
   and `+0x34` and not `+0x20`.
-- `FUN_004d403c` reads only `[player+0x20]+4` (`004d4231`…`004d42f7`).
+- The placement walk `FUN_004d403c` places from `[player+0x20]+4`
+  (`004d4231`…`004d42f7`), after a hygiene pass that reads and prunes the
+  group list `+0x24` (`004d4063`…`004d4126`, `PARTY-GATE-013`).
+- The walk is not the only reader of `+0x20`: the server's end-of-mission cull
+  walks it (`PARTY-ENDCULL-026`), and the join removes an actor from the old
+  owner's `[+0x20]+4` (`PARTY-JOIN-025`).
 - A consumer that implements the groups alone starts every mission with nobody
   standing on the map, and one that implements the flat index alone loses the
   party at the first save.
@@ -385,20 +410,37 @@ arm's own direction of copy, groups → index. The rival "one collection seen
 twice" is excluded by the two `new`s of different sizes with different
 constructors.
 
+**Unknown.** The complete reader set of `+0x20`: EXP-0100's commands hold no
+sweep of its readers.
+
+**Amended.** The exclusivity clause is withdrawn
+([`retracted.md`](retracted.md)). The former wording read "read only by the
+placement walk" and "`FUN_004d403c` reads only `[player+0x20]+4`". The walk's
+own hygiene pass reads `+0x24` (`PARTY-GATE-013`, EXP-0100), and
+`PARTY-ENDCULL-026` and `PARTY-JOIN-025` (EXP-0165) read `+0x20`. The two
+containers, the derivation of `+0x20` from `+0x24` on load and the walk's
+placement from `+0x20` stand.
+
 ### PARTY-WRITE-011
 
 - Instrument: `EnumRefs "re:CALL 0x0050fbee"` (the flat index's append), 32
   hits, 20 owners, 0 in orphan or undisassembled code. It prints the
   instruction that loaded `ECX`, so a hit with no function name cannot be lost.
-- Twelve hits load `ECX` from a `+0x20` displacement:
-  - `FUN_004d3755` ×2 (chargen, `SESS-HERO-014`);
+- Twelve hits, in eleven routines, load `ECX` from a `+0x20` displacement.
+  Seven routines are read at instruction level:
+  - `FUN_004d3755` ×2 (chargen, `SESS-HERO-014`; the repair arm `004d37e3`
+    and the fresh-hero arm `004d3ea3`, `PARTY-INSTALL-012`);
   - `FUN_004d5dd8` (the `0xbe` carry arm, `PARTY-CARRY-005`);
-  - `FUN_004e26bb` (the map's own type-6 spawner, `MISSION-ARM-006`);
-  - `FUN_005056f1` (the mercenary spawn, `MERC-HIRE-003`);
+  - `FUN_005056f1` (the mercenary spawn, `MERC-HIRE-003`, `PARTY-INSTALL-012`);
   - `FUN_00511089` (`Player::Serialize`, the load arm);
   - `FUN_004d403c` (the `.ini` "Humans" arm);
-  - `FUN_004d1e14`, `FUN_004d8fcd`, `FUN_004f164c`, `FUN_004feadb`,
-    `FUN_00504da1`, which EXP-0100 did not read.
+  - `FUN_004d1e14` (the mid-mission join, `PARTY-JOIN-025`);
+  - `FUN_004d8fcd` (the `AddHero` install behind command `0x49`,
+    `PARTY-ADDHERO-017`).
+- Four are classified by their append site alone: `FUN_004e26bb` (the map's
+  own type-6 spawner, `MISSION-ARM-006`; its append at `004e2f23` is not
+  read), `FUN_004f164c` (`004f19ab`), `FUN_004feadb` (`004ff7dc`) and
+  `FUN_00504da1` (`00504fcc`).
 - The group list's append (`EnumRefs "re:CALL 0x0051a050"`: 13 hits, 11
   owners, 0 orphan) and the group's own actor append (`callto:50f950`: 15 hits,
   11 owners, 0 orphan) have the same owner set. That is the evidence that the
@@ -412,10 +454,22 @@ constructors.
 **Confidence.** High for the enumeration being complete by call: three sweeps
 on the repaired table, 0 orphan hits in each, and the raw-`AddTail` sweep closes
 the route around the helpers. Medium that these eleven are the complete set of
-origins: five were read at instruction level and six were classified by their
+origins: seven are read at instruction level and four are classified by their
 append site alone.
 
 **Unknown.** Whether any path copies a whole `Player`.
+
+**Amended.** Two corrections ([`retracted.md`](retracted.md)). The former text
+listed six routines with their roles and named five "which EXP-0100 did not
+read", against its own "five were read at instruction level and six were
+classified by their append site alone". The five read are `FUN_004d3755` at
+both sites, `FUN_004d5dd8`, `FUN_005056f1`, `FUN_00511089` and
+`FUN_004d403c`; the sixth classified routine is `FUN_004e26bb`, which is not in
+EXP-0100's disassembly list. `PARTY-JOIN-025` (EXP-0165) reads
+`FUN_004d1e14` and `PARTY-ADDHERO-017` (EXP-0153) reads `FUN_004d8fcd`: each
+appends the actor to `+0x20`, a new group to `+0x24` and the actor to that
+group, as their append sites classified them. The three sweeps, their counts
+and the shared owner set are untouched.
 
 ### PARTY-INSTALL-012
 
@@ -521,7 +575,7 @@ what builds the human `Player` before the campaign's first map load, stay open.
 | PARTY-MONEY-015 | `Player::Player` stores a zero purse at `004fab27`; the conclusion that nothing credits it before the first mission is withdrawn, because the participant factory stores 100. | High | ● active (partially retracted) | [EXP-0151](../experiments/EXP-0151-mission-documents/), [EXP-0156](../experiments/EXP-0156-start-money/) |
 | PARTY-MONEY-016 | Each `Player` owns one 32-bit purse at `+0x38`, and the two persistence paths, the save record and the mission carry, carry that same field. | High / Medium | ✔ promoted | [EXP-0152](../experiments/EXP-0152-money-cycle/) |
 | PARTY-ADDHERO-017 | `[Mission<n>] AddHero[]` creates a companion player character, neither the primary character nor a mercenary, when the town view activates. | High / Medium | ● active | [EXP-0153](../experiments/EXP-0153-addhero-consumer/) |
-| PARTY-MONEY-018 | Withdrawn: a new campaign was said to reach the first playable mission with `Player+0x38 == 0`; the participant factory writes 100 first (`PARTY-MONEY-024`). | — | ✖ retracted | [EXP-0154](../experiments/EXP-0154-campaign-start/), [EXP-0156](../experiments/EXP-0156-start-money/) |
+| PARTY-MONEY-018 | The constructor's 32-bit zero purse, the purse-free chargen opcode `0x48` and the scoped mission and data negatives stand; the conclusion that a new campaign reaches play with `Player+0x38 == 0` is withdrawn (`PARTY-MONEY-024`). | High | ● active (partially retracted) | [EXP-0154](../experiments/EXP-0154-campaign-start/), [EXP-0156](../experiments/EXP-0156-start-money/) |
 | PARTY-MONEY-024 | A fresh campaign starts with 100 in the human participant's `Player+0x38`; zero is only the constructor intermediate. | High / Medium | ✔ promoted | [EXP-0156](../experiments/EXP-0156-start-money/) |
 
 ### PARTY-MONEY-015
@@ -597,13 +651,16 @@ memory persistence.
 - The first-sub-tick automatic save and a later explicit save both decode to
   100.
 
-**Confidence.** The retained subclaims keep their original grades. The start
-value and the complete no-grant conclusion are retracted.
+**Confidence.** High for the retained subclaims, each in its own scope: the
+grade [`retracted.md`](retracted.md) records for them. The start value and the
+complete no-grant conclusion, graded Medium, are retracted.
 
-**Amended.** Retracted by EXP-0156: the claim's own prediction failed
+**Amended.** Partially retracted by EXP-0156: the claim's own prediction failed
 (`PARTY-MONEY-024`, [`retracted.md`](retracted.md)). The withdrawn headline
 read: "A new campaign reaches the first playable mission with
-`Player+0x38 == 0`, independent of character-generation choices."
+`Player+0x38 == 0`, independent of character-generation choices." The
+retraction entry keeps the constructor, field-width, chargen-packet and scoped
+mission and data observations.
 
 ### PARTY-MONEY-024
 
@@ -639,8 +696,8 @@ copies remain a blind spot. The start chain does not depend on that universal.
 | PARTY-JOIN-025 | A mid-mission join is one routine, `FUN_004d1e14`, reached from trigger instants 19 and 22: `PARTY-INSTALL-012`'s install sequence without the hero pointer or a fresh runtime id. | High | ● active | [EXP-0165](../experiments/EXP-0165-join-persistence/) |
 | PARTY-ENDCULL-026 | The server's end-of-mission cull `FUN_004d05b2` decides which players and actors exist on the next map; it keeps an actor iff `0x21 <= word[actor+0x0e] < 0x40`. | High | ● active | [EXP-0165](../experiments/EXP-0165-join-persistence/) |
 | PARTY-BAND-027 | Withdrawn: the server survival band `[0x21,0x40)` was said to be the Humans creation arm's typeID range; the band is real, but that arm's output is conditional (`PARTY-M20-031`). | High | ✖ retracted | [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
-| PARTY-PERSIST-028 | The campaign's mission-to-mission edge preserves the surviving human `Player`, its name and every actor that first passes the client and server filters, not an unfiltered roster. | High | ● active (amended) | [EXP-0165](../experiments/EXP-0165-join-persistence/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
-| PARTY-JOINCORPUS-029 | The shipped join corpus holds 28 runtime instant-19/22 nodes on 16 maps, 22 of which hand actors to player 1; the handed Humans are not all on the kept side. | High / Medium | ● active (amended) | [EXP-0165](../experiments/EXP-0165-join-persistence/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
+| PARTY-PERSIST-028 | The campaign's mission-to-mission edge preserves the surviving human `Player`, its name and every actor that first passes the client and server filters, not an unfiltered roster. | High | ● active (amended, superseded) | [EXP-0165](../experiments/EXP-0165-join-persistence/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
+| PARTY-JOINCORPUS-029 | The shipped join corpus holds 28 runtime instant-19/22 nodes on 16 maps, 22 of which hand actors to player 1; the handed Humans are not all on the kept side. | High / Medium | ● active (amended, partially retracted) | [EXP-0165](../experiments/EXP-0165-join-persistence/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
 
 ### PARTY-JOIN-025
 
@@ -692,9 +749,10 @@ own instruction, and the two absences are two of the five writes
 - A kept actor is reset in place: `word+0x94` from `+0x96`, `word+0x9a` from
   `+0x9c`, `byte+0x13c = 0`, `FUN_004f4b39`, then `+0x5c`, `+0x64`, `+0x44`,
   `+0x68`, `+0x40` zeroed (`004d0890`...`004d08f5`).
-- Neither routine writes an inventory field, not the sack `+0x7c`
-  (`TRIG-ADDITEM-027`) and not the twelve worn slots `+0x198`
-  (`SAV-CARRY-050`), so a survivor keeps what it carried.
+- Neither `FUN_004d05b2` nor the reset helper `FUN_004f4b39` writes an
+  inventory field, not the sack `+0x7c` (`TRIG-ADDITEM-027`) and not the
+  twelve worn slots `+0x198` (`SAV-CARRY-050`), so a survivor keeps what it
+  carried.
 - This is the server counterpart `PARTY-FLAG-003` recorded as never looked for,
   and it is not a flag word: the server asks the actor's typeID.
 
@@ -848,10 +906,9 @@ tavern UI.
   and what builds the human `Player` before the campaign's first map load, the
   one boundary `FUN_004e2327`'s reuse arm cannot serve (`PARTY-PERSIST-014`,
   `PARTY-PERSIST-028`).
-- The six writers of `player+0x20` classified only by their append site
-  (`PARTY-WRITE-011`): `FUN_004d1e14`, `FUN_004d8fcd`, `FUN_004f164c`,
-  `FUN_004feadb`, `FUN_00504da1`, and the second `FUN_004d3755` site. Each is
-  one listing.
+- The four writers of `player+0x20` classified only by their append site
+  (`PARTY-WRITE-011`): `FUN_004e26bb`, `FUN_004f164c`, `FUN_004feadb` and
+  `FUN_00504da1`. Each is one listing.
 - `actor+0x13c`, the flag that decides whether `FUN_004d3755` repairs a hero or
   leaves it alone (`PARTY-INSTALL-012`), and `actor+0x70`'s writers. One writer
   of `+0x13c` is named: the mission-end cull sets it to 0 on every survivor

@@ -480,6 +480,19 @@ func lint(ledgers []ledger) int {
 	fail := func(l ledger, line int, format string, args ...any) {
 		bad = append(bad, fmt.Sprintf("claims/%s:%d: %s", l.name, line, fmt.Sprintf(format, args...)))
 	}
+	// kinds maps a claim id to the Kind cells of its retracted.md entries, so a
+	// card's Status can be held to the corrections recorded against it.
+	kinds := map[string][]string{}
+	for _, l := range ledgers {
+		if l.name != "retracted.md" {
+			continue
+		}
+		for _, r := range l.rows {
+			if len(r.cells) > 1 {
+				kinds[r.id] = append(kinds[r.id], strings.ToUpper(r.cells[len(r.cells)-1]))
+			}
+		}
+	}
 	for _, l := range ledgers {
 		if l.name == "registry.md" || l.name == "retracted.md" {
 			continue
@@ -538,6 +551,19 @@ func lint(ledgers []ledger) int {
 					fail(l, r.cardLine, "%s: status %q needs an **Amended.** paragraph", r.id, r.cells[3])
 				}
 			}
+			if m != nil && m[1] != "✖ retracted" && m[3] == "" && strings.Contains(r.card, "**Amended.**") {
+				fail(l, r.line, "%s: the card has an **Amended.** paragraph, so the status needs a qualifier", r.id)
+			}
+			if m != nil && m[1] != "✖ retracted" {
+				for _, want := range statusFromRetractions(kinds[r.id]) {
+					if (want == "" && m[3] == "") || (want != "" && !strings.Contains(m[3], want)) {
+						if want == "" {
+							want = "a qualifier"
+						}
+						fail(l, r.line, "%s: retracted.md records a correction against it; status %q needs %s", r.id, r.cells[3], want)
+					}
+				}
+			}
 			if !evidenceRe.MatchString(r.cells[4]) {
 				fail(l, r.line, "%s: evidence names no experiment", r.id)
 			}
@@ -563,6 +589,35 @@ func lint(ledgers []ledger) int {
 	}
 	fmt.Printf("claim -check: ok (%d card ledger(s), %d claims; %d table-only ledger(s))\n", cardLeds, claims, len(legacy))
 	return 0
+}
+
+// statusFromRetractions names what a Status must carry for the retracted.md
+// entries recorded against its claim: any entry needs a qualifier, a
+// SUPERSEDED entry needs "superseded", and a REFUTED or RETRACTED entry needs
+// "partially retracted". A whole-claim ✖ retracted needs none of these.
+func statusFromRetractions(kinds []string) []string {
+	if len(kinds) == 0 {
+		return nil
+	}
+	want := []string{""}
+	for _, k := range kinds {
+		if strings.Contains(k, "SUPERSEDED") && !contains(want, "superseded") {
+			want = append(want, "superseded")
+		}
+		if (strings.Contains(k, "REFUTED") || strings.Contains(k, "RETRACTED")) && !contains(want, "partially retracted") {
+			want = append(want, "partially retracted")
+		}
+	}
+	return want
+}
+
+func contains(list []string, s string) bool {
+	for _, x := range list {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 // gradeOrder reports whether a Confidence cell names each grade at most once,

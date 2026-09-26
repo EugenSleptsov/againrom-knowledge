@@ -103,7 +103,8 @@ Human derive. World resume depends on
 YA1 InBattle, frontend mode/authority and the server run gate. City resume
 drains queued commands around client restoration. Earlier document calls,
 queues and callbacks remain outside that hook's negative scope.
-— SAV-HUMRESUME-460
+— SAV-HUMRESUME-460 (reference-repair shorthand superseded by the
+field-specific rules)
 
 Group LOAD first invokes the embedded Group+20 list serializer, then the
 separate Group+3c state serializer. Its actor archive read distinguishes an

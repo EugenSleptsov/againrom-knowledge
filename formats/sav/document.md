@@ -56,7 +56,9 @@ The Building, SpellEffect, Sack and dead-actor managers are reached through
 four fields of the separate object at `world+0x14`: `+0`, `+4`, `+8`, `+c`
 respectively. The dead list is not `world+0xc`. Every top-level list uses a
 plain u32 count and complete archive references; an empty list is four bytes.
-— SAV-ROSTER-024, SAV-SHAPE-023, SAV-DOC-053, SAV-657
+— SAV-ROSTER-024, SAV-SHAPE-023, SAV-DOC-053 (partially retracted for its
+7-of-18, Unit-failure and terminal-padding clauses; the top-level order
+stands), SAV-657
 
 ## Load-side validation
 
@@ -123,15 +125,16 @@ being subscripted by them. `Unit+15c`, `Unit+178`, `Group+20`,
 `*(Group+3c)+4c` and `*(*(Unit+158)+90)` are counted here and none of their
 element meanings is established, and the interiors of the fixed spans are not
 decomposed.
-— SAV-1026, SAV-CAMPAIGN-077, SAV-667, SAV-668, SAV-844, SAV-662,
-MAGIC-SPELL-001
+— SAV-1026, SAV-CAMPAIGN-077, SAV-667, SAV-668 (per-unit-type reading
+superseded by SAV-844), SAV-844, SAV-662, MAGIC-SPELL-001
 
 The roster is nested as Player -> Groups -> actors -> owned/equipped objects.
 Group records are direct inline programmes, with no class tag. The map producer
 creates Players from type-5 slots, actors from type-6 records plus the hero,
 and Buildings from type-4 records. These relations do not fix the file counts.
 Sacks and their contents are created at runtime.
-— SAV-OBJ-016, SAV-MEMBER-036, SAV-DIARY-042, SAV-HUMAN-043
+— SAV-OBJ-016, SAV-MEMBER-036 (its unread-classes Unknown superseded by
+SAV-EMBED-039), SAV-DIARY-042, SAV-HUMAN-043
 
 ## Trailer
 
@@ -139,7 +142,8 @@ The loader always consumes a discriminator and 400 bytes. It consumes the
 intervening global dword only when the discriminator is `0xBADFACE1`. Thus
 marker-present and marker-absent trailers occupy 408 and 404 bytes. A marker
 inside an earlier raw member does not terminate that member.
-— SAV-TRAIL-026, SAV-DOC-053, SAV-FULLREAD-252, SAV-790
+— SAV-TRAIL-026, SAV-DOC-053 (its terminal-padding clause is partially
+retracted; the 400 bytes are loaded state), SAV-FULLREAD-252, SAV-790
 
 The 400-byte block is a separately allocated, exclusively owned world object,
 zero-filled by its constructor and freed at world teardown. It is not session
@@ -155,14 +159,15 @@ Only the first two dwords have identified consumers. The remaining fields'
 meanings and pointer/alias/computed access remain Unknown. The separate global `[0x00609b0c]`
 has initialization and archive read/write sites but no established nonzero
 ordinary producer.
-— SAV-646, SAV-647, SAV-648, SAV-649, SAV-790, SAV-791
+— SAV-646, SAV-647 (its zero-direct-caller clause is partially retracted; the
+toggle sites stand), SAV-648, SAV-649, SAV-790, SAV-791
 
 Command 46 parameter 80 reaches the toggle helper only after Player resolution,
 `byte[cmd+4]==0`, nonzero `[0x5f21c4]` and unsigned `Player+68 > 50`.
 Subcommands 3/19 toggle the first/second dword: zero becomes 1, any nonzero
 becomes 0. Ordinary UI emission and production of the gate byte remain Unknown.
 The helper's debug help names subcommand 19 `Script tracing on/off`.
-— SAV-694, SAV-647, SAV-791
+— SAV-694, SAV-647 (zero-direct-caller clause partially retracted), SAV-791
 
 An odd logical endpoint receives one transport byte; its value is not
 constrained or consumed by the document routine. An even endpoint receives

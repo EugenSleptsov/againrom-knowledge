@@ -83,9 +83,11 @@ text      id 10   (128, 36)-(428,172)   with a portrait
 button    id 11   (200,172)-(280,198)   label = main.txt line 77, command 0x46f
 ```
 
-Six call sites, all six shipping their resources: mission events (`battle\m%d\event%02d`), the
-inn's NPCs (`inn\NPC\npc%02dm%d`), the mercenary hall (`inn\mercenary\npc%02d`, `…\npc35`), the
-shop (`shop\npc31m%d`) and the training hall (`training\npc34m%d`).
+Six calling routines, at seven call sites, name five resource families, and all five ship:
+mission events (`battle\m%d\event%02d`), the inn's NPCs (`inn\NPC\npc%02dm%d`, two call sites),
+the mercenary hall (two routines, `inn\mercenary\npc%02d` and `…\npc35`, sharing one family), the
+shop (`shop\npc31m%d`) and the training hall (`training\npc34m%d`). — `DLG-WIN-001`, its
+six-families clause amended to five
 
 <a id="the-speakers-figure"></a>
 
@@ -142,7 +144,12 @@ female  male  mage  fighter  sound=  tune=  tips=
 
 `part=%d` is a **substring** test, so `part=10` satisfies a search for part 1 — the first
 matching tag in file order wins. Shipped data never trips it (0 of 513 EN / 518 RU parts).
-`npcalive=`, `npcdead=`, `sound=` and `tune=` are never used on either root.
+`npcalive=`, `npcdead=`, `sound=` and `tune=` occur in no `text/battle` event file on either
+root, and `iamfighter` and `fighter` in none on EN. The `sound=` zero is scoped to those event
+files: on EN `sound=` occurs 7 times, all in `text/inn`, while `npcalive=`, `npcdead=` and
+`tune=` occur in none of the four tag-carrying families. — `DLG-MARKUP-007` (its `sound=` zero
+narrowed to event files), `DLG-NPCTAG-019` (its reason for the RU raw-file census partially
+retracted; the counts stand)
 
 Two different `npc` tests decide the face: the constructor's `Find("npc")` over the **whole
 lowercased file** picks the layout once, and the per-part `Find("npc=")` refreshes the portrait.
@@ -164,11 +171,14 @@ iamfighter  player  reject if set      fighter  speaker  reject if set
 ```
 
 **The literals nest and an arm that does not reject falls through.** `Find` is a substring test,
-so `iamfemale` also satisfies `female` and `male`, `iammale` satisfies `male`, `iammage`
-satisfies `mage` and `iamfighter` satisfies `fighter`. Only the `male` arm guards against it,
-and only against `female`. A part tagged for a female player therefore also requires a female
-speaker, and an `iamfemale`/`iammale` pair read to a female player by a male speaker matches
-neither tag. Nine bodies on each root carry `iamfemale` and nine carry `iammale`.
+so `iamfemale` also satisfies `female`, `iammale` satisfies `male`, `iammage` satisfies `mage`
+and `iamfighter` satisfies `fighter`. `iamfemale` also contains `male`, but the `male` arm
+re-tests `Find("female") == -1` and skips its speaker test for any body containing `female`, so
+an `iamfemale` body reaches the `female` arm's test only. That is the only guard. A part tagged
+for a female player therefore also requires a female speaker, and an `iamfemale`/`iammale` pair
+read to a female player by a male speaker matches neither tag. Nine bodies on each root carry
+`iamfemale` and nine carry `iammale`. — `DLG-TAGARM-027`, its `iamfemale`-satisfies-`male`
+clause amended
 
 ### Sound
 
@@ -212,7 +222,7 @@ EN and RU disagree with each other more often and in all three ways: same-length
 pure reorder of the same speaker multiset, and outright length change, where one root's tag
 sequence has a different element count from the other's (`TEXT-BATTLEROOT-063`).
 
-The inn's own dialogue entry (`FUN_00480fd0`, one of this page's six `FUN_004217be` call sites)
+The inn's own dialogue entry (`FUN_00480fd0`, one of this page's six `FUN_004217be` callers)
 shows the same shape one level down: the "nothing to offer" zero arm never advances `InnMission`
 regardless of its text, but that text is not uniformly backward-only — it splits by root: the
 pre-release root's three shipped instances are recap with no forward-pointing content, while

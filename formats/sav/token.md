@@ -6,7 +6,8 @@
 
 Every Token-derived body begins with these 37 bytes, serialized by
 `00510e5c`. Player and Diary do not have this head.
-— SAV-TOKEN-034, SAV-MEMBER-036
+— SAV-TOKEN-034, SAV-MEMBER-036 (its unread-classes Unknown superseded by
+SAV-EMBED-039)
 
 | Body offset | Type | Source | Meaning |
 |---:|---|---|---|
@@ -23,7 +24,8 @@ Every Token-derived body begins with these 37 bytes, serialized by
 Both archive arms transfer the stated widths. Coincident runtime offsets in
 another object are not the same field. Token `+18` is also Unit `+18` because
 Unit calls Token without adjusting `this`. The mask is not a class discriminator. — SAV-OBJ-014, SAV-ID-015, SAV-TOKEN-034,
-SAV-636, SAV-653, SAV-654, SAV-678, ITEM-VALUE-115,
+SAV-636 (its no-named-reader-or-writer clause is partially retracted; the byte
+identity stands), SAV-653, SAV-654, SAV-678, ITEM-VALUE-115,
 SHOP-CONSUME-073
 
 `+14`'s "actor owner" meaning is established for the actor (Unit/Human) path
@@ -130,7 +132,8 @@ Position's nonzero key must agree with the terrain record for the named
 world-rebind route. Zero or a dummy pointer is not a general substitute.
 An unresolved nonzero Position key remains unresolved; coordinates or record
 order do not supply a replacement.
-— SAV-IDCENSUS-254, SAV-TOKENLOAD-092, SAV-CELLLOAD-112, SAV-HUMRESUME-460,
+— SAV-IDCENSUS-254, SAV-TOKENLOAD-092, SAV-CELLLOAD-112, SAV-HUMRESUME-460
+(its reference-repair shorthand is superseded by these field-specific rows),
 SAV-GRPLOAD-560, SAV-847, SAV-908
 
 ## Reach of Position repair

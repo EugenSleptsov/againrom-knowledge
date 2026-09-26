@@ -20,11 +20,11 @@ this file: [registry.md](registry.md).
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| DLG-WIN-001 | One `0x84`-byte panel class with one constructor draws every line of authored dialogue, and its six calling routines are the complete set of entries into it. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
+| DLG-WIN-001 | One `0x84`-byte panel class with one constructor draws every line of authored dialogue, and its six calling routines are the complete set of entries into it. | High | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-PATH-002 | Script and outcome announcements share one transport; the failure close is selected by its own stored panel pointer. | High | ● active (partially retracted, amended) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0101](../experiments/EXP-0101-mission-end/), [EXP-0274](../experiments/EXP-0274-defeat-modes/) |
 | DLG-ABSENT-003 | A named event text that does not ship produces nothing: no window, no fallback, no fault, no blocked state; this answers `MISSION-TEXT-005`'s Unknown. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-EMPTY-004 | The window's `"Nothing to say"` fallback is reached only by an existing file that yields no part 1, and no shipped file on either root reaches it. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
-| DLG-LIFE-005 | Only input ends the display, nothing queues, and an announcement that arrives while any dialog is open is discarded. | High / Medium | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0108](../experiments/EXP-0108-panel-modality/) |
+| DLG-LIFE-005 | Only input ends the display, nothing queues, and an announcement that arrives while any dialog is open is discarded. | High / Medium | ● active (amended, partially retracted) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-READ-006 | The event text is read at fire time, not at map load, and it is read twice per announcement. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 
 ### DLG-WIN-001
@@ -47,8 +47,10 @@ this file: [registry.md](registry.md).
   event text (`FUN_00473110`), the inn's NPCs (`FUN_00480fd0`, ×2), the
   mercenary hall (`FUN_0047e410`, `FUN_004b4c70`), the shop keeper
   (`FUN_004a8bc3`) and the training hall (`FUN_004b7f20`).
-- Each of the six formats a name in its own family, and all six families ship
-  (`evidence/family-en.txt`: 318/22/14/4/33 nodes).
+- Each of the six formats a name under a `main.res` text prefix. The two
+  mercenary-hall owners share `text/inn/mercenary/`, so the six owners name
+  five families, and all five ship (`evidence/family-en.txt`: 318/22/14/4/33
+  nodes).
 - The child rects are panel-relative, and the drawn layout settles it. Read as
   screen coordinates, the portrait's top edge (54) would sit 66 px above the
   panel's own (120). Read as panel-relative, all four children fall inside the
@@ -63,6 +65,13 @@ also scans `.rdata` dwords holding the address, 0 orphan on both sweeps. Its
 blind spot is a construction reached only through a vtable slot; the class
 census `EnumRefs range:4c52b0:4c58a0` (13 functions, 1468 function bytes,
 0 orphan bytes, 0 orphan runs) closes that hole for this class.
+
+**Amended.** The family bullet read "Each of the six formats a name in its own
+family, and all six families ship", beside five node counts.
+`evidence/family-en.txt` gives `FUN_0047e410` (`inn\mercenary\npc%02d`) and
+`FUN_004b4c70` (`inn\mercenary\npc35`) the same prefix,
+`text/inn/mercenary/` (14 nodes): six owners, five families. The entry
+enumeration and the node counts stand.
 
 ### DLG-PATH-002
 
@@ -204,7 +213,7 @@ one possible. The "at load" rival predicts an opener in the map-load path, and
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| DLG-MARKUP-007 | The content model is a tag scan, not a grammar; its vocabulary is fifteen lowercase literals, and five of them are dead in the shipped corpus. | High / Medium | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
+| DLG-MARKUP-007 | The content model is a tag scan, not a grammar; its vocabulary is fifteen lowercase literals, four of which occur in no event file on either root, and `iamfighter` and `fighter` in no EN one. | High / Medium | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-FACE-008 | The whole file decides once whether the window has a portrait, each part decides which portrait it shows, and the two tests differ. | High / Unknown | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-WRAP-009 | The text is wrapped and measured against its own font, and this window clamps the line count rather than scrolling. | High / Medium | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-LANG-010 | Only resources depend on the language root, and the roots differ in three mission events: EN silences three announcements that RU speaks. | High / Medium | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
@@ -224,14 +233,27 @@ one possible. The "at load" rival predicts an opener in the map-load path, and
   13, and 0 parts on either root whose number is a prefix of an earlier part
   number in the same file. The hazard exists and the shipped data never trips
   it.
-- Never used on either root: `npcalive=`, `npcdead=`, `sound=`, `tune=`.
-  `iamfighter` is used once on RU and never on EN (`evidence/markup-*.txt`).
+- Never used in either root's event files: `npcalive=`, `npcdead=`,
+  `sound=`, `tune=`. `iamfighter` and `fighter` each count once in RU's and
+  never in EN's; `fighter` is matched only through `iamfighter`
+  (`evidence/markup-*.txt`, `DLG-TAGARM-027`).
 
 **Confidence.** High for the vocabulary and the scan: one routine's own string
 operands, read with `StrDump fnstr:`, and the lowercasing is a named call.
 Medium for what each conditional literal does: only `part=`, `npc=` and
 `tips=` were followed to their consumers, and the four `iam*` arms and the four
 npc-flag arms were read as tests, not as effects.
+
+**Amended.** The headline read "five of them are dead in the shipped corpus".
+Its own list is four literals unused on both roots plus `iamfighter` and
+`fighter`, unused on EN only (`evidence/markup-en.txt` 0, `markup-ru.txt` 1
+each), over the 225 EN / 228 RU event files. `DLG-NPCTAG-019` bounds the
+`sound=` zero to that corpus: on EN `sound=` occurs 7 times, all in `text/inn`.
+It also finds one `iamfigter` misspelling per root, which no arm matches.
+`DLG-TAGARM-027` reads the four `iam*` arms and the four speaker (npc-flag) arms
+to their effects, and `DLG-SOUND-028` follows `sound=` to the pager; neither
+follows `npcalive=`, `npcdead=` or `tune=`, and for those three the Medium
+clause stands.
 
 ### DLG-FACE-008
 
@@ -354,7 +376,7 @@ output rather than `open: … bad registry offset`.
 | DLG-STOP-012 | The world stops while a dialogue panel is displayed, and one instruction in the whole image decides it. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-DIM-013 | When a panel is shown the whole screen behind it is darkened once, destructively, to 13/16 brightness, through the shroud table `TERR-FOG-084` pinned. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-CLOCK-014 | The time a dialogue panel stops is discarded, not caught up, and the close's guard names the only state the engine expects the panel to interrupt. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
-| DLG-DRAW-015 | Nothing else is drawn differently while a panel is up: six instructions read the panel bit, and none of them is in a draw path. | High / Medium | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
+| DLG-DRAW-015 | Nothing else is drawn differently while a panel is up: seven instructions in six routines read the panel bit, and none of them is in a draw path. | High / Medium | ● active (amended) | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-ENTRY-016 | All six entry points and both mission-outcome panels take the identical mechanism; they differ in the state each runs from, plus one close arm. | High / Medium | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-MODAL-017 | A second, stronger modality, a nested message loop, exists in the image; no dialogue entry uses it, and it makes harmless the one panel the halt gate cannot see. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 
@@ -494,16 +516,16 @@ independently of any disassembler.
   bit 0: `00472fba MOV EDX,0x1` at the head of `FUN_00472fb0`, never reassigned
   before it. The four byte-wide loads `00490dbf`, `0049148c`, `004b08eb`,
   `004b0c47` test `0x3`, `0x1`, `0x2`, `0x2` respectively.
-- That leaves six readers of bit 3:
+- That leaves seven readers of bit 3, in six routines:
   - `0047167f` (`TEST EAX,0x4008`, the halt gate; `imm:4008` = 1 hit
     image-wide);
   - `004738df` (the announcement drop, `DLG-LIFE-005`);
   - `004761f2` (the close arm, `DLG-CLOCK-014`);
-  - three early-outs: `004902b1 TEST byte ptr [EAX + 0x3dc],0xa` in
-    `FUN_00490280`, `00490c9d` and `00490fc5` in `FUN_00490c60`, and
-    `004b9c04` in `FUN_004b9bc0`. Each returns or jumps past its body when the
-    bit is set.
-- None of the six lies in the terrain/sprite/shroud blit family
+  - four early-outs in three routines:
+    `004902b1 TEST byte ptr [EAX + 0x3dc],0xa` in `FUN_00490280`, `00490c9d`
+    and `00490fc5` in `FUN_00490c60`, and `004b9c04` in `FUN_004b9bc0`. Each
+    returns or jumps past its body when the bit is set.
+- None of the seven lies in the terrain/sprite/shroud blit family
   (`0x0044dxxx`–`0x00452xxx`) or the map-view draw family
   (`0x00404xxx`–`0x0040cxxx`) that `TERR-*` establishes.
 - The two composite masks that read the word inside the `0x0049xxxx` family do
@@ -516,11 +538,19 @@ independently of any disassembler.
 count stated, for the register-carried mask being bit 0, and for the two mask
 arithmetics. Its blind spot: a wholesale `REP MOVSD`/`memcpy` of the campaign
 object carries no displacement, and no `disp:` sweep can see it. Medium that
-the three early-outs are input paths rather than draw paths: each was read at
+the four early-outs are input paths rather than draw paths: each was read at
 its guard and the two instructions after it, not end to end. `FUN_00490280`
 and `FUN_00490c60` read the cursor globals `[0x005cd7a0]`/`[0x005cd7a4]` that
 the pacer's own edge-scroll block reads at `0047547d`…`004754fc`, and
 `FUN_004b9bc0`'s not-taken path calls the panel command router `FUN_004c52f3`.
+
+**Amended.** The headline read "six instructions read the panel bit" and the
+card "six readers of bit 3" and "three early-outs", against seven listed
+addresses. `evidence/enum-en.txt` and section 11 of
+`evidence/rom-panel-excerpt.md` show seven bit-3 tests in six routines;
+`FUN_00490c60` holds two (`00490c9d`, `00490fc5`), so the early-outs are four
+instructions in three routines. The draw-path negative holds for all seven
+addresses.
 
 ### DLG-ENTRY-016
 
@@ -599,12 +629,12 @@ instructions.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | DLG-NPCTAG-018 | The number in `<npc=N>` is the `npc<n>` section id of `scenario.res::npc.reg`, established by a subscript path, not by two shipped files agreeing. | High / Medium | ● active | [EXP-0141](../experiments/EXP-0141-npc-fields-and-tag/) |
-| DLG-NPCTAG-019 | On EN the `<npc=` tag occurs in four `main.res` text families, which corrects two shipped-usage points of `DLG-MARKUP-007`. | High / Medium | ● active (amended) | [EXP-0141](../experiments/EXP-0141-npc-fields-and-tag/) |
-| DLG-FIGURE-020 | The speaker's figure is the world figure compositor's output, called on the speaker's own drawable with the stencil surface null. | High | ● active | [EXP-0166](../experiments/EXP-0166-dialogue-dress/) |
+| DLG-NPCTAG-019 | On EN the `<npc=` tag occurs in four `main.res` text families, which corrects two shipped-usage points of `DLG-MARKUP-007`. | High / Medium | ● active (amended, partially retracted) | [EXP-0141](../experiments/EXP-0141-npc-fields-and-tag/) |
+| DLG-FIGURE-020 | The speaker's figure is the world figure compositor's output, called on the speaker's own drawable with the stencil surface null. | High | ● active (amended) | [EXP-0166](../experiments/EXP-0166-dialogue-dress/) |
 | DLG-FIGURE-021 | No layer is excluded at the dialogue site, and the head slot is equipment slot 6, drawn in both halves of the compositor. | High | ● active | [EXP-0166](../experiments/EXP-0166-dialogue-dress/) |
 | DLG-SPEAKER-022 | The speaker is a live actor when one matches the section, and otherwise a synthesised drawable with twelve empty equipment slots. | High / Unknown | ● active | [EXP-0166](../experiments/EXP-0166-dialogue-dress/) |
 | DLG-SPEAKER-023 | The live-actor predicate is seventeen `Flags` tokens plus two record comparisons and a state gate, and most shipped speakers are on the composed-figure arm. | High / Medium | ● active | [EXP-0166](../experiments/EXP-0166-dialogue-dress/) |
-| DLG-DRESS-024 | A live named speaker is drawn in its spawn outfit; mission 40's `npc25` joins its section, its `Data.bin` template and its map label in three independent directions. | High / Medium / Unknown | ● active (amended) | [EXP-0166](../experiments/EXP-0166-dialogue-dress/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
+| DLG-DRESS-024 | A live named speaker is drawn in its spawn outfit; mission 40's `npc25` joins its section, its `Data.bin` template and its map label in three independent directions. | High / Medium / Unknown | ● active (amended, partially retracted) | [EXP-0166](../experiments/EXP-0166-dialogue-dress/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
 
 ### DLG-NPCTAG-018
 
@@ -648,9 +678,8 @@ every hop a named instruction, and no instruction between the `sscanf` and the
   `.txt` nodes in four families: `text/battle` 225 nodes / 535 tags,
   `text/inn` 36 / 135, `text/shop` 4 / 8, `text/training` 33 / 40
   (`evidence/tag-families-en.csv`).
-- RU figures come from the raw file, because the RU `MAIN.RES` cannot be opened
-  by this repository's reader (`DLG-READER-011`). RU carries 762 tags with the
-  identical 59 distinct values.
+- RU figures come from a byte census of the raw file, not a node walk. RU
+  carries 762 tags with the identical 59 distinct values.
 - Correction 1: `DLG-MARKUP-007` records `sound=` as "never used on either
   root". That census was `text/battle`, its own 225 EN event files. `sound=`
   occurs 7 times on EN, all in `text/inn` (as `sound="npcNmNpa"`,
@@ -685,7 +714,12 @@ second `female` at `0x5c1cc8` are in the run and were not listed. `.txt` and
 run, and `.txt` is at `0x5be578`. `Start` is the omission that matters: it is
 the `npc.reg` key read at `004c6579` that gates all four speaker-conditional
 arms (`DLG-TAGARM-027`). The per-family tag counts, the `sound=` correction and
-the two shipped misspellings stand.
+the two shipped misspellings stand. `retracted.md` also withdraws the reason
+given for the RU raw-file census: "because the RU `MAIN.RES` cannot be opened
+by this repository's reader (`DLG-READER-011`)". `DLG-READER-011` records
+EXP-0101's repair of that reader, which precedes EXP-0141 and opens RU
+`MAIN.RES` as 504 nodes. The RU figures stand as a raw-file census, and so
+does the Medium grade for RU carrying no fifth family.
 
 ### DLG-FIGURE-020
 
@@ -713,7 +747,7 @@ the two shipped misspellings stand.
 - The dialogue passes `(0, canvas, 0)`, so the colour pass runs and the
   click-map pass does not.
 - The panel then blits a fixed 72 x 96 window of the 160 x 240 canvas to
-  `(8,7)` of the 88 x 108 canvas (`REG-NPC-089`).
+  `(8,7)` of the 88 x 108 surface (`REG-NPC-089`).
 - Every equipment-tree `.256` on both roots is a single 160 x 240 frame: 59 face
   sheets, 780 of 784 `primary/` and 144 `secondary/` parsed, and 4 `primary/`
   nodes too short to carry one. A layer therefore covers the canvas rather than
@@ -723,6 +757,11 @@ the two shipped misspellings stand.
 image through the PE section table on three roots, 0 mismatches, and both
 vtable slots were read as raw dwords at fixed addresses, which consults no call
 graph.
+
+**Amended.** The blit bullet read "to `(8,7)` of the 88 x 108 canvas". In this
+card the canvas is the 160 x 240 scratch surface; the 88 x 108 target is the
+surface `FUN_00429520(0x58, 0x6c)` allocates and the panel receives
+(`evidence/listing-dialogue-portrait.txt`). The blit geometry stands.
 
 ### DLG-FIGURE-021
 
@@ -829,17 +868,19 @@ at its own `AND`. Medium for the two censuses, which are corpus agreement.
   36 slot 4, 39 slot 5, 110 slot 6, 148 slot 7, 81 slot 8, 64 slot 9, 105
   slot 10 and 123 slot 12.
 - A live named speaker is drawn in its spawn outfit.
-- `npc25` keeps that outfit across the boundary because its exact `Hero` flag
-  makes the npc arm request the player-character typeID overwrite, after which
-  the culls leave the worn slots untouched.
+- `npc25` keeps that outfit across the boundary by constructor mode
+  (`PARTY-M20-031`): its exact `Hero` flag makes the npc arm request the
+  player-character typeID overwrite, after which the culls leave the worn
+  slots untouched.
 - This is not universal to Humans: mission 20 transfers four dressed Humans
   that retain out-of-band table typeIDs and are removed (`PARTY-M20-031`).
 
 G2: dress remains template data plus later equipment changes; persistence is a
 separate classification decision.
 
-**Confidence.** High for the mission-40 join and the corrected constructor
-reason. Medium for the 166-row census.
+**Confidence.** High for the mission-40 join and for the constructor-mode
+reason `npc25` keeps its outfit, which rests on `PARTY-M20-031`. Medium for
+the 166-row census.
 
 **Unknown.** How the other 28 composed-arm tags resolve at run time.
 
@@ -850,7 +891,10 @@ Humans-arm actor inside the surviving typeID band". Outfit persistence is
 conditional on actor survival, not a property of the Humans arm: `npc25`
 survives because it is flagged `Hero`, and mission 20's four dressed Humans
 join and are then removed. The mission-40 outfit and all equipment counts
-stand.
+stand. The Confidence paragraph graded "the corrected constructor reason", a
+label the card did not carry. The graded clause is the `npc25` bullet's
+`Hero`-flag reason, which `PARTY-M20-031` names constructor mode; the bullet
+and the Confidence paragraph now name it.
 
 ## Message number, mission number, tag arms and sound
 
@@ -858,7 +902,7 @@ stand.
 |---|---|---|---|---|
 | DLG-MSGNUM-025 | The message number is a dword from the script parameter to the `%02d` field, and the value 255 is byte-identical to the mission-lost sentinel. | High | ● active | [EXP-0171](../experiments/EXP-0171-script-message/) |
 | DLG-MISSION-026 | `campaign+0x660` is the mission number and the map file number at once, and its writers are inside the record embedded at `campaign+0x548`, not at that displacement. | High / Medium | ● active | [EXP-0171](../experiments/EXP-0171-script-message/) |
-| DLG-TAGARM-027 | The eight conditional markup arms test the player's hero or the speaker, and substring nesting makes four of them fire twice. | High / Medium | ● active | [EXP-0171](../experiments/EXP-0171-script-message/) |
+| DLG-TAGARM-027 | The eight conditional markup arms test the player's hero or the speaker, and substring nesting makes four of them fire twice. | High / Medium | ● active (amended) | [EXP-0171](../experiments/EXP-0171-script-message/) |
 | DLG-SOUND-028 | `sound=` names a wave and plays nothing; the pager plays it, and the name it composes when the tag is absent depends on the resource's own leaf name. | High / Medium | ● active | [EXP-0171](../experiments/EXP-0171-script-message/) |
 
 ### DLG-MSGNUM-025
@@ -967,9 +1011,11 @@ sweep (`docs/INSTRUMENT.md` rules 4 and 9).
   is how the shipped `iamfemale`/`iammale` pairs are authored.
 - An arm that does not disagree falls through to the next arm on the same tag
   body, and `CString::Find` is a substring test. So `iamfemale` also satisfies
-  `female` and `male`, `iammale` satisfies `male`, `iammage` satisfies `mage`,
-  and `iamfighter` satisfies `fighter`. One guard exists: the `male` arm
-  re-tests `004c662f Find("female") == -1` first.
+  `female`, `iammale` satisfies `male`, `iammage` satisfies `mage`, and
+  `iamfighter` satisfies `fighter`. `iamfemale` also contains `male`, but the
+  `male` arm re-tests `004c662f Find("female") == -1` and
+  `004c663f JNZ 0x004c6671` skips its speaker test for any body containing
+  `female`. That is the one guard.
 - A part tagged for a female player therefore additionally requires a female
   speaker, and an `iamfemale`/`iammale` pair read to a female player by a male
   speaker satisfies neither tag, so that part is absent and the window closes.
@@ -989,6 +1035,13 @@ exhaustive tag-body walk of both roots' `text/battle` nodes, whose 535 EN bodies
 reproduce `DLG-NPCTAG-019`'s independently published figure. Medium that a
 nesting-suppressed part is absent in play: the fall-through and the loop tail
 are read from branch targets, not observed.
+
+**Amended.** The nesting bullet read "`iamfemale` also satisfies `female` and
+`male`", beside the `male` arm's own `Find("female") == -1` guard.
+`evidence/markup-arms.txt` shows that guard's `004c663f JNZ 0x004c6671`
+jumping past the `male` arm's speaker test whenever the body contains
+`female`, so an `iamfemale` body reaches the `female` arm's test only. The
+four double firings, the two gates and the census stand.
 
 ### DLG-SOUND-028
 
@@ -1033,7 +1086,7 @@ sites rather than pinned.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | DLG-ZEROARM-029 | The inn's "nothing to offer" zero arm never advances `InnMission` whatever its shipped text says, and that text is not uniformly backward-only: it splits by data root. | High / Medium | ● active | [EXP-0393](../experiments/EXP-0393-inn-text-closure/) |
-| DLG-INNVOICE-030 | Text and voice presence for the inn's mission-giver NPCs do not track each other in either direction, and differ per root independently of registry addressing. | High | ● active | [EXP-0393](../experiments/EXP-0393-inn-text-closure/) |
+| DLG-INNVOICE-030 | Text and voice presence for the inn's mission-giver NPCs do not track each other in either direction, and differ per root independently of registry addressing. | High | ● active (amended) | [EXP-0393](../experiments/EXP-0393-inn-text-closure/) |
 
 ### DLG-ZEROARM-029
 
@@ -1098,9 +1151,14 @@ instances and by the registry state itself, which never changes at any of the
 
 **Confidence.** High. Every figure is a direct per-root file-presence count
 over a named, closed union of paths (`evidence/dialogue-presence.csv`). The
-alternative "presence is 1:1" is refuted by five named voice counterexamples
+alternative "presence is 1:1" is refuted by seven named voice counterexamples
 running in both directions plus the text-level asymmetry count, not by an
 aggregate mismatch count alone.
+
+**Amended.** The Confidence paragraph read "five named voice
+counterexamples" against the seven `.wav` names the card lists.
+`evidence/dialogue-presence.csv` carries all seven: two RU-only, five
+EN-only.
 
 ## Open questions
 

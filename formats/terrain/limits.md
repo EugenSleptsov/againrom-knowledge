@@ -46,7 +46,8 @@ withdrawn save-absence clause in `TERR-FOG-087`.
   and `TERR-SPR-139`, alongside `TERR-SPR-067`, `TERR-SPR-140`, `TERR-SPR-141`
   and `TERR-SPR-144`.
 - The `vt+0x34` overlay blend consumer remains the separate sprite residual
-  `SPR256-OVL-014`. Runtime clip-rectangle values and the displaced-well-shadow
+  `SPR256-OVL-014` (its no-path-read clause superseded: the pair is loaded and
+  drawn together). Runtime clip-rectangle values and the displaced-well-shadow
   boundary remain scoped by `TERR-SHDW-136` and `TERR-SPR-140`.
 
 Read profile, save and registry values from the selected input; they are not universal state defaults.

@@ -139,7 +139,8 @@ SAV-CELLLOAD-113, TRIG-CELLTAIL-035
 
 After the cell table, terrain `00544a60` writes its own u32 identity key and
 LOAD binds it to the fresh terrain. Session then transfers exactly 4,374 bytes.
-— SAV-TERRKEY-056, SAV-CELLREC-032, SAV-SESS-031
+— SAV-TERRKEY-056, SAV-CELLREC-032 (its "unattributed" label is superseded by
+SAV-TERRKEY-056; the `2 + 54 × count + 4` measurement stands), SAV-SESS-031
 
 | Session-wire offset | Bytes | Runtime source | Meaning |
 |---:|---:|---|---|
@@ -222,14 +223,17 @@ sufficiency for arbitrary reconstruction remains Unknown: constructor outputs,
 opaque direct fields and the first computed ticks are unresolved. A different
 route input independent of shape is not established by a fixed-bytes crossing;
 the loader can select resume/fresh construction from SAV shape itself.
-— SAV-RECON-268, SAV-RECON-269, SAV-RECON-270, SAV-SUFF-302, SAV-SUFF-303
+— SAV-RECON-268 (its universal Human saved-row clause is partially retracted;
+Human binding follows SAV-ACTORBIND-544), SAV-RECON-269, SAV-RECON-270,
+SAV-SUFF-302, SAV-SUFF-303
 
 ## Actor crossing and local cell refusal
 
 Stage-zero reference repair does not center Position or reset the mover's
 crossing bytes. Mover `+7c` uses hit-only identity replacement; the progress-3
 arm can continue its saved step. First actual loaded scheduling remains
-Unknown. — SAV-ACTORINPUT-547, SAV-HUMRESUME-460, MOVE-STEP-040
+Unknown. — SAV-ACTORINPUT-547, SAV-HUMRESUME-460 (reference-repair shorthand
+superseded by the field-specific rule), MOVE-STEP-040
 
 | Operation | Located local behavior |
 |---|---|

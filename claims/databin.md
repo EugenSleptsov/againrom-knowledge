@@ -10,7 +10,7 @@ file: [registry.md](registry.md).
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | DAT-LOC-001 | The placeable-definition database at `0x609b18` loads from `World\Data\Data.bin`, shipped as the archive node `world.res:data/data.bin` (88 327 B). | High | ● active | [EXP-0049](../experiments/EXP-0049-placeable-db/) |
-| DAT-OBJ-002 | The database holds eleven by-value collections; every entry begins `{vptr, CString name, CDWordArray params}` and its size depends on the element class. | High | ● active | [EXP-0049](../experiments/EXP-0049-placeable-db/) |
+| DAT-OBJ-002 | The database holds eleven by-value collections; every entry begins `{vptr, CString name, CDWordArray params}` and its size depends on the element class. | High | ● active (amended) | [EXP-0049](../experiments/EXP-0049-placeable-db/) |
 | DAT-GRAM-003 | `Data.bin` is eight serialized groups of column titles and entries, and this grammar tiles the shipped file with 0 residue. | High | ● active | [EXP-0049](../experiments/EXP-0049-placeable-db/) |
 
 ### DAT-LOC-001
@@ -93,9 +93,9 @@ assignment closes, and it is the one the instructions spell.
 |---|---|---|---|---|
 | DAT-SCHEMA-004 | Column titles name the parameter slots: parameter `i` is CSV column `i+1`, and an empty cell stores −1. | High / Medium | ● active | [EXP-0049](../experiments/EXP-0049-placeable-db/) |
 | DAT-SCHEMA-007 | Every collection's titles map to slot numbers fixed by four instruments; `Data.bin` Units carries a unit's simulation numbers and `units.reg` its drawable. | High / Medium | ● active | [EXP-0072](../experiments/EXP-0072-unit-stats/) |
-| DAT-HUMANS-008 | The Humans spawn streamer consumes 23 slots in order, and slot 16 reaches `actor+0x0e`. | High | ● active (amended) | [EXP-0104](../experiments/EXP-0104-combat-columns/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
+| DAT-HUMANS-008 | The Humans spawn streamer consumes 23 slots in order, and slot 16 reaches `actor+0x0e`. | High | ● active (amended, partially retracted) | [EXP-0104](../experiments/EXP-0104-combat-columns/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
 | DAT-HUMANS-009 | Humans rows carry no absorption, protection, resistance, physical-damage or attack-kind column; those exist only in Units. | High / Medium | ● active | [EXP-0104](../experiments/EXP-0104-combat-columns/) |
-| DAT-ACT-006 | Actors are created from the database through a Humans arm and a Units arm, and a −1 parameter keeps the constructor default. | High | ● active (amended) | [EXP-0049](../experiments/EXP-0049-placeable-db/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
+| DAT-ACT-006 | Actors are created from the database through a Humans arm and a Units arm, and a −1 parameter keeps the constructor default. | High | ● active (amended, partially retracted) | [EXP-0049](../experiments/EXP-0049-placeable-db/), [EXP-0192](../experiments/EXP-0192-mission20-party-boundary/) |
 
 ### DAT-SCHEMA-004
 

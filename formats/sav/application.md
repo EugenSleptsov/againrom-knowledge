@@ -15,7 +15,8 @@ The tail is uncompressed and has three consecutive parts.
 
 `R` is the store's record count. REG header, kind bits, records and pool
 encoding apply directly; state entries have no CArchive tags. — SAV-EXT-009,
-SAV-EMB-004, SAV-TAILEXT-062, SAV-CAMPTAIL-070, REG-FMT-017, REG-099
+SAV-EMB-004 (its run-to-EOF extent clause is partially retracted by
+SAV-TAILEXT-062), SAV-TAILEXT-062, SAV-CAMPTAIL-070, REG-FMT-017, REG-099
 
 Both located save dialogs read the label's fixed buffer, but the
 selection-to-writer path passes only the NUL-terminated string. Bytes after
@@ -42,7 +43,8 @@ The baseline world producer has nine roots:
 `Objects/Group0` through `Group9` and decimal top-level `Prj<id>` roots.
 City/no-world records omit Fog and Projectiles on the located producer route.
 Record/leaf counts therefore depend on state, not on one fixed schema count.
-— SAV-EMB-004, SAV-TAILEXT-062, SAV-PROJSTORE-428, SAV-915
+— SAV-EMB-004 (extent clause partially retracted; key names stand),
+SAV-TAILEXT-062, SAV-PROJSTORE-428, SAV-915
 
 The application consumers load stack-local registries, then read the campaign
 from the same file, consume named state and destroy the registry. The longer

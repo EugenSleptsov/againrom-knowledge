@@ -6,7 +6,8 @@
 
 A Group is serialized directly inside its Player's u32-counted Group list;
 it has no archive class tag or saved-address definition of its own.
-— SAV-OBJ-016, SAV-MEMBER-036
+— SAV-OBJ-016, SAV-MEMBER-036 (its unread-classes Unknown superseded by
+SAV-EMBED-039)
 
 | Order | Wire | Original source |
 |---:|---|---|

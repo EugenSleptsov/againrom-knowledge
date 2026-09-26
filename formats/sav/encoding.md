@@ -30,7 +30,9 @@ with no expansion allowance. — SAV-CODEC-022
 `Count(n)` is the generic MFC collection count. `list32<T>` instead uses an
 unconditional u32 count followed by that many typed `objref<T>` operations.
 Player, dead-actor, Building, SpellEffect and Sack lists use `list32`; Group
-counts also use plain u32. — SAV-WLIST-040, SAV-DOC-053
+counts also use plain u32. — SAV-WLIST-040, SAV-DOC-053 (partially retracted
+for its 7-of-18, Unit-failure and terminal-padding clauses; the list shape
+stands)
 
 | Primitive | Minimal length prefix | Payload |
 |---|---|---|
@@ -54,8 +56,9 @@ large-allocation or complete malformed-SAV acceptance. — SAV-758
 ## CArchive object framing
 
 Objects and class descriptors share one index counter starting at 1. Indices
-are assigned in stream order, not separately per class. — SAV-STREAM-013,
-SAV-ARCHREL-253
+are assigned in stream order, not separately per class. — SAV-STREAM-013
+(its "null arm unobserved" clause is superseded by SAV-ARCHREL-253; the shared
+counter stands), SAV-ARCHREL-253
 
 | u16 tag | Meaning | Following content |
 |---|---|---|
@@ -69,7 +72,8 @@ the next. Each later new instance consumes one index. A back-reference aliases
 the previously loaded object. The located typed reader checks derivation from
 the requested base class for a new class, a known class and a back-reference.
 For example, `objref<Effect>` admits `Effect_DirectDamage`, but not an unrelated
-class. — SAV-STREAM-010, SAV-STREAM-013, SAV-ARCHREL-253, SAV-774
+class. — SAV-STREAM-010, SAV-STREAM-013 (null-arm clause superseded),
+SAV-ARCHREL-253, SAV-774
 
 Plain-index back-references, Unicode strings, noncanonical nonzero presence
 bytes and marker-absent trailers have defined reader arms. Their primitive
@@ -98,4 +102,5 @@ necessarily emit their runtime class descriptor.
 An Effect's 44-byte body does not imply another Effect follows it: it belongs
 to its owner's list. A class-tag-shaped word or trailer marker inside a raw
 member remains payload; scanning for it does not identify an archive boundary.
-— SAV-EFFCHAIN-046, SAV-TAGSCAN-158, SAV-FULLREAD-252
+— SAV-EFFCHAIN-046 (its tag-scan support clause is partially retracted; the
+44-byte programme and list placement stand), SAV-TAGSCAN-158, SAV-FULLREAD-252

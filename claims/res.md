@@ -15,23 +15,23 @@ Spec: [`formats/res/format.md`](../formats/res/format.md). Format of this file:
 |---|---|---|---|---|
 | RES-MAGIC-001 | The magic is `26 59 41 31` ("&YA1"); as a little-endian u32 it is `0x31415926`, π's first 8 digits, which is arithmetic only and claims no intent. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
 | RES-HDR-002 | The header is 24 bytes, and payload data begins at offset 24. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
-| RES-HDR-003 | `u32@16` is the registry offset; a registry `[@16,EOF)` length ≡ 0 (mod 32) is an EN-corpus packer fact, not a format rule. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0051](../experiments/EXP-0051-res-ru/) |
-| RES-HDR-004 | `u32@20` is the node count, the engine's only size input (allocation and bulk-read length); `count = regLen/32` holds on the EN corpus only. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0051](../experiments/EXP-0051-res-ru/) |
+| RES-HDR-003 | `u32@16` is the registry offset; a registry `[@16,EOF)` length ≡ 0 (mod 32) is an EN-corpus packer fact, not a format rule. | High | ✔ promoted (amended) | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0051](../experiments/EXP-0051-res-ru/) |
+| RES-HDR-004 | `u32@20` is the node count, the engine's only size input (allocation and bulk-read length); `count = regLen/32` holds on the EN corpus only. | High | ✔ promoted (amended) | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0051](../experiments/EXP-0051-res-ru/) |
 | RES-HDR-005 | `u32@8` is the root count: the number of top-level, unowned nodes. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
 | RES-HDR-006 | Header `u32@4` and `u32@12` are the root directory node's `off` and `type` fields (`RES-HDR-017`, `RES-HDR-018`). | High | ● active | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
 | RES-NODE-007 | A node is 32 bytes, `{u32, u32 off, u32 size, u32 type, char[16] name}`, and shipped names are 0xCD-padded. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
 | RES-NODE-008 | Node `type` 0 is a file, a byte range in `[24,regOff)`; `type` 1 is a directory, a first-child index plus a count. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
-| RES-TREE-009 | Corpus-wide, the nodes form a tree: all reachable, no cycles, and file ranges tile `[24,regOff)` exactly (60 blobs / 4592 nodes, 0 violations). | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
+| RES-TREE-009 | Corpus-wide, the nodes form a tree: all reachable, no cycles, and file ranges tile `[24,regOff)` exactly (12 standalone containers / 4592 nodes, 0 violations). | High | ✔ promoted (amended) | [EXP-0001](../experiments/EXP-0001-res-container/) |
 | RES-SCOPE-010 | `.LM` files use the same container, and an empty archive is valid; `Allods/*.RES` use an identical container. | High | ✔ promoted | [EXP-0001](../experiments/EXP-0001-res-container/) |
-| RES-NODE-011 | Node `u32@0` is the node record's reserved word: 0 in standalone archives and never dereferenced by lookup, descent or sort. | High | ● active | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
-| RES-HDR-012 | On the 60-blob EN widened corpus, header `@0x04` is 0 or the non-root-node count; it is the root node's `off`, and the two-value law is EN-only. | High | ● active | [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
-| RES-HDR-013 | Header `@0x0C` is a per-file constant in `{1, 17}` with no third value in 60 blobs; it is the root node's type/flags word, and bit 4 marks sorted children. | High | ● active | [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
-| RES-NODE-014 | Tail-registry node `@0x00` is 0 for every node of every reachable tail-registry `&YA1` (4592 nodes, 11 archives): a reserved word, not a hash or id. | High | ● active | [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
+| RES-NODE-011 | Node `u32@0` is the node record's reserved word: 0 in standalone archives, and none of the four scanned lookup, path-walk and finalize-sort functions dereferences it. | High | ● active (amended) | [EXP-0001](../experiments/EXP-0001-res-container/), [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
+| RES-HDR-012 | On the 60-blob EN widened corpus, header `@0x04` is 0 or the non-root-node count; it is the root node's `off`, and the two-value law is EN-only. | High | ● active (amended, superseded) | [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
+| RES-HDR-013 | Header `@0x0C` is a per-file constant in `{1, 17}` with no third value in 60 blobs; it is the root node's type/flags word, and bit 4 marks sorted children. | High | ● active (amended, superseded) | [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
+| RES-NODE-014 | Tail-registry node `@0x00` is 0 for every node of every reachable tail-registry `&YA1` (4592 nodes, 11 archives): a reserved word, not a hash or id. | High | ● active (amended) | [EXP-0014](../experiments/EXP-0014-res-opaque/), [EXP-0017](../experiments/EXP-0017-res-open/) |
 | RES-SCOPE-015 | The `&YA1` magic labels two distinct formats, the tail-registry archive and the inline REG-style record store; in this install's 60 blobs every nested `&YA1` is inline. | High / Medium | ● active | [EXP-0014](../experiments/EXP-0014-res-opaque/) |
 | RES-NODE-016 | In `rom.exe`, the 24-byte `&YA1` header is a directory-node record: the tree's virtual root node, sharing its first 16 bytes with a node. | High | ● active | [EXP-0017](../experiments/EXP-0017-res-open/) |
 | RES-HDR-017 | In `rom.exe`, header `@0x04` is the root directory node's `off`, the array index of the first top-level node, and the name lookup dereferences it. | High | ● active | [EXP-0017](../experiments/EXP-0017-res-open/) |
-| RES-HDR-018 | In `rom.exe`, header `@0x0C` is the root directory node's type/flags word: `1` is a directory, and bit 4 (`0x10`) is the children-sorted flag the lookup branches on. | High | ● active | [EXP-0017](../experiments/EXP-0017-res-open/) |
-| RES-NODE-019 | In `rom.exe`, node `@0x00` is the node record's reserved word, and no lookup, descent or finalize-sort instruction dereferences it. | High | ● active | [EXP-0017](../experiments/EXP-0017-res-open/) |
+| RES-HDR-018 | In `rom.exe`, header `@0x0C` is the root directory node's type/flags word: `1` is a directory, and bit 4 (`0x10`) is the children-sorted flag the lookup branches on. | High | ● active (superseded) | [EXP-0017](../experiments/EXP-0017-res-open/) |
+| RES-NODE-019 | In `rom.exe`, node `@0x00` is the node record's reserved word, and none of the four scanned lookup, path-walk and finalize-sort functions dereferences it. | High | ● active (partially retracted) | [EXP-0017](../experiments/EXP-0017-res-open/) |
 
 ### RES-MAGIC-001
 
@@ -107,8 +107,10 @@ grades in `RES-HDR-012` and `RES-HDR-013`.
   a fact about the packer, not a format constant.
 
 **Confidence.** High. `REG-REC-032` attests the same record four ways in
-`rom.exe`, among them the stride from `SHL 0x5` and `name @+0x10`, fixed from
-the writer's 15-character clamp.
+`rom.exe`: the loader `FUN_004cae80`, the lookup `FUN_004ce8e0`, the accessors
+`FUN_004ccc20`/`FUN_004cc670` and the node-insert writer `FUN_004ce6d0`. The
+stride is the `SHL 0x5` in the loader, the lookup and the node-insert, and
+`name @+0x10` is fixed by the writer's 15-character clamp.
 
 ### RES-NODE-008
 
@@ -119,12 +121,19 @@ computes `&records[node->off]` and iterates `node->size`, which is what
 
 ### RES-TREE-009
 
-- The measurement is exhaustive: 60 blobs / 4592 nodes, 0 violations.
+- The measurement is exhaustive over the 12 standalone containers (11 tail
+  archives and the empty `KIDS.LM`): 4592 nodes, 0 violations.
 - Exact tiling is the invariant EXP-0030 showed can hold under two framings at
   once, so it corroborates the layout rather than pinning it. The reader pins it
   (`RES-NODE-016`, `RES-HDR-017/018`). This claim covers only the measurement.
 
 **Confidence.** High as a measurement.
+
+**Amended.** The population was worded "60 blobs / 4592 nodes". EXP-0001's
+`evidence/archives.csv` measures 12 containers whose node counts sum to 4592,
+with every violation column 0. The 60 blobs are EXP-0014's widened reach, which
+adds 48 inline stores that neither EXP-0001 nor EXP-0014 tree-checked
+([`retracted.md`](retracted.md)).
 
 ### RES-SCOPE-010
 
@@ -136,11 +145,26 @@ extension plays no part in the binary either: one reader validates the magic
 
 - Observed 0 in standalone archives.
 - `RES-NODE-014` widened the observation and refuted the hash/id reading.
-- EXP-0017 resolved the meaning: the node record's reserved word, never
-  dereferenced by lookup, descent or sort (`RES-NODE-019`).
+- EXP-0017 resolved the meaning: the node record's reserved word. No
+  instruction in the four scanned functions, the lookup `FUN_004ce8e0`, the
+  path-walk `FUN_004ce800`/`FUN_004ce9e0` and the finalize-sort `FUN_004ce660`,
+  dereferences it (`RES-NODE-019`).
 
-**Confidence.** High, the grade of `RES-NODE-014` (always zero) and
-`RES-NODE-019` (never dereferenced), which resolve the meaning.
+**Confidence.** High, the grade of `RES-NODE-014` (always zero) and of
+`RES-NODE-019`, which resolve the meaning. The absence of a `[node+0]`
+dereference is High over the four scanned lookup, path-walk and finalize-sort
+functions only, the scope `RES-NODE-019` keeps.
+
+**Unknown.** Whether a node-touching function outside the four scanned reads
+`[node+0]`. `RES-NODE-019` names such functions (`FUN_004c9320`, `FUN_004ce8c0`,
+`FUN_004c9ad0`, `FUN_004ccc20`/`FUN_004cc670`, and the node-insert
+`FUN_004ce6d0`, which stores `0` there).
+
+**Amended.** The former headline and Confidence said the word is never
+dereferenced by lookup, descent or sort, and took `RES-NODE-019`'s High for that
+without its scope. `RES-NODE-019`'s "the four functions that touch a node"
+clause is withdrawn ([`retracted.md`](retracted.md)), so this claim now carries
+the same scope and the same Unknown.
 
 ### RES-HDR-012
 
@@ -159,11 +183,13 @@ extension plays no part in the binary either: one reader validates the magic
 **Confidence.** High for the value law on the EN corpus. The meaning carries
 `RES-HDR-017`'s grade (EXP-0017).
 
-**Amended.** `RES-HDR-017` (EXP-0017) resolves the meaning, and with it which
-archives populate the word, which this claim left to the `rom.exe` writer
-routine: `@0x04` is the root directory node's `off`, the index of the first
-top-level node, and `{0, ownedNodes}` is the packer's roots-first vs roots-last
-layout order, not a recomputed count. `RES-HDR-029` (EXP-0051) narrows the scope: the
+**Amended.** `RES-HDR-017` (EXP-0017) resolves the meaning: `@0x04` is the root
+directory node's `off`, the index of the first top-level node, and
+`{0, ownedNodes}` is the packer's roots-first vs roots-last layout order, not a
+recomputed count. It supersedes the pointer "Which archives populate it →
+`rom.exe` writer routine": the tail archives come from an external packer, and
+`rom.exe` contains only the inline writer (EXP-0017, `RES-GEOM-028`,
+[`retracted.md`](retracted.md)). `RES-HDR-029` (EXP-0051) narrows the scope: the
 `{0, nNodes−roots}` law is EN-corpus only, because RU `SFX.RES` stores a
 mid-table `186`.
 
@@ -175,8 +201,8 @@ mid-table `186`.
   18.
 - `17 ⟺ inline-flavor` is falsified: graphics and main are tail archives.
 - `17 ⟺ has-dirs` is falsified: VIDEO4 has 15 dirs `@1`.
-- Bit 4 (`0x10`) is the discriminator. EXP-0014 read it as a format-variant /
-  writer-generation flag.
+- Bit 4 (`0x10`) is the discriminator: the children-sorted flag
+  (`RES-HDR-018`).
 
 **Confidence.** High for the domain and the inline⟹17 invariant. The meaning
 carries `RES-HDR-018`'s grade (EXP-0017).
@@ -184,10 +210,11 @@ carries `RES-HDR-018`'s grade (EXP-0017).
 **Amended.** `RES-HDR-018` (EXP-0017) resolves the meaning: `@0x0C` is the root
 directory node's `type/flags` (`1` = directory), and bit 4 is the
 children-sorted flag the reader tests to pick binary vs linear search
-(`17` = dir+sorted), set by the writer's finalize-sort. `RES-HDR-030`
-(EXP-0051) narrows the association: RU ships `1` on all 11 archives including
-graphics and main, so "17 on graphics+main" was EN packing. The domain `{1,17}`
-holds over all 23.
+(`17` = dir+sorted), set by the writer's finalize-sort. It supersedes the
+EXP-0014 reading of bit 4 as "a format-variant / writer-generation flag"
+([`retracted.md`](retracted.md)). `RES-HDR-030` (EXP-0051) narrows the
+association: RU ships `1` on all 11 archives including graphics and main, so
+"17 on graphics+main" was EN packing. The domain `{1,17}` holds over all 23.
 
 ### RES-NODE-014
 
@@ -202,8 +229,9 @@ holds over all 23.
 grade (EXP-0017).
 
 **Amended.** `RES-NODE-019` (EXP-0017) resolves the meaning: the node record's
-reserved word, aligned with the header's magic, never dereferenced by any
-lookup, descent or sort instruction.
+reserved word, aligned with the header's magic. None of the four scanned lookup,
+path-walk and finalize-sort functions dereferences it; whether another
+node-touching function reads it is Unknown.
 
 ### RES-SCOPE-015
 
@@ -256,7 +284,8 @@ between them.
 
 - The reader branches on bit 4: `FUN_004ce8e0 @0x004ce909 TEST AL,0x10; JZ`.
   Set gives a binary search over sorted children (`bsearch`, cmp `0x4ceaf0`);
-  clear gives a linear `strncmp` scan. So `{1,17} = {dir, dir+sorted}`.
+  clear gives a linear scan through the CRT `_strnicmp`, ASCII case-insensitive
+  (`RES-LOOKUP-023`, `RES-041`). So `{1,17} = {dir, dir+sorted}`.
 - The writer sets it in the finalize-sort
   `FUN_004ce660 @0x004ce6c3 OR AL,0x10; MOV [node+0xc]`.
 - Bit 4 is EXP-0014's discriminator.
@@ -268,6 +297,11 @@ between them.
 **Confidence.** High. The reader branches on the bit and the writer sets it,
 both quoted: read and write sides, the strongest form available for a flag.
 
+**Amended.** The linear branch was worded "a linear `strncmp` scan".
+`RES-LOOKUP-023` (EXP-0034) disassembled its comparator `FUN_00557030` as the
+CRT `_strnicmp`, which folds ASCII `A`-`Z` on both operands, and supersedes that
+label ([`retracted.md`](retracted.md)). The bit-4 branch stands.
+
 ### RES-NODE-019
 
 - Scanned: `FUN_004ce8e0` (reads `+4/+8/+0xc/+0x10`),
@@ -278,18 +312,32 @@ both quoted: read and write sides, the strongest form available for a flag.
 - Resolves the meaning flag on `RES-NODE-014`.
 
 **Confidence.** High. An absence, established by enumerating every dereference
-in the four functions that touch a node; that distinction from a corpus zero is
-the one the confidence scale turns on.
+in the four scanned lookup, path-walk and finalize-sort functions; that
+distinction from a corpus zero is the one the confidence scale turns on.
+
+**Unknown.** Whether a node-touching function outside the four scanned reads
+`[node+0]`.
+
+**Amended.** The clause that the four scanned functions are "the four functions
+that touch a node" is withdrawn ([`retracted.md`](retracted.md)). Other
+functions read or write node words: `FUN_004c9320` (`RES-ORDER-033`,
+`RES-MASK-035`), the endpoint `FUN_004ce8c0` (`RES-040`), `FUN_004c9ad0`
+(`RES-MASK-035`), the accessors `FUN_004ccc20`/`FUN_004cc670` and the
+node-insert `FUN_004ce6d0`, which stores `0` into `node+0x00` (`REG-REC-032`).
+The absence over the four scanned functions stands. The headline's unscoped
+reading, that no lookup, descent or finalize-sort instruction dereferences the
+word, is narrowed to the four scanned functions
+([`retracted.md`](retracted.md)).
 
 ## Reader code, entry names and the tail open
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| RES-CODE-020 | An address map of the `&YA1` reader, lookup, writer, value accessors, node insert, stream class and archive manager in `rom.exe` (sha256 `942e9b72…7d367d03`). | High | ● active (partially retracted) | [EXP-0017](../experiments/EXP-0017-res-open/), [EXP-0034](../experiments/EXP-0034-res-name-codec/) |
+| RES-CODE-020 | An address map of the `&YA1` reader, lookup, writer, value accessors, node insert, stream class and archive manager in `rom.exe` (sha256 `942e9b72…7d367d03`). | High | ● active (partially retracted) | [EXP-0017](../experiments/EXP-0017-res-open/), [EXP-0032](../experiments/EXP-0032-reg-text-and-kinds/), [EXP-0034](../experiments/EXP-0034-res-name-codec/), [EXP-0040](../experiments/EXP-0040-enumeration-audit/), [EXP-0051](../experiments/EXP-0051-res-ru/), [EXP-0052](../experiments/EXP-0052-res-resolution/), [EXP-0348](../experiments/EXP-0348-container-field-operations/) |
 | RES-TEXT-021 | In `rom.exe`, the `.res` reader applies no byte-to-character conversion to archive entry names: one verbatim bulk read loads every 16-byte name field. | High | ● active | [EXP-0034](../experiments/EXP-0034-res-name-codec/), [EXP-0040](../experiments/EXP-0040-enumeration-audit/) |
 | RES-TEXT-022 | Over all 12 standalone `&YA1` containers of this install, 0 of 45 865 entry-name bytes are `>=0x80`; the 55 distinct values span `0x27..0x7A`. | High | ● active | [EXP-0034](../experiments/EXP-0034-res-name-codec/) |
-| RES-LOOKUP-023 | In `rom.exe`, `.res` child-name lookup reuses `.reg`'s shared `FUN_004ce8e0`; its linear branch is the CRT `_strnicmp`, case-insensitive with a 15-character bound. | High / Medium | ● active (partially retracted) | [EXP-0034](../experiments/EXP-0034-res-name-codec/) |
-| RES-IDENT-024 | In `rom.exe`, `FUN_004ce800` matches a path's leading segment against the resolving object's own stored name by a direct, case-sensitive byte compare. | High / Medium | ● active | [EXP-0034](../experiments/EXP-0034-res-name-codec/), [EXP-0052](../experiments/EXP-0052-res-resolution/) |
+| RES-LOOKUP-023 | In `rom.exe`, `.res` child-name lookup reuses `.reg`'s shared `FUN_004ce8e0`; its linear branch is the CRT `_strnicmp`, case-insensitive with a 15-character bound. | High / Medium | ● active (partially retracted) | [EXP-0034](../experiments/EXP-0034-res-name-codec/), [EXP-0040](../experiments/EXP-0040-enumeration-audit/), [EXP-0348](../experiments/EXP-0348-container-field-operations/) |
+| RES-IDENT-024 | In `rom.exe`, `FUN_004ce800` matches a path's leading segment against the resolving object's own stored name by a direct, case-sensitive byte compare. | High / Medium | ● active (amended) | [EXP-0034](../experiments/EXP-0034-res-name-codec/), [EXP-0052](../experiments/EXP-0052-res-resolution/) |
 | RES-OPEN-026 | In `rom.exe`, the tail open accepts a file when the stream opens, `u32@0 == 0x31415926` and `malloc(@0x14×32)` succeeds; no instruction checks the registry geometry. | High | ● active | [EXP-0051](../experiments/EXP-0051-res-ru/) |
 | RES-PATH-025 | In `rom.exe`, path splitting treats `\` and `/` as interchangeable terminators and rewrites neither; the clause denying any lower-casing pass is retracted. | High | ● active (partially retracted) | [EXP-0034](../experiments/EXP-0034-res-name-codec/), [EXP-0052](../experiments/EXP-0052-res-resolution/) |
 | RES-OPEN-027 | In `rom.exe`, the registry is located by `@0x10` alone and sized by `@0x14×32` alone; bytes past it are unreachable, and the module cannot observe EOF. | High | ● active | [EXP-0051](../experiments/EXP-0051-res-ru/) |
@@ -301,15 +349,16 @@ the one the confidence scale turns on.
   `FUN_004ce8e0`; path walk `FUN_004ce800`/`FUN_004ce9e0`; file-resolve
   `FUN_004c9320`; finalize-sort `FUN_004ce660` (writer-only, sole caller
   `FUN_004cafe0`); serializer `FUN_004cafe0`; empty ctor `FUN_004cb0a0`;
-  INI→REG compiler `FUN_004cb340`; record comparator `0x4ceaf0`.
+  INI→REG compiler `FUN_004cb340`; record comparator `0x4ceaf0`. The magic
+  immediate `0x31415926` occurs in exactly four functions: the two `CMP`
+  readers `FUN_004c90a0` and `FUN_004cae80`, and the two `MOV` writers
+  `FUN_004cb0a0` (`@0x004cb13b`) and `FUN_004cb340` (`@0x004cb624`).
 - EXP-0032, value accessors and node insert: `FUN_004cc670` GetString,
   `FUN_004ccc20` GetInt, `FUN_004ccda0` GetDouble; int-array getters
   `FUN_004cd240`/`004cd130`; setters `FUN_004ccad0`, `004cccb0`, `004cd910`,
   `004cda60`, `004cdbb0`, `004cdd10`, `004ce020`; `FUN_004cd370`, labelled
   create-subkey; `FUN_004ce6d0` node insert, which fixes `value`/`size` as
-  block-start/count and the 15-char name clamp; `FUN_004cb160` Open. The magic
-  immediate `0x31415926` occurs in exactly four functions: two `CMP` readers
-  and two `MOV` writers.
+  block-start/count and the 15-char name clamp; `FUN_004cb160` Open.
 - EXP-0034: path-resolve wrapper `FUN_004ce8c0`; the linear branch's comparator
   `FUN_00557030` (`_strnicmp`); the sorted branch's search driver `FUN_00557140`
   (`bsearch`, not a comparator: EXP-0040 read it, and the comparison arrives as
@@ -360,8 +409,9 @@ of the two lookup comparators ([`retracted.md`](retracted.md)).
 - `REG-TEXT-036` reached the same conclusion for `.reg`; this claim re-derives it
   independently from `.res`'s own distinct reader and does not assume it carries
   over.
-- CP866 (our shipped decoding) is therefore a display convention of ours,
-  unbacked by the binary, as CP866/CP1251 are for `.reg` text.
+- No code page is backed by the binary for entry names: CP866, CP1251 or any
+  other code page applied to display a name is a rendering choice, not a
+  transcription, as `REG-TEXT-036` finds for `.reg` text.
 
 **Confidence.** High. An absence over a whole-image reachability sweep, plus the
 single bulk `Read` that leaves no room for a per-name transform, re-derived from
@@ -394,9 +444,10 @@ stronger than this claim states; 0 in orphan code.
   on both operands, no locale active. Case-insensitive, 15-character bound.
 - Sorted branch: the `bsearch` driver `FUN_00557140`, a generic bisection loop,
   is handed the same comparator address (`0x4ceaf0`) that `.reg`'s sorted
-  lookups cite: the identical shared code, not an independent instance. That
-  comparator function was not itself re-disassembled; it sits in a byte range
-  the existing Ghidra auto-analysis never marked as a function.
+  lookups cite: the identical shared code, not an independent instance.
+  EXP-0034 did not read the comparator's instructions; its byte range had no
+  function in the Ghidra auto-analysis. `RES-041` and `REG-100` read them:
+  `0x4ceaf0` compares unsigned bytes, case-sensitively.
 - EXP-0040 read `FUN_00557140`: it is the CRT's generic `bsearch` driver, not a
   comparator. The comparison function arrives as a pointer argument and is
   called indirectly at `00557181 CALL dword ptr [ESP+0x2c]`, so reading this
@@ -404,10 +455,11 @@ stronger than this claim states; 0 in orphan code.
   callee.
 
 **Confidence.** High for the linear branch, disassembled. Medium for the sorted
-branch's comparator: the address is confirmed shared, and its instructions were
-not independently re-read. EXP-0040's reading of `FUN_00557140` supports the
-Medium for that better reason. EXP-0040's audit used this claim as its positive
-control: flagged on shape, it came back correct.
+branch's comparator on this claim's own evidence: the address is confirmed
+shared, and EXP-0034 did not read its instructions. EXP-0040's reading of
+`FUN_00557140` supports the Medium for that better reason. The comparator's
+semantics carry `RES-041`'s High. EXP-0040's audit used this claim as its
+positive control: flagged on shape, it came back correct.
 
 **Amended.** The clause that the sorted branch's actual comparator is still
 unidentified is partially retracted by `RES-041` and `REG-100` (EXP-0348,
@@ -480,6 +532,9 @@ independent ways (`RES-OPEN-027`).
   entirely: no import symbol at all.
 
 **Confidence.** High for the separator half, read at every test position.
+
+**Unknown.** The 95-literal figure below is `RES-CASE-036`'s. It conflicts
+with `RES-IDENT-034`'s census; see the Unknown on both cards.
 
 **Amended.** The lower-casing half, that no separate case-normalization pass
 exists anywhere in `rom.exe`, is retracted and corrected by `RES-CASE-036`
@@ -583,7 +638,7 @@ the dereference now has a discriminating witness.
 | RES-CASE-036 | In `rom.exe`, `FUN_004c9580` lower-cases every path entering the archive manager; the fold is always on and required. | High | ● active | [EXP-0052](../experiments/EXP-0052-res-resolution/) |
 | RES-DIR-037 | In `rom.exe`, `dir[0]` is the working directory captured before `main`, and `AddArchive` uses `dir[0]` alone, so an archive not beside the CWD never opens. | High / Medium | ● active | [EXP-0052](../experiments/EXP-0052-res-resolution/) |
 | RES-COLL-038 | Over the EN and RU corpora, the 8 live archives show 0 identity collisions, 0 cross-archive path collisions and 0 within-archive case-insensitive duplicates. | Medium | ● active | [EXP-0052](../experiments/EXP-0052-res-resolution/) |
-| RES-ACCEPT-031 | A consumer accepts exactly what the engine accepts: assert the magic, read exactly `@0x14` records at `@0x10`, and never derive the count from region length. | High / Medium / Unknown | ● active | [EXP-0051](../experiments/EXP-0051-res-ru/) |
+| RES-ACCEPT-031 | A consumer accepts exactly what the engine accepts: assert the magic, read exactly `@0x14` records at `@0x10` when `@0x0C` bit 31 is clear, and never derive the count from region length. | High / Medium / Unknown | ● active (amended) | [EXP-0051](../experiments/EXP-0051-res-ru/) |
 
 ### RES-SET-032
 
@@ -679,6 +734,13 @@ This supplies exactly the dispatch rule `RES-IDENT-024` said "a reader that
 needs [it] must have read"; the literal census is independent corroboration,
 not the basis.
 
+**Unknown.** This census counts 95 `SFX\`+`sfx\` literals and 7 `World\`;
+`RES-CASE-036` counts 95 literals that capitalise the identity segment, `World\`
+and `Scenario\` among them. Both hold only if the lower-case `sfx\` literals
+number exactly the capitalised literals of every other identity. The EXP-0052
+record states the 95 capitalised total with one `SFX\` example and no
+per-identity case split, so it does not settle which count is right.
+
 ### RES-MASK-035
 
 - `FUN_004c9a20` (sole call site `@004710e3`, argument
@@ -731,6 +793,12 @@ read/write pair that is the strongest available form for a flag.
 count enumerated with the instrument stated, the transform read at instruction
 level, and the 95-literal census shows the fold is required rather than merely
 present.
+
+**Unknown.** The 95 capitalised literals conflict with `RES-IDENT-034`'s
+census, which counts 95 `SFX\`+`sfx\` literals and 7 `World\`. Both hold only
+if the lower-case `sfx\` literals number exactly the capitalised literals of
+every other identity. The EXP-0052 record gives no per-identity case split.
+The fold's existence and gate do not rest on the count.
 
 ### RES-DIR-037
 
@@ -797,8 +865,10 @@ three and none of the others.
 
 - Assert, engine-checked:
   - `u32@0 == "&YA1"`;
-  - locate the registry at `@0x10`, take exactly `@0x14` 32-byte records, and
-    ignore `[@0x10 + @0x14×32, EOF)`;
+  - with `@0x0C` bit 31 clear, locate the registry at `@0x10`, take exactly
+    `@0x14` 32-byte records, and ignore `[@0x10 + @0x14×32, EOF)`;
+  - with bit 31 set, read the node table at the stream position after the six
+    header dwords (`RES-039`);
   - do not require `(EOF−@0x10) % 32 == 0`;
   - do not derive the count from region length; that is what rejected RU
     `MAIN.RES`.
@@ -814,18 +884,24 @@ three and none of the others.
   read and unchecked dir bounds.
 
 **Confidence.** High for the assert clauses, instruction-level per
-`RES-OPEN-026/027`. Medium for the corpus clauses, the cap for a corpus
-measurement.
+`RES-OPEN-026/027`; the bit 31 set clause carries `RES-039`'s High. Medium for
+the corpus clauses, the cap for a corpus measurement.
 
 **Unknown.** Engine runtime behaviour outside the corpus envelope: garbage node
-words, `@0x0C` bit 31 set, short reads. No defensive path exists; what the
-engine checks is pinned, and what it would do is not.
+words and short reads. No defensive path exists; what the engine checks is
+pinned, and what it would do is not.
+
+**Amended.** `RES-039` (EXP-0348) closes the `@0x0C` bit 31 item, formerly in
+the Unknown: bit 31 set suppresses the seek to `@0x10`, and the tail open
+reads the table at the stream position after the six header dwords. The
+`@0x10` locate clause is narrowed to bit 31 clear, which holds on all 23
+shipped archives (`RES-OPEN-026`; [`retracted.md`](retracted.md)).
 
 ## Relocated template row
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| RES-HDR-001 | _statement_ | High | ● active | [EXP-0001](../experiments/EXP-0001-res-header/) |
+| RES-HDR-001 | _statement_ | High | ● active (amended) | [EXP-0001](../experiments/EXP-0001-res-container/) |
 
 ### RES-HDR-001
 
@@ -835,11 +911,16 @@ engine checks is pinned, and what it would do is not.
   claim lands".
 - The knowledge repository's `k1` edition dropped it from the public index as
   internal review narrative, under that page's own Publication-boundary rule.
-- It sits here, unedited, because the id it names belongs to this ledger's own
+- It sits here because the id it names belongs to this ledger's own
   `RES-HDR-*` series, which otherwise runs `002`–`030`, and was never promoted
   into a published row here.
 - The move touches and resolves nothing about the id's confidence, status or
   evidence; the id remains exactly as unpromoted as it was.
+
+**Amended.** The Evidence link read `../experiments/EXP-0001-res-header/`, a
+directory that does not exist; the only EXP-0001 directory is
+`EXP-0001-res-container`, and the link now names it
+([`retracted.md`](retracted.md)). The statement stays `_statement_`.
 
 ## Shared container field operations
 
@@ -892,3 +973,13 @@ controls. Native stream failure remains outside scope.
 bodies/arguments and conditional composition controls.
 
 **Unknown.** Nonzero locale and complete native-manager/display behavior.
+
+## Open questions
+
+- How many path-shaped `rom.exe` `.data` literals capitalise their identity
+  segment. `RES-IDENT-034` counts 95 `SFX\`+`sfx\` and 7 `World\`;
+  `RES-CASE-036` counts 95 capitalised literals, `World\` and `Scenario\` among
+  them, and `RES-PATH-025` repeats that figure. The discriminating measurement is a case-split census
+  of those literals: per identity, how many spell the leading segment other
+  than the lower-case archive identity, with the `SFX\`/`sfx\` and
+  `Scenario\`/`scenario\` splits.

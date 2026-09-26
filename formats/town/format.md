@@ -331,7 +331,10 @@ Unknown. — TOWN-GRAPHICS-459
 
 In the recovered backpack painter, Smoothing enables `spritesb.256` after
 its `sprites.256` base. Opaque indexed boundary pixels half-mix destination and palette colours
-in the original16-bit surface, masking each shifted half before addition:
-mask0x7bef for RGB565 or0x3def for RGB555. Clipped pixels remain untouched.
+in the original 16-bit surface, masking each shifted half before addition:
+mask 0x7bef for RGB565 or 0x3def for RGB555. Clipped pixels remain untouched.
 This is an extra sprite pass; native complete-screen equivalence and coverage
-of every drawable family remain Unknown. — TOWN-SMOOTH-460, SPR256-OVL-014
+of every drawable family remain Unknown. The painter pairs the overlay draw
+`vt+0x34` with the five-argument base draw `vt+0x18` (`SPR256-077`), so
+`SPR256-OVL-014`'s `vt+0x14` pairing is narrowed; that claim's no-path-read
+clause is superseded. — TOWN-SMOOTH-460, SPR256-OVL-014

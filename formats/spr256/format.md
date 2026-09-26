@@ -32,16 +32,19 @@ repeat frames:
 
 frameCount = number of frame records before the trailer         SPR256-COUNT-002
              AND trailer & 0x7FFFFFFF (the two agree exactly)   SPR256-TRLR-016/021
+             (SPR256-COUNT-002's "not stored" clause superseded by that trailer count)
 ```
 
 - A palette-bearing payload begins with palette entry 0, not a frame count.
 - The final u32 contains the 31-bit frameCount and bit 31 has-palette flag.
   `frameCount=trailer&0x7fffffff`; read 1024 palette bytes only when
   `trailer&0x80000000` is nonzero. The set high bit also makes this word the
-  frame walk's terminator sentinel. This refines `SPR256-COUNT-002`.
-  — SPR256-TRLR-016, SPR256-TRLR-021
-- Installed maxima are width 640, height 480 and 256 frames; these are not
-  field-width or loader-admission limits. — SPR256-CORPUS-006
+  frame walk's terminator sentinel. `SPR256-COUNT-002`'s clause that the count
+  is not stored is superseded by this stored count; its walk derivation and
+  `u32@0` clause stand. — SPR256-TRLR-016, SPR256-TRLR-021
+- Installed maxima over the 1370 standard `.256` are width 640, height 480 and
+  256 frames; these are not field-width or loader-admission limits.
+  — SPR256-CORPUS-006
 
 <a id="frame-pixel-data--rle-spr256-rle-007-23-79123-791-frames"></a>
 
@@ -115,20 +118,31 @@ use a zero reserved byte. `cursors/attack.256` and `cursors/pickup.256` have
 anomalous leading regions and are not covered by the ordinary palette rule.
 — SPR256-PAL-011, SPR256-PAL-018
 
-- Index 0 is unused by installed literal runs (`SPR256-PAL-012`), but is
-  not a color key. The blitters write every literal value, including zero;
-  transparency comes from skip and blank-row opcodes. — SPR256-KEY-044
+- Index 0 is unused by the literal runs of the 1370 standard `.256`
+  (`SPR256-PAL-012`, its population amended from 1376), but is not a color
+  key; that claim's key clause is superseded. The blitters write
+  every literal value, including zero; transparency comes from skip and
+  blank-row opcodes. — SPR256-KEY-044
 
 The zero-low-palette cases are overlays and the two cursor exceptions below.
 — SPR256-PAL-013
 
-## Overlay layers — `spritesb.256` (`SPR256-OVL-014`)
+## Overlay layers — `spritesb.256` (`SPR256-OVL-014`, draw-path clauses amended)
 
 A `spritesb.256` overlay has one frame per base `sprites.256` frame and
-uses the base sibling's palette. Its own low palette entries are zero.
+uses the base sibling's palette: its literal indices are zero in its own
+palette and coloured in the base's, at 99 % or more of literals in 179 of 180
+pairs (median 100 %). A zeroed low palette is carried by 179 `…b.256` files;
+at least one of the 180 paired `…b.256` files lacks one, and which is Unknown
+(`SPR256-PAL-013`, its every-b-variant reading amended).
+`SPR256-OVL-014`'s no-path-read clause is superseded: the pair is loaded and
+drawn together. Its six-argument `vt+0x14` pairing is narrowed to the object
+and unit body passes; the structure draw and the backpack painter pair the
+overlay's `vt+0x34` with the five-argument `vt+0x18` (`SPR256-STR-040`,
+`SPR256-077`).
 The recovered plain half-colour painter computes
 `((destination16>>1)&mask)+((palette16[index]>>1)&mask)` for opaque boundary
-pixels; masks are0x7bef (RGB565) and0x3def (RGB555). The backpack painter
+pixels; masks are 0x7bef (RGB565) and 0x3def (RGB555). The backpack painter
 gates this overlay with Smoothing. Native full composition, mirrored paths
 and coverage of other drawable families remain Unknown. — SPR256-OVL-014,
 TOWN-SMOOTH-460
@@ -195,7 +209,9 @@ frame actually being drawn (`SPR256-FRAME-023`, `TERR-SPR-043`).
 
 A `structures.reg` class opens **two** sheets, `graphics\structures\<File>.256` and
 `<File>b.256` — the `spritesb` overlay class of `SPR256-OVL-014`, drawn with the same frame
-index through `vt+0x34` and gated on `[0x005eb520]`.
+index through `vt+0x34` and gated on `[0x005eb520]`. The base sheet is drawn by the
+five-argument own-table `vt+0x18`, not `vt+0x14`, so `SPR256-OVL-014`'s six-argument pairing is
+narrowed to the object and unit body passes (`SPR256-STR-040`, `SPR256-061`).
 
 Neither sheet is block-addressed like a unit's and neither is `Index`-addressed like an
 object's. It is a **row-major grid of tile-sized frames**, `TileWidth` columns wide and
@@ -263,7 +279,10 @@ addresses past populated frames is not resolved by any claim here.
 
 - The `spritesb` overlay uses the base palette; plain-loop half-colour arithmetic
   is measured, while native full composition and unmeasured paths remain Unknown.
-  — SPR256-OVL-014, TOWN-SMOOTH-460
+  `SPR256-OVL-014`'s clause that nothing loads the pair together is superseded;
+  whether the structure and backpack `vt+0x18` pairings shade the overlay through
+  the base's table row is Unknown. Which paired `…b.256` lacks a zeroed low
+  palette is Unknown (`SPR256-PAL-013`). — SPR256-OVL-014, TOWN-SMOOTH-460
 - The attack/pickup resources have a nonzero reserved byte in the nominal
   palette region. That region is not an ordinary palette; the cause and
   corresponding decoder behavior remain Unknown. — SPR256-OVL-015,

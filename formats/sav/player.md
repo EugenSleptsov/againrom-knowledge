@@ -43,7 +43,9 @@ After the prefix, emit **all three** suffix members in order:
 | 3 | Direct Diary body | Object pointed to by Player `+40`, `00511427` |
 
 The Diary is required even when its arrays are empty. Omitting it desynchronizes
-the next counted record. — SAV-MEMBER-036, SAV-PLDIARY-054, SAV-662, SAV-663
+the next counted record. — SAV-MEMBER-036 (its unread-classes Unknown
+superseded by SAV-EMBED-039, which reads the Diary's two members as a
+`CDWordArray` and a `CWordArray`), SAV-PLDIARY-054, SAV-662, SAV-663
 
 ## Identity and ownership
 

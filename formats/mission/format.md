@@ -4,12 +4,15 @@
 
 Mission setup binds campaign state to an ALM, Player/Group objects, class
 definitions and the authored script. Drop selection, placement, outcome and
-party retention are separate steps. — MISSION-DROP-002, PARTY-ORIGIN-010,
+party retention are separate steps. — MISSION-DROP-002 (map-object base name
+superseded; drop behaviour retained), PARTY-ORIGIN-010 (its only-reader clause
+for the flat index partially retracted; the two containers stand),
 PARTY-GATE-013
 
 `server` denotes the singleton whose map subobject is at `server+0x44`.
 `server+0x6c` is therefore `(server+0x44)+0x28`; those are not offsets from
-an independent map object. — MISSION-DROP-002
+an independent map object. — MISSION-DROP-002 (its former `mapObj` base
+name is superseded by `server`)
 
 The arithmetic behind the DataBinID 26 sentinel, the complete compiled-check
 population and full inter-mission state-machine arm remain Unknown.
@@ -24,7 +27,8 @@ those to the drop cell. What a map contributes is **one packed cell**, and the e
 is to take units that already exist on the player object and stand them on it. A consumer that
 looks for the player's units among the map's placements starts every mission with an empty army.
 
-**And "the player object" holds two containers, not one** (`PARTY-ORIGIN-010`):
+**And "the player object" holds two containers, not one** (`PARTY-ORIGIN-010`, its clause that
+only the placement walk reads `+0x20` partially retracted):
 
 ```
 Player +0x20  -> a flat index of every actor I own      <- the placement walk reads THIS
@@ -34,6 +38,9 @@ Player +0x20  -> a flat index of every actor I own      <- the placement walk re
 
 `+0x20` is derived: `Player::Serialize`'s load arm rebuilds it by walking `+0x24`. Every routine
 that gives the player a unit writes both, plus a fresh group, plus `actor+0x14` and `actor+0x70`.
+The walk is not the only reader of `+0x20`: the server's end-of-mission cull walks it, and the
+join removes an actor from the old owner's index (`PARTY-ENDCULL-026`, `PARTY-JOIN-025`). The
+complete reader set of `+0x20` is Unknown (`PARTY-ORIGIN-010`, as partially retracted).
 
 ## Starting
 
@@ -96,8 +103,9 @@ resolve `THEN` slots by node **id**, never by position.
 of them wrong.** An instant-5 node fires only when a trigger's action list reaches it. A
 check-18 node is armed by being **authored**: the builder gives every check node a slot and the
 evaluator runs every check once per full tick, so an unreferenced check-18 node still loses the
-mission when its unit dies (`MISSION-VIP-004`). The test for "can this map be lost by its
-script" is therefore *referenced* instant-5 nodes plus *authored* check-18 nodes.
+mission when its unit dies (`MISSION-VIP-004`; its corpus map count is partially retracted, the
+arming rule stands). The test for "can this map be lost by its script" is therefore
+*referenced* instant-5 nodes plus *authored* check-18 nodes.
 
 Eleven of the 28 campaign maps have neither, on both roots — `30`, `41`, `51`, `61`, `80`, `90`,
 `120`, `121`, `131`, `140`, `141` — so their scripts can only ever produce a win
@@ -205,11 +213,15 @@ Command `0x49` assigns the existing player as owner, inserts the actor into the 
 The new-campaign path constructs the session, resets the campaign record, and loads mission 10
 before the character-generation command creates the hero and before the first simulation tick.
 
-The human participant's `Player+0x38` purse is a 32-bit zero from `Player::Player`. Character
-generation, mission 10 entry, and the first tick do not change it on the measured path. Fighter or
-mage, sex, face, stats, entered or default name, and starting weapon do not affect the purse. A
-runtime observation remains required for the complete negative: any non-zero purse before a player
-action refutes it (`PARTY-MONEY-018`, retracted).
+The human participant's `Player+0x38` purse starts play at **100**. `Player::Player` stores a
+32-bit zero, and participant factory `FUN_004d35e6`, whose only direct caller is join, then
+replaces a zero purse with 100 before hero creation and preserves a nonzero one. Join applies a
+zero delta and sends opcode `0x67`. Chargen opcode `0x48` carries no purse and the factory reads no
+chargen field, so fighter or mage, sex, face, stats, entered or default name, and starting weapon
+do not affect the purse. Two original-runtime mission-10 saves, at sub-tick 1 and sub-tick 129,
+both decode 100. That the typed writer list is complete image-wide is Medium; the start chain does
+not depend on it (`PARTY-MONEY-024`). `PARTY-MONEY-018`'s conclusion that play starts with a zero
+purse is partially retracted; its constructor, field-width and chargen-packet observations stand.
 
 Mission 10 appends three text-document entries to the campaign record before hero creation:
 `(value=1,kind=1)`, `(2,1)`, and `(3,1)`. The collection is independent of the inventory item that

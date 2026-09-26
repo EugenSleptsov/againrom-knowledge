@@ -47,11 +47,17 @@ field the original validates. — `RES-HDR-002`, `RES-MAGIC-001`
 
 The header's first 16 bytes have the same logical shape as a node's first 16 bytes, so
 the header functions as the tree's virtual root node. — `RES-NODE-016`,
-`RES-HDR-017`, `RES-HDR-018`
+`RES-HDR-017`, `RES-HDR-018` (its `strncmp` label for the linear branch is superseded
+by the case-insensitive CRT `_strnicmp` of `RES-LOOKUP-023` and `RES-041`; the bit-4
+branch stands)
 
 `0x08` is the root's child count. `0x04` is a node-array index; it is
 not a count or checksum. `0x0c` carries the directory type and optional sorted
-flag. — RES-HDR-005, RES-HDR-012, RES-HDR-013
+flag. — RES-HDR-005, RES-HDR-012 (its pointer to a `rom.exe` writer routine is
+superseded: `rom.exe` holds no tail writer, and `0` versus the owned-node count
+is the external packer's roots-first or roots-last order, RES-HDR-017,
+RES-GEOM-028), RES-HDR-013 (its writer-generation reading of bit 4 is
+superseded by RES-HDR-018's children-sorted flag)
 
 Header bit 31 also controls original open: clear seeks to `regOffset`, set
 reads the table at the current stream position after six header dwords.
@@ -72,11 +78,14 @@ Each registry node is 32 bytes:
 
 Observed writers may leave non-semantic padding values after a short name. Readers
 should use the terminator/name bound rather than treating padding bytes as content. —
-`RES-NODE-007`, `RES-NODE-008`, `RES-NODE-019`
+`RES-NODE-007`, `RES-NODE-008`, `RES-NODE-019` (its clause that the four scanned functions
+are all that touch a node is partially retracted; their absence of `[node+0]` reads stands)
 
-`0x00` is reserved. It is zero on every node of every examined tail-registry archive and
-is never read by lookup, descent or sort, which refutes reading it as a per-node hash,
-id or checksum. — `RES-NODE-011`, `RES-NODE-014`
+`0x00` is reserved. It is zero on every node of every examined tail-registry archive,
+which refutes reading it as a per-node hash, id or checksum, and no instruction in the
+four scanned lookup, path-walk and finalize-sort functions reads it. Whether another
+node-touching function reads it is Unknown. — `RES-NODE-011` (its never-read clause
+narrowed to the scanned functions), `RES-NODE-014`
 
 <a id="minimal-read-algorithm"></a>
 
@@ -109,7 +118,8 @@ A directory's `0x10` flag selects sorted lookup; clear selects a linear scan.
 The sorted comparator compares unsigned bytes without case folding. The
 linear comparator folds ASCII under the named no-locale state.
 RES-LOOKUP-023's unresolved-comparator clause is partially retracted; its
-linear evidence stands. — RES-HDR-018, RES-LOOKUP-023, RES-041
+linear evidence stands. RES-HDR-018's `strncmp` label for the linear branch is
+superseded; its bit-4 branch stands. — RES-HDR-018, RES-LOOKUP-023, RES-041
 
 Path processing has several important compatibility properties:
 

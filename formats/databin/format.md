@@ -63,7 +63,8 @@ groups and fills the entry's extra strings instead. **An empty cell is stored as
 and the named parameter-streaming readers skip the store on −1**. In those
 readers, −1 preserves the constructor default; other consumers can use −1
 as a literal value, including the document-item price below.
-— DAT-SCHEMA-004, DAT-ACT-006
+— DAT-SCHEMA-004, DAT-ACT-006 (unconditional Humans typeID clause partially
+retracted; −1 law retained)
 
 ## The placement-facing tables
 
@@ -121,11 +122,13 @@ remain Unknown. Both have known wire extents and must be retained. The Buildings
 so they are not two missing numeric payload fields. Full server-to-client
 creation-message semantics are a separate session contract. Human type-ID
 streaming retains the conditional constructor overwrite described above
-(`DAT-ACT-006`, `DAT-HUMANS-008`, `PARTY-M20-030`, `PARTY-M20-031`).
+(`DAT-ACT-006` and `DAT-HUMANS-008`, each with its unconditional-overwrite
+clause partially retracted; `PARTY-M20-030`, `PARTY-M20-031`).
 
 EN and RU Data.bin payloads differ. Units entries match; Humans parameters
 can differ. Preserve the values of the selected definition source.
-— DAT-HUMANS-008
+— DAT-HUMANS-008 (unconditional slot-16 overwrite clause partially retracted;
+23-slot map retained)
 
 The Buildings presence mask is consumed as `(row*width+col)&31`, with byte width/height and a
 32-bit mask; it is not an arbitrary-size bitset. Registration visits only its set positions and

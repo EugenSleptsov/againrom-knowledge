@@ -32,7 +32,8 @@ dword 0 and word 1024. That capacity does not establish a single actor index
 domain: base Unit construction writes a Units ordinal into actor `+0c`,
 while Human construction writes a Humans ordinal. The mutation rejects an
 index above 63 only when actor virtual `+30` is nonzero: false for Unit,
-true for Humanoid/Human. — SAV-667, SAV-668, SAV-844
+true for Humanoid/Human. — SAV-667, SAV-668 (its unconditional index bound
+and per-unit-type reading are superseded by SAV-844), SAV-844
 
 The array accessors perform pointer arithmetic without a length check. No
 safe malformed count/index relationship follows from the field widths.

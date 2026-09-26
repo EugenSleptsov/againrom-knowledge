@@ -100,8 +100,8 @@ witnessed GUI or a successful load.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| MISSION-START-001 | `FUN_004d403c` puts the player's own unit list on the map and never reads the type-6 array; a campaign map usually places nobody for the player, but 5 of the 28 do. | High | ● active (amended) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
-| MISSION-DROP-002 | The map's whole contribution to the start is one packed cell, and the engine picks from the drop array at random rather than taking the first entry. | High | ● active (amended) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
+| MISSION-START-001 | `FUN_004d403c` puts the player's own unit list on the map and never reads the type-6 array; a campaign map usually places nobody for the player, but 5 of the 28 do. | High | ● active (amended, superseded) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
+| MISSION-DROP-002 | The map's whole contribution to the start is one packed cell, and the engine picks from the drop array at random rather than taking the first entry. | High | ● active (amended, superseded) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
 
 ### MISSION-START-001
 
@@ -116,10 +116,11 @@ witnessed GUI or a successful load.
   (`0x005c61b8`) when both attempts fail.
 - Its second half is the only place a map could contribute a starting unit, and
   it is dead on shipped data. It looks up a node named `"Humans"`
-  (`004d4506 PUSH 0x5c61f0`, `004d452e CALL 0x004e17d2` on `mapObj+0x44`) and
-  builds one unit per child from a `name#id` string. No shipped map has such a
-  node: a label sweep over all 1477 nodes of all 38 maps finds two containing
-  "human", both ordinary leaf nodes bound to triggers (`evidence/audit.txt` §1).
+  (`004d4506 PUSH 0x5c61f0`, `004d452e CALL 0x004e17d2` on `server+0x44`,
+  `MISSION-DROP-002`'s map sub-object) and builds one unit per child from a
+  `name#id` string. No shipped map has such a node: a label sweep over all 1477
+  nodes of all 38 maps finds two containing "human", both ordinary leaf nodes
+  bound to triggers (`evidence/audit.txt` §1).
   That entry point is the `World\Mission\<n>.ini` overlay's (`TRIG-INI-012`),
   which the install does not ship.
 - Over all 28 campaign maps of both roots, roster slot 1 owns 19 of 2333 type-6
@@ -143,7 +144,10 @@ map places nobody for the player, is retracted, and so is the discriminator
 built on it: "the alternative predicts a nonzero slot-1 count and is excluded
 outright" was an argument from a one-map sample, and the corpus has five nonzero
 maps. [`retracted.md`](retracted.md) records the clause as superseded by the
-slot-1 census above. The positive half is unamended.
+slot-1 census above. The `"Humans"` lookup's base read "on `mapObj+0x44`".
+`FUN_004d403c`'s `this` is the server singleton (EXP-0100, `MISSION-DROP-002`),
+so the lookup runs on `server+0x44`, the map sub-object; its instructions and
+behaviour are unchanged. The positive half is otherwise unamended.
 
 ### MISSION-DROP-002
 
@@ -190,8 +194,8 @@ was not. [`retracted.md`](retracted.md) records the old base name as superseded.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| MISSION-WIN-003 | Every campaign map is won by exactly one authored action, and none of the 10 loose maps outside the campaign can be won at all. | High | ● active | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
-| MISSION-VIP-004 | A trigger can exist only for the side effect of evaluating its conditions; that is how a protect-this-unit objective is authored, and authorship, not reference, arms it. | Medium | ● active (amended) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
+| MISSION-WIN-003 | Every campaign map is won by exactly one authored action, and none of the 10 loose maps outside the campaign can be won at all. | High | ● active (amended, superseded) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
+| MISSION-VIP-004 | A trigger can exist only for the side effect of evaluating its conditions; that is how a protect-this-unit objective is authored, and authorship, not reference, arms it. | Medium | ● active (amended, partially retracted) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
 
 ### MISSION-WIN-003
 
@@ -203,7 +207,9 @@ was not. [`retracted.md`](retracted.md) records the old base name as superseded.
 - The action is not unique to one trigger: on `81.alm` four distinct triggers
   reference the same win node and on `130.alm` two do. A consumer binds by node
   id and does not assume a one-to-one map.
-- Instant 5 (lose) appears on 14 of 28 and check 18 on 8 of 28.
+- Instant 5 (lose) is authored on 15 of 28 maps, identically on both roots
+  (`MISSION-TYP-028`). Check 18 is authored on 7 of 28 EN maps and 6 of 28 RU
+  maps (`MISSION-LOSE-025`).
 - This is the corpus half of `TRIG-END-009`'s "there is no evaluator for
   victory". A map with two win actions, or a campaign map with none, would have
   refuted the one-authored-action reading.
@@ -213,6 +219,13 @@ instrument named: a whole-payload type-7 walk that tiles every map exactly, so
 no node can be missed. The loose-map half is the discriminating case: it
 predicts that a skirmish map never ends in victory, which any instant 4 there
 would have refuted.
+
+**Amended.** The lose-arm figures read "Instant 5 (lose) appears on 14 of 28 and
+check 18 on 8 of 28". [EXP-0161](../experiments/EXP-0161-mission-30/) replaces
+them: `MISSION-TYP-028` counts 15 instant-5 maps and `MISSION-LOSE-025` counts 7
+EN and 6 RU check-18 maps, the difference being `100.alm`. The same two EXP-0096
+figures are already corrected in `MISSION-TYP-010` and `MISSION-VIP-004`
+([`retracted.md`](retracted.md)). The win-action census stands.
 
 ### MISSION-VIP-004
 
@@ -280,7 +293,7 @@ exceptions are still unexplained as authoring.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | MISSION-ARM-006 | A type-6 placement resolves down one of four arms; the class key, not a flag, is the outer discriminator, and the NPC arm is tested before the definition id. | High | ● active | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
-| MISSION-DEF-007 | The Humans definition lookup searches backwards, never tests index 0 and returns 0, a valid index, on a miss; `DataBinID == 26` is a sentinel, not an id. | High / Medium | ● active | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
+| MISSION-DEF-007 | The Humans definition lookup searches backwards, never tests index 0 and returns 0, a valid index, on a miss; `DataBinID == 26` is a sentinel, not an id. | High / Medium | ● active (amended) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
 
 ### MISSION-ARM-006
 
@@ -330,7 +343,14 @@ answers are generic.
 value: all four are named instructions in a routine read whole. Medium for the
 sentinel's meaning: the `== 0x1a` test, the four token literals and their tester
 are read, but the arithmetic that turns the tokens into an id is not, and the
-remaining six unresolved `DataBinID` values `42..46` are still unexplained.
+remaining six unresolved `DataBinID` entries, `npc25`…`npc30`, are still
+unexplained. They carry the five values `42..46`, with `46` twice.
+
+**Amended.** The Confidence paragraph read "the remaining six unresolved
+`DataBinID` values `42..46`", which is five integers. EXP-0043's
+`evidence/values-scenario_npc.csv` (the table behind `REG-NPC-058`) lists the
+six entries: `npc25` 42, `npc26` 43, `npc27` 44, `npc28` 45, `npc29` 46 and
+`npc30` 46. The count of six entries and the range `42..46` stand.
 
 ## Check slots and mission variables
 
@@ -373,7 +393,7 @@ established for `60.alm` on the compiled-order reading.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | MISSION-M10-009 | `10.alm`, the campaign's first mission, decodes end to end into 13 triggers, and its win is a two-step escort gated on a kill. | High | ● active | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
-| MISSION-TYP-010 | `10.alm` is structurally typical of the campaign and exceptional in one respect: its win depends on a variable set by walking a placed unit to a coordinate. | Medium | ● active (amended) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
+| MISSION-TYP-010 | `10.alm` is structurally typical of the campaign and exceptional in one respect: its win depends on a variable set by walking a placed unit to a coordinate. | Medium | ● active (amended, partially retracted) | [EXP-0096](../experiments/EXP-0096-campaign-mission/) |
 
 ### MISSION-M10-009
 
@@ -434,8 +454,8 @@ to 15. The 14 is in [`retracted.md`](retracted.md).
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| MISSION-DROP-011 | Exactly one instruction writes `player+0x60`, in session opcode `0x32`, and its value is the current cell of one of the player's own units. | High / Medium | ● active (amended) | [EXP-0100](../experiments/EXP-0100-party-origin/) |
-| MISSION-SEAT-012 | Seating a unit is a bounded random-then-raster search around the drop cell; it can fail per unit, leaving the surplus off the map, and the mission starts anyway. | High / Medium | ● active | [EXP-0100](../experiments/EXP-0100-party-origin/) |
+| MISSION-DROP-011 | Exactly one instruction writes `player+0x60`, in session opcode `0x32`, and its value is the current cell of one of the player's own units; the campaign path never reads it. | High / Medium | ● active (amended) | [EXP-0100](../experiments/EXP-0100-party-origin/) |
+| MISSION-SEAT-012 | Seating a unit is a bounded random-then-raster search around the drop cell; it can fail per unit, leaving the surplus off the map, and the mission starts anyway. | High / Medium | ● active (amended, superseded) | [EXP-0100](../experiments/EXP-0100-party-origin/) |
 
 ### MISSION-DROP-011
 
@@ -461,22 +481,32 @@ to 15. The 14 is in [`retracted.md`](retracted.md).
   two bytes (`FUN_00544a10`/`FUN_00544a20`). It packs them `x | (y << 8)`, the
   packing `FUN_004d403c` unpacks, and stores the word on `[actor+0x14]`, the
   actor's owning `Player` (`004d6e0d`…`004d6e1b`).
-- The override is "start the next map where this unit is standing now".
-  `SESS-CMD-016` graded `0x32` Medium for want of a name; this is the name.
+- The override is "start the next map where this unit is standing now" where it
+  is read at all. `FUN_004d403c` reads it only when `server+0x0c` is nonzero,
+  and the campaign start leaves that field 0, so on the campaign path the
+  override is never read (`MISSION-DROP-002`). `SESS-CMD-016` graded `0x32`
+  Medium for want of a name; this is the name.
 
 **Confidence.** High that the writer is unique: a whole-image displacement
 sweep, the width filter stated with both halves, its two orphan hits read and
 excluded by address, and the dword band checked inside the owning class's own
 ranges. High for what the arm computes: nine consecutive named instructions.
-Medium that the meaning is "enter the next mission here": the packing and the
-destination are read, the command's provenance is not, and `SESS-CMD-015`
-already says nothing shows what fills the command pool. This sweep's own blind
-spot: a `memcpy`/`REP MOVSD` over a `Player` carries no displacement at all.
+Medium that the meaning is "enter the next mission here" where `server+0x0c` is
+nonzero: the packing and the destination are read, the command's provenance is
+not, and `SESS-CMD-015` already says nothing shows what fills the command pool.
+This sweep's own blind spot: a `memcpy`/`REP MOVSD` over a `Player` carries no
+displacement at all.
 
 **Amended.** EXP-0155 (`TRIG-CAST-033`) identifies the object of the two byte
 stores in `FUN_004d2105` as the temporary casting actor for trigger instant 21,
 not a message record ([`retracted.md`](retracted.md)). The writer enumeration
-and the `Player+0x60` conclusion are untouched.
+and the `Player+0x60` conclusion are untouched. `MISSION-DROP-002` (EXP-0100)
+bounds the override's reach: `FUN_004d403c` reads `player+0x60` only when
+`server+0x0c` is nonzero (`004d4136`…`004d4147`), that field is `arg0 < 2` from
+the server's constructor, and the campaign start passes 2. The clause "start the
+next map where this unit is standing now" was stated without that gate; it holds
+only where `server+0x0c` is nonzero, and on the campaign path the drop comes from
+the array or the random fallback.
 
 ### MISSION-SEAT-012
 
@@ -493,10 +523,11 @@ and the `Player+0x60` conclusion are untouched.
   success `FUN_00544d00` commits the actor to the world (`004f47da`).
 - Order and radius come from the walk: the flat index in list order. The hero
   (`player+0x34`) is tried first at the exact cell with `r = 0`, where the box
-  is one cell and both attempts are that cell, since `FUN_00504003(0)` is 0.
-  Every member is then tried at `r = ftol(max(5.0, sqrt(n) + [0x0059bc50]))`
-  with `n` the flat index's own count (`004d4231`…`004d42be`,
-  `004d4353`…`004d4382`).
+  is one cell and both attempts are that cell, since `FUN_00504003(0)` is 0. A
+  hero seated there keeps that cell. A hero that fails there, and every other
+  member, is tried at `r = ftol(max(5.0, sqrt(n) + [0x0059bc50]))` with `n` the
+  flat index's own count (`004d4231`…`004d42be`, `004d4353`…`004d4382`;
+  `MISSION-SCATTER-053`).
 - The drop cell applies to all members, not one, and the box grows with the
   party. The seat is a search over a bounded box, so a party larger than the
   box's free cells leaves the surplus in the collections and off the map, with a
@@ -508,6 +539,14 @@ routines read at instruction level, each bound named by its own instruction.
 Medium that a failed seat has no further consequence: the walk's per-actor tail
 runs unconditionally afterwards and nothing there re-tests the return, but the
 actor's later behaviour off-map was not followed.
+
+**Amended.** The order clause read "Every member is then tried at
+`r = ftol(max(5.0, sqrt(n) + [0x0059bc50]))`". `MISSION-SCATTER-053` (EXP-0365,
+`evidence/instructions.tsv`) replaces it: a nonzero return from the hero's
+radius-0 call at `004d4365` skips the computed-radius call (`004d436d`,
+`004d4371 JNE 0x4d438a`). A seated hero keeps radius 0; only a failed hero and
+every nonhero enter the computed-radius call. Both phases, the radius expression
+and the failure return stand.
 
 ## Mission end: counters, latch, close and stepping
 
@@ -586,8 +625,10 @@ disassembled, so its reachability is open.
   Load opens save selection.
 - The separate `0x41d` phase-2 zero-win-flag branch still targets `0x41e`, but
   it is not the actual failure panel's upstream hop.
-- `MISSION-DEFEAT-046` is the corrected failure programme; `MISSION-VICTORY-034`
-  owns success Continue.
+- `MISSION-DEFEAT-046` is the corrected failure programme. Success Continue's
+  control and result `0x446` are `MISSION-VICTORY-029`, its handler
+  `MISSION-VICTORY-030`, its input programme `MISSION-VICTORY-031` and the
+  reachability it leaves `MISSION-VICTORY-033`.
 
 **Confidence.** High for the named instruction paths and the discriminating
 branch/vtable counterexamples. No original runtime timing or GUI observation is
@@ -597,7 +638,10 @@ claimed.
 `00446d35` posts `0x41d` ([`retracted.md`](retracted.md)). The failure
 constructor installs `00598b78`, whose message slot is `00447063`; the base
 close and the `+0x110` pointer arm choose `0x41e` or `0x418`; the borrowed
-`00446d35` is in the neighboring vtable `00598af0`.
+`00446d35` is in the neighboring vtable `00598af0`. The success cross-reference
+read "`MISSION-VICTORY-034` owns success Continue". `MISSION-VICTORY-034` is
+mission-completion restore and the latch reset; Continue's control, result and
+handler are EXP-0233's `MISSION-VICTORY-029`…`031` and `MISSION-VICTORY-033`.
 
 ### MISSION-STOP-016
 
@@ -629,7 +673,7 @@ without requiring a run-dword write.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| MISSION-ROOT-017 | `rom.exe` is identical in the two releases but the campaign script is not, so a mission-outcome measurement names its root or it is not made. | Medium | ● active (amended) | [EXP-0101](../experiments/EXP-0101-mission-end/) |
+| MISSION-ROOT-017 | `rom.exe` is identical in the two releases but the campaign script is not, so a mission-outcome measurement names its root or it is not made. | Medium | ● active (amended, partially retracted) | [EXP-0101](../experiments/EXP-0101-mission-end/) |
 | MISSION-VIP-018 | A protect-this-unit objective can announce its loss only because no shipped map names one unit in two VIP nodes, and that is a corpus fact, not a rule. | Medium | ● active | [EXP-0101](../experiments/EXP-0101-mission-end/) |
 
 ### MISSION-ROOT-017
@@ -1134,7 +1178,9 @@ permission.
   success action on all ten.
 - Success announcement/Continue need not clear the server run dword, but the
   shown campaign panel blocks idle stepping via bit 8 (`SESS-DEFEAT-065`).
-- Success Continue remains `MISSION-VICTORY-034`.
+- Success Continue remains `MISSION-VICTORY-029` (control and result `0x446`),
+  `MISSION-VICTORY-030` (handler), `MISSION-VICTORY-031` (input programme) and
+  `MISSION-VICTORY-033` (the reachability it leaves).
 
 **Confidence.** High for the named instruction paths and the discriminating
 branch/vtable counterexamples. No original runtime timing or GUI observation is
@@ -1145,7 +1191,11 @@ clauses ([`retracted.md`](retracted.md)): the former Restart label, the
 failure-handler `0x41d` hop, and unqualified continued stepping of the completed
 world. The first label is Exit to Main Menu in EN and RU, the actual handler is
 `00447063`, and campaign outcome panels pause idle stepping. The distinct
-success Continue and the prior loose-map census stand.
+success Continue and the prior loose-map census stand. The success
+cross-reference read "Success Continue remains `MISSION-VICTORY-034`".
+`MISSION-VICTORY-034` is mission-completion restore and the latch reset;
+Continue's control, result and handler are EXP-0233's
+`MISSION-VICTORY-029`…`031` and `MISSION-VICTORY-033`.
 
 ### MISSION-VICTORY-036
 

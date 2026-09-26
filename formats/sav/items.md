@@ -28,12 +28,17 @@ Item's `+20` list is typed as Effect and admits Effect_DirectDamage by
 derivation. Located Item producers are the `Effects=` grammar and the
 magic-shop merge-or-append generator; the latter uses Item `+1c` price as its
 budget. Actual production by other paths remains Unknown.
-— SAV-774, SAV-775, ITEM-EFFGRAM-070, SHOP-EFFALT-071, SHOP-MAGIC-007
+— SAV-774, SAV-775 (its clause placing the live damage-spell path outside
+both located writers' call graphs is partially retracted; the writers and the
+class bound stand), ITEM-EFFGRAM-070, SHOP-EFFALT-071, SHOP-MAGIC-007
 
-Effect's trailing `+0c` byte is zero from those two located Item producers.
-The live attached-spell identity stamp uses different call sites; neither
-Item generator reaches them. Do not infer attached-spell identity from an
-Item Effect merely sharing the class programme. — SAV-776,
+Those two located Item producers use the default constructor, and their own
+writer bodies store no nonzero value in Effect's trailing `+0c` byte. The live
+attached-spell identity stamp uses different call sites. Whether an Item
+producer reaches those sites through a callee is Unknown: SAV-776's former
+spell-builder caller chain is partially retracted, and SAV-910 supplies no
+whole-builder graph in its place. Do not infer attached-spell identity from an
+Item Effect merely sharing the class programme. — SAV-776, SAV-910,
 MAGIC-ATTACH-016, MAGIC-DMG-005
 
 ## Transfers and nested identity

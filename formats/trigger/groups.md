@@ -40,7 +40,8 @@ place(actor, x, y, r):                      // FUN_004f4604
     return 0
 ```
 
-`rand(n)` is `MISSION-DROP-002`'s inclusive `(rand() * (n+1)) / 32768`.
+`rand(n)` is `MISSION-DROP-002`'s inclusive `(rand() * (n+1)) / 32768` (that claim's
+`mapObj` base name is superseded; its RNG bound stands).
 
 ```
 instant 32:  for member in Target_Group: FUN_004f47e6(member)

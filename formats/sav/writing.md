@@ -88,7 +88,8 @@ own first test while the other runs inside the `1..12` loop. Every other indexed
 write stores zero. The slot is never filled, so skipping it drops nothing. The
 census finds only instructions whose encoded displacement is `0x198`; a write
 through a previously computed address would not appear in it.
-— SAV-1029, SAV-CARRY-050, ITEM-EQUIP-006
+— SAV-1029, SAV-CARRY-050 (death-container identity clause partially
+retracted; the twelve worn slots stand), ITEM-EQUIP-006
 
 The Spellbook's skipped index 0 is writable storage rather than unreachable
 storage, so whatever occupies it is dropped, and the difference from the

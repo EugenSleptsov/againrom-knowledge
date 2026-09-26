@@ -2080,7 +2080,7 @@ and runtime visible values also remain open.
 | SAV-ACTORBIND-544 | Loaded Unit, exact Humanoid and Human have different definition laws; every saved Human type word 33..65535 selects row 5. | High / Unknown | ✔ promoted | [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
 | SAV-ACTORDISPLAY-545 | The saved display backing dword `+148` and the effective byte `+14c` can diverge during load. | High / Unknown | ✔ promoted (amended) | [EXP-0287](../experiments/EXP-0287-actor-definition-binding/), [EXP-0318](../experiments/EXP-0318-human-unit-residuals/) |
 | SAV-ACTORCTOR-546 | Archive construction is not actor reconstruction from definitions after restore. | High / Unknown | ✔ promoted | [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
-| SAV-ACTORINPUT-547 | The selected load and hook slice retains saved mover and visual inputs, not a fresh definition projection. | High / Unknown | ✔ promoted (amended) | [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
+| SAV-ACTORINPUT-547 | The selected load and hook slice retains saved mover and visual inputs, not a fresh definition projection. | High / Unknown | ✔ promoted (amended, superseded) | [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
 | SAV-ACTORLIMIT-548 | A complete local binding law proves neither first-consumer safety nor exact-class acceptance. | High / Unknown | ✔ promoted | [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
 
 ### SAV-ACTORBIND-544
@@ -2780,7 +2780,7 @@ identity, first selected reads and writes, admission or authoring defaults.
 | SAV-HUMEQUIP-447 | Ranged to-hit authoring is history-sensitive, and its removal is not the inverse of equip. | High / Unknown | ✔ promoted | [EXP-0276](../experiments/EXP-0276-human-live-fields/), [EXP-0288](../experiments/EXP-0288-equipment-event-order/) |
 | SAV-HUMMUT-448 | Health and mana amounts, their regeneration modifiers and skill progress are not interchangeable saved state. | High / Unknown | ✔ promoted | [EXP-0276](../experiments/EXP-0276-human-live-fields/) |
 | SAV-HUMGAPS-449 | Known consumers do not close all live Human authoring inputs. | High / Medium | ✔ promoted | [EXP-0276](../experiments/EXP-0276-human-live-fields/) |
-| SAV-HUMRESUME-460 | Original resume and the expanded Human reference hook do not establish a universal derive-before-read boundary. | High / Unknown | ✔ promoted (amended) | [EXP-0277](../experiments/EXP-0277-human-postload/) |
+| SAV-HUMRESUME-460 | Original resume and the expanded Human reference hook do not establish a universal derive-before-read boundary. | High / Unknown | ✔ promoted (amended, superseded) | [EXP-0277](../experiments/EXP-0277-human-postload/) |
 | SAV-HUMPROJECT-461 | Actor-state projection computes from live Human damage bytes without a local derive. | High / Unknown | ✔ promoted | [EXP-0277](../experiments/EXP-0277-human-postload/) |
 | SAV-HUMTICK-462 | First gameplay reads are branch-dependent: regeneration and Effect dispatch consume Human modifier state, and not every Effect derives. | High / Unknown | ✔ promoted | [EXP-0277](../experiments/EXP-0277-human-postload/) |
 | SAV-HUMSTRIKE-463 | The admitted ordinary melee strike reads live selected Human fields without a derive in its dispatch prefix. | High / Unknown | ✔ promoted | [EXP-0277](../experiments/EXP-0277-human-postload/) |
@@ -3055,10 +3055,10 @@ and whole-object authoring.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| SAV-HDR-001 | A save opens with magic `41 73 67 26` (`Asg&`) and little-endian u32 fields; the 20-byte header and `0x14` body start are superseded by `SAV-FRAME-021`'s 16-byte header. | High / Medium | ● active (amended) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/) |
+| SAV-HDR-001 | A save opens with magic `41 73 67 26` (`Asg&`) and little-endian u32 fields; the 20-byte header and `0x14` body start are superseded by `SAV-FRAME-021`'s 16-byte header. | High / Medium | ● active (amended, superseded) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/) |
 | SAV-VER-002 | `u32@0x08 = 0x0BAD0002` in all 4 saves is a `rom.exe`-held constant paired with the magic at two sites; the reader compares it as a version (`SAV-FRAME-021`). | High / Medium | ● active (amended) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/) |
 | SAV-PTR-003 | `u32@0x04` is the coded body's end and `u32@0x0C = u32@0x04 − 16` (4/4); `SAV-FRAME-021` reverses which of the two has a consumer. | High / Medium | ● active (amended) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/) |
-| SAV-EMB-004 | Each save embeds one REG-style inline key-value `&YA1` store at `u32@0x04 + 0x100`, outside the coded body, holding 9 top-level state keys; no `M7R` snapshot. | Medium | ● active (amended) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/), [EXP-0150](../experiments/EXP-0150-save-fog-record/), [EXP-0223](../experiments/EXP-0223-sav-campaign-tail/) |
+| SAV-EMB-004 | Each save embeds one REG-style inline key-value `&YA1` store at `u32@0x04 + 0x100`, outside the coded body, holding 9 top-level state keys; no `M7R` snapshot. | Medium | ● active (amended, partially retracted) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/), [EXP-0150](../experiments/EXP-0150-save-fog-record/), [EXP-0223](../experiments/EXP-0223-sav-campaign-tail/) |
 | SAV-MAP-005 | The save references its map by a length-prefixed ASCII name at decoded body `+0x08` (`06` then `"10.alm"`, 4/4); the map is referenced, not embedded. | High / Medium | ● active (amended) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/) |
 | SAV-UNK-006 | `u32@0x10` exceeds the file size in every sample because it is the coded body's decompressed size in 16-bit words; it is the blob's first dword. | High | ● active (amended) | [EXP-0009](../experiments/EXP-0009-sav-container/), [EXP-0046](../experiments/EXP-0046-sav-body/) |
 | SAV-PACK-007 | The coded body is a run/literal code over 16-bit words: opcode `n < 0x80` precedes `n` literal words, and `n ≥ 0x80` repeats the next word `n & 0x7f` times. | High / Medium / Unknown | ● active (amended) | [EXP-0046](../experiments/EXP-0046-sav-body/), [EXP-0048](../experiments/EXP-0048-sav-stream/) |
@@ -3269,12 +3269,12 @@ the start moves, by the four bytes the codec reads as its own header
 | SAV-STREAM-010 | The decoded body opens with two counters where `+0x04 == (+0x00) >> 4` (4/4) and the map name at `+0x08`, and carries `CArchive` new-class records naming 11 classes. | High / Medium / Unknown | ● active (amended) | [EXP-0046](../experiments/EXP-0046-sav-body/), [EXP-0048](../experiments/EXP-0048-sav-stream/) |
 | SAV-BLOCK-011 | The decoded body carries `TERR-PASS-053`'s predicted block array: a `u16` count, then u32 records packing cell, dynamic and static bytes inside `FUN_00544a60`'s window. | High / Medium / Unknown | ● active | [EXP-0046](../experiments/EXP-0046-sav-body/) |
 | SAV-BLOCK-012 | The block array is a delta over the terrain ingest, not a plane: a cell whose only block bits are the map's own `0x01` or `0x05` is never written. | High / Medium / Low | ● active | [EXP-0046](../experiments/EXP-0046-sav-body/) |
-| SAV-STREAM-013 | The decoded stream is one object graph under one index counter shared by classes and objects, from 1 in stream order; the walk closes on 393/393 tags in four saves. | High / Medium | ● active (amended) | [EXP-0048](../experiments/EXP-0048-sav-stream/), [EXP-0251](../experiments/EXP-0251-sav-full-reader/) |
+| SAV-STREAM-013 | The decoded stream is one object graph under one index counter shared by classes and objects, from 1 in stream order; the walk closes on 393/393 tags in four saves. | High / Medium | ● active (amended, superseded) | [EXP-0048](../experiments/EXP-0048-sav-stream/), [EXP-0251](../experiments/EXP-0251-sav-full-reader/) |
 | SAV-OBJ-014 | The corpus's two equal cell words are one packed cell stored twice inside the raw position object (413/413 instances), under `SAV-TOKENPOS-074`'s layout. | High / Medium | ● active (amended) | [EXP-0048](../experiments/EXP-0048-sav-stream/), [EXP-0145](../experiments/EXP-0145-save-members/), [EXP-0224](../experiments/EXP-0224-sav-token-position/) |
 | SAV-ID-015 | The head's `+0x0c` id is a runtime id from the lowest free bit of bitmap `0x62c7e0`, not the map's id field; on these saves hero 1, buildings 2..19, units 20..54. | High / Medium | ● active (amended) | [EXP-0048](../experiments/EXP-0048-sav-stream/), [EXP-0055](../experiments/EXP-0055-tick-order/) |
 | SAV-OBJ-016 | The saved population is the map's, object for object: 5 Players for the 5 type-5 slots, one Human or Unit per type-6 record plus the hero, 18 Buildings, items and sacks. | High / Medium | ● active (amended) | [EXP-0048](../experiments/EXP-0048-sav-stream/), [EXP-0055](../experiments/EXP-0055-tick-order/) |
 | SAV-CELLREC-017 | The block array is followed by a counted table, `u16 count` + `count ×` (`u16 packedCell` + 52-byte payload), serialized by `FUN_0054ff70`. | High / Medium | ● active (amended) | [EXP-0048](../experiments/EXP-0048-sav-stream/), [EXP-0236](../experiments/EXP-0236-sav-cell-record-rebind/) |
-| SAV-TAIL-018 | A fixed-size region sits between the cell-record table and the Sack records in all four saves, and the stream ends in zeros; `SAV-SESS-031` names the region at 4374 bytes. | High / Unknown | ● active (amended) | [EXP-0048](../experiments/EXP-0048-sav-stream/) |
+| SAV-TAIL-018 | A fixed-size region sits between the cell-record table and the Sack records in all four saves, and the stream ends in zeros; `SAV-SESS-031` names the region at 4374 bytes. | High / Unknown | ● active (amended, superseded) | [EXP-0048](../experiments/EXP-0048-sav-stream/) |
 
 ### SAV-STREAM-010
 
@@ -3733,7 +3733,7 @@ bytes is a shape, not a meaning.
 | SAV-OBF-029 | Two `Player` fields, `+0x38` (money) and `+0x48`, are XOR-obfuscated on the way out, and two, `+0x54` and `+0x4c`, are silently narrowed to `u16`. | High / Medium | ● active | [EXP-0086](../experiments/EXP-0086-saves/) |
 | SAV-CITY-030 | The between-mission save `game0010.sav` witnesses `SAV-SHAPE-023`'s byte-0 arm: 3 544 bytes, no world-half structure, and the whole campaign-half roster. | High / Medium / Unknown | ● active | [EXP-0086](../experiments/EXP-0086-saves/) |
 | SAV-SESS-031 | `SAV-TAIL-018`'s fixed region is the session `Serialize` `FUN_00539310`: 4374 bytes in the world half, located at the same byte two ways in 11/11 saves. | High / Unknown | ● active | [EXP-0086](../experiments/EXP-0086-saves/) |
-| SAV-CELLREC-032 | Four bytes follow the 54-byte cell-record table, before the session block, in 11/11 saves; `SAV-TERRKEY-056` identifies them. | Medium / Unknown | ● active (amended) | [EXP-0086](../experiments/EXP-0086-saves/) |
+| SAV-CELLREC-032 | Four bytes follow the 54-byte cell-record table, before the session block, in 11/11 saves; `SAV-TERRKEY-056` identifies them. | Medium / Unknown | ● active (amended, superseded) | [EXP-0086](../experiments/EXP-0086-saves/) |
 
 ### SAV-FLAG-027
 
@@ -3994,7 +3994,7 @@ The field-specific rule above replaces them.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| SAV-MEMBER-036 | The eleven `Serialize` bodies are read field by field, and a record's length is not a constant: counted lists, a string and presence flags vary it. | High / Unknown | ● active (amended) | [EXP-0145](../experiments/EXP-0145-save-members/) |
+| SAV-MEMBER-036 | The eleven `Serialize` bodies are read field by field, and a record's length is not a constant: counted lists, a string and presence flags vary it. | High / Unknown | ● active (amended, superseded) | [EXP-0145](../experiments/EXP-0145-save-members/), [EXP-0146](../experiments/EXP-0146-embedded-members/) |
 | SAV-BLDG-037 | A `Building` record is exactly 77 bytes, `Token`'s 37 plus 40 of its own, and chaining consecutive instances confirms the length. | High | ● active | [EXP-0145](../experiments/EXP-0145-save-members/) |
 | SAV-OBFCEN-038 | Within the disassembled `Serialize` call set, the XOR obfuscation and the `0x7fff` clamp occur only in `Player::Serialize` `FUN_00511089`. | Medium | ● active | [EXP-0145](../experiments/EXP-0145-save-members/) |
 | SAV-EMBED-039 | The eight embedded-object sites a `.sav` record serializes hold four classes: an unnamed `u16` list at five sites, a `Spellbook`, a `CDWordArray` and a `CWordArray`. | High / Unknown | ● active | [EXP-0146](../experiments/EXP-0146-embedded-members/) |
@@ -4004,7 +4004,7 @@ The field-specific rule above replaces them.
 | SAV-HUMAN-043 | A `Human` record is a `Unit` plus 24 raw bytes and thirteen object references, the references `SAV-MEMBER-036` omits. | High / Medium | ● active | [EXP-0146](../experiments/EXP-0146-embedded-members/) |
 | SAV-SPELL-044 | A `Spell` record is nine bytes, and its load binds an identity key in the `Token` identity map although `Spell` is not a `Token`. | High / Unknown | ● active | [EXP-0146](../experiments/EXP-0146-embedded-members/) |
 | SAV-UNITLEN-045 | A `Unit` record has no fixed length; its floor is `609 + L` bytes, where `L` is the name's length. | High / Medium | ● active | [EXP-0146](../experiments/EXP-0146-embedded-members/) |
-| SAV-EFFCHAIN-046 | `Effect` is 44 bytes; chaining cannot reach a second instance because each `Effect` is an element of its owner's `+0x20` list, not written consecutively. | High | ● active (amended) | [EXP-0146](../experiments/EXP-0146-embedded-members/), [EXP-0245](../experiments/EXP-0245-sav-unit-subtree-reconciliation/) |
+| SAV-EFFCHAIN-046 | `Effect` is 44 bytes; chaining cannot reach a second instance because each `Effect` is an element of its owner's `+0x20` list, not written consecutively. | High | ● active (amended, partially retracted) | [EXP-0146](../experiments/EXP-0146-embedded-members/), [EXP-0245](../experiments/EXP-0245-sav-unit-subtree-reconciliation/) |
 | SAV-SERPOP-047 | The image carries 35 serializable class descriptors, not 28: seven more at schema 0, of which `CDWordArray` and `CWordArray` are `Diary`'s two members. | High / Medium / Unknown | ● active (amended) | [EXP-0146](../experiments/EXP-0146-embedded-members/), [EXP-0247](../experiments/EXP-0247-sav-nontoken-serializers/) |
 
 ### SAV-MEMBER-036
@@ -4032,10 +4032,9 @@ full, and the tool-reduced sequence was then checked against the raw listing for
 all eleven; that check caught `Weapon`'s object reference, `Unit`'s two embedded
 sub-objects and `Shield`'s empty arm.
 
-**Unknown.** What any field named only by offset means. No total length is
-claimed for `Unit`, `Human`, `Diary` or a group record, because the classes of
-the objects embedded at `Unit+0x15c`, `Unit+0x178`, `Diary+0x04`, `Diary+0x18`,
-`Group+0x4c`, `*(Unit+0x140)` and `*(*(Unit+0x158)+0x90)` were not read here.
+**Unknown.** What any field named only by offset means, and what the unnamed
+`u16` lists hold (`SAV-EMBED-039`). No total length is claimed here for `Unit`,
+`Human`, `Diary` or a group record.
 
 **Amended.** Two clauses are narrowed ([`retracted.md`](retracted.md),
 EXP-0146). The `Human` clause said `Humanoid::Serialize` appends only the 24 raw
@@ -4043,7 +4042,13 @@ bytes; it also writes thirteen `ar << CObject*` (`SAV-HUMAN-043`). The Unknown
 clause listed seven embedded sites; the count is eight, with `Group+0x20`
 dispatched first in `FUN_00511938` (`SAV-EMBED-039`). The ten other field
 programmes, the presence flags, the counted lists and `Shield`'s empty arm are
-untouched.
+untouched. `SAV-EMBED-039` also supersedes the Unknown clause that the classes
+of the objects embedded at `Unit+0x15c`, `Unit+0x178`, `Diary+0x04`,
+`Diary+0x18`, `Group+0x4c`, `*(Unit+0x140)` and `*(*(Unit+0x158)+0x90)` were
+not read: it reads an unnamed `u16` list at `Unit+0x15c`, `Unit+0x178`,
+`*(*(Unit+0x158)+0x90)`, `Group+0x4c` and `Group+0x20`, a `Spellbook` at
+`*(Unit+0x140)`, a `CDWordArray` at `Diary+0x04` and a `CWordArray` at
+`Diary+0x18`.
 
 ### SAV-BLDG-037
 
@@ -4313,11 +4318,11 @@ the direct `Diary` members stand.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | SAV-OWNER-048 | The human participant's own objects are the subtree of the stream's first top-level record, and two further mechanisms agree, over 23 files (18 distinct). | High / Medium / Unknown | ● active | [EXP-0147](../experiments/EXP-0147-save-object-walk/) |
-| SAV-UNITFLD-049 | The fourteen stat words of a `Unit` record are named, with their alignment fixed by two constructor immediates, and a monster's carry capacity is a fossil of the default body. | High / Unknown | ● active (amended) | [EXP-0147](../experiments/EXP-0147-save-object-walk/) |
-| SAV-CARRY-050 | What a unit carries and knows is four separate mechanisms: the `+0x7c` inventory, twelve worn armour references, the `Spellbook` and a thirteenth reference. | High / Medium | ● active (amended) | [EXP-0147](../experiments/EXP-0147-save-object-walk/), [EXP-0285](../experiments/EXP-0285-whole-item-transfer/) |
-| SAV-DEATH-051 | Something no longer in play is removed from the owner graph and kept in the exact top-level dead list; stage and runtime id, not one health constant, identify the terminal state. | High / Medium | ● active (amended) | [EXP-0147](../experiments/EXP-0147-save-object-walk/), [EXP-0237](../experiments/EXP-0237-sav-dead-actor-projection/) |
-| SAV-TOPLVL-052 | The EXP-0145 tag scan's 61 `Player` hits include 2 zero-run artefacts that `SAV-OBJ-016`'s doubled slot id rejects. | High / Unknown | ● active (amended) | [EXP-0147](../experiments/EXP-0147-save-object-walk/) |
-| SAV-DOC-053 | The top-level document `Serialize` `FUN_004d0cb7` enumerates everything a save contains, in order, each width taken from the primitive it calls. | High / Unknown | ● active (amended) | [EXP-0148](../experiments/EXP-0148-save-seen-record/), [EXP-0055](../experiments/EXP-0055-tick-order/), [EXP-0222](../experiments/EXP-0222-sav-residual-census/), [EXP-0245](../experiments/EXP-0245-sav-unit-subtree-reconciliation/), [EXP-0246](../experiments/EXP-0246-sav-token-class-serializers/) |
+| SAV-UNITFLD-049 | The fourteen stat words of a `Unit` record are named, with their alignment fixed by two constructor immediates, and a monster's carry capacity is a fossil of the default body. | High / Unknown | ● active (amended) | [EXP-0147](../experiments/EXP-0147-save-object-walk/), [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
+| SAV-CARRY-050 | What a unit carries and knows is four separate mechanisms: the `+0x7c` inventory, twelve worn armour references, the `Spellbook` and a thirteenth reference. | High / Medium | ● active (amended, partially retracted) | [EXP-0147](../experiments/EXP-0147-save-object-walk/), [EXP-0285](../experiments/EXP-0285-whole-item-transfer/) |
+| SAV-DEATH-051 | Something no longer in play is removed from the owner graph and kept in the exact top-level dead list; stage and runtime id, not one health constant, identify the terminal state. | High / Medium | ● active (amended, partially retracted) | [EXP-0147](../experiments/EXP-0147-save-object-walk/), [EXP-0237](../experiments/EXP-0237-sav-dead-actor-projection/) |
+| SAV-TOPLVL-052 | The EXP-0145 tag scan's 61 `Player` hits include 2 zero-run artefacts that `SAV-OBJ-016`'s doubled slot id rejects. | High / Unknown | ● active (amended, partially retracted) | [EXP-0147](../experiments/EXP-0147-save-object-walk/) |
+| SAV-DOC-053 | The top-level document `Serialize` `FUN_004d0cb7` enumerates everything a save contains, in order, each width taken from the primitive it calls. | High / Unknown | ● active (amended, partially retracted) | [EXP-0148](../experiments/EXP-0148-save-seen-record/), [EXP-0055](../experiments/EXP-0055-tick-order/), [EXP-0222](../experiments/EXP-0222-sav-residual-census/), [EXP-0245](../experiments/EXP-0245-sav-unit-subtree-reconciliation/), [EXP-0246](../experiments/EXP-0246-sav-token-class-serializers/) |
 | SAV-PLDIARY-054 | `Player::Serialize` has a third tail call, a `Diary` at `Player+0x40`, and with it the object graph is walkable end to end. | High | ● active | [EXP-0148](../experiments/EXP-0148-save-seen-record/) |
 
 ### SAV-OWNER-048
@@ -4400,15 +4405,19 @@ different arithmetic on a different pair, so one shift cannot preserve them all.
 The six raw blocks are untouched: what lives inside them is `UNIT-COMBAT-006`'s
 at its own confidence, not this claim's.
 
-**Unknown.** `+0x8e`, `+0x90`, `+0xa2`, `+0xa4` and `+0x18`; `+0x6c` on a live
-actor; the `+1` in the human capacity relation, which no published claim
-attributes.
+**Unknown.** `+0x18` (`SAV-636`); `+0x6c` on a live actor; the `+1` in the
+human capacity relation, which no published claim attributes.
 
 **Amended.** EXP-0321 narrows the two sight enumerations, which were stated as
 closed sets: `1024 x {1, 1.25, 1.5, 2}` on `Unit` and 1382..1658 on `Human` hold
 over this claim's 176 and 100 records, not over the preserved corpus (`SAV-795`,
 [`retracted.md`](retracted.md)). `SAV-796` confirms the zero's absence over the
 larger population. The rest of this claim's population arithmetic is unaffected.
+`SAV-635` (EXP-0311) names four fields this card listed as Unknown: `+0x8e` is
+the carried weight and `+0x90` the derived load (`ITEM-LOAD-005`,
+`HERO-SIGHT-007`), `+0xa2` the health-regeneration remainder byte
+(`HERO-REGEN-021`, `SAV-REGENSTORE-529`), and `+0xa4` the `u16` sight radius in
+1/256-cell units (`AI-SIGHT-092`, `HERO-SIGHT-007`).
 
 ### SAV-CARRY-050
 
@@ -5096,7 +5105,7 @@ lifecycle to the Building/Sack remainder graded Medium above.
 | SAV-CAMPAIGN-083 | The persisted mercenary state is four different things: pool counts, per-type hire flags, the mission's shelf and permanent unlocks. | High / Medium | ● active | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
 | SAV-CAMPAIGN-084 | `AddHero[]` is a consumed campaign grant, but it is not Brian's grant: Brian enters through a mission-40 map instant. | High | ● active | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
 | SAV-CAMPAIGN-085 | Campaign documents are an append-only, pair-deduplicated collection, not mission completion state. | High / Medium | ● active | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
-| SAV-CAMPAIGN-086 | The marker list is selected-mission presentation state, not progress or availability. | High / Medium | ● active | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
+| SAV-CAMPAIGN-086 | The marker list is selected-mission presentation state, not progress or availability. | High / Medium | ● active (amended, superseded) | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
 | SAV-CAMPAIGN-087 | The fixed `we have brian !!` save is not a mission-30 or mission-40 state: main 50, selected 41, no record or building array holding 30 or 40. | High / Medium | ● active | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
 | SAV-CAMPAIGN-088 | Brian's mission-40 handover has no identity-dedup guard; ordinary progress prevents the duplicate upstream. | High / Medium | ● active | [EXP-0232](../experiments/EXP-0232-sav-campaign-state/) |
 
@@ -5241,8 +5250,10 @@ observing each grant.
 
 - Selecting a mission memoizes one marker only when its MapObject has a
   non-`"nothing"` picture.
-- World-map paint and the picture-bearing rectangle gate read it, save/load
-  persist it, and load rehydrates its picture pointer.
+- World-map paint and the picture-bearing rectangle gate read it, and save/load
+  persist it. Its picture pointer is rehydrated by world-map entry
+  `FUN_00464140`, the one caller of `FUN_0048a660`, not by either SAV load
+  routine or the campaign loader (`SAV-609`, `SAV-CAMPMARK-073`).
 - No mission loader, completion arm, building offer consumer, announce
   enumerator or companion path reads the marker list.
 
@@ -5250,6 +5261,15 @@ observing each grant.
 complete, while the rival progress consumers are bounded and read other fields.
 Medium for the corpus scope: all 55 decoded paths have zero markers, but some
 are duplicate byte streams.
+
+**Amended.** `SAV-609` supersedes the clause "load rehydrates its picture
+pointer" ([`retracted.md`](retracted.md)). Its image-wide caller census finds
+the rehydration routine `FUN_0048a660` called only from world-map entry
+`FUN_00464140`, which is reached through virtual dispatch and not from either
+SAV load routine or the campaign loader. The persisted marker bytes still
+round-trip through LOAD. Whether ordinary play reaches world-map entry after
+every LOAD is `SAV-609`'s Unknown. The presentation-state classification, the
+readers, the serializer and the corpus scope are unchanged.
 
 ### SAV-CAMPAIGN-087
 
@@ -6129,7 +6149,7 @@ implemented SAV reach.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | SAV-POSTLOAD-220 | World resume and city-to-mission reach different pre-entry routes, and serialized `Player+0x3d` is the retained-actor placement latch. | High / Medium / Unknown | ✔ promoted (partially retracted, amended) | [EXP-0249](../experiments/EXP-0249-sav-postload-lifecycle/), [EXP-0254](../experiments/EXP-0254-sav-reconstruction-sufficiency/) |
-| SAV-POSTLOAD-221 | The mandatory session-entry Position consumer is class-specific: Sack emits full X/Y, while Building emits cell X/Y and discards the sub-cell bytes. | High / Medium / Unknown | ✔ promoted (superseded) | [EXP-0249](../experiments/EXP-0249-sav-postload-lifecycle/), [EXP-0254](../experiments/EXP-0254-sav-reconstruction-sufficiency/) |
+| SAV-POSTLOAD-221 | The mandatory session-entry Position consumer is class-specific: Sack emits full X/Y, while Building emits cell X/Y and discards the sub-cell bytes. | High / Medium / Unknown | ✔ promoted (partially retracted, superseded) | [EXP-0249](../experiments/EXP-0249-sav-postload-lifecycle/), [EXP-0254](../experiments/EXP-0254-sav-reconstruction-sufficiency/) |
 | SAV-POSTLOAD-222 | Session entry consumes actor Item references only after actor, recipient, type and ownership gates; nested Effect reach has two further Item gates. | High / Medium / Unknown | ✔ promoted | [EXP-0249](../experiments/EXP-0249-sav-postload-lifecycle/) |
 | SAV-POSTLOAD-223 | Automatic Sack entry omits `Sack+0x40`; pickup moves quantity-one Items into the existing actor container and deletes the source container inside the move helper. | High / Medium / Unknown | ✔ promoted | [EXP-0249](../experiments/EXP-0249-sav-postload-lifecycle/) |
 
@@ -6581,7 +6601,7 @@ execution of the 16 unwitnessed bodies.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| SAV-RECON-268 | The located resumable-world programme is a field-specific hybrid, not a SAV-only restore or an external-only reinitialization. | High / Medium / Unknown | ● active (amended) | [EXP-0252](../experiments/EXP-0252-sav-world-reconstruction/), [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
+| SAV-RECON-268 | The located resumable-world programme is a field-specific hybrid, not a SAV-only restore or an external-only reinitialization. | High / Medium / Unknown | ● active (amended, partially retracted) | [EXP-0252](../experiments/EXP-0252-sav-world-reconstruction/), [EXP-0287](../experiments/EXP-0287-actor-definition-binding/) |
 
 ### SAV-RECON-268
 
@@ -7410,7 +7430,7 @@ states the open gap rather than closing it.
 |---|---|---|---|---|
 | SAV-606 | Over 55 files, `Mercenaries[]` equals the registry's `[Mission<n>] Mercenaries` value for the record's current main mission, with zero exceptions; it is not a cumulative union of missions played. | High | ✔ promoted | [EXP-0308](../experiments/EXP-0308-town-sav-homes/) |
 | SAV-607 | The campaign record's fifteen-element hire-flag array (`+0x88`) is all-zero in every one of 55 accessible files (31 distinct SHA-256 byte streams), zero exceptions. | Medium | ✔ promoted | [EXP-0308](../experiments/EXP-0308-town-sav-homes/) |
-| SAV-608 | No accessible save's Player-owned actor graph contains an individually addressable hired mercenary; every actor is drawn from one of nine fixed identities, none resembling the tavern's 1–15 type space. | High | ✔ promoted | [EXP-0308](../experiments/EXP-0308-town-sav-homes/) |
+| SAV-608 | No accessible save's Player-owned actor graph contains an individually addressable hired mercenary; every actor is drawn from one of nine fixed identities, none resembling the tavern's 1–15 type space. | High | ✔ promoted (partially retracted) | [EXP-0308](../experiments/EXP-0308-town-sav-homes/) |
 | SAV-609 | Marker-picture rehydration is not LOAD-synchronous: `FUN_0048a660`'s one caller is the world-map-enter routine, reached only through virtual dispatch, not either SAV Load routine or the campaign loader. | High / Unknown | ✔ promoted | [EXP-0308](../experiments/EXP-0308-town-sav-homes/) |
 
 ### SAV-606
@@ -7940,12 +7960,12 @@ list, the class mechanics and the stat-block cross-references established.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | SAV-630 | The u16 elements of Unit's two embedded route lists (`+0x15c` static, `+0x178` dynamic) are `MOVE-ROUTE-004`'s node `+0x8` packed cell on both the save and load arm; most corpus lists are empty. | High / Medium | ✔ promoted | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
-| SAV-631 | Outside `Unit::Serialize`, six functions in the `0x4f0000`-`0x550000` AI/movement module touch the two route lists: two extraction routines, three runtime drivers and one search function. | High / Medium | ✔ promoted | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
+| SAV-631 | Outside `Unit::Serialize`, six functions in the `0x4f0000`-`0x550000` AI/movement module touch the two route lists: two extraction routines, three runtime drivers and one search function. | High / Medium | ✔ promoted (amended) | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
 | SAV-632 | The `u16list` append, used identically by all three sites and not only in `Serialize`, grows the pool by 10 nodes only on an empty free list; teardown frees chain and pool and zeroes all five fields. | High | ✔ promoted | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
 | SAV-633 | The third embedded list, `*(*(Unit+0x158)+0x90)`, holds exactly 0 or 2 elements in the corpus, in one of two value pairs, consistent with `SAV-GRPPATROL-570`'s patrol-ring copy, not shown to be the only writer. | High / Medium / Unknown | ✔ promoted | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
 | SAV-634 | On load, all three list surfaces are rebuilt as ordinary runtime state through the class's append path; the `SAV-631` census finds no further post-load consumer of the two Unit-embedded lists. | Medium | ✔ promoted | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
-| SAV-635 | Four of `SAV-UNITFLD-049`'s five listed Unknowns, Unit `+0x8e`, `+0x90`, `+0xa2` and `+0xa4`, are already named at High confidence by other ledgers that do not cite it. | High | ✔ promoted | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
-| SAV-636 | `SAV-UNITFLD-049`'s fifth listed Unknown, Unit `+0x18`, is `Token+0x18`: `Token` is `Unit::Serialize`'s unadjusted first component, byte-mapped at High confidence by `SAV-TOKEN-034`. | High / Unknown | ✔ promoted (amended) | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
+| SAV-635 | Four of `SAV-UNITFLD-049`'s five listed Unknowns, Unit `+0x8e`, `+0x90`, `+0xa2` and `+0xa4`, are already named at High confidence by other ledgers that do not cite it. | High | ✔ promoted (amended) | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
+| SAV-636 | `SAV-UNITFLD-049`'s fifth listed Unknown, Unit `+0x18`, is `Token+0x18`: `Token` is `Unit::Serialize`'s unadjusted first component, byte-mapped at High confidence by `SAV-TOKEN-034`. | High / Unknown | ✔ promoted (amended, partially retracted) | [EXP-0311](../experiments/EXP-0311-unit-mover-route/) |
 
 ### SAV-630
 
@@ -8037,10 +8057,23 @@ not a controlled trace of a route in progress.
 `evidence/raw-listings.txt`, from the two whole-image sweeps in
 `evidence/disp-sweeps.txt`) and for the six-function count being exhaustive over
 the `0x4f0000`-`0x550000` module: every owning function the sweep returned there
-was read. Medium, scope-limited, for completeness beyond that module and beyond
-`FUN_00541e80`'s body. An address computed in two steps, carried in a field, or
-reached only from inside that function's ~4KB body is invisible to this
-instrument, the blind spot `MOVE-PLANE-005` recorded for its writer enumeration.
+is identified, and five of the six were read; of `FUN_00541e80` only the
+instruction at `00542fc6` was read. Medium, scope-limited, for completeness
+beyond that module and beyond `FUN_00541e80`'s body. An address computed in two
+steps, carried in a field, or reached only from inside that function's ~4KB body
+is invisible to this instrument, the blind spot `MOVE-PLANE-005` recorded for
+its writer enumeration.
+
+**Amended.** The count of owning functions is corrected
+([`retracted.md`](retracted.md)). The former text said "Exactly six owning
+functions", listed five, and then called `FUN_00541e80` "a seventh site".
+`evidence/disp-sweeps.txt` returns six owning functions for the two
+displacements in the module outside `Unit::Serialize` (`00510518`): `00541e80`,
+`005433a0`, `00543e60` (the listing that holds `FUN_00544080`), `005436b0`,
+`005492a0` and `00545990`. `FUN_00541e80` is the sixth, the search function the
+headline counts, not a seventh. The Confidence paragraph also said every owning
+function the sweep returned was read; `FUN_00541e80` was read only at
+`00542fc6`. The six-function headline and the grades are unchanged.
 
 ### SAV-632
 
@@ -8146,7 +8179,8 @@ no dynamic instrumentation of the load path was run.
   already closed `+0xa2/+0xa3` as the separately persisted regeneration
   remainder bytes (`SAV-REGENSTORE-529`, `SAV-REGENWIRE-532`), independently of
   both `HERO-REGEN-021` and `SAV-UNITFLD-049`.
-- None of the three rows cited above cites `SAV-UNITFLD-049` back.
+- None of the four claims `ITEM-LOAD-005`, `HERO-SIGHT-007`, `AI-SIGHT-092` and
+  `HERO-REGEN-021` cites `SAV-UNITFLD-049` back.
 - For `+0x8e`, `+0x90` and `+0xa2`, `SAV-UNITFLD-049`'s dense enumeration names
   only the offset and grades each Unknown with no description. For `+0xa4` it
   quotes the field's value distribution via `UNIT-CTOR-004` ("sight `+0xa4 = 0`
@@ -8161,6 +8195,13 @@ no dynamic instrumentation of the load path was run.
 **Confidence.** High. Each cited field was independently disassembled to its
 byte and graded High by its own experiment. This claim only cross-references,
 and the four resolutions depend neither on each other nor on any new reading.
+
+**Amended.** The count of non-citing claims is corrected
+([`retracted.md`](retracted.md)). The card said "None of the three rows cited
+above cites `SAV-UNITFLD-049` back" after naming four claims. The experiment
+record names the same four, `ITEM-LOAD-005`, `HERO-SIGHT-007`, `AI-SIGHT-092`
+and `HERO-REGEN-021`, as claims that do not cite it back. The four field
+resolutions and the High grade are unchanged.
 
 ### SAV-636
 
@@ -8210,7 +8251,7 @@ session registers and `Token+0x18`/`+0x1c` established.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | SAV-646 | `world+0x118` is a heap-allocated, exclusively owned 400-byte raw block with its own construction, use and teardown: not an embedded array, not shared, and not the session object. | High / Medium | ✔ promoted | [EXP-0312](../experiments/EXP-0312-tail-and-registers/) |
-| SAV-647 | Two of the 400-byte block's 100 dwords are debug-trace verbosity toggles: `+0x0` gates turn tracing and `+0x4` gates script tracing. | High | ✔ promoted (amended) | [EXP-0312](../experiments/EXP-0312-tail-and-registers/) |
+| SAV-647 | Two of the 400-byte block's 100 dwords are debug-trace verbosity toggles: `+0x0` gates turn tracing and `+0x4` gates script tracing. | High | ✔ promoted (amended, partially retracted) | [EXP-0312](../experiments/EXP-0312-tail-and-registers/) |
 | SAV-648 | `[0x00609b0c]` is a plain global int with exactly three whole-image touch points: a zero-initializer, a save-arm write after the `0xbadface1` marker, and a marker-gated load-arm read. | High | ✔ promoted | [EXP-0312](../experiments/EXP-0312-tail-and-registers/) |
 | SAV-649 | Over the 45 parsed of the corpus's 46 distinct save streams, the 400-byte tail is zero in every save, but the stored `[0x00609b0c]` is non-zero in one, refuting always-zero and monotonic-counter readings. | Medium | ✔ promoted | [EXP-0312](../experiments/EXP-0312-tail-and-registers/) |
 | SAV-650 | Session register slot 93 (`session+0xbea8`) has three literal-displacement write sites, and slots 90, 91 and 92 are the only other slots of the 100 written by literal displacement (`SAV-658`). | High / Medium / Unknown | ✔ promoted | [EXP-0312](../experiments/EXP-0312-tail-and-registers/) |
@@ -8866,7 +8907,7 @@ correlation folded into `SAV-664`.
 |---|---|---|---|---|
 | SAV-666 | `Player+0x58` defaults to 95 and is overwritten to 0 or 50 on exactly the protagonist population with nonzero `Player+0x2c`, plus two zero-colour records; SAV-726 names a command writer. | Medium | ✔ promoted (amended) | [EXP-0313](../experiments/EXP-0313-player-diary-container/) |
 | SAV-667 | A new `Diary` sizes both arrays once from `data.bin`'s Units table through `FUN_004f8b05`; every load resizes them from the stream's own count, and the two counts are equal across the corpus. | High | ✔ promoted (amended) | [EXP-0313](../experiments/EXP-0313-player-diary-container/), [EXP-0320](../experiments/EXP-0320-item-effect-classes/), [EXP-0327](../experiments/EXP-0327-diary-consumers/) |
-| SAV-668 | Every Diary element pair in the corpus satisfies `word[i] = 1024 - dword[i]`; the traced mutator touches only the word array, SAV-842 locates the dword writer, and the relation is a finite corpus fact. | High / Medium / Unknown | ✔ promoted (amended) | [EXP-0313](../experiments/EXP-0313-player-diary-container/), [EXP-0327](../experiments/EXP-0327-diary-consumers/) |
+| SAV-668 | Every Diary element pair in the corpus satisfies `word[i] = 1024 - dword[i]`; the traced mutator touches only the word array, SAV-842 locates the dword writer, and the relation is a finite corpus fact. | High / Medium / Unknown | ✔ promoted (amended, superseded) | [EXP-0313](../experiments/EXP-0313-player-diary-container/), [EXP-0327](../experiments/EXP-0327-diary-consumers/) |
 | SAV-669 | `Diary+0x2c` resolves through the `SAV-PTRMAP-035` identity map, and every resolved reference in the corpus names the Diary's own enclosing Player record, never another object. | High | ✔ promoted (amended, partially retracted) | [EXP-0313](../experiments/EXP-0313-player-diary-container/), [EXP-0327](../experiments/EXP-0327-diary-consumers/) |
 
 ### SAV-666
@@ -9457,8 +9498,8 @@ cause of every corpus exception.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | SAV-774 | `CArchive::ReadObject` (`0057d47c`) class-checks every typed reference, first occurrence or repeat, and admits any class derived from the requested one; for an item's Effects list that is `{Effect, Effect_DirectDamage}`. | High | ● active | [EXP-0320](../experiments/EXP-0320-item-effect-classes/) |
-| SAV-775 | No located writer, and no member in a 98-file/5,134-item/234-member corpus census, puts a class other than `Effect` in an item's Effects list; `SAV-774` leaves `Effect_DirectDamage` as the only other class. | Medium | ● active | [EXP-0320](../experiments/EXP-0320-item-effect-classes/) |
-| SAV-776 | Both located item-Effect creation paths use the default constructor, and their own writer bodies contain no nonzero Token+0c stamp. | High / Medium / Unknown | ● active (amended) | [EXP-0320](../experiments/EXP-0320-item-effect-classes/), [EXP-0336](../experiments/EXP-0336-effect-attribution/) |
+| SAV-775 | No located writer, and no member in a 98-file/5,134-item/234-member corpus census, puts a class other than `Effect` in an item's Effects list; `SAV-774` leaves `Effect_DirectDamage` as the only other class. | Medium | ● active (partially retracted) | [EXP-0320](../experiments/EXP-0320-item-effect-classes/) |
+| SAV-776 | Both located item-Effect creation paths use the default constructor, and their own writer bodies contain no nonzero Token+0c stamp. | High / Medium / Unknown | ● active (amended, partially retracted) | [EXP-0320](../experiments/EXP-0320-item-effect-classes/), [EXP-0336](../experiments/EXP-0336-effect-attribution/) |
 
 ### SAV-774
 
@@ -9601,8 +9642,8 @@ graph witnesses polymorphism through a checked subclass, not an unchecked
 substitution. Any unlocated writer into an item's list is bound by the same
 check, so the widest class set it could produce is
 `{Effect, Effect_DirectDamage}`. `Effect_DirectDamage` is the class
-`MAGIC-DMG-005`'s live damage-spell path constructs, which `SAV-776` places
-outside both located item-list writers' call graphs.
+`MAGIC-DMG-005`'s live damage-spell path constructs. Whether that path reaches
+either located item-list writer is not established (`SAV-910`).
 
 **Confidence.** Medium. The population is exact and the two located writers'
 construction sites are read end to end. The negative, that no writer anywhere in
@@ -9612,6 +9653,16 @@ chain through `FUN_004f36f7`), and corpus agreement over 234 members does not by
 itself exclude an unobserved writer. `SAV-774`'s reader-side check narrows such
 a writer's output to one alternative class, `Effect_DirectDamage`; it does not
 exclude a writer producing that one, so Medium and not High.
+
+**Amended.** The clause that `SAV-776` places the live damage-spell path
+"outside both located item-list writers' call graphs" is withdrawn
+([`retracted.md`](retracted.md)). `SAV-910` withdraws the function identity at
+`004ff57d` and the `004fcd16`→`004fd09c`→`004ff57d` caller chain that carried
+that separation in `SAV-776`: `004ff57d` lies inside the six-byte instruction at
+`004ff579`, and no corrected whole-builder graph replaces the chain. The two
+located writers, the 234-member corpus census, the `{Effect,
+Effect_DirectDamage}` bound and the Medium grade do not rest on the withdrawn
+clause and stand.
 
 ### SAV-776
 
@@ -9644,7 +9695,7 @@ own-store observations stand.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | SAV-790 | The 400-byte trailer block moves through one non-virtual call site for both directions; `0057b908` reads and `0057ba16` writes. | High | ✔ promoted | [EXP-0321](../experiments/EXP-0321-sav-trailer-unit-fields/) |
-| SAV-791 | Only trailer dwords 0 and 1 have a located consumer; dwords 2 through 99 have none within a complete search of the `[base+0x118]` displacement form. | Medium | ✔ promoted | [EXP-0321](../experiments/EXP-0321-sav-trailer-unit-fields/) |
+| SAV-791 | Only trailer dwords 0 and 1 have a located consumer; dwords 2 through 99 have none within a complete search of the `[base+0x118]` displacement form. | Medium | ✔ promoted (amended) | [EXP-0321](../experiments/EXP-0321-sav-trailer-unit-fields/) |
 | SAV-792 | `Unit+0x8e` is an incrementally maintained accumulator with a second writer, `FUN_004f36f7`, far better connected than the published derive, and `+0x90` is recomputed at each increment. | High | ✔ promoted | [EXP-0321](../experiments/EXP-0321-sav-trailer-unit-fields/) |
 | SAV-793 | The carried-load arithmetic is 16-bit and its 64 000 threshold compare is signed; the consumer's encodings imply that a load large enough to wrap reads negative and cancels the speed penalty. | High / Medium | ✔ promoted | [EXP-0321](../experiments/EXP-0321-sav-trailer-unit-fields/) |
 | SAV-794 | The original's load path reads `Unit+0x90` back and keeps it instead of recomputing it from the record's container, even when no recompute could have produced it. | High / Medium | ✔ promoted | [EXP-0321](../experiments/EXP-0321-sav-trailer-unit-fields/) |
@@ -9707,9 +9758,10 @@ marker-less stream.
 - `SAV-647` names `0053cf70` as the `+0x0` toggle's read. The instruction
   before it, `0053cf6a MOV EDX,[0x5cd758]`, is the singleton load and carries no
   `+0x118` displacement, so it is not in this census.
-- The four further sites naming this block are lifecycle, not consumption:
-  `004ced6c` stores the pointer, `004d0b79`/`004d0b85`/`004d0bb3` free and null
-  it, and `004d15e7` loads it for `SAV-790`'s transfer.
+- The five further sites naming this block, in three functions, are lifecycle,
+  not consumption: `004ced6c` (in `004cec1d`) stores the pointer,
+  `004d0b79`/`004d0b85`/`004d0bb3` (in `004d099a`) free and null it, and
+  `004d15e7` (in `004d11d0`) loads it for `SAV-790`'s transfer.
 - This answers `SAV-TRAIL-026`'s "400 zero bytes is a shape, not a meaning" and
   `SAV-647`'s "the other 98 dwords are not characterized by this claim" as far
   as a static sweep reaches.
@@ -9725,6 +9777,14 @@ crossing criterion is also blind to a function that obtains the world as
 reach it; those three are named from `SAV-646`'s reading, not found by the
 crossing. No claim is made that the image contains no consumer, only that this
 search found none.
+
+**Amended.** The lifecycle-site count is corrected
+([`retracted.md`](retracted.md)). The card said "The four further sites naming
+this block are lifecycle" and listed five addresses. `evidence/q1-block-sites.txt`
+and `evidence/q1-blockuse-summary.tsv` carry five `+0x118` sites in three
+functions: the store in `004cec1d`, the test, load and null store in `004d099a`,
+and the transfer load in `004d11d0`. The six consumer sites, the dword 0/1
+result and the Medium grade are unchanged.
 
 ### SAV-792
 
@@ -11235,9 +11295,9 @@ traced and is not claimed to be unrelated.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| SAV-1037 | Over 129 save paths / 76 SHA-distinct, more than double `SAV-CLASSSER-177`'s corpus, `SpellTransport`, `PointEffect` and `Effect_DirectDamage` keep one witness digest each; `AreaEffect` gains one. | Medium | ● active | [EXP-0378](../experiments/EXP-0378-transport-scheduling/) |
+| SAV-1037 | Over 129 save paths / 76 SHA-distinct, more than double `SAV-CLASSSER-177`'s corpus, `SpellTransport`, `PointEffect` and `Effect_DirectDamage` keep one witness digest each; `AreaEffect` gains one. | Medium | ● active (amended) | [EXP-0378](../experiments/EXP-0378-transport-scheduling/) |
 | SAV-1042 | At LOAD, `SpellTransport`'s `+0x44`/`+0x48` are bound to fresh `CArchive::ReadObject` references; its post-load hook rebinds Position and dispatches each child's hook, writing neither field. | High / Unknown | ● active | [EXP-0380](../experiments/EXP-0380-transport-rebind/) |
-| SAV-1043 | Alternative 4, that no writer path emits a `SpellTransport` record, fails for the searched population: re-running `SAV-1037`'s census over its 129 paths / 76 digests reproduces its witness count. | High / Medium / Unknown | ● active | [EXP-0380](../experiments/EXP-0380-transport-rebind/) |
+| SAV-1043 | Alternative 4, that no writer path emits a `SpellTransport` record, fails for the searched population: re-running `SAV-1037`'s census over its 129 paths / 76 digests reproduces its witness count. | High / Medium / Unknown | ● active (amended) | [EXP-0380](../experiments/EXP-0380-transport-rebind/) |
 | SAV-1047 | `CArchive::WriteObject` writes `u16 0` for null, a compact back-reference for a known pointer, and on first occurrence the class then the object's vtable `+0x8`; objects and classes share one index space. | High / Unknown | ● active | [EXP-0381](../experiments/EXP-0381-transport-store/) |
 | SAV-1048 | `SpellTransport::Serialize`'s STORE arm calls `CArchive::WriteObject` on `+0x44` and `+0x48` with no null guard; the base `Serialize` call runs once before the branch, and the class chain passes the container check. | High / Unknown | ● active | [EXP-0381](../experiments/EXP-0381-transport-store/) |
 | SAV-1050 | Neither `PointEffect`'s nor `AreaEffect`'s post-load hook calls the shared-container registrar or append primitive; like `SpellTransport`'s (`SAV-1042`), each only forwards to its child's repair. | High | ● active | [EXP-0382](../experiments/EXP-0382-shared-effect-owner/) |
@@ -11258,7 +11318,7 @@ traced and is not claimed to be unrelated.
   - `gameversions/saves/2026-08-27/EXP-0261-owner-runs/MANIFEST.md` labels
     `game9001.sav`/`game9002.sav`/`game9003.sav`/`game9004.sav`/`game9006.sav`
     "generated candidate";
-  - two further directories under that same date and one under `2026-08-30`
+  - one further directory under that same date and two under `2026-08-30`
     hold paths literally named `generated`, `generated-repeat`, `en-generated`
     or `ru-generated`, undocumented by any `MANIFEST.md` but self-identified by
     path: `2026-08-27/story-1073-owner-witness/{generated,generated-repeat}/game0000.sav`,
@@ -11314,6 +11374,14 @@ reference reachable through `SpellTransport+0x48`, which `formats/sav/objects.md
 documents as an `AreaEffect` reference. Whether that file's provenance is
 admissible as corpus evidence on the same footing as an untouched owner save is
 not resolved.
+
+**Amended.** The fixture-directory count is corrected
+([`retracted.md`](retracted.md)). The card said "two further directories under
+that same date and one under `2026-08-30`". The paths it lists, and the census
+rows in `evidence/class-record-census.tsv`, are one directory under
+`2026-08-27` (`story-1073-owner-witness`) and two under `2026-08-30`
+(`SAV-work-3173785a`, `SAV-work-d7606aa1`). The 12-fixture total, the 129/76
+figures and the witness counts are unchanged.
 
 ### SAV-1042
 
@@ -13483,10 +13551,15 @@ any later derive trigger is also open.
 - The members inside the 4374-byte session region past `SAV-SESS-031`.
 - The contents of `Group+0x4c`'s and `Group+0x20`'s two `u16` lists, unopened
   by this repository (`Group+0x20`: see `SAV-1107`).
-- What writes the `Diary` dword array's nonzero values, and what the six
-  per-unit-type counters those values populate count (`SAV-668`). The arrays'
-  sizing, the `word[i] = 1024 - dword[i]` relation and `Diary+0x2c` are closed
-  by `SAV-667`–`SAV-669`.
+- Which live events reach the `Diary` dword writer. `SAV-842` locates it,
+  `004f8c22`, and `SAV-843` places its one located call in attributed actor
+  teardown; whether every kill reaches that path, whether its source is always
+  the lethal one, and which event runs first after LOAD are open. `SAV-668`'s
+  per-unit-type reading is withdrawn: the index follows the actor's
+  class-dependent Units or Humans ordinal (`SAV-844`), and the meaning of each
+  unobserved lower index is Unknown. The arrays' sizing, the corpus
+  `word[i] = 1024 - dword[i]` relation (a finite corpus fact, `SAV-842`) and
+  `Diary+0x2c` are closed by `SAV-667`–`SAV-669`.
 - The 10 of 12 unidentified `+0x90` owning functions of `SAV-633`. The three
   Unit/order-relative `u16` lists' element identity, corpus shape and bounded
   runtime-accessor census are closed by `SAV-630`–`SAV-634`.

@@ -177,8 +177,10 @@ outside `[1, Palette]` on a class that owns palettes.
 - **Tier 1 is not a recolour.** `palette.pal` is byte-identical to the sheet's own embedded
   palette on all 256 entries of each installed class.
 - **Never touch palette entry 0.** It is identical across every installed tier of every class and
-  no sprite ever emits it (`SPR256-PAL-012`). It is *reserved*, not a key: no blitter tests it
-  (`SPR256-KEY-044`), so a decoder must not treat it as transparent.
+  no standard `.256` emits it: 0 of 9 541 025 literal pixels over the 1370 standard sprites
+  (`SPR256-PAL-012`, its transparent-key clause superseded and its population amended from 1376
+  to 1370). It is *reserved*, not a key: no blitter tests it (`SPR256-KEY-044`), so a decoder
+  must not treat it as transparent.
 - **The owner band is separate and narrow.** The 16 sub-palettes of `human.pal` differ from
   sub-palette 0 on exactly the same 55 indices for all fifteen k: `4, 10, 13, 15-17, 21, 23-24,
   28, 36, 41-42, 44-45, 55, 81, 89, 104, 106, 109, 114, 116, 118-120, 123-125, 127, 141, 144-147,

@@ -45,7 +45,8 @@ ShopMission on the wire despite its higher memory address. With every count
 zero, the complete record is 104 bytes. — SAV-CAMPPROG-071,
 SAV-CAMPAIGN-076, SAV-CAMPAIGN-077, SAV-CAMPAIGN-078, SAV-CAMPAIGN-079,
 SAV-CAMPAIGN-080, SAV-CAMPAIGN-081, SAV-CAMPAIGN-082, SAV-CAMPAIGN-083,
-SAV-CAMPAIGN-084, SAV-CAMPAIGN-085, SAV-CAMPAIGN-086
+SAV-CAMPAIGN-084, SAV-CAMPAIGN-085, SAV-CAMPAIGN-086 (its clause that load
+rehydrates the picture pointer is superseded by SAV-609: world-map entry does)
 
 ## Scalar suffix
 
@@ -137,7 +138,8 @@ world-map presentation state; surviving heroes are objects in the Player
 roster, not campaign records. — SAV-CAMPAIGN-076, SAV-CAMPAIGN-077,
 SAV-CAMPAIGN-078, SAV-CAMPAIGN-079, SAV-CAMPAIGN-080, SAV-CAMPAIGN-081,
 SAV-CAMPAIGN-082, SAV-CAMPAIGN-083, SAV-CAMPAIGN-084, SAV-CAMPAIGN-085,
-SAV-CAMPAIGN-086
+SAV-CAMPAIGN-086 (load-rehydration clause superseded by SAV-609; the
+presentation-state classification stands)
 
 The base record's `+0x04` mission scalar is not written through the archive's
 insertion operator. `FUN_00486e80` loads the archive vtable's `+0x40` slot and

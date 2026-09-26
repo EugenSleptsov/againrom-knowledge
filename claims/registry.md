@@ -112,7 +112,11 @@ claim, in the same order.
   | `branch candidate` | published from a bounded branch candidate whose confidence review had not passed |
 
   `amended`, `partially retracted`, `superseded` and `contested` require an
-  **Amended.** paragraph in the card.
+  **Amended.** paragraph in the card, and an **Amended.** paragraph requires one
+  of them unless the claim is `✖ retracted`. A claim with an entry in
+  [`retracted.md`](retracted.md) carries a qualifier; a `SUPERSEDED` entry
+  requires `superseded`, and a `REFUTED` or `RETRACTED` entry requires
+  `partially retracted` unless the whole claim is `✖ retracted`.
 - **Evidence** links the experiments whose evidence earned the claim.
 - A card stays under 8 KB; `tools/claim -check` refuses a longer one.
 - The card holds facts, not their history. Git and the experiment record carry

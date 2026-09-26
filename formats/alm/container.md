@@ -234,7 +234,8 @@ UNIT-PLACESKILL-086, ALM-TRIG-047 (amended: opaque-region gloss withdrawn), ALM-
 
 The placeable-definition source is [Data.bin](../databin/format.md), including
 footprints and actor fields. The earlier unknown source-file clause is
-resolved by DAT-LOC-001 and DAT-ACT-006.
+resolved by DAT-LOC-001 and DAT-ACT-006 (unconditional Humans typeID clause
+partially retracted; database lookup retained).
 
 The first three rows of campaign maps 131 and 150 contain type 3 residue,
 including 64 codes whose `c-1` exceeds the 82-entry object array. Bounds-check

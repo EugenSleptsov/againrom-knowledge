@@ -42,7 +42,8 @@ original runtime object, **not file offsets**. A variable-size field moves all
 following wire offsets. Runtime member offsets are hexadecimal, including
 abbreviated `+38`; wire-offset and byte-count columns are decimal unless
 prefixed with `0x`. `Count`, `CString`, `objref` and `list32` are defined
-in [Encoding](encoding.md). — SAV-PLAYER-028, SAV-MEMBER-036, SAV-UNITPROG-156,
+in [Encoding](encoding.md). — SAV-PLAYER-028, SAV-MEMBER-036 (its
+unread-classes Unknown superseded by SAV-EMBED-039), SAV-UNITPROG-156,
 SAV-FULLREAD-252, SAV-758
 
 ## File envelope
@@ -68,7 +69,9 @@ The blob begins with its own `u32 outWords`, followed by the
 [word codec](encoding.md#word-codec). That dword belongs to the blob; the
 container header is exactly 16 bytes. A consistent written envelope has
 `blobEnd = 16 + blobBytes`, with at least four blob bytes for `outWords`.
-— SAV-HDR-001, SAV-VER-002, SAV-FRAME-021, SAV-CODEC-022, SAV-EXT-009
+— SAV-HDR-001 (its 20-byte header and `0x14` body start superseded by
+SAV-FRAME-021's 16-byte header), SAV-VER-002, SAV-FRAME-021, SAV-CODEC-022,
+SAV-EXT-009
 
 ## Decoded document
 
@@ -93,8 +96,9 @@ word alignment               one byte only if the logical endpoint is odd
 Player-list metadata precedes its count. See the complete
 [head and ordered grammar](document.md). There are no separators between
 counted records. Object programmes determine their endpoints; scanning for
-class names or `0xBADFACE1` does not. — SAV-DOC-053, SAV-PLDIARY-054,
-SAV-TAGSCAN-158, SAV-FULLREAD-252
+class names or `0xBADFACE1` does not. — SAV-DOC-053 (partially retracted for
+its 7-of-18, Unit-failure and terminal-padding clauses; the top-level order
+stands), SAV-PLDIARY-054, SAV-TAGSCAN-158, SAV-FULLREAD-252
 
 A no-world document retains the roster and trailer and omits the world half.
 Its map name can still name the previous mission while its mission number is

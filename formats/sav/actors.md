@@ -56,7 +56,8 @@ Humanoid appends raw XP24 at `+1cc`, twelve equipment `objref`s at
 `+198+4*i` for `i=1..12`, then a Diary `objref` at `+1e4`. Human inherits
 that whole programme and adds no bytes in its own store arm. Inventory,
 equipment, Spellbook and Diary are separate constructs.
-— SAV-HUMAN-043, SAV-CARRY-050
+— SAV-HUMAN-043, SAV-CARRY-050 (death-container identity clause partially
+retracted; the four mechanisms stand)
 
 The array those twelve references come from is thirteen dwords wide, not
 twelve. The Humanoid constructor zero-fills `+198+4*i` for `i=0..12`, then six
@@ -68,7 +69,8 @@ writes, the store arm never emits and the destructor never frees. It is never
 filled either, because the only routine that can place a non-null item there
 refuses a slot number of 0 outright. What array indices 1 and 2 hold remains
 Unknown.
-— SAV-1028, SAV-HUMAN-043, SAV-CARRY-050, ITEM-EQUIP-006
+— SAV-1028, SAV-HUMAN-043, SAV-CARRY-050 (death-container identity clause
+partially retracted; worn-slot measurements stand), ITEM-EQUIP-006
 
 A roster record carries one 24-byte stat layout twice, the 22-byte layout once
 and the whole 64-byte modifier block, and one routine per layout is both its
@@ -112,7 +114,8 @@ records at `248..3029` and `3131..4930`, the Player's own raw 32 at
 Human there is a Player record and a group record and no count of characters:
 membership is the nesting, not a roster object. Each Human's variable-length
 parts tile the record with no residue under the programme above.
-— SAV-1028, PARTY-ROSTER-002, SAV-UNITPROG-156
+— SAV-1028, PARTY-ROSTER-002 (its `+0x1c` group-id clause is superseded by
+SAV-GRPFLD-060; the three-level roster stands), SAV-UNITPROG-156
 
 The actor Diary reference may resolve to an existing archive object. The
 typed LOAD does not establish exclusive ownership; a new object is registered
@@ -216,7 +219,8 @@ The selected post-read hooks do not normalize their consistency.
 Stage zero admits key repair in the fresh order object for
 `+0c,+10,+18,+20,+28,+30,+68`; hits replace, misses retain raw words, without
 class/lifetime checks. Other stages skip that repair. — SAV-ACTORINPUT-547,
-SAV-HUMRESUME-460
+SAV-HUMRESUME-460 (reference-repair shorthand superseded by this field-specific
+rule)
 
 The repaired list excludes both the pending-order byte `ord+0x08` and the order-progress byte
 `ord+0x09`; neither is touched by stage zero's own repair or by any other located LOAD-side
@@ -310,7 +314,8 @@ LOAD creates/resolves them through CArchive, then the later manager callback
 runs `actor->vt+24`, repairing Position and `+5c,+64,+44,+68,+40` references.
 It does not join an authored ALM record or derive actor state. Timer `+6c`,
 signed health `+94` and stage `+13c` remain separately restored fields.
-— SAV-DEATH-051, SAV-DEADLOAD-124, SAV-DEADLOAD-125, SAV-DEADLOAD-126
+— SAV-DEATH-051 (tag-scan counts superseded by SAV-DEADLOAD-124; removal from
+the owner graph stands), SAV-DEADLOAD-124, SAV-DEADLOAD-125, SAV-DEADLOAD-126
 
 Stage-5 health is not restricted to -10001: the decay consumer retains every
 signed value below -10000. Producers of the other observed residues remain

@@ -5,7 +5,8 @@
 Each row is an ordered body programme after its archive tag. `Base` means a
 direct call to that base serializer; it adds no tag. Widths exclude the tag
 and any newly introduced class descriptor. Offsets name the runtime source.
-— SAV-MEMBER-036, SAV-CLASSSER-172, SAV-CONTSER-188
+— SAV-MEMBER-036 (its unread-classes Unknown superseded by SAV-EMBED-039),
+SAV-CLASSSER-172, SAV-CONTSER-188
 
 ## Token-derived bodies
 
@@ -78,9 +79,9 @@ named above. One
 corpus-witnessed record (n=1 of 31 SHA-distinct preserved saves) agrees:
 `+00`/`+0e..+12` are `0x00`, `+13/+14/+15` are `0x04/0x04/0x01`, and
 `+16/+17` hold nonzero save-time heap residue, `0xc6/0x02`.
-— SAV-MEMBER-036, SAV-HUMAN-043, SAV-CLASSSER-172, SAV-CLASSSER-173,
-SAV-CLASSSER-174, SAV-CLASSSER-175, SAV-CLASSSER-176, SHOP-SAVE-015,
-SAV-1032, SAV-1033, SAV-1034
+— SAV-MEMBER-036 (its unread-classes Unknown superseded by SAV-EMBED-039),
+SAV-HUMAN-043, SAV-CLASSSER-172, SAV-CLASSSER-173, SAV-CLASSSER-174,
+SAV-CLASSSER-175, SAV-CLASSSER-176, SHOP-SAVE-015, SAV-1032, SAV-1033, SAV-1034
 
 ## Fixed extents and variable extents
 
@@ -105,7 +106,9 @@ u32 Effect-list count, plus the encoded Effect reference entries:
 at least `609+L` with its name of length `L` and three null references;
 Human adds at least 24+26 bytes.
 Counts, strings, presence flags and nested references move the endpoint.
-— SAV-MEMBER-036, SAV-UNITLEN-045, SAV-CLASSSER-173, SAV-CLASSSER-176
+— SAV-MEMBER-036 (its `Human` clause amended by SAV-HUMAN-043's thirteen
+references; its unread-classes Unknown superseded by SAV-EMBED-039),
+SAV-HUMAN-043, SAV-UNITLEN-045, SAV-CLASSSER-173, SAV-CLASSSER-176
 
 Building's Token map-unit ID joins the authored type-4 record. Its 77-byte body
 is fixed. — SAV-BLDG-037
