@@ -94,10 +94,15 @@ slot 15  "sutableFor"  a TWO-BIT MASK over consumer classes: bit 0 = fighter, bi
                        its bit 1 and bit 1 into its bit 2; the death gate tests the whole
                        value against 0. Shipped: Weapons 0 on three monster attacks (Boulder
                        Thrower, Flame Thrower, Sonic Beam), 1 on nineteen martial weapons,
-                       2 on the two staves, 3 on BareHands and Plasma Sword, and one row
-                       (rem) with no parameter array; Shields all 1; Armors 1 on nineteen
-                       metal rows, 2 on nine cloth rows, 3 on Amulet and Ring.
+                       2 on the two staves, 3 on BareHands and Plasma Sword, and -1 on rem,
+                       whose 17 parameter cells are all -1, so both bits are set; Shields
+                       all 1; Armors 1 on nineteen metal rows, 2 on nine cloth rows, 3 on
+                       Amulet and Ring.
 ```
+
+The `rem` row carries a parameter array. The descriptor arms `AND` a stored `-1` with 1 and 2
+without a sign test, and its all-zero material mask builds no item from it (`ITEM-WEAR-056`,
+whose former no-parameter-array `rem` clause is retracted; `ITEM-PICT-050`).
 
 ### Equipment transfer boundary
 
@@ -116,7 +121,7 @@ Unequip deletes a nonnull owned Spell and clears Weapon `+0x80`, while leaving
 the source Effect in place. No Item split is needed for this nested identity
 change. An allocator may reuse the old numerical address. — ITEM-SPELLMOVE-132
 
-### Weapon-borne spell state (`ITEM-CASTSTATE-056`)
+### Weapon-borne spell state (`ITEM-CASTSTATE-056`, `+0x68`-only remap clause retracted)
 
 A `castSpell` record remains an ordinary ordered Effect of kind 41. General effect dispatch does
 nothing for that kind beyond target recompute. A separate list finder returns the first kind-41
@@ -158,7 +163,7 @@ requires descriptor bits `0x10|0x01`; a castSpell Weapon has bit 4 from its effe
 descriptor supplies only suitability bits 1 and 2. Bit 0 is a MagicItems-class bit. The server arm
 would accept a crafted weapon item order, but no Weapon row can make the shipped UI emit one.
 
-### The wear rule (`ITEM-WEAR-055`, `ITEM-WEAR-057`)
+### The wear rule (`ITEM-WEAR-055`, Human-constructor clause retracted; `ITEM-WEAR-057`)
 
 The column decides whether a character may equip or use the item, and the whole rule is one
 13-instruction predicate in the CLIENT. The simulation applies none of it.
@@ -230,10 +235,16 @@ the shape word the **material** implies — `"Soft "` for a material containing 
 call it. The `Shield` constructor alone then cuts the literal `" Shield"` off the residue.
 
 ```
-actor->vt+0x38  Equip(item)    -> item->vt+0x38(actor); actor->vt+0x54(); returns the displaced item
-actor->vt+0x40  Unequip(item)  -> item->vt+0x3c(actor); actor->vt+0x54(); returns the item
+actor->vt+0x38  Equip(item)    -> item->vt+0x38(actor); returns the displaced item
+actor->vt+0x40  Unequip(item)  -> item->vt+0x3c(actor); returns the item
 Item::vt+0x38                  -> refuses if actor.health <= 0; else attaches every effect of
                                   the item to the actor and DELETES the item (a consumable)
 Item::vt+0x3c                  -> prints "Unknown item takeoff"; only the three subclasses
                                   implement a real take-off
 ```
+
+Only the Unit wrappers add a trailing `actor->vt+0x54()`: equip `004f4d98` and removal
+`004f4e0a` make that call, and its Unit target only returns `actor+0x1c`. The Humanoid/Human
+wrappers `004f705b`/`004f70cf` omit it. `vt+0x54` is Token value, not an equipment recompute
+(`ITEM-EQUIP-006`, whose universal wrapper and recompute clauses are retracted;
+`SAV-EQUIPCALL-554`).

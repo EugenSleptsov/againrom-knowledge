@@ -49,7 +49,8 @@ transient dword `+0x44`. Effect copy preserves Token state `+0x0c` and transient
 compares only kind, the full operand dword and mode. Item equality first compares item code. Both
 stackable means equal immediately, exactly one stackable means unequal, and only two non-stackable
 items compare their ordered lists in lockstep. A Potion remains stackable with effects because its
-item kind is 3 (`ITEM-STACK-003`, `ITEM-EFFOBJ-072`).
+item kind is 3 (`ITEM-STACK-003`, whose universal enchantment-separator clause is retracted;
+`ITEM-EFFOBJ-072`).
 
 For freshly parsed equipment Effects, Token state `+0x0c` is zero. Equip walks the list and
 dispatches each value with multiplier +1; unequip walks it with -1. Every kind arm then calls target
@@ -138,7 +139,7 @@ other scaled value in this file is `ftol(x + 0.5)`; `armor+0x54` and `shield+0x5
 (`0050c674` → `0050c677`, `0050d012` → `0050d015`, against `0050c6a1` and `0050d03f`). The shield fill does not read the `Slot` column. Installed `Shields`
 definitions carry `Slot = 2`; that value does not participate in the fill.
 
-### What equipping an armour or a shield does (`ITEM-ARMFOLD-033`)
+### What equipping an armour or a shield does (`ITEM-ARMFOLD-033`, event-order clause retracted)
 
 Both classes embed one **0x16-byte modifier block**, `memset` to zero by
 `FUN_004fa49b` → `FUN_004fa4b1`, at `armor+0x52` and `shield+0x50`. The two scaled words above
@@ -155,7 +156,8 @@ and contributes exactly zero to  the six protections  actor+0xc2..+0xcc
 There is **no per-slot difference**: the slot byte indexes `actor+0x198 + 4i` and is read nowhere
 else, and neither block add sits under a branch on it. The Unit equip wrapper's
 `vt+0x54` call (`004f4dbb`) is **not** an equipment recompute. Humanoid/Human
-equip/removal wrappers omit that call (`SAV-EQUIPCALL-554`, `ITEM-EQUIP-006`).
+equip/removal wrappers omit that call (`SAV-EQUIPCALL-554`; `ITEM-EQUIP-006`,
+whose universal wrapper and recompute clauses are retracted).
 The humanoid `+54` target `FUN_004fc22a` sums
 `actor+0x1cc + 4i` for `i = 1..5`, the skill-experience caches, and stores `ftol(sum x 0.01)` into
 `actor+0x1c`; the base class's slot is a bare `return actor+0x1c`, and the caller discards the
@@ -165,7 +167,8 @@ The helper set does not specify a common event order. Armor removal refreshes
 negative weight, subtracts both defensive blocks, clears its slot, sets flags,
 then removes Effects. Shield removal removes Effects after those block
 subtractions but before flags and slot clear. Shield attach sets flags after
-Effects; Armor attach sets them before (`SAV-EQUIPORDER-552`, `ITEM-ARMFOLD-033`).
+Effects; Armor attach sets them before (`SAV-EQUIPORDER-552`; `ITEM-ARMFOLD-033`,
+whose common event-order clause is retracted and replaced by this order).
 Weapon attach prepares its Spell before old-weapon eviction and calls derive
 before timing/range and weight stores; Weapon removal starts with Effects and
 clears the owned Spell and actor slot near the end (`HERO-EQUIP-017`).

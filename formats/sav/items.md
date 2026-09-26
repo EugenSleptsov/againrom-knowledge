@@ -20,7 +20,8 @@ Ground-pickup ordering and an equip arm can change the insertion index.
 A transfer helper copies both dwords; a reset pair zeroes both. Neither LOAD
 nor SAVE recomputes the running load. Container `+1c/+20` are not Item's
 numerically coincident price/Effect-list fields. — SAV-670, SAV-671, SAV-672,
-ITEM-CONT-004, ITEM-LOAD-005, ITEM-STACK-003, SAV-CITYSTORE-516
+ITEM-CONT-004, ITEM-LOAD-005, ITEM-STACK-003 (its enchantment-separator clause
+is retracted; the running-load sum stands), SAV-CITYSTORE-516
 
 ## Item Effect list
 
@@ -60,7 +61,8 @@ writer was located. — SAV-1114, SAV-1115, SAV-POSTLOAD-222
 Quantity-one draining can split a stack. Death reaches both Sack branches.
 No branch establishes copying Sack/actor Position into contained Items;
 actor callbacks and aliases remain outside the local no-write result.
-— ITEM-WHOLE-128, ITEM-MERGE-129, ITEM-GROUNDMOVE-130, ITEM-DEATH-012
+— ITEM-WHOLE-128, ITEM-MERGE-129, ITEM-GROUNDMOVE-130, ITEM-DEATH-012 (its
+unconditional container-identity sentence is retracted)
 
 Armor/Shield/Weapon equip bodies write actor slots/stats. Base Item equip can
 consume/delete the Item and change an Effect mode. Transitive callback writes
@@ -133,7 +135,8 @@ actor range byte `+12c`; arithmetic wraps, so removal need not invert arbitrary
 prior state. Melee's active selector uses the low byte of definition parameter
 5 cached after displacement and slot store. Ranged kinds 11/12 and removal
 assign zero. — SAV-EQUIPORDER-552, SAV-HUMEQUIP-447, HERO-EQUIP-017,
-ITEM-ARMFOLD-033
+ITEM-ARMFOLD-033 (its common flag/Effect order clause is retracted; the
+per-class order above replaces it)
 
 State-0 Effect apply/remove walks forward and derives after each normal
 general dispatch. Its iterator saves a next-node pointer but later reads that
@@ -143,6 +146,7 @@ the quotient changes. Humanoid/Human wrappers add no trailing derive; Unit
 wrapper `+54` is Token value, not derive. Atomic equipment snapshots, callback
 purity and the state observed by an actual SAVE remain Unknown.
 — SAV-EQUIPEFFECT-553, SAV-EQUIPCALL-554, SAV-EQUIPOBS-555, ITEM-EQUIP-006
+(its universal wrapper and recompute clauses are retracted)
 
 ## City producers
 

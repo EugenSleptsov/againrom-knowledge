@@ -243,7 +243,8 @@ timing/range and weight. Armor/Shield store their slot and add defence before
 weight and Effects; Armor sets flags before Effects, Shield after. Same-slot
 eviction calls the item; opposite-hand two-handed eviction calls the actor
 wrapper and reinserts before installing the new item (`SAV-EQUIPORDER-552`,
-`HERO-EQUIP-017`, `ITEM-ARMFOLD-033`).
+`HERO-EQUIP-017`, `ITEM-ARMFOLD-033`, whose common event-order clause is
+retracted; its slot store and block add stand).
 
 The active selector comes from definition parameter 5 cached after displacement
 and the new-weapon slot store; melee copies its low byte, ranged 11/12 and
@@ -259,9 +260,10 @@ not all remaining Effect values. Actual callback list mutations remain Unknown
 (`SAV-EQUIPEFFECT-553`). Command22 adds container removal/reinsertion and a final
 zero-weight refresh; that refresh derives only on a changed load quotient.
 Humanoid/Human wrappers add no trailing derive; Unit's trailing `+54` is Token
-value, not `+50` derive (`SAV-EQUIPCALL-554`, `ITEM-EQUIP-006`). Derive and Effect
-reads therefore occur between local stores; no atomic final-state or pure
-callback contract follows (`SAV-EQUIPOBS-555`).
+value, not `+50` derive (`SAV-EQUIPCALL-554`; `ITEM-EQUIP-006`, whose universal
+wrapper and recompute clauses are retracted). Derive and Effect reads therefore
+occur between local stores; no atomic final-state or pure callback contract
+follows (`SAV-EQUIPOBS-555`).
 
 A weapon's numbers are `round(column × shapeFactor × materialFactor)` (`+0.5` then `ftol`); runtime
 column *i* is `Data.bin` title *i+1*, so they are the shipped titles `@.physicalMin`,

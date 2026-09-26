@@ -130,8 +130,9 @@ every value change reaches the notifier by some other path was not traced. — `
 
 The container identity is retained only by the new-Sack adoption branch.
 Strip/reinsertion and an existing-Sack drain apply the whole/split/merge rules;
-Weapon unequip also changes its owned Spell. `ITEM-DEATH-012`, `ITEM-GROUNDMOVE-130`
-and `ITEM-SPELLMOVE-132` distinguish these outcomes. A mercenary (`NPC%02d_%d`)
+Weapon unequip also changes its owned Spell. `ITEM-DEATH-012` (its unconditional
+container-identity sentence is retracted), `ITEM-GROUNDMOVE-130` and
+`ITEM-SPELLMOVE-132` distinguish these outcomes. A mercenary (`NPC%02d_%d`)
 leaves nothing at all. Because the strip precedes the
 emptiness test, a body that wore anything leaves a sack even if it carried nothing.
 
@@ -171,8 +172,8 @@ placements resolve to those definitions per root. Death moves the same worn Weap
 container before producing a sack for 49 non-`NPC` placements; it destroys that container for the
 27 `NPC` placements. This split is for the shipped single-player campaign maps. In multiplayer,
 `Player+0x5c != 0` is a second suppression input; loose-map non-`NPC` rows therefore leave death
-eligibility unevaluated (`ITEM-AUTHCAST-086`, `ITEM-AUTHDROP-087`, `ITEM-DEATH-012`,
-`ALM-MODE-070`).
+eligibility unevaluated (`ITEM-AUTHCAST-086`, `ITEM-AUTHDROP-087`, `ALM-MODE-070`;
+`ITEM-DEATH-012`, whose container-identity sentence is retracted; its suppression inputs stand).
 
 Dragon rows 112–115 author `Flame Thrower` in slot 0, leave slot 1 empty and
 have no castSpell. `Flame Thrower` has `sutableFor=0`, so the death gate does

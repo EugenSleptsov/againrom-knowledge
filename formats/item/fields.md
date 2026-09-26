@@ -84,4 +84,5 @@ Scroll sums spell-derived kind-41 values and falls back to parameter 0 only when
 while Book reads only the first Effect's spell value, or zero when empty (`ITEM-VALUE-115`). Mission
 40's `Quest Item31` therefore leaves construction at 10,000 from its row, not from an enchantment.
 The later descriptor path does treat `item+0x1c == -1` specially; the assignment rule is not a
-global denial of sentinel semantics (`ITEM-MAGVAL-090`, `ITEM-WEAR-058`, `ALM-M40-074`).
+global denial of sentinel semantics (`ITEM-MAGVAL-090`, whose Book list-traversal clause is
+retracted; `ITEM-WEAR-058`, `ALM-M40-074`).

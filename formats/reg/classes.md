@@ -250,7 +250,9 @@ suffix (`UNIT-PICT-037`). The RU install lacks the `magic`, `ruins` and
 
 ## `projectiles.reg` — and why its `ID` is an address
 
-`REG-PROJ-086`, read from the loader `FUN_0046e0f0` rather than fitted.
+`REG-PROJ-086`, read from the loader `FUN_0046e0f0` rather than fitted. Its routine label is
+superseded: `FUN_0046e4e0` is the teardown and `FUN_004707d0` the grow. Every field, default, count
+and consumer stands.
 
 ```
 [Global] Count = 31

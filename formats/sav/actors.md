@@ -322,7 +322,8 @@ signed value below -10000. Producers of the other observed residues remain
 Unknown. Death moves/adopts or drains the old inventory into a Sack and gives
 the corpse a fresh container; the saved corpse container is not the Sack
 container identity. — SAV-DEADLOAD-127, SAV-DEADLOAD-129, SAV-DEADLOAD-130,
-ITEM-DEATH-012
+ITEM-DEATH-012 (its unconditional container-identity sentence is retracted;
+ITEM-GROUNDMOVE-130 holds both Sack branches)
 
 Unit `+40` is a raw old actor-address key; `+64` is temporary attribution;
 `+68` is initially an archive object reference; signed `+48` is an attribution
@@ -330,7 +331,8 @@ byte. World lifecycle separately map-repairs `+40/+64/+68`, nulling misses;
 no-world LOAD clears `+40`, and `+48` is retained at that boundary. The `+68`
 second lookup uses its then-current word, so archive resolution alone does
 not prove its survival. Ordinary item-cast completion clears `+64/+68`.
-— SAV-908, MAGIC-ITEMKILL-117, ITEM-CASTSTATE-056
+— SAV-908, MAGIC-ITEMKILL-117, ITEM-CASTSTATE-056 (its `+68`-only remap clause
+is retracted; the cast lifetime stands)
 
 ### Consequence receivers
 

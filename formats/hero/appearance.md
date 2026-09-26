@@ -82,8 +82,9 @@ predicate — is true, so a non-humanoid actor's twelve slots stay null for its 
 named recipient it walks the player list and calls itself once per player.
 
 **Which field becomes which slot.** Both opcodes visit `actor+0x74`, `actor+0x78`, then
-`actor+0x198+4i` for `i = 3..12` — `ITEM-EQUIP-006`'s own 1..12 equipment numbering. Wire slot `k`
-is equipment slot `k+1`, and an empty slot is sent as 0 rather than omitted.
+`actor+0x198+4i` for `i = 3..12` — `ITEM-EQUIP-006`'s own 1..12 equipment numbering (its wrapper
+and recompute clauses are retracted; the slot map stands). Wire slot `k` is equipment slot `k+1`,
+and an empty slot is sent as 0 rather than omitted.
 
 **The two opcodes do not carry the same bytes.**
 
