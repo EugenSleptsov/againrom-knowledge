@@ -309,6 +309,36 @@ personal record's state. — SAV-1096, SAV-1101
 
 ### Client drawable after LOAD
 
+The selected entry state message does not populate every numeric card field.
+A non-owned Human outside types 33..63 receives mask `50fb`, preserving
+current/max health and mana but omitting primary and combat values. Types
+9/24 also take no prototype-stat copy. The subsequent numeric card reads
+drawable bytes; local omitted fields retain their existing contents.
+Other client writers and first-frame contents remain Unknown. — SAV-1125,
+SAV-1126
+
+One external mission-151 SAV and its reported original resave, 546 full-clock
+units apart, retain the primary values of five Human candidates matching
+owner screenshots by class and maxima. Those primary values differ from
+the displayed ones. Screenshots do not identify a unique actor, and an
+original resave does not establish a regenerated drawable cache. — SAV-1127
+
+A native mission 151 control and its entry autosave share217 unique nonzero
+authored ids with that external/resave pair. External/native primary words,
+attack, maximum health, type and definition index match on all 217. Other
+actor/member differences remain, including Human+1e4 Diary references and
+live scalar values. Five zero-id actors per file are not identity-matched.
+Exact member-span coverage is not complete semantic equivalence of all
+document records. — SAV-1128
+
+The four selected targets' absorption 200 is a map-script assignment to
+actor+c0. Native observations0/10 do not establish a required saved default:
+the repeatable setter coexists with delayed temporary casts whose effect
+application can invoke Human derive, clear the defence/absorption block and
+fold equipment modifiers. The last runtime writer at SAVE remains Unknown.
+The separate +be field is defence; the +c0 server field is a word, even
+where client projection reads only its low byte. — SAV-1128
+
 The session-entry join sends every tick-list actor, and every dead-list actor
 below stage 5, through the actor-state sender with a full mask. The client
 state arm creates a drawable for an unknown runtime id whose message passes

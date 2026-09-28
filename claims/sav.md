@@ -13684,6 +13684,148 @@ drawable is shown or later corrected in play.
 **Unknown.** Whether an original save can hold a non-centred actor with a far
 mover cell, for example during a teleport or a trigger return.
 
+## Non-hero card after LOAD
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-1125 | The entry sender selects card fields by ownership and class; a non-owned Human of type 9 or 24 receives health/mana but no primary or combat values in its reduced state message. | High | ✔ promoted | [EXP-0404](../experiments/EXP-0404-enemy-card-load/) |
+| SAV-1126 | The selected type-9/24 client creation path leaves omitted primary values unchanged; the numeric card reads drawable bytes, with two independent five-byte extended-row loops. | High / Medium / Unknown | ✔ promoted | [EXP-0404](../experiments/EXP-0404-enemy-card-load/) |
+| SAV-1127 | Five candidate Human pairs in one external mission-151 SAV and its reported original resave retain primary values that differ from the owner card screenshots; the two saves are 546 full-clock units apart. | Medium | ✔ promoted | [EXP-0404](../experiments/EXP-0404-enemy-card-load/) |
+| SAV-1128 | Native mission151 shares primary words and attack with the external document on 217 authored ids; observed absorption0/10 does not invalidate the repeatable200 setter, and a conditional Human derive can overwrite it. | High / Medium / Unknown | ✔ promoted | [EXP-0404](../experiments/EXP-0404-enemy-card-load/) |
+
+### SAV-1125
+
+`SAV-1118` identifies entry's initial mask `-1`. Sender `004e7de3` reduces
+it when actor owner differs from recipient. Non-humanoids retain `507b`;
+their additional class test removes `1000` except for types 26, 27 and 69.
+Humanoids retain the full mask for types 33..63 and `50fb` otherwise.
+Equal-owner actors bypass these reductions. `+9c==0` separately removes
+the current-mana bit. All masks here are hexadecimal.
+
+Primary words `+84/+86/+88/+8a` enter the packet as low bytes only under
+`20000000`. Client `004104e8` writes them to `+138/+13b/+139/+13a`.
+Combat packet masks are `100` attack `+a6`, `200` damage sums, `400`
+defence `+be`, `800` armour `+c0`. Maxima use `1000`, sight `2000`,
+speed `200000`. Protection masks `10000..100000` use the low bytes of
+`+c4/+c6/+c8/+ca/+cc`. Skill masks `1000000..10000000` use low bytes
+of `+aa/+ac/+ae/+b0/+b2`, not the actor's damage-resistance bytes.
+
+Unit serialization stores and restores the primary words. Its definition
+binding suffix (`SAV-ACTORBIND-544`) is separate from these values. The
+selected SAVE scalar writes read actor state, not the client drawable.
+
+**Confidence.** High for these named local branches and transfers. The
+probe executes 44 ownership/class/type mask vectors from the original
+instructions and validates its three helper contracts against their bodies.
+This is not an independent runtime or all-message census.
+
+**Unknown.** Later mutation before sending; complete client-writer lifetime;
+arbitrary saved-class validity; whether an exact actor reaches the first
+displayed card without an intervening writer.
+
+### SAV-1126
+
+Client state creation calls prototype fill `0045f850` at `00411755`, then
+appearance fill `0045fb00`. For types 9/24 the former only sets class/face
+and flag state; it takes no prototype-stat copy. Its flags lack bit 0, so
+the latter returns through its entry gate. The subsequent message writes
+only fields named by its mask. Twelve synthetic vectors run the original
+prototype and primary-copy slices: mask `50fb` retains each seed
+`00/5a/c3`; control mask `20000000` copies payload 49/35/28/50 into
+drawable byte order 49/28/50/35.
+
+`00460480` draws Body/Agility/Mind/Spirit from `+138/+13b/+139/+13a`.
+Primary rows require disclosure level 5; the `005eb588` global can force
+level 7. Ordinary attack reads signed `+146`, defence signed `+144`, armour
+byte `+142`, and damage bytes `+148/+149` as min and min+spread. Sight
+word `+102` uses 1/256 scaling, speed word `+104` prints as an integer.
+The first extended loop walks five bytes `+14b..+14f` with text-pointer
+offsets `78..88`, or `90..a0` for types 23/24. The second walks five bytes
+`+150..+154` with captions at `a4..b4`. These are the numeric card loops.
+`UNIT-PANEL-011`'s indexed read `0041953a` instead belongs to the separate
+type-23/24 spell-mask loop; it does not define these five-row card indexes.
+
+Constructors `00458a50`/`0045ae30` directly zero health/mana, sight and
+speed. Their bodies contain no direct store into primary `+138..+13b` or
+combat/extended `+142..+154`. This is a two-body direct-store observation,
+not an all-callee or allocation-lifetime absence proof.
+
+**Confidence.** High for the local mask/retention discriminator and the
+positive card readers. Medium that stale drawable contents explain the
+owner symptom. The live alternative is an untraced intervening writer.
+Unknown for the first-frame contents and the full initialization history.
+
+### SAV-1127
+
+Inputs are external `game2320-input.sav` (SHA-256 `1ee3466b514ed90e69e05ad01eeceb49a20f2712cac0b64c7e88d1c06479b400`)
+and reported original `game0002-original.sav` (`aaac9a89705250144acb8933ef93e52b9a02f83abc9c21e65c2917836e6d9db3`).
+Research `savdoc` walks 222 actor bodies in each. Both name mission 151;
+full-clock values are 8729 and 9275. The comparison is not an immediate
+LOAD/SAVE pair and the external input is not an original-native oracle.
+
+Type-9 Axeman candidates, runtime ids 98/99 and authored ids 252/253,
+both retain primary 49/35/28/50, health 607/607, attack 308 and defence
+216. The owner Axeman images show 196/3/94/3, health 607/607, attack
+772 and defence 1272. Type-24 Mage candidates, ids 96/97 and authored
+250/251, retain 17/40/46/50 and health 117/117, mana 630/630;
+candidate 139/589 retains 17/24/42/50 with those same maxima. The Mage
+image shows 5/0/0/0 and health/mana 117/117, 630/630.
+
+**Confidence.** Medium for this finite comparison. Names are checked against
+the repository's installed-text census. The screenshot contains no actor
+id, so the five matches are candidates. Changing position, intervening
+ticks and omitted client fields remain separate variables. Correct maxima
+do not establish that the displayed primaries came from the actor.
+
+**Unknown.** Exact screenshot actor and capture time; which writer supplied
+each displayed abnormal byte; native baseline cards before the external
+input; whether the resave was reloaded before the screenshots.
+
+### SAV-1128
+
+The two SAV-1127 documents plus native `game0003-original-native151.sav`
+(SHA-256 `54a1d77a07da694f816307f0780a481465b7c54ffadc8d1068850d1336406414`)
+and supplemental entry `game9999-original-entry151.sav`
+(`d776f109a9d221999852b7d9d61efb315ea09f933336480e3d472edc472db846`)
+are mission 151, difficulty2. Full clocks are 8729,9275,16,0. Exact research
+walks reach EOF and tile every actor subtree with named member spans.
+Actor counts are 222,222,242,242. Each file has five zero-id actors, which
+are not cross-file joined; all nonzero map ids are unique. The four-file
+intersection has 217 ids. Runtime ids and addresses do not define this join.
+
+On those217 ids the external/native primary words, attack, maximum health,
+class, type, definition index and owner-player index all match. Other
+differences include 208 external-zero/native-nonzero Token+1c values,
+217 actor+136 values 0/1,113 defence differences,62 speed differences and
+99 sight differences. All110 Human+1e4 references name Diary bodies in
+external/resave and are null in native/entry. Unequal clocks, party history,
+effects and gameplay prevent treating this corpus as a same-state oracle.
+
+For ids 250/251/252/253, absorption is 200 in external/resave and 0/0/10/10
+in native/entry. Lawful mission 151 placement bytes+31/+32 are zero on
+these four. Actions 78..81 instead author opcode 34, selector 16, value 200;
+repeatable trigger 33 compares condition 1 to itself. Original `0053cb4b`
+writes actor+c0 as a word. The preceding repeatable triggers 29..32 enqueue
+temporary casts 5/10/16/22 at those targets. The effect-dispatch common tail
+`00502833` calls target virtual+50; both Human slots select `004f7dfc`,
+which zeros actor+be..+d3 and folds modifiers. Their absorption modifier
+word is 0/10 in all four documents. This gives a conditional overwrite path,
+not a universal SAVE value. Native clock 16 has latch 33=1 and four attached
+effects per selected target, so a never-fired trigger is not its explanation.
+
+**Confidence.** High for the exact actor-span tiling, reference resolution
+and selected instruction relations. Medium for the finite corpus comparison
+and the delayed-cast/derive explanation. The full member/byte matrix and
+all-record extent/hash inventory are reproducible; arbitrary item/effect
+identity across documents is not proven.
+
+**Unknown.** Last writer before each SAVE, original callback cadence at the
+sampled frame, cause of the other persistent constants, and whether any of
+these actor differences supplied the displayed abnormal client bytes.
+A runtime trace reaching the 200 setter then the documented Human derive
+with unchanged modifiers, but retaining 200 afterward, refutes the proposed
+local overwrite. No original-runtime trace was run.
+
 ## Open questions
 
 - Whether a Building or Sack Position terrain key is used, replaced or

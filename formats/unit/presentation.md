@@ -25,9 +25,23 @@ non-null and that object's `+0x84` is not 2:
 this table is the display **mirroring** the spawner's rule for a prototype that never went through
 it — not a second, display-only rule.
 
-**Not established:** which value appears where. From `+0x14a` on, the block is read by *computed
-index* (`FUN_004190f0` `0041953a`), so no displacement sweep names a consumer — the layout needs
-the interface layer (`UNIT-PANEL-011`). `FUN_0045f850` has no multi-selection arm.
+`UNIT-PANEL-011` bounds a displacement sweep; the numeric card readers are
+now identified. `00460480` reads Body/Agility/Mind/Spirit from drawable
+`+138/+13b/+139/+13a`. It reads attack/defence from signed words
+`+146/+144`, armour from byte `+142`, and min/min-plus-spread from
+`+148/+149`. It walks `+14b..+14f` and `+150..+154` in two five-row
+loops. The first captions differ for types 23/24. The earlier indexed
+`0041953a` consumer belongs to a spell-mask loop, not these numeric rows.
+Disclosure levels gate rows; global `005eb588` can force level 7.
+Its runtime cause is Unknown. — SAV-1126
+
+Prototype copy precedes packet overwrites. A non-owned Human outside types
+33..63 receives mask `50fb`: current/max health and mana remain available,
+but primary/combat/sight/speed/extended values are omitted. Types 9/24 also
+skip the prototype-stat copy. The selected client path therefore preserves
+existing primary bytes; complete initialization and first-frame contents
+remain Unknown. An original SAVE reads actor fields, not those drawable
+bytes. — SAV-1125, SAV-1126
 
 
 ## Drawable class (`UNIT-APPEAR-030`)
