@@ -13684,6 +13684,51 @@ drawable is shown or later corrected in play.
 **Unknown.** Whether an original save can hold a non-centred actor with a far
 mover cell, for example during a teleport or a trigger return.
 
+## Original patrol continuation endpoints
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-1123 | Two owner-reported original EN continuations of mission-141 patrol probes save unit 57 idle at (60,61) after their counters advance, while units 30 and 75 retain active routes; the first dispatch remains Unknown. | Medium | ● active | [EXP-0403](../experiments/EXP-0403-patrol-dispatch/) |
+
+### SAV-1123
+
+- The four identified documents are one control re-encoded for original EN,
+  a copy whose decoded body differs only at unit 57's order+04 low byte
+  (`1` to `2`), and two owner-reported original-English resaves. Their full
+  SHA-256 values, body sizes and local offsets are in the experiment's
+  `evidence/inputs.tsv` and `evidence/latch-control.tsv`.
+- Both outputs save map unit 57, runtime id 37, type word 68, at cell 60,61
+  with state+50 `0x0a`, motion+54 zero, no dynamic route, order+08 zero,
+  order+04 one, waypoint and destination 63,59, and unchanged deadline+138
+  1097. Its Group has one member, selector+1c 12, AI order+20 zero,
+  activity+45 one and override+48 one. It belongs to Player 2 and its
+  saved owner key matches that Group's +44 reference.
+- Units 30 and 75 also belong to Player 2. They change position and current
+  route between the input and each output, retain motion+54 one and have
+  nonempty routes. The first document-head dword advances 1219 to 1816 and
+  2256: 597 and 1037 increments. Numerically, 38 and 65 intermediate values
+  have residue 6 modulo 16, the AI slot in `AI-TICK-008`. This count assumes
+  traversal through each intervening value; it is not a record of calls.
+- Both outputs save order+04 as one. If each output descends from a different
+  input probe as the owner reported, the input marked two changed to one
+  regardless of the still unknown slot assignment. The walker has a known
+  write of one (`SAV-PATROLCURSOR-571`), but this endpoint does not identify
+  which writer ran or when.
+
+**Confidence.** High for the decoded bytes of the four SHA-pinned documents
+and the local original-instruction path checked against `rom.exe` SHA-256
+`942e9b72…d367d03`. Medium for original-runtime attribution: the two output
+files were supplied as original-game resaves, without a native dispatch trace
+or a confirmed input-to-slot mapping. Saved endpoint agreement cannot select
+one of the intervening runtime paths.
+
+**Unknown.** Whether first Group dispatch reached unit 57, what guard left in
+order+08, whether a route was admitted and later cancelled, and whether the
+troll moved transiently between LOAD and SAVE. A first-phase native trace at
+the Group gate, walker, guard return and route admission would discriminate
+these alternatives. Continued movement of units 30 and 75 does not itself
+prove that the Group dispatcher ran: a previously admitted route can advance
+without a fresh Group call.
 ## Non-hero card after LOAD
 
 | ID | Claim | Confidence | Status | Evidence |
