@@ -245,9 +245,32 @@ on the mage bit, the composed-figure bit, **whether slot 0 is occupied**, and th
   neither, slot 0 empty                  -> 0x5f1b98   m_peasant / f_peasant
 ```
 
-`FUN_004af540` fills them at start-up from `sfx\<bank>\` + `select1/2`, `command1/2`, `retreat`,
-`defend`, `idle`, `easy`, `hard`, `die`. The slot-0 condition can therefore
-select different voice banks for armed and unarmed humanoids.
+`FUN_004af540` fills them at start-up from `sfx\<bank>\` + `select1/2`, `command1/2/3`
+(`HERO-FIGURE-061`, amended: eleven leaves per bank, `ANIM-094`), `retreat`, `defend`, `idle`,
+`easy`, `hard`, `die`. The slot-0 condition is reached only when the mage bit and the
+composed-figure bit `0x1` are both clear, so it can select different voice banks for armed and
+unarmed humanoids without either bit, never for a drawable with bit `0x1` (`ANIM-096`).
+
+**The hurt cue reads three bank fields.** The hurt hook `vt+0x68` takes an event index `k`. While
+`+0x18c & 0x11` is non-zero, `k` alone picks the bank field; otherwise `k` reads the drawn class's
+`Sound[k+1]` (`ANIM-094`):
+
+```
+field   file       k   event (ANIM-095)
++0x24   easy.wav   1   0x73 blow, health before it at least half and above -10
++0x28   hard.wav   2   0x73 blow, health before it below half and above -10;
+                       state sync while the corpse stage stays 1
++0x2c   die.wav    3   state sync that moves the corpse stage from 0 to 1
+half = maximum health unit+0x100 / 2, truncated toward 0
+```
+
+`k = 0`, a `0x73` message that leaves health unchanged, always plays the drawn class's `Sound[1]`;
+for a drawable with bit `0x1` that class follows equipment slots 0 and 1 and the mage bit. A blow
+that finds health at -10 or below plays nothing. `k = 1` and `k = 2` stay silent within 1500 ms of
+the drawable's voice timestamp `+0x190`, which the select, command, retreat, defend and idle voices
+also set; `k = 3` neither tests nor sets it. With bit `0x1` set, the sex bit and the mage bit
+choose the bank, and equipment and the drawn class choose neither the bank nor the field of `k` 1
+to 3 (`ANIM-096`).
 
 Claims: `HERO-FIGURE-057`…`HERO-FIGURE-064`, `UNIT-FIGURE-032`, `ITEM-APPEAR-025`.
 Not established: what the effect-list keys `0x26`/`0x30` name; which garment

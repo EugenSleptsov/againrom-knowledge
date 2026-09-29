@@ -5,7 +5,8 @@
 Each drawable advances a presentation state block using a game-tick driver.
 Action messages fill that block; the state selects phases and frames through
 the class sheet. Simulation attack/movement timing remains a separate input.
-— ANIM-CLOCK-001, ANIM-OBJ-008, SPR256-UNIT-024
+— ANIM-CLOCK-001, ANIM-OBJ-008 (its object-arm unreachability clause is
+withdrawn), SPR256-UNIT-024
 
 The complete-period formula in HERO-CADENCE-023 is retracted. This reference
 does not infer simulation duration from a frame count. The meanings that
@@ -25,7 +26,7 @@ Action messages populate the drawable. The paced0x401 tick advances it;
 idle/attack/cast/death timelines use ticks, while walking accumulates distance
 and advances once per 1/16 cell. Drawing resolves the resulting state through
 class phase blocks. Registration selects the collection and composition pass.
-— ANIM-CLOCK-001, ANIM-OBJ-008, ANIM-WALK-013
+— ANIM-CLOCK-001, ANIM-OBJ-008 (unreachability clause withdrawn), ANIM-WALK-013
 
 ## Reference map
 

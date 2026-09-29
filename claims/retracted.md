@@ -1,5 +1,14 @@
 # Overturn history
 
+## Hurt cue band operand, state-sync calls, the stage-0 arm and the voice-bank leaf count
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `ANIM-SND-022` (operand of the `0x73` arm's band tests only) | **2** when the new health is below `unit+0x100 / 2` and **1** otherwise, the latter two only while the new health is above -10 | High | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/), ANIM-095 | Both tests read the stored `unit+0xfc`, the health before the message (`0041446c`, `00414490`); the new level `msg+0xc` is stored after the call, at `004144cc`. A blow from half or more to below half passes 1, and a blow from above -10 to -10 or below still passes 1 or 2. The `k = 0` test and the hook's sources stand. | **REFUTED** |
+| `ANIM-BLOW-019` (band operand and the call-free state sync only) | Verbatim: "It calls `vt+0x68` with 0, 1 or 2 by remaining-health band (`ANIM-SND-022`)." and "the field-masked state sync of `ANIM-MSG-005` cannot supply one either, being 616 instructions of stores with no call among them" | High | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/), ANIM-095 | The band is chosen from the health before the message. The state-sync arm `[0x00410e0e, 0x00411fd0)` is 1004 instructions with 22 calls, among them `FUN_0045f850` (`00411755`) and `FUN_0045fb00` (`00411760`), and its stage switch calls `vt+0x68` with 3 (`0041210f`) and 2 (`004121f6`). Whether any of those calls draws was not read. The strike, the builder and the `0x73` arm's numeral, health store and repaint stand. | **REFUTED** |
+| `ANIM-DEATH-007` (the stage-0 transition only) | **0 → 0** clears the action | High | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/), ANIM-095 | The stage-0 arm tests the saved stage (`0041200b JZ`): saved 0 does nothing; a non-zero saved stage clears `+0x84` and, when `+0x18c & 1`, calls `FUN_0045fb00` (`00412033`). The 0 → 1 and 1 → 1 arms, the thresholds and the corpse fork stand. | **REFUTED** |
+| `HERO-FIGURE-061` (the corpus population only; the initializer, the bank names, the selector and the consumer census stand) | Verbatim: "**Corpus, both roots: 80 of 80 (bank, leaf) pairs present, 0 absent**" | High | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/), ANIM-094 | The constructor builds eleven leaves per bank, `command1..3` among them (`004afaf3`..`004afb44`); all 88 are present on both roots (`ANIM-094`). The 80-pair corpus held ten leaves per bank and left out `command3`. | **NARROWED** |
+
 ## Cast admission and transport timing
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

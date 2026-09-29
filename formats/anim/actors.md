@@ -146,15 +146,23 @@ into a jump table at `0x004186e3`.
 server   actor+0x13c = 1 at death; FUN_004f52ee raises it to 2 / 3 / 4 as health passes
          -10 / -20 / -40, and to 5 below -600; every change is broadcast
 client   the stage arrives in the state sync under mask bit 3; the client keeps the previous
-         value and dispatches on the TRANSITION:
+         value and, on every state sync it applies, dispatches on the TRANSITION:
              0 -> 1   action 6, 2 x DyingPhases ticks, clock 0        the fall
+                      then the hurt hook with k = 3
              1 -> 1   action 6, 4 ticks, clock 2*DyingPhases - 4      the last two frames again
+                      then the hurt hook with k = 2
+             N -> 0   N != 0: the action is cleared
          when the run ends, no action runs and the frame switch's state-0 corpse fork draws
          on the stage alone:
              1        dying frame DyingPhases - 1, frozen
              2 3 4    bone frames 0 1 2
              5        the actor is gone
 ```
+
+The hurt hook reads a voice bank's `die` file for `k = 3` and its `hard` file for `k = 2` when
+`+0x18c & 0x11` is non-zero, and the class's `Sound[4]` and `Sound[3]` otherwise; `k = 2` stays
+silent within 1500 ms of the drawable's voice timestamp `+0x190`, which `k = 3` neither tests nor
+sets (`ANIM-094`, `ANIM-095`).
 
 The thresholds never reach the client as numbers — it sees only the stage. The four
 `movementType > 1` classes (`Ghost`, `Bee`, `Bat_Sonic`, `Dragon`) take `health = -1000` the moment
@@ -177,7 +185,8 @@ per-instance state at all (`TERR-SPR-042`, `REG-OBJ-046`). The animated arm's ga
 around every drawable, and the 32-tick sweep `FUN_0040eaee` clears bit 14 map-wide (`ANIM-TICK-011`).
 Those two bits are the **fog of war**, and the gate holds on exactly the cells the local player can
 currently see, so the arm **does** fire: a shipped map's fires and trees animate inside the field of
-view and hold frame 0 outside it (`TERR-TILE-079`, `ANIM-OBJ-008`).
+view and hold frame 0 outside it (`TERR-TILE-079`; `ANIM-OBJ-008`, whose unreachability clause is
+withdrawn).
 
 **Cadence, which is the thing the walk does not share.** `CMapView+0xa70` advances an object's
 timeline **one step per tick**, unshifted. The ambient *repaint* is throttled by a second field:

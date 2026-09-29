@@ -52,7 +52,8 @@ picture 10 and 12 also blit a smoke sheet once per point of the object's trail a
 
 ## Projectile clock
 
-`ANIM-PHASECLOCK-028`. A projectile's driver computes its sheet frame as
+`ANIM-PHASECLOCK-028`; its constant enumeration of the picture 34/36 ramp is amended by
+`ANIM-BOLTRAMP-035`. A projectile's driver computes its sheet frame as
 
 ```
 phase = (|actionphase| / 2) % Phases          Phases from projectiles.reg

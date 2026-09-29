@@ -21,7 +21,8 @@ not found in the list   append (growable array, capacity doubles, cap 0x400)   A
 
 **Damage notifications.** `FUN_004e9da2` is called from melee/general
 strike, Building strike, both area direct-damage applies, and the general
-effect applier's Token-8 branch (`ANIM-BLOW-019`, `ANIM-074`). Poison
+effect applier's Token-8 branch (`ANIM-BLOW-019`, whose band-operand and
+call-free state-sync clauses are withdrawn; `ANIM-074`). Poison
 produces Token8 (`MAGIC-POISONINPUT-157`); an item equip/use producer remains
 Unknown. First attachment and continuous ticking call base Effect virtual
 `+0x40`, reaching the Token-8 HP body (`MAGIC-POISONREFRESH-158`,
