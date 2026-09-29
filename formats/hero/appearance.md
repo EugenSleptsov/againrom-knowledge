@@ -124,7 +124,8 @@ C.
 graphics\equipment\ <figure> \ primary   \ <name>.256    the info window's figure, per slot
 graphics\equipment\ <figure> \ secondary \ <name>.256    slots 3, 8, 9, and 7 for a mage
 graphics\equipment\ <figure> \ <face>.256                 the head, from drawable+0x24
-graphics\inventory\ <name>.16a                            the icon; missing -> "Invalid item weared "
+graphics\inventory\ <name>.16a                            the icon; missing -> "Invalid item weared ",
+                                                          posted only under -trace
 
 <figure> is one of mfighter, mmage, ffighter, fmage, chosen by (drawable+0x18c & 6) —
 the mage bit and the SEX bit together.

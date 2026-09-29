@@ -29,10 +29,11 @@ class 14 only: bits 0..7 are the whole MagicItems index and there is no shape fi
 ```
 
 Reading a name is `FUN_00483e50`: take the interface element's `u16` at `+0x6`, `Lookup`. On a
-**miss** the element is not drawn under a fallback — it is dropped from the list and a
-diagnostic naming the code is emitted, so the name table is the inventory's admission list
-(`ITEM-NAMEMISS-039`). The numeric form the diagnostic carries is seven digits with no
-separator: `%02d%02d%1d%02d`, or `%02d%02d%03d` for class 14.
+**miss** the element is not drawn under a fallback — it is dropped from the list, so the name
+table is the inventory's admission list (`ITEM-NAMEMISS-039`). Only when the command line
+carries `-trace` does a miss also post a diagnostic naming the code to the map message line;
+without the switch it posts nothing (`MISSION-MSGPOST-058`). The numeric form the diagnostic
+carries is seven digits with no separator: `%02d%02d%1d%02d`, or `%02d%02d%03d` for class 14.
 
 Consequences a consumer must not miss:
 
@@ -70,8 +71,10 @@ above 31 would corrupt the `+0x45` field.
 `"%02d%02d%03d"` of the top two and the whole low byte when the slot field is 14 — and that name
 addresses both `graphics\inventory\<name>.16a`, the icon, and
 `graphics\equipment\<figure>\<layer>\<name>.256`, the figure layer. `FUN_00483d70` tries to open
-the icon and returns 1 when it cannot; the `0x76` equipment message then shows the engine's own
-`"Invalid item weared "` for five seconds. *Weared* is the engine's word for the equipment slots.
+the icon and returns 1 when it cannot. The `0x76` equipment message runs that check only when the
+command line carries `-trace`, and then posts the engine's own `"Invalid item weared "` to the map
+message line, grey, for five seconds; without the switch a missing icon posts nothing
+(`MISSION-MSGPOST-058`). *Weared* is the engine's word for the equipment slots.
 
 **`FUN_00483c80` is not a method on `Item`.** Its `this` is a display record whose `+0x06` is a
 copy of `item+0x40`, made by the record's only two constructor call sites:
@@ -95,7 +98,8 @@ by the nibble and **draws by the `Slot`**. Installed codes agree with their row 
 (`ITEM-PICT-051`).
 
 **A second self-check message.** Beside `"Invalid item weared "` sits `"Invalid item in
-inventory "` (`0x5b83ac`), shown for **10 000 ms** at `004134e7`, gated on `FUN_00483e50` — which
+inventory "` (`0x5b83ac`), posted grey for **10 000 ms** at `004134e7`, likewise only under
+`-trace`, gated on `FUN_00483e50` — which
 is not a file open but a keyed lookup of the same word in the object at `0x5eb410`, and returns
 **non-zero on success**, the opposite polarity to `FUN_00483d70`'s. `graphics\inventory\` is
 composed at five sites in all: `00481f27`, `004838c0`, `00483db1` (the check), `00491815`,
@@ -126,4 +130,5 @@ last row. Use these distinct defaults when constructing a picture word. — ITEM
 
 What the word is used for on the drawing side is [hero appearance](../hero/appearance.md).
 
-Claims: `ITEM-APPEAR-023`, `ITEM-APPEAR-024`, `ITEM-PICT-046`…`ITEM-PICT-051`.
+Claims: `ITEM-APPEAR-023`, `ITEM-APPEAR-024`, `ITEM-PICT-046`…`ITEM-PICT-051`,
+`MISSION-MSGPOST-058`.

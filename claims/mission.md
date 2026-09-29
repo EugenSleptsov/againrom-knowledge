@@ -8,6 +8,167 @@ stores and [`trigger.md`](trigger.md) what the evaluator does with the compiled
 script. Spec: [`formats/mission/format.md`](../formats/mission/format.md).
 Format of this file: [registry.md](registry.md).
 
+## Map message line
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MISSION-MSGLINE-056 | In a campaign session the message line draws its oldest line at (8, 8) and each next one 17 px lower, left-aligned in font1 with a 1-px dark shadow, in the colour its post chose; the text width moves nothing. | High | ● active | [EXP-0408](../experiments/EXP-0408-price-message-line/) |
+| MISSION-MSGLINE-057 | In a campaign session the line keeps at most ⌊⌊H/17⌋/2⌋ lines for a map view H pixels high, 14, 16 or 22 at 640, 800 or 1024 wide; a post appends at the bottom, drops the oldest past that, and lines expire oldest first. | High / Medium | ● active | [EXP-0408](../experiments/EXP-0408-price-message-line/) |
+| MISSION-MSGPOST-058 | Forty-five call sites post to the map message line: 22 only under the `-trace` switch, and 23 for key toggles, game speed, skill increases, pickups, gold, chat, player and diplomacy notices, a save notice and phase-3 console lines. | High | ● active | [EXP-0408](../experiments/EXP-0408-price-message-line/) |
+
+### MISSION-MSGLINE-056
+
+- The line is the list object at `view+0xa10` of the map view
+  (`SESS-VIEW-028`): vtable `0x597070`, constructed once by `FUN_00401bc0`
+  (1 call, `004025d0` in `FUN_004023c6`). It holds a text array at `+0x04`
+  (count `+0x0c`), a colour-ramp array at `+0x18`, a lifetime array at
+  `+0x2c`, the last tick time `+0x40`, the elapsed time `+0x44`, the capacity
+  `+0x48`, a rectangle at `+0x4c` and a redraw flag `+0x5c`.
+- `FUN_004021c0` draws it. It has 2 calls, 0 in orphan code: the view's
+  message `0x402` arm through `FUN_00407b1a` (`0040ca1e`), and `0044698b` in
+  `FUN_0044612f` on an object read from `+0x68`.
+- For `i = 0 .. count−1` it calls `FUN_00456b50(x, y + off, text[i], 0,
+  ramp[i], 1)` and then adds the font's frame-0 height plus 2 to `off`
+  (`0040224b`..`00402301`). While `campaign+0x6bc != 3`, which includes the
+  campaign session, phase 2 (`SESS-PHASE-002`), `x = 8`, `y = 8` and the
+  font is font1 `[0x005e88b8]`; with 3, `x = 0`, `y = 220` and font2
+  `[0x005e92f8]` (`004021fb`..`00402230`). Font1 cells are 15 pixels high
+  and font2 cells 10 (`SPR16A-FONT-015`, `SPR16A-FONT-018`), so the pitch is
+  17 or 12.
+- Flag 0 leaves `x` alone in `FUN_004577f0`: bit 0 subtracts the text width
+  and bit 1 half of it (`004577f7`..`0045782c`). Every line starts at the
+  same `x`, whatever its width.
+- `FUN_00456b50` draws the text twice: at `(x+1, y+1)` with the ramp that
+  the font's `vt+0x18` returns, `0x5e9be8` (`FUN_00457980`), then at `(x, y)`
+  with the line's ramp (`00456b56`..`00456b93`). `FUN_004577f0` hands the
+  ramp to the glyph blit.
+- `FUN_00457c40` fills each ramp once as 16 words, entry `k` packing the
+  channels as `TERR-LIGHT-019` does: `0x5e8878` white, `17k` per channel
+  (`00457dc2`); `0x5e9720` grey, `14k` (`00457dff`); `0x5e9b88`,
+  `(185k/15, 159k/15, 73k/15)` (`00457e79`); `0x5e9be8`, 8 per channel in
+  every entry (`00457d72`..`00457d8d`). A player's ramp is
+  `0x5e88c0 + 32·n` (`ANIM-NUM-020`).
+- A line is drawn as posted. A carriage return in it would split it at
+  `0040226d`, but both post routines replace every carriage return with a
+  space (`00401f00`, `00402046`).
+
+**Confidence.** High: the origin, the pitch, the alignment flag, the shadow
+and the ramps are named instructions in complete routine listings, and the
+cell heights are measured atlases.
+
+**Unknown.** Which object the second draw call at `0044698b` reaches, and on
+which screen. Phase 3 is named only by its writers (`SESS-PHASE-002`); its
+paced idle arm draws no map view (`SESS-IDLE-007`).
+
+### MISSION-MSGLINE-057
+
+- `FUN_00401d80(rect)` copies the rectangle to `+0x4c` and sets the capacity
+  `+0x48` (`00401d80`..`00401e2d`). While `campaign+0x6bc != 3` it is
+  `((bottom − top) / (h1 + 2)) / 2`, signed division, with `h1` font1's
+  frame-0 height; with 3 it is `(screenH − 480) / (h2 + 2) + 14`, with `h2`
+  font2's.
+- It has 2 calls. `FUN_00402c88` passes the view rectangle `view+0x8`
+  (`00402f7c`) after snapping its bottom to whole 32-pixel rows (`00402d86`);
+  `FUN_00402c88` has one call, `004026aa` in the view's constructor.
+  `00477c8b` in `FUN_00477c00` resizes it in phase 3 from the screen
+  rectangle `0x5ea200` less 72 at the bottom.
+- The map view is 480, 576 or 768 pixels high at 640×480, 800×600 and
+  1024×768 (`SESS-VIEW-028`): ⌊480/17⌋ = 28 → 14, ⌊576/17⌋ = 33 → 16,
+  ⌊768/17⌋ = 45 → 22. Phase 3 gives 14, 24 and 38. The panel-driven row
+  writer `0041e112` (`SESS-VIEW-028`) does not resize the list.
+- `FUN_00401e70(text, ramp, lifetime)` sets the redraw flag, word-wraps the
+  text with `FUN_00456ab0` against the list rectangle, 480, 640 or 864 wide
+  in a map session, and appends every piece with the same ramp and lifetime
+  (`00401ec0`..`00401f64`). When the count is then 1 it restarts the clock:
+  `+0x40 = timeGetTime()`, `+0x44 = 0` (`00401f6a`..`00401f79`). While the
+  count exceeds the capacity it removes entry 0 from all three arrays
+  (`00401f80`..`00401fbc`) and leaves `+0x44` unchanged.
+- `FUN_00401fe0` is the same post with font1 always. It drops a one-piece post
+  equal to the newest line (`strcmp` at `0040207a`, `00402064`..`00402089`).
+- `FUN_00402160`, called once, from the view's message `0x401` arm
+  (`0040ecca`), adds `now − last` to `+0x44`. When `+0x44` exceeds the
+  lifetime of entry 0 (unsigned, `0040218a`) it zeroes `+0x44` and removes
+  entry 0: one line per call (`00402160`..`004021b7`).
+- Derived from those instructions: lifetimes run one after another, each from
+  the call that removed the line above it; an overflow removal passes the time
+  already counted to the new top line; and a post of two or more pieces into an
+  empty list does not restart the clock, so its first piece is measured from the
+  last tick before the list emptied.
+
+**Confidence.** High for the capacity formula, the three sizes, the append
+order, the overflow rule and the one-per-call expiry: named instructions and
+the view heights of `SESS-VIEW-028`. Medium for the derived timing clauses:
+they follow from the instructions, but the interval between `0x401` messages
+was not measured.
+
+**Unknown.** The interval between `0x401` messages, and the value `+0x40`
+holds before the first post. The phase when the view is constructed, and
+whether a campaign session can follow the phase-3 resize, which no call
+undoes.
+
+### MISSION-MSGPOST-058
+
+- Census (`evidence/refs.txt`, `evidence/callsites.tsv`): `FUN_00401e70` has
+  44 direct calls from 3 owners and `FUN_00401fe0` 1, 0 in orphan code. A
+  `rel32` scan of every executable byte finds the same 44 and 1 calls and no
+  jump.
+- The switch: `FUN_004709e0` searches the command line for `-trace`
+  (`0x5be3d0`) with `FUN_005549b0` and stores 1 in `[0x005eb58c]` on a match
+  (`00470f7f`..`00470f9c`). `FUN_005549b0` returns the address of the match:
+  the `-session"` parse adds 9 to its result (`004736cc`..`004736da`). The
+  flag lies in the zero-filled tail of `.data` and has 1 write and 22 reads,
+  all in `FUN_004104e8`, 0 in orphan code. Each read's `JZ` skips one post.
+- The 22 posts under `-trace`: message `0x92` subtype 1, string 129 (`No way`),
+  white, 3000 ms (`004108c9`); and 21 grey diagnostics formatted from the
+  literals `0x5b82c8`..`0x5b8914` (`evidence/literals.tsv`): 30 000 ms at
+  `00410e7f`, `00411265`, `004112d3`, `0041150c`, `00412658` and `004126c5`;
+  10 000 ms at `00413504` (`ITEM-PICT-049`); 5000 ms at `004113a7`,
+  `0041274a`, `00413c35` (`ITEM-APPEAR-024`), `004142a4`, `00414698`,
+  `004147de`, `004149c3`, `00414b09`, `00414cf0`, `00414ed8`, `0041503e`,
+  `00415226`, `0041538b` and `00417ad3`.
+- The 23 posts without the switch:
+  1. Seven toggles in `FUN_0040f38e`, each under the Ctrl latch
+     `[0x005eb558]` (`AI-KEYMOD-059`), grey, 2000 ms, with the new state's
+     string: vkey `0x57` strings 94..96 (`0040f9e5`), `0x46` 97..99
+     (`0040fa69`), `0x48` 100..101 (`0040face`), `0x55` 218..220 (`0040fb36`),
+     `0x4c` 102..103 (`0040fb9b`, `ANIM-NUM-020`), `0x4e` 104..105
+     (`0040fbe6`) and `0x4f` 106..107 (`0040fc38`).
+  2. Game speed: vkeys `0x6b` and `0x6d` without the latch, while
+     `campaign+0x6bc == 2` and `campaign+0x3dc == 1`, post string 108 plus the
+     new speed through `FUN_00401fe0`, grey, 2000 ms (`00472d68`..`00472e3a`).
+  3. Skill increase: message `0x92` subtype 2 posts string `129 + k`, or
+     `134 + k` when `[[view+0x3f54]+0x18c] & 2`, with `k = msg+0xe`, white,
+     3000 ms (`00410918`, `0041094c`). Strings 130..134 are the five weapon
+     skills and 135..139 the five magic spheres.
+  4. Message `0x92` subtypes 3..7: `"%s %s %s"` from strings 204..209 and
+     221..226 around a player name, white, 5000 ms (`004109e1`, `00410aca`,
+     `00410b45`, `00410bbf`, `00410c36`).
+  5. The pickup (`004136e7`) and gold (`004169ab`) lines of
+     `ITEM-PICKTEXT-145`, white, 3000 ms.
+  6. Chat, message `0x91`: a sender id of 0, past the player count or naming
+     no player posts the text grey for 10 000 ms (`0041575b`); a known sender
+     posts `name: text` in its player ramp for 10 000 ms (`004158a1`), unless
+     mask 4 of that player's word in `[[view+0x9b4]+0x38]` is set.
+  7. Diplomacy, message `0xb9`: `"%s %s %s"` from strings 142..149, white,
+     3000 ms, each followed by a sound call (`00415e71`, `00415fe7`).
+  8. Message `0xbe`: string 203 (`Your character is saved`), grey, 30 000 ms
+     (`0041852e`).
+  9. Frame message `0x471`, only in phase 3: `n|text` posts `text` in player
+     ramp `n & 0xf`, and a text without `|` posts grey, both 30 000 ms
+     (`004733ed`).
+- Vkey letters are the Windows naming, as in `AI-KEYMOD-059`: `0x57` W, `0x46`
+  F, `0x48` H, `0x55` U, `0x4c` L, `0x4e` N, `0x4f` O, `0x6b` and `0x6d` the
+  keypad plus and minus.
+
+**Confidence.** High: both censuses have 0 orphan hits and agree with the
+`rel32` scan, the flag has one write, and every gate, string, colour and
+lifetime is a named instruction.
+
+**Unknown.** Callers through a code pointer outside `.rdata`. Which unit
+`view+0x3f54` holds, and so whose flag selects the magic strings. Which
+producers send message `0x92` subtypes 3..7, message `0xbe` and frame message
+`0x471` in a single-player session.
+
 ## Start scatter
 
 | ID | Claim | Confidence | Status | Evidence |

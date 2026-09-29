@@ -192,6 +192,15 @@ it is `ceil(price/2)` on the player's side and `price` on the shop's (`SHOP-SCRE
 `SHOP-SCREEN-037`). The grids draw no item name and no characteristics panel
 (`SHOP-SCREEN-039`).
 
+The plaque's text is the number alone, with no label on either root: `"%d"`, grouped in threes
+with commas (`1,250`, `9,999,999`, `-1,250`; `TOWN-469`), its right end 6 pixels inside the
+cell's right edge and its top 1 pixel below the cell's top, in font2 with a 1-pixel shadow. Its
+colour ramp `0x5e9b88` holds `(185k/15, 159k/15, 73k/15)` in entry `k` (`MISSION-MSGLINE-056`).
+Every element except the money cell and a quantity of 0 draws it, whatever the price's sign. For
+a price of 0 or less `log10` has no value, and the x87 integer-indefinite result selects the first
+plaque; that is derived, Medium. Across every reader found, no item-information text composes a
+price, and these grids alone draw an item's own price (`ITEM-PRICETAG-144`).
+
 Of the 134 resources the screen names, 132 are byte-identical on the EN and RU installs; the two
 that differ are `main\text\tips\shop1.txt` and `shop2.txt` (`SHOP-SCREEN-038`).
 Both are shown in **one** widget of a different class (vtable `0x0059ba18`, ctor

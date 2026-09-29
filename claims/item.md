@@ -938,7 +938,7 @@ resolved.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | ITEM-APPEAR-023 | `item+0x40` is the appearance word, assembled from three of the item's own bytes plus a kind rather than stored. | High / Unknown | ● active | [EXP-0115](../experiments/EXP-0115-held-item/) |
-| ITEM-APPEAR-024 | A worn slot whose `graphics\inventory\` sheet is missing makes the engine show `"Invalid item weared "` on screen for five seconds. | High | ● active | [EXP-0115](../experiments/EXP-0115-held-item/) |
+| ITEM-APPEAR-024 | A worn slot whose `graphics\inventory\` sheet is missing posts `"Invalid item weared "` to the map message line for five seconds, and only while the `-trace` switch is set. | High | ● active (amended) | [EXP-0115](../experiments/EXP-0115-held-item/), [EXP-0408](../experiments/EXP-0408-price-message-line/) |
 | ITEM-APPEAR-025 | The appearance `u16` has a second reader, which consumes field D alone, so field C reaches the drawn figure only through the sheet name. | High / Medium | ● active | [EXP-0119](../experiments/EXP-0119-figure-compositor/) |
 
 ### ITEM-APPEAR-023
@@ -973,17 +973,27 @@ index exceeds 31.
   (`00483da6`) and composes `graphics\inventory\` (`0x5beeb4`) + name + `.16a`
   (`0x5bc90c`). It tries to open it (`FUN_004c9f10` at `00483dfc`) and returns
   1 when it cannot (`00483e05`).
-- The `0x76` message arm calls it per slot (`00413c0f`). On a true result it
-  formats `0x5b83e4`, `"Invalid item weared "`, into the on-screen message
-  routine `FUN_00401e70` with a 5000 ms lifetime (`00413c18`).
+- The `0x76` message arm reaches the check only while `[0x005eb58c]` is
+  nonzero, and only the `-trace` switch sets it (`MISSION-MSGPOST-058`):
+  `00413b90 CMP dword ptr [0x005eb58c],0x0` / `JZ 0x00413c4c` skips the name,
+  the check and the post. Under the switch it calls the check per slot
+  (`00413c0f`). On a true result it formats `0x5b83e4`,
+  `"Invalid item weared "`, into the map message line's post `FUN_00401e70`
+  (`MISSION-MSGLINE-056`) with the grey ramp `0x5e9720` and a 5000 ms lifetime
+  (`00413c18`..`00413c35`).
 - Weared is the engine's own word for the twelve slots.
 - `graphics.res` ships 416 `inventory/` nodes, all `.16a`, identical in count on
   both roots. That is a different tree and a different container from the 928
   `.256` figure sheets of `SPR256-EQUIP-042`, addressed by the same name.
 
-**Confidence.** High: the composition, the open, the polarity of the return and
-the message call are named instructions, and the node counts are exact archive
-measurements on both roots.
+**Confidence.** High: the composition, the open, the polarity of the return,
+the trace gate and the message call are named instructions, and the node counts
+are exact archive measurements on both roots.
+
+**Amended.** EXP-0408 (`MISSION-MSGPOST-058`) narrowed the display clause
+([`retracted.md`](retracted.md)). The headline read "makes the engine show
+`"Invalid item weared "` on screen for five seconds". Without `-trace` a
+missing sheet posts nothing.
 
 ### ITEM-APPEAR-025
 
@@ -1412,7 +1422,7 @@ independent tests and the corpus census as standing.
 | ITEM-PICT-046 | The picture-name formatter `FUN_00483c80` is not an `Item` method: it reads a display record whose `+0x06` word is a copy of `item+0x40`. | High / Unknown | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
 | ITEM-PICT-047 | The picture map is partial over the 5 329 constructible items and total over what the data asks for; its inverse over the 416 `inventory/*.16a` nodes is exact. | High | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
 | ITEM-PICT-048 | The two name-word parsers return different not-found defaults, shape 0 `Common` and material 15 `None`, and that asymmetry makes every shipped item drawable. | High | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
-| ITEM-PICT-049 | The engine has two self-check messages about missing item art, and the second, `Invalid item in inventory`, gates on a keyed lookup and opens no file. | High / Unknown | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
+| ITEM-PICT-049 | The engine has two `-trace`-only self-check messages about missing item art, and the second, `Invalid item in inventory`, gates on a keyed lookup and opens no file. | High / Unknown | ● active (amended) | [EXP-0144](../experiments/EXP-0144-item-pictures/), [EXP-0408](../experiments/EXP-0408-price-message-line/) |
 | ITEM-PICT-050 | A five-word material mask on each `Data.bin` row decides which (material, shape) pairs an item may take, and it predicts the picture set exactly: 416 legal items. | High | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
 | ITEM-PICT-051 | The authoring code and the picture word share a layout but are produced by different code; an armour draws by its row's `Slot`, not by the code's kind nibble. | High | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
 | ITEM-PICT-052 | The name table, picture tree and material masks, three files decoded three ways, each give exactly 416 items: 0 named-not-drawn, 0 drawn-not-named. | High | ● active | [EXP-0144](../experiments/EXP-0144-item-pictures/) |
@@ -1498,8 +1508,12 @@ wrong default visibly breaks.
 - `ITEM-APPEAR-024` publishes `"Invalid item weared "`. Beside it, `0x5b83ac`
   is `"Invalid item in inventory "`, composed at `004134b7` with the same
   seven-digit name `FUN_00483c80` produced at `00413493`.
-- It is shown by the same routine `FUN_00401e70` with a 10 000 ms lifetime
-  (`004134e7 PUSH 0x2710`), against the other's 5 000.
+- It is posted by the same message-line routine `FUN_00401e70` with the grey
+  ramp `0x5e9720` and a 10 000 ms lifetime (`004134e7 PUSH 0x2710`), against
+  the other's 5 000.
+- Both messages exist only under the `-trace` switch. This one's block starts
+  `00413479 CMP dword ptr [0x005eb58c],0x0` / `JZ 0x0041357f`
+  (`MISSION-MSGPOST-058`).
 - Its gate is `004134de CALL FUN_00483e50` | `004134e3 TEST EAX,EAX` | `JNZ`,
   the opposite polarity to `FUN_00483d70`'s.
 - `FUN_00483e50` is seven instructions that do no file I/O:
@@ -1518,6 +1532,11 @@ string's address and for `rel32` targets.
 
 **Unknown.** Which panel each of the four load sites draws, and what the object
 at `0x5eb410` is keyed on beyond the word.
+
+**Amended.** EXP-0408 (`MISSION-MSGPOST-058`) narrowed the display clause
+([`retracted.md`](retracted.md)). The card read "It is shown by the same
+routine `FUN_00401e70` with a 10 000 ms lifetime" and named no switch; both
+messages run only while `-trace` has set `[0x005eb58c]`.
 
 ### ITEM-PICT-050
 
@@ -1605,7 +1624,7 @@ read out of a third file.
 | ITEM-DISPNAME-036 | The displayed item name is a stored `itemname.txt` line selected through a `CMap<u16,const char*>` at `0x5eb410`, not composed and not the `Data.bin` row name. | High / Medium | ● active | [EXP-0142](../experiments/EXP-0142-item-names/) |
 | ITEM-NAMEKEY-037 | The name key is the packed item code: material `k>>12`, class `(k>>8)&0xf`, shape `(k>>5)&7`, row `k&0x1f`; class 14 spends the whole low byte on the row. | High | ● active | [EXP-0142](../experiments/EXP-0142-item-names/) |
 | ITEM-NAMEPOP-038 | 416 items have a name; 5 648 further keys the same encoding can address do not, and the shipped name set is not a product of its fields. | High / Medium | ● active (amended) | [EXP-0142](../experiments/EXP-0142-item-names/) |
-| ITEM-NAMEMISS-039 | An inventory element whose code is not in the name map is dropped, not shown under a fallback name, so the name table is the inventory's admission list. | Medium | ● active | [EXP-0142](../experiments/EXP-0142-item-names/) |
+| ITEM-NAMEMISS-039 | An inventory element whose code is not in the name map is dropped, not shown under a fallback name, so the name table is the inventory's admission list. | Medium | ● active (amended) | [EXP-0142](../experiments/EXP-0142-item-names/), [EXP-0408](../experiments/EXP-0408-price-message-line/) |
 | ITEM-NAMEPARSE-040 | `FUN_0050d670` is `Weapon::Weapon(const char*)`, and the tier/material/shape name grammar is an authoring parser that no display path reaches. | High / Medium | ● active | [EXP-0142](../experiments/EXP-0142-item-names/) |
 | ITEM-BRACE-041 | No item-collection row name carries a brace: the `{...}` suffix belongs to the equipment cell, and none of it reaches the display key. | High / Medium | ● active (amended) | [EXP-0142](../experiments/EXP-0142-item-names/), [EXP-0225](../experiments/EXP-0225-item-effect-grammar/) |
 | ITEM-NAMELIMIT-042 | The name decode implies customisation limits: a display name is a whole text line, the `u16` key's field widths are hard, and a `Data.bin` row name is a lookup key. | Medium | ● active | [EXP-0142](../experiments/EXP-0142-item-names/) |
@@ -1698,25 +1717,33 @@ the same 416 keys (`ITEM-PICT-052`). The Medium clause stands as written:
 
 ### ITEM-NAMEMISS-039
 
-- `FUN_004104e8` calls `FUN_00483c80` first (`00413493`), prefixes `0x5b83ac`,
-  the literal `Invalid item in inventory ` (`004134b8`, concatenated at
-  `004134c4`), and only then performs the lookup
+- Each record first tests the `-trace` flag (`MISSION-MSGPOST-058`):
+  `00413479 CMP dword ptr [0x005eb58c],0x0` / `JZ 0x0041357f`.
+- Under the switch, `FUN_004104e8` calls `FUN_00483c80` first (`00413493`),
+  prefixes `0x5b83ac`, the literal `Invalid item in inventory ` (`004134b8`,
+  concatenated at `004134c4`), and only then performs the lookup
   (`004134de CALL 0x00483e50`).
 - `004134e3 TEST EAX,EAX` / `004134e5 JNZ 0x0041350b` takes a hit to the
   `CObArray` grow-and-store at `+0xc8`. The fall-through pushes `0x2710` and
-  `0x5e9720`, calls `0x00401e70` through `[panel+0xa10]` and jumps past the
-  append.
-- A second site at `00413585` skips the append on a miss silently. A third at
-  `0041362c` calls `Lookup` inline.
+  `0x5e9720`, posts the text to the map message line through `0x00401e70` on
+  `[panel+0xa10]` (`MISSION-MSGLINE-056`) and jumps past the append.
+- Without the switch the record takes `0041357f`: `00413585` performs the same
+  lookup, and a miss skips the append with no post (`0041358c JZ 0x004135ef`).
+  Both paths join at `004135ef`. A third site at `0041362c` calls `Lookup`
+  inline.
 - `0041376c MOV word ptr [ECX + 0x6],0xffff` writes the empty-slot sentinel
   that `FUN_00483970` tests with `if (*(short *)(elem + 6) == -1)` before it
   asks for a name at all.
 
-**Confidence.** Medium. The branch, the two pushes and the join are quoted from
-one listing read at three sites, but `FUN_004104e8` is 7 327 instructions and
-only these surroundings were read. That `0x00401e70` is a diagnostic sink
-rather than a display call is inferred from its two literal arguments and was
-not followed.
+**Confidence.** Medium. Both paths of the gate are quoted to their join, but
+`FUN_004104e8` is 7 327 instructions and only these surroundings were read.
+
+**Amended.** EXP-0408 (`MISSION-MSGLINE-056`, `MISSION-MSGPOST-058`) corrected
+the Confidence paragraph ([`retracted.md`](retracted.md)). It read "That
+`0x00401e70` is a diagnostic sink rather than a display call is inferred from
+its two literal arguments and was not followed." `0x00401e70` posts to the map
+message line, and this post runs only under `-trace`. The lookup at `00413585`
+is the same record's path without the switch.
 
 ### ITEM-NAMEPARSE-040
 
@@ -2779,6 +2806,150 @@ index, which EXP-0379 did not measure.
 value-change path or a different one, and what `log10`'s error-handler
 branches (read in full, see `ITEM-137`) produce as a stored byte when
 `Sack+0x1c` is non-positive.
+
+## Price display and pickup notices
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| ITEM-PRICETAG-144 | Across every reader found, no item-information text composes a price and only the shop grids draw an item's own price, as a bare grouped number with no label, the same on both roots. | High / Medium | ● active | [EXP-0408](../experiments/EXP-0408-price-message-line/) |
+| ITEM-PICKTEXT-145 | A pickup posts string 85, a space and the bare item name, plus ` (86 N 87)` when the stack holds more than one, white for 3 s and wrapped at the line's width; a map-session purse gain with message flag 0 posts `88 N 89` the same way. | High / Medium | ● active | [EXP-0408](../experiments/EXP-0408-price-message-line/) |
+
+### ITEM-PRICETAG-144
+
+- The item element keeps its attributes as a tagged stream at `+0x0c`,
+  counted by the byte at `+0x09`: a tag byte, then a dword for tag 1 and one
+  byte for any other tag (`FUN_00484060`, `00484079`..`004840ac`). Tag 1 is
+  the price. The server writes it with `FUN_004f0a18` (tag at `004f0a2e`,
+  dword at `004f0a53`), called 5 times from 4 owners, each pushing tag 1 and
+  `Item+0x1c` (`SHOP-PRICE-011`): `005092eb`, `00509302`, `0050cb1c`,
+  `0050d480`, `0050e462`. `FUN_005092c9` alone sends 0 for the `-1` sentinel
+  (`SHOP-MISSION-019`) and then no further attribute (`005092d3`..`005092f0`);
+  the other three writers push `Item+0x1c` unchanged.
+- The item formatter `FUN_00484160` (`TEXT-HOVERTEXT-052`) dispatches each tag
+  through the tables at `0x00484954` and `0x00484930`. Tag 1 alone reaches
+  `00484225 ADD EBP,0x4` / `JMP 0x004848f5`: the dword is skipped and nothing
+  is appended. The formatter has 4 direct calls from 4 owners, 0 in orphan
+  code: the inventory bar `FUN_00483970` (`00483a5e`), the character screen
+  `FUN_00490c60` (`00491043`), the tavern `FUN_0047d880` (`0047d9c0`) and the
+  shop cell getter `FUN_004a2c70` (`004a2cbd`), which the shelf, table and
+  pack getters `FUN_004a41b0`, `FUN_004a5280` and `FUN_004a5de0` call
+  (`TEXT-HOVERROOM-051`). The seven getters read installed labels 8..14,
+  52..60, 74, 121 and 122; label 74 (`Money`) belongs to the money element.
+- `FUN_00484060(tag)` has 12 calls from 8 owners, 0 in orphan code. Tag 1 is
+  pushed by the grid painter `FUN_004a2fe0` (`004a31b4`, `004a3356`,
+  `004a3428`, `004a3435`), at `004a381b` and `004a6033`, which only branch on
+  zero and sign, and by the wrapper `FUN_004ae4a0`. The wrapper's 7 calls are
+  the stock comparator `FUN_004a6830` (4), a zero test at `004a78cb` and the
+  tray totals `004a9676`/`004a96a3` (`SHOP-TRAY-027`). The other calls push
+  tags `0x29`, `0x2a` and `0x32`. `FUN_004840c0` returns only tags 2..`0x25`
+  (`004840e6`..`004840ec`), `FUN_00484af0` appends a two-byte attribute, and
+  the copy `FUN_00484990` moves the stream without reading a tag.
+- A census of `[R+0x9]` accesses within four instructions of `[R+0xc]`, over
+  475 873 listing instructions, finds 6 pairs in 6 owners, 0 in orphan code:
+  `FUN_00484060`, `FUN_004840c0`, the formatter, the appender and the
+  element's two constructors `FUN_00483af0`/`FUN_00483b50`.
+- The grid number: `FUN_004a2fe0` takes the price, or `(price+1)/2` on the
+  party-backpack side (`SHOP-SCREEN-037`), formats it with `"%d"`
+  (`0x005b8e1c`, `004a343f`), groups it with `FUN_00468f60` (`TOWN-469`) and
+  draws it with `FUN_00456b50(x, y, text, 1, 0x5e9b88, 1)` in font2
+  `[0x005e92f8]` (`004a347b`..`004a3499`). Flag 1 right-aligns the text at
+  `x = view.left + cell.right − 6`, with `y = view.top + cell.top + 1`, the
+  colour ramp `0x5e9b88` and a 1-pixel shadow (`MISSION-MSGLINE-056`). The
+  text is the number alone. The grid draws it for every element except the
+  money element (`+0x6 == 0xffff`) and a quantity of 0 (`004a3317`..`004a3326`).
+- Grid texts from that rule (`evidence/number-format.tsv`), shelf or table
+  side then party-backpack side: 999 `999`/`500`; 1 250 `1,250`/`625`;
+  99 999 `99,999`/`50,000`; 9 999 999 `9,999,999`/`5,000,000`; 0 `0`/`0`;
+  −1 250 `-1,250`/`-624`.
+- The shop's button panel `FUN_004acb50` draws the purse and the deal totals
+  of `FUN_004a95ec`, which multiplies the same value, or `(price+1)/2` for an
+  element of container code 2, by the quantity `+0x10` (`004a9676`..`004a96ab`,
+  `SHOP-TRAY-026`, `SHOP-TRAY-027`). Each number stands beside a caption, and
+  the buy and sell totals are joined to `Buy` and `Sell`, main strings 70 and
+  71 (`SHOP-SCREEN-035`, `SHOP-050`). They are sums for the deal, not item
+  information.
+- Wording search (`evidence/price-wording.tsv`, `evidence/exe-strings.tsv`):
+  13 words (`price`, `cost`, `value`, `worth`, `gold`, `coin`, `money`, `цен`,
+  `стоим`, `золот`, `монет`, `денег`, `деньг`) over 16 installed tables per
+  root (EN 1 568 lines, RU 1 527) and 5 092 printable executable strings.
+  Table hits: main 74, 80, 81, 89 and 117, stats 0, dialogs 46, 48 and 131,
+  four item names, and RU main 169 and 188 (`процент`). Of these, the
+  formatter, the seven getters and the grid painter read only label 74.
+  Label 80, `for %d gold coins?`, is the identify modal's raw line
+  (`TEXT-UI-040`). The 23 executable-string hits are resource paths, key
+  names, `Gold` and two runtime-library messages; none of their addresses is
+  pushed in the listings of those routines.
+- Derived: for a stored 0 or negative price, `FYL2X` and `__ftol` give the x87
+  integer indefinite, whose low dword 0 selects the first plaque
+  (`004a335f`..`004a3367`, `0055458c`).
+
+**Confidence.** High that the formatter appends nothing for the price, for its
+four callers, and for the grid's format, grouping, font, colour argument and
+position: each is a named instruction or a census with 0 orphan hits. Medium
+that no other reader exists, since the population is direct calls, the tag
+tables and one paired-access pattern, and Medium for the derived plaque.
+
+**Unknown.** A computed call to the accessors, a reader in bytes never
+disassembled, and a paired access farther apart than four instructions.
+
+### ITEM-PICKTEXT-145
+
+- The pickup post (`SAV-1114`) is `004135ef`..`004136e7` in `FUN_004104e8`.
+  Only when bit `0x40` of display `+8` is set (`004135fa`, `004135ff JZ`) it
+  clears the bit (`0041360e`), looks the item code `+0x6` up in the name map
+  `0x5eb410` (`00413631`, `ITEM-DISPNAME-036`) without testing the result,
+  and compares the quantity `+0x10` with 1, signed (`0041363c`,
+  `00413640 JLE`).
+- Above 1 it formats `"%s %s (%s %d %s)"` (`0x005b83c8`) with string 85, the
+  name, string 86, the quantity and string 87 (`00413642`..`00413693`);
+  otherwise `"%s %s"` (`0x005b83dc`) with string 85 and the name
+  (`0041369d`..`004136c2`). It posts the result to the map message line with
+  the white ramp `0x5e8878` and 3000 ms (`004136ca`..`004136e7`,
+  `MISSION-MSGLINE-056`).
+- The post wraps the text at the line's width (`MISSION-MSGLINE-057`): a text
+  at least as wide as the list rectangle, 480 px at 640×480, shows as two or
+  more lines, each with the same ramp and lifetime.
+- So single spaces join the pieces, the name carries no quotes, the quantity is
+  plain signed `%d` without grouping, and the count form is the one-item text
+  extended by ` (` … `)`. Each flagged record posts once.
+- The gold line is the client arm of message `0x67` (`004168ff`..`004169c5`).
+  When `campaign+0x3dc == 1` (a map session, `SESS-SCREEN-003`), the stored
+  purse `[[view+0x9b4]+0xc]` is less than the new total `msg+0xa` (signed)
+  and the flag `msg+0xe` is 0, it formats `"%s %d %s"` (`0x005b8908`) with
+  string 88, the difference and string 89 and posts it white for 3000 ms
+  (`004169ab`). It stores the new total whether or not it posts (`004169c5`).
+- `FUN_004faff7(amount, flag)` adds the amount to `Player+0x38` and sends the
+  total and the flag as message `0x67` through `FUN_004ea2f6`. It has 14 calls
+  from 13 owners, 0 in orphan code. The sack pickup `FUN_004f4e3e` passes the
+  sack's gold `[sack+0x3c]` with flag 0 (`004f4e6a`) before it stamps the
+  sack's items for announcement (`004f4e9b`). Flag 1 is passed at `004d2fad`,
+  `004d35b8`, `004d715f` and `004f7a48`. Flag 0 comes with an unnegated amount
+  at `004f4e6a`, `004d4f69` (after a compare with `"Gold"`, `0x5c624c`),
+  `00505402`, `00539f2f` and `0053c61d`, a negated one at `004d856e` and
+  `005059ea`, and 0 at `00506999` and `00506ab4`. The fourteenth, `004fb042`,
+  is in the wrapper `FUN_004fb02e`, which negates the amount, passes the flag
+  through and has no caller.
+- Installed strings (`evidence/slots.tsv`): EN 85 `Picked up`, 86 `now`, 87
+  `pieces`, 88 `Picked up`, 89 `gold`; RU 85 `Вы подняли:`, 86 `теперь`, 87
+  `шт`, 88 `Вы подняли`, 89 `монет`.
+- Texts built from them for item code `0x0e07` (`evidence/composed.tsv`):
+
+  | root | one item | quantity 3 | gold 50 |
+  |---|---|---|---|
+  | EN | `Picked up Small Potion of Healing` | `Picked up Small Potion of Healing (now 3 pieces)` | `Picked up 50 gold` |
+  | RU | `Вы подняли: Целебное Снадобье` | `Вы подняли: Целебное Снадобье (теперь 3 шт)` | `Вы подняли 50 монет` |
+
+**Confidence.** High for both format literals, their arguments, the
+separators, the colour, the lifetime and the gold arm's three conditions: each
+is a named instruction, and both roots' strings are measured bytes. Medium that
+the quantity is the whole carried stack after the pickup: a merge ORs the flag
+into the stack it joins (`ITEM-MERGE-129`), and the record carries that
+stack's quantity.
+
+**Unknown.** The order of the gold line against the item lines of one sack
+pickup. The text when an item code is missing from the name map, since the
+lookup result is not tested. Whether a message `0x67` for another player
+reaches this arm, which reads no player id.
 
 ## Open questions
 
