@@ -1,5 +1,13 @@
 # Overturn history
 
+## Vtable starts searched inside their tables
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `TEXT-SAVELABEL-059` (never-constructed clause and its Medium only) | none of those four vtables is constructed anywhere in the image; Medium that this makes the family unreachable | High / Medium | [EXP-0406](../experiments/EXP-0406-precreate-name/EXP-0406.md) | The four searched addresses are slot 11 of the `CDC`, `CClientDC`, `CWindowDC` and `CPaintDC` tables at `0x0059d1d4`, `0x0059d254`, `0x0059d2d4` and `0x0059d354`, which their constructors and destructors store. The `CDC`, `CWindowDC` and `CPaintDC` constructors have direct callers (6, 3 and 2); one is the `CPaintDC` call at `00472009` in `FUN_00471fe0`, which a message-map entry binds to `WM_PAINT`. The zero-hit search stands for the four interior addresses only. | **PARTIALLY RETRACTED** |
+| `TEXT-NAMEIN-024` (vtable base, slot index and caret-clock clauses only) | The class's vtable is `0x005979c0`; `FUN_00432c80` is its slot 23 (`+0x5c`); the caret stamp is `GetTickCount` | High | [EXP-0406](../experiments/EXP-0406-precreate-name/EXP-0406.md), TEXT-075, TEXT-076 | The 30-slot table starts at `0x005979a8`; `0x005979c0` is its slot 6, and `FUN_00432c80` is slot 29 (`+0x74`). The caret stamp calls `[0x00632fa4]`, WINMM `timeGetTime`. The cap, the drop below `0x20`, key 8, the tooltip index and the six converter owners stand. | **PARTIALLY RETRACTED** |
+| `TEXT-SAVELABEL-055` | The capped text-entry class is not constructed anywhere in the image by the literal-vtable-store idiom | High / Medium | [EXP-0406](../experiments/EXP-0406-precreate-name/EXP-0406.md), TEXT-075 | The search read `0x005979c0`, which is not the class's vtable. `0x005979a8` is stored by both constructors and the destructor, and `FUN_004329b0` is called once, at `00433c16`, where the pre-create screen builds its name field. The zero-hit result stands for `0x005979c0` only. | **RETRACTED** |
+
 ## Hurt cue band operand, state-sync calls, the stage-0 arm and the voice-bank leaf count
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

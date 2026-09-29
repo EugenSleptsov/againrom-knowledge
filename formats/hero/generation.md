@@ -130,7 +130,8 @@ per **instance**, never per class. Four writers, and no shipped surface draws it
 | `FUN_004e0f26` `004e10cf` | the `Name` key of a `Humans.Hero` block that ships in no root |
 
 Limits for a consumer: **10 bytes**, refused at the keystroke by the entry control
-(`TEXT-NAMEIN-024`); charset as `TEXT-COLL-025` bounds it; storage is a `CString`, so there is no
+(`TEXT-NAMEIN-024`, whose vtable clauses are partially retracted; the field only appends,
+`TEXT-075`); charset as `TEXT-COLL-025` bounds it; storage is a `CString`, so there is no
 fixed buffer to overflow; and the field is **not inert** — `FUN_004e32c2` skips any actor whose
 name is empty before evaluating its sex/class predicate, so an empty name changes behaviour.
 
@@ -143,7 +144,9 @@ which nothing in either install provides.
 ## Character-generation controls (`HERO-CHARGEN-082`…`HERO-CHARGEN-085`)
 
 Character generation is two screens and two boundaries. Pre-create owns name, class/sex and
-difficulty. Its Forward copies those fields into the main-frame draft, constructs a temporary
+difficulty. Its name field opens at `npcnames.txt` entry 20, EN `Danath`, RU `Данас`
+(`TEXT-073`), and a hero press rewrites the name only while it is a default (`TEXT-074`). Its
+Forward copies those fields into the main-frame draft, constructs a temporary
 archetype record and opens detailed generation. Detailed Play joins or resolves the participant and
 only then sends command `0x48`, which creates and installs the live actor.
 
@@ -153,8 +156,10 @@ does not mean preservation of the preview record: the reset reconstructs a fresh
 zeros the five class skills, restores the chosen starting skill, recomputes all derived mirrors and
 releases/rebuilds the twelve equipment-object slots (`HERO-CHARGEN-082`).
 
-Detailed Back returns to pre-create and restores name, difficulty and class/sex. Stats, skill and
-appearance are not written at that moment. The next pre-create Forward nevertheless reloads the
+Detailed Back returns to pre-create and copies name, difficulty and class/sex back into it. The
+pre-create enter that runs next resets class/sex to the first hero and turns a default name into
+`npcnames.txt` entry 20 (`TEXT-073`), so only the difficulty and a typed name reach the screen.
+Stats, skill and appearance are not written at that moment. The next pre-create Forward nevertheless reloads the
 archetype defaults unconditionally, so stat and skill edits do not survive the round trip. Pre-create
 Back is the destructive cancel: it releases the temporary record and returns to the participant/lobby
 screen (`HERO-CHARGEN-083`).

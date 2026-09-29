@@ -96,7 +96,8 @@ TEXT-HOVERROOM-051, TEXT-HOVERTEXT-052, TEXT-HOVERPAINT-053
 The game loads multiple CRLF-delimited text resources into positional tables. Entries
 are addressed by table-local or global numeric indices depending on the consumer.
 Loading is byte-preserving; conversion happens when text is displayed or entered, not
-when the resource file is parsed. — `TEXT-STRTAB-023`
+when the resource file is parsed. — `TEXT-STRTAB-023` (both-root line total partially
+retracted; loader and table structure retained)
 
 Table rules:
 
@@ -114,7 +115,50 @@ Table rules:
 The original character-name control stores a bounded one-byte string and applies the
 input conversion before appending accepted bytes. Backspace is handled as editing rather
 than a stored character; control bytes below the printable range are rejected in the
-reached input path. — `TEXT-NAMEIN-024`
+reached input path. — `TEXT-NAMEIN-024` (vtable address, slot index and timer clauses
+partially retracted)
+
+The pre-create screen's name field opens at `npcnames.txt` entry 20 (table-local,
+counted from 0): EN `Danath`, RU `Данас`. On every traced opening the screen copies its
+stored name into the field after replacing `Unnamed` or any of entries 20..23 with entry
+20; a new campaign stores `Unnamed` unless the command line carries `-name`. A return
+from the detailed page keeps a typed name, turns a default name into entry 20 and resets
+the hero choice to slot 0. — `TEXT-073`
+
+A left-button press on a hero writes that hero's entry only when the field holds
+`Unnamed` or one of entries 20..23 and the pressed slot differs from the last pressed
+one: slot 0 (male fighter) entry 20, slot 1 (female fighter) entry 21, slot 2 (female
+mage) entry 23, slot 3 (male mage) entry 22. A typed name is never replaced.
+— `TEXT-074`
+
+The text each press leaves when made from the first opening (`TEXT-074`):
+
+| hero choice | EN | RU |
+|---|---|---|
+| slot 0, male fighter | `Danath` | `Данас` |
+| slot 1, female fighter | `Naira` | `Найра` |
+| slot 2, female mage | `Reniesta` | `Рениеста` |
+| slot 3, male mage | `Fergard` | `Фергард` |
+
+Typing only appends: a converted byte at or above `0x20` is added at the end while the
+text is shorter than 10 bytes, and key 8 removes the last byte. There is no selection,
+insertion point or replace-on-first-key, so the first keystroke extends the seeded name.
+The cap limits typing only. — `TEXT-075`
+
+The caret is the glyph `|` (`0x7c`) appended to the drawn string, so it stands at the
+text's advance sum in the text's font and colour. It flips at the first paint more than
+500 ms after the last flip; a character message under the cap, and the field's
+construction, show it and restart that interval. The draw does not test focus.
+— `TEXT-076`
+
+The prompt, global string slot 125, and the name are left-aligned font4 draws. The
+prompt's glyph cells start at screen origin + (224,305) and the name's at + (224,321),
+where the origin centres the 640x480 screen on the display; no text width enters either
+position. With the normal `/16` ramp the prompt's opaque ink is RGB(65,47,20) and the
+name's RGB(101,39,61) before packing, on both roots. A memory check selects the `/18` ramp
+when the machine reports less than 24,000,000 bytes of physical memory; that ramp gives
+(57,41,17) and (89,34,54), and in that branch a level-15 word also adds a sixteenth of the
+quantized background. Only the strings differ by root. — `TEXT-077`
 
 Two different typed byte sequences can therefore become visually identical under the
 Russian display transform: composing the input conversion with the display conversion
@@ -130,19 +174,19 @@ copy that filters no byte value other than the NUL terminator, distinct from the
 character-name entry's rejection of control bytes below the printable range.
 — `TEXT-SAVELABEL-057`
 
-The character-name control's own vtable is referenced nowhere in the executable image by
-a full instruction-reference search, ruling out that specific class as the save-label
-producer for any construction reached through the literal-vtable-store idiom this
-codebase uses elsewhere; a class constructed by some other means is not excluded by this
-search. — `TEXT-SAVELABEL-055`
+`TEXT-SAVELABEL-055`'s exclusion of the character-name control is retracted: it searched
+an address inside that class's vtable rather than the vtable itself. The control is still
+not the save-label producer (`TEXT-SAVELABEL-057`), and its only direct construction is the
+pre-create screen's name field (`TEXT-075`).
 
 The byte-indexed display-conversion selector documented above for other text surfaces is
 not called, directly or through its only wrapper, by any traced save-label chooser code
 path. — `TEXT-SAVELABEL-054`
 
 Neither the byte-indexed selector's own draw functions nor this image's GDI text-out
-import surface is reached by any traced save-label chooser code path either, and the MFC
-GDI-wrapper vtables that would carry the latter are themselves never constructed. By
+import surface is reached by any traced save-label chooser code path either; the MFC `CDC`
+classes whose tables hold the GDI text wrappers are constructed, so that leg rests on the
+traced chooser paths alone (`TEXT-SAVELABEL-059`'s never-constructed clause is retracted). By
 elimination among these named mechanisms, the field's pixels are consistent with native
 Win32/MFC list-control default painting outside this executable's own code — an
 elimination among catalogued candidates, not a positive trace, and it does not exclude an
@@ -192,13 +236,21 @@ The published rules do not establish:
 - coverage of strings embedded in every possible non-text resource type;
 - whether the save-label chooser's byte-to-glyph mapping can differ between EN and RU for
   this field: the two lawful executables are byte-identical (`TEXT-SAVELABEL-061`), so any
-  such difference would have to come from outside `rom.exe` — this image's own draw
-  mechanism is eliminated by `TEXT-SAVELABEL-058`/`-059`, so the mapping is a property of
-  whatever paints the field, not settled by that elimination;
+  such difference would have to come from outside `rom.exe` — no traced chooser path
+  reaches this image's own draw mechanisms (`TEXT-SAVELABEL-058`; `TEXT-SAVELABEL-059`
+  partially retracted), so the mapping is a property of whatever paints the field, not
+  settled by that elimination;
 - which native control paints the save-label chooser's field (a catalogued in-image
   mechanism is excluded by elimination, `TEXT-SAVELABEL-058`/`-061`, but the specific
   native control is not identified), what it does with a byte outside 7-bit printable
-  ASCII, and what bounds the field's drawn length — all three need a running original.
+  ASCII, and what bounds the field's drawn length — all three need a running original;
+- whether a keystroke reaches the pre-create name field before the field is pressed
+  (`TEXT-075`), and what the `-name` source string and any untraced opening of that
+  screen supply (`TEXT-073`);
+- the caret's visible blink period, which adds the repaint interval to 500 ms
+  (`TEXT-076`);
+- the displayed pixel of the prompt and name inks, which depends on the framebuffer's
+  channel widths, and whether a native original runs with the `/18` ramp (`TEXT-077`).
 
 ## Decode and encode sequence
 
@@ -211,5 +263,6 @@ The published rules do not establish:
 For keyboard input, apply the input transform before appending accepted bytes;
 backspace edits the current string. Preserve stored bytes on save or resource
 rewrite. Display conversion is not injective and therefore has no unique
-inverse suitable for reconstructing original text. — TEXT-STRTAB-023,
-TEXT-INDEX-003, TEXT-DOM-010, TEXT-NAMEIN-024, TEXT-COLL-025
+inverse suitable for reconstructing original text. — TEXT-STRTAB-023 (line total
+partially retracted), TEXT-INDEX-003, TEXT-DOM-010, TEXT-NAMEIN-024 (vtable clauses
+partially retracted), TEXT-COLL-025

@@ -61,6 +61,29 @@ effects use visible terrain/object state and scheduled replay.
 — VIDEO-SFX-016, VIDEO-SFX-017, VIDEO-SFX-018, VIDEO-SFX-019,
 VIDEO-SFX-020, VIDEO-SFX-021
 
+## Character-generator sounds
+
+The pre-create page restarts `level1..3.wav` on each press on a difficulty
+button and `char.wav` on each press on a hero button, selected or not. OK or
+Enter with a non-empty name, the Back amulet and Escape request `ok.wav` unless
+it plays and then close the page; with an empty name OK and Enter do nothing.
+The close stops `ok.wav` within the same call. — VIDEO-SFX-058
+
+The detailed page restarts `+_-.wav` for each applied statistic step,
+including a double-click's second click and the held-button repeat; a refused
+step is silent. A skill press requests its class's member for that skill slot
+unless it plays: slot 1 sword or fire, 2 axe or water, 3 club or air, 4 pike
+or earth, 5 bow or astral. The school room requests the same members by slot.
+— VIDEO-SFX-059
+
+Every request uses the SFX volume, pan 0, no loop and priority 128. At most one
+instance of each member plays; members share 16 channels and displace only a
+lower-priority sound when all are busy. The volume option never suppresses a
+request. The main menu buttons and the Hall of Fame OK also request `ok.wav`.
+Motion, release, the right button and page opening play nothing. Audibility of
+the closing `ok.wav`, the repeat cadence and requests from outside the searched
+code remain Unknown. — VIDEO-SFX-058, VIDEO-SFX-059, VIDEO-SFX-060
+
 <a id="resource-selection"></a><a id="sidecar"></a><a id="user-stop-behaviour"></a><a id="decoder-boundary"></a>
 
 ## Cutscene sequence
@@ -77,14 +100,15 @@ VIDEO-SFX-020, VIDEO-SFX-021
    mouse-button-down, close or quit events. Natural completion and some
    open/construction failures instead continue the scan.
 
-— VIDEO-029, VIDEO-030, VIDEO-031, VIDEO-032, VIDEO-033, VIDEO-034,
-VIDEO-035, VIDEO-036
+— VIDEO-029, VIDEO-030, VIDEO-031 (its former first-dot reading is
+retracted), VIDEO-032, VIDEO-033, VIDEO-034, VIDEO-035, VIDEO-036
 
 The decoder boundary needs resource input, frame dimensions/count, palette
 changes, frame progression/timing and destination ownership. Sidecar fade/pan
 state and user interruption operate around this boundary. The sidecar is a
 [REG store](../reg/format.md); its records are not part of the SMK bitstream.
-— VIDEO-045, VIDEO-046, VIDEO-047, VIDEO-048, VIDEO-049, VIDEO-050, VIDEO-051
+— VIDEO-045 (its allocation-selector clause is retracted), VIDEO-046,
+VIDEO-047, VIDEO-048, VIDEO-049, VIDEO-050, VIDEO-051
 
 <a id="a-namespace-that-is-not-a-cutscene-surface"></a>
 
