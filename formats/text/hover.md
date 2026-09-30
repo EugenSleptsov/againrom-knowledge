@@ -84,8 +84,9 @@ separators in both installed languages. — TEXT-HOVERPAINT-053
 This lifecycle is separate from introductory `text/tips/*.txt` panels, whose
 constructor, controls and persistent `TipsMode` gate are documented in the town
 claims. Disabling an introductory panel is not evidence that the hover
-controller's distinct enable field is disabled. — TEXT-HOVERPAINT-053,
-TOWN-184, TOWN-185, TOWN-186
+controller's distinct enable field is disabled. `TOWN-184` is amended: only
+the room named in one aside of that claim is retracted, and the operand-order
+finding cited here stands. — TEXT-HOVERPAINT-053, TOWN-184, TOWN-185, TOWN-186
 
 ## Limits
 

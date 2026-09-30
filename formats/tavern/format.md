@@ -177,10 +177,12 @@ serialized count of 0 loads as two empty arrays that nothing repopulates. — SA
 
 Each mercenary type's flavor bio lives at `main.res::text/inn/mercenary/npc<NN>.txt`, with voice
 at `speech.res::inn/mercenary/npc<NN>p<N>.wav`. Over this experiment's three data roots (EN, RU
-and a fourth, owner-supplied pre-release snapshot), the fourteen bio text files ship on all three
-alike — 0 asymmetric — but voice does not: most `inn/mercenary/*.wav` parts are EN/RU-only, two
-differ EN-vs-RU inside the same bio, and where the pre-release root does carry mercenary voice its
-byte size matches EN's exactly rather than RU's (`TAVERN-MERCVOICE-008`).
+and a fourth, owner-supplied pre-release snapshot), the fourteen `inn/mercenary` text files ship on
+all three alike — 0 asymmetric — but voice does not: most `inn/mercenary/*.wav` parts are EN/RU-only,
+two differ EN-vs-RU inside the same bio, and where the pre-release root does carry mercenary voice its
+byte size matches EN's exactly rather than RU's (`TAVERN-MERCVOICE-008`). Thirteen of the fourteen are
+type bios, for types 1..10, 12, 13 and 14; the fourteenth, `npc35`, is the town gate line
+(`TAVERN-BUTTON-020`).
 
 ## Roster progress and selected-entry prerequisites
 
@@ -252,3 +254,22 @@ synthesised `Hero` or `Human` object shows its composed face figure; one with
 neither, npc2 in the shipped campaign, takes the `infowindow` picture arm, and
 which picture it shows is Unknown.
 — TAVERN-TALKSTATS-017
+
+## Roster and button clicks
+
+A click on an occupied roster cell selects it and refreshes the first button
+caption. Only occupied cells are tested, mercenary cells first. A double click
+on a mercenary cell hires or dismisses its type, and on a talk-only cell opens
+its talk dialogue. No routine read tests the candle, cauldron or tender, and
+the tavern view's own message handler and the controls of its tip popup were not
+read for mouse messages; a click on them reaches the cell rectangles that
+overlap them. — TAVERN-CLICK-019
+
+The button column has three rectangles that act on release over the pressed
+one. The upper hires or dismisses the selected mercenary and does nothing for a
+talk-only cell. The middle opens the bio dialogue `inn\mercenary\npc<NN>` for a
+mercenary cell, where `NN` is the type, or the talk dialogue for a talk-only
+cell. The lower leaves the tavern and returns to the town view. The talk
+dialogue is `inn\NPC\npc<NN>m<M>`, with `M` from `InnMission` or, when that
+entry is 0, the live main mission. Delivery of the double click and the sound
+files of these actions are Unknown. — TAVERN-BUTTON-020, TAVERN-CLICK-019

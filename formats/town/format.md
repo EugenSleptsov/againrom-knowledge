@@ -2,10 +2,10 @@
 
 # Town rooms, reactions and animation
 
-Town pointer handlers and paint routines maintain entrance state, ambient
-episodes, tavern selection and school-training pictures. These contracts are
-conditional on the named handlers being reached. Physical-pointer delivery
-and audio-device results remain Unknown.
+Town pointer handlers and paint routines maintain click targets, entrance
+state, ambient episodes, tavern selection and school-training pictures. These
+contracts are conditional on the named handlers being reached. Physical-pointer
+delivery and audio-device results remain Unknown.
 
 ## Tavern entry ordering boundary
 
@@ -29,6 +29,46 @@ A delivered blank-mask update removes those labels but does not reset active
 shop/tavern/school frames or enable bits. Focus loss is not that proved update.
 (`TOWN-399`)
 
+## Click targets
+
+A left click in the town view reaches slot `+54`, `004b4c70`, which samples the
+picture `townmask.bmp` and tests nothing else: no drawn figure has a rectangle,
+sprite bound or test of its own there. The right button and the other click
+slots are default stubs. Five mask values act: `80h` tavern, `90h` shop, `a0h`
+gate, `b0h` statue, `c0h` school. Every path returns 1, and a click on any
+other pixel does nothing in that routine. The mask is 640x480 at 8 bits. Each
+value forms one large connected region, and `80h`, `90h` and `a0h` also hold
+single stray pixels elsewhere. While the tips option is on, its initial value,
+the tip popup over (328,0)-(640,200) is offered a click first, with its text
+area, Close button and checkbox (`TOWN-185`, `TOWN-186`); what they do with a
+left click is not read here (`TOWN-207`). (`TOWN-473`)
+
+Ten painted figures overlap a region: tavern door and label (`80h`),
+shopkeeper and label (`90h`), gate door and guards (`a0h`), statue star
+(`b0h`), school fighter, mage and label (`c0h`). Horses 2 and 4 reach `80h` and
+`c0h` with 7 and at most 167 pixels. Sign, weathervane, birds,
+horses 1, 3 and 5, baba and dervish overlap none. Outside the tip popup, a
+figure is clickable where it lies on a region and inert elsewhere. A region is
+larger than the figures on it, so it is not their outline. (`TOWN-474`)
+
+Each region posts one message: tavern `42bh`, shop `42ah`, school `42ch`, gate
+`42dh`, statue `41fh`. Tavern and school open only while campaign state `+3dc`
+is 0, and the shop while it is 0 or is 1 with phase word `+6bc` at most 1.
+The gate and statue have no `+3dc` condition. The gate first asks the offer
+helper: with nothing on offer it opens the dialogue `inn\mercenary\npc35` and
+posts nothing, otherwise it posts. The statue opens the town menu. The four
+room arms send `445h` first, which leaves the town view. The shop and the
+school speak on entry when the campaign holds an offer for them. No separate
+mercenary hall is reached from the town. (`TOWN-475`)
+
+Inside the shop the merchant panel tests four shelf rectangles and two prompt
+rectangles, and the painted merchant is not tested in that panel. The school
+view tests the mage panel in one state and the fighter panel in another through
+their class masks. A click on one of the five skill icons of the shown panel
+changes that icon's state, plays its sound and selects its skill. The school
+slots read do not test the trainers, the diamond or the column picture; the
+other children of the shop and school views were not read. (`TOWN-478`)
+
 ## Entrance state
 
 | entrance | arm and retained state | advance and end | conditional sound request |
@@ -43,6 +83,16 @@ Guard animation is separate from the door: eight-frame sprite `+e4`, frame
 other recovered arms set +1. Its unconditional hub helper clamps at endpoints,
 stops on overshoot, and uses `Guard1.wav`/`Guard2.wav` on direction-latch changes.
 The same hub can request then release a guard sound. (`TOWN-403`)
+
+In the town routines read, the guards start moving only when a pointer message
+is delivered. The hub then moves the frame one step per admitted hub, at most
+one hub per 68 ms. With the pointer on the gate and nothing on offer the sweep
+runs frames 6 to 0 over seven hubs and clamps on the eighth. Any other message
+sets +1, which reverses a sweep in progress from the current frame. Entry sets
+frame 7, step 0 and latch 0 and reloads the sheet, so the guards start every
+visit at rest. Leaving the view frees the sheet and sounds and writes none of
+those fields. The town routines hold no timer, loop or return trigger for the
+guards. (`TOWN-476`, `TOWN-477`)
 
 All sound requests above are conditional calls to `00453b08`, not guarantees
 of audible output. Null pointers, status lookup, audio availability and indirect
@@ -157,6 +207,14 @@ here proves that a stationary physical pointer receives no updates. Frame and
 latch persistence through focus changes, screen reuse, untaken indirect calls,
 or changing gate availability is not closed. School interiors are outside this
 contract. (`TOWN-399`, `TOWN-402`, `TOWN-403`)
+
+The click and guard contracts read the town routines only. The tip popup's
+controls, the per-instance handler at `+34` and 96 stores at the guard fields'
+displacements in other routines, counted and not attributed, were not read, and
+children added outside the constructor and enter routines were not searched. The
+crossed-halberd frame, audible guard playback and pointer messages the system
+generates after a room closes remain Unknown. (`TOWN-473`, `TOWN-476`,
+`TOWN-477`)
 
 ## Tavern interior draw and clocks
 

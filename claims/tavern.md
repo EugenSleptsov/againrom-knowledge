@@ -384,7 +384,7 @@ undisassembled.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| TAVERN-MERCVOICE-008 | The fourteen mercenary bios ship on all three roots, but 16 of 21 mercenary voice parts are EN/RU-only; where the pre-release root carries voice, its byte size matches EN's, not RU's. | High / Medium | ● active | [EXP-0393](../experiments/EXP-0393-inn-text-closure/) |
+| TAVERN-MERCVOICE-008 | The fourteen mercenary bios ship on all three roots, but 16 of 21 mercenary voice parts are EN/RU-only; where the pre-release root carries voice, its byte size matches EN's, not RU's. | High / Medium | ● active (amended) | [EXP-0393](../experiments/EXP-0393-inn-text-closure/) |
 | TAVERN-ORDER-015 | The mercenary cells follow the walk of the campaign document's actor map, not any persisted list. | High / Medium | ● active | [EXP-0400](../experiments/EXP-0400-tavern-roster-presentation/) |
 | TAVERN-TALKPIC-016 | A talk-only cell draws the sheet of the object `FUN_00422b29(InnNPC[j])` returns: `HeroMage`/`HeroFighter` when `+0x18c` bit 0 is set, else `Unit<+0x15b>`; the selected cell animates it. | High / Medium | ● active | [EXP-0400](../experiments/EXP-0400-tavern-roster-presentation/) |
 | TAVERN-TALKSTATS-017 | Selecting a talk-only cell shows that object's statistics in the upper left panel only when its `+0x18c` bit `0x40` is clear, and a synthesised object is created with it set. | High / Medium | ● active | [EXP-0400](../experiments/EXP-0400-tavern-roster-presentation/) |
@@ -409,6 +409,11 @@ reads over a named, closed set of 21+14 paths
 (`evidence/dialogue-presence.csv`). Medium for reading the three size matches as
 unlocalized or reused audio: consistent with a byte-identical payload, but only
 size was compared, not a payload hash, so exact identity is not established.
+
+**Amended.** One of the fourteen text files, `npc35`, is the town gate line, and one
+of the 21 voice parts, `npc35p1.wav`, is its voice; the other thirteen text files
+are type bios (`TAVERN-BUTTON-020`, `TOWN-475`). The presence and size figures
+stand.
 
 ### TAVERN-ORDER-015
 
@@ -523,3 +528,113 @@ actor.
 
 **Unknown.** npc2's picture, and whether a live actor answers its `Platoon`
 term.
+
+## Roster and button clicks
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TAVERN-CLICK-019 | In the tavern a click on an occupied roster cell selects it and a double click hires or dismisses a mercenary or opens a talk dialogue; no routine read gives the candle, cauldron or tender a click test. | High / Medium | ● active | [EXP-0409](../experiments/EXP-0409-town-figures/) |
+| TAVERN-BUTTON-020 | The three tavern buttons are rectangles that act on release over the pressed one: the upper hires or dismisses, the middle opens the bio or talk dialogue, the lower leaves for the town. | High | ● active | [EXP-0409](../experiments/EXP-0409-town-figures/) |
+
+### TAVERN-CLICK-019
+
+- A click reaches the child that holds the point through the base dispatcher's
+  children broadcast (`TOWN-139`, `TOWN-211`), and the view's own `+0x54`
+  forwards to the same child (`TOWN-013`, `TOWN-014`). Of the three children
+  (`TOWN-064`) the left panel's `+0x54` (`0047d490`) returns 0, and the
+  right-button slots `+0x60`, `+0x64` and `+0x68` are default stubs in all three
+  (`evidence/refs.txt`, `evidence/d-tavern.txt`).
+- Roster `+0x54`, `0047fda0`, runs the cell test `0047f4c0`: `PtInRect` over the
+  cell rectangles `i` below `view+0xc8` plus `view+0xf0`, so only occupied cells
+  count, mercenary cells first (`TOWN-066`, `TOWN-467`, `TOWN-468`). A hit
+  stores `i` at `view+0xb8`, refreshes the first button caption (`0047e6a0`,
+  `TOWN-391`), requests sound `+0xa8` (`0047d440`) and returns 1. A miss returns
+  0. The roster's left-up slot `+0x58` is a stub.
+- Roster `+0x5c`, `0047fce0`, is the double-click slot (`TOWN-211`, `TOWN-406`).
+  It runs `+0x54` first and returns 0 when that misses. On a hit, a selection
+  below the mercenary count `view+0xc8` reads the type byte `unit+0x15b` and
+  calls dismiss `00480f60` when `[campaign+0x5d0][type-1]` is nonzero, hire
+  `00480e80` otherwise, then refreshes the caption. Hire is refused with sound
+  `+0xa0` when the price exceeds the money left (`MERC-HIRE-003`). A selection
+  at or above the count calls the talk routine `00480fd0`. Every hit returns 1.
+- `00480fd0` formats `inn\NPC\npc%02dm%d` (literal `0x5bed8c`) from
+  `InnNPC[idx]` and `InnMission[idx]` at `idx=sel-count`. When `InnMission[idx]`
+  is 0 the second number is the live main mission. It opens the dialogue through
+  `004217be`, queues a nonzero mission and requests sound `+0xb4` (`REG-118`,
+  `REG-SCN-064`, `DLG-ZEROARM-029`). The text nodes are `main.res`
+  `text/inn/npc/npc<NN>m<M>.txt`: 22 nodes and 17499 bytes on EN, 29 nodes and
+  22758 bytes on RU (`evidence/node-families.tsv`, `evidence/nodes.tsv`).
+- The candle (160,48)-(240,168), the cauldron (420,160)-(480,412) and the tender
+  (240,152)-(420,364) are placed by painter addends (`TOWN-407`). No click slot
+  read tests them. The candle overlaps no cell rectangle, the cauldron overlaps
+  cells 11 and 17, and the tender overlaps cells 7 to 11 and 13 to 17. A click
+  there reaches the cell test, which selects only an occupied cell
+  (`evidence/rooms.tsv`). The tip popup that the tavern's enter builds at
+  `00480647` over (0,0)-(312,200) while the tips option is on (`TOWN-015`)
+  contains the candle whole and overlaps the tender; `evidence/rooms.tsv` has no
+  popup row and the popup's controls were not read for mouse messages
+  (`TOWN-207`).
+- The hero figure in the right column is the shared character panel
+  (`SHOP-FIGURE-041`, `TOWN-349`).
+
+**Confidence.** High for the slot words, the cell test, the double-click routing
+and the talk routine: each was read at instruction level, and both roots run one
+program (`evidence/rom-program-digest.tsv`). Rival excluded: a hit test on the
+candle, cauldron or tender inside the roster child, whose click slots are the
+two above and stubs. Medium that no other routine acts on a click in the figure
+rectangles: the tavern view's own message handler `00480380` (`vt+0x48`) and the
+controls of the tip popup were not read for mouse messages. Medium that a double
+click reaches `+0x5c`: the base dispatcher maps message `0x203` to it
+(`TOWN-211`, `TOWN-406`), and the window class was not read.
+
+**Unknown.** The files bound to the sounds `+0x98` to `+0xb4`, the voice nodes of
+the talk family, and what the tip popup's controls do with a left click.
+
+### TAVERN-BUTTON-020
+
+- The buttons child (vtable `00599f60`, rectangle (480,0)-(640,238), `TOWN-064`)
+  has three rectangles that its initializer `0047dc10` stores at `+0x90`,
+  `+0xa0` and `+0xb0`: index 0 (484,44)-(624,90), index 1 (484,91)-(624,137) and
+  index 2 (484,138)-(624,184). They are the upper, middle and lower bands
+  `TOWN-214` draws the buttons in (`evidence/d-capstone.txt`,
+  `evidence/exe-anchors.tsv`). The hit test `0047e5f0` runs `PtInRect` on them
+  with the point relative to the parent origin and returns the first index or
+  -1.
+- Left down `+0x54`, `0047e390`, stores the hit index at `+0xc0` (-1 on a miss),
+  requests sound `parent+0xb0` for index 2 and returns 1 for any point. Double
+  click `+0x5c`, `0047e3f0`, repeats `+0x54`. The pointer slot `+0x4c`,
+  `0047e370`, only updates the highlight `+0xc4` (`0047e640`) and returns 0.
+- Left up `+0x58`, `0047e410`, acts only when `+0xc0` is 0, 1 or 2 and the hit
+  test at the release point returns the same index. It clears `+0xc0` and
+  returns 1 on every path. The actions:
+  - Index 0, upper: for a selection below the mercenary count it dismisses
+    through `00480f60` when `[campaign+0x5d0][type-1]` is nonzero and hires
+    through `00480e80` otherwise, then refreshes the caption. For a talk cell it
+    does nothing.
+  - Index 1, middle: for a selection at or above the count it calls `00480fd0`
+    (`TAVERN-CLICK-019`). Otherwise it formats `inn\mercenary\npc%02d` (literal
+    `0x5beb64`) with the type byte `unit+0x15b`, opens it through `004217be` and
+    requests sound `+0xb4`.
+  - Index 2, lower: `00480c60` sends `0x445` through the view's `vt+0x48` and
+    posts `0x42e` to the window `[object+0x1c]`, which reopens the town view
+    (`TOWN-477`).
+- The captions are `main.txt` slot 258 or 259 for the upper button by hire state
+  and empty for a talk cell, slot 242 for the middle and slot 232 for the lower
+  (`TOWN-391`, `TOWN-383`).
+- The bio nodes are `main.res` `text/inn/mercenary/npc<NN>.txt` for NN 01 to 10,
+  12, 13 and 14: 13 nodes on each root (EN 3026 bytes, RU 2603 bytes). The
+  family holds one more node, `npc35`, which is the town gate line (`TOWN-475`;
+  14 nodes, EN 3249 bytes, RU 2836 bytes). No node exists for types 11 and 15 on
+  either root (`evidence/node-families.tsv`, `evidence/nodes.tsv`). This narrows
+  `TAVERN-MERCVOICE-008`, whose fourteen bios include `npc35`.
+
+**Confidence.** High for the three rectangles, the hit test, the three slot
+bodies and the action switch: each was read at instruction level, the
+initializer's stores were checked byte for byte against the rectangle fields,
+and both roots run one program (`evidence/rom-program-digest.tsv`). The index
+order agrees with the caption order of `TOWN-391` and `TOWN-392`. Rival
+excluded: an action on release without the pressed index, which `0047e48c` rules
+out.
+
+**Unknown.** The sound files bound to `parent+0xb0` and `+0xb4`, and what
+`004217be` shows for a bio node that does not exist.
