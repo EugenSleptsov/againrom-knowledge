@@ -52,7 +52,14 @@ member's route and reservation state, then forks on identity: the named member e
 with its post set to its own cell and no pending order; every other member enters state 3 with the
 named member at `ord+0x0c`, its own `actor+0x12c` at `ord+0x14`, and no pending order. The next
 member-state pass therefore acquires on the subject and engages on everyone else
-(`AI-SCRIPTATTACK-120`).
+(`AI-SCRIPTATTACK-120`, whose headline universality and single-walk dispatcher reading are
+superseded; the two helper branches stated here stand). The dispatcher walks the group twice.
+Before the per-member call it compares the target cost of member and named unit with the sentinel
+`0xffffff` (`AI-COST-071`, reached only through a zero cell of `AI-PREF-070`'s matrix); on the
+sentinel it takes the named-member branch (`FUN_0052fd40`: state `0xc`, post its own cell, no
+pending order) instead of the other-member branch, so that member acquires in place and never
+engages the named unit. Every shipped `Victim` reference is a Humans unit in movement domain 1,
+so no shipped node reaches it.
 
 Subcommand 11 is the defend form already specified by `AI-DEFEND-111` and
 `AI-FOLLOWSET-116`: the named member acquires, every other member stores it at `ord+0x10` and
@@ -101,7 +108,7 @@ runtime populations and dense-count wrap remain Unknown (`AI-RETREAT-274`).
 Both call the same distance-3 away picker and install pending move 1. The picker clamps to
 `[8, dimension-9]`; a zero coordinate difference becomes 1. It has no passability test.
 Route search, not the picker, handles inaccessible cells. These geometry clauses survive
-the partial correction to `AI-WITHDRAW-028`.
+the partial correction to `AI-WITHDRAW-028`, whose living-only centroid clause is retracted.
 
 **Shipped threshold source, not explicit-command eligibility.** The **Humans** table has
 neither column; that is not an immunity to explicit Retreat. Of the 56 parameterised Units rows in

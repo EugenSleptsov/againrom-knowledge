@@ -25,7 +25,9 @@
 0053116e  MOV byte ptr [EAX + 0x9],DL
 ```
 
-`ord+0x09` is the progress byte of `AI-PROGRESS-034`. The order switch of `AI-ORDER-039` — walk,
+`ord+0x09` is the progress byte of `AI-PROGRESS-034` (whose four-value liveness clause is
+superseded: `0xff` is a fifth live value). The order switch of `AI-ORDER-039` (whose arm-`0xb`
+clause is retracted) — walk,
 attack, cast at an actor, cast at a cell, and eleven others — is entered only while it is 0
 (`0053117c JZ 0x0053125a`). Progress value 4 routes to the arm at `0x00531228`, which sets
 `actor+0x54 = 0x1a`, re-tests the same bit, calls nothing, and clears the progress byte only when

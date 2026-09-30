@@ -130,10 +130,11 @@ ground → `v = 16`, step 16, `ticks = 16` — exactly one full tick, ≈ 992 ms
 distinct times on cost-8 terrain; the slope term is a `>>6`; a diagonal is 0.97..1.15× of `√2 ×` the
 straight time rather than exactly `√2`. Only `Speed`, `RotationSpeed` (`data.bin`),
 `SpeedMultiplier` and the `Cost*` alphabet (`map.reg`) are carried by a shipped file
-(`MOVE-LIMIT-033`). The two gates above are **neither**: the spread threshold is a compile-time `2`
-and the formation mode is per-player runtime state whose only authored surface is trigger instant 7
-(`Set formation`), whose installed use carries the constructor default
-(`AI-SPREAD-038`, `AI-FORM-037`).
+(`MOVE-LIMIT-033`). The spread threshold is not carried by a shipped file, being a compile-time `2`;
+the formation mode is per-player runtime state whose only authored surface is trigger instant 7
+(`Set formation`), which the campaign's one node uses to author 0 rather than the constructor
+default (`AI-SPREAD-038`; `AI-FORM-037`, whose corpus clause reading 2 is retracted, and
+`TRIG-PARAM-030`).
 
 ## Area effects (`MOVE-AREA-038`)
 
@@ -207,7 +208,8 @@ The states that do this:
 | `ord+0x09 = 0xff` | `00531789`, when the queued command is `actor+0x50 == 0x17` | no order runs; cleared only by `FUN_00532e60` |
 | `actor+0x54 == 0x10` | elsewhere | `FUN_004f37be` returns at `004f37e9` before the machine runs |
 
-A refusal takes effect only from `ord+0x09 == 0`, which `AI-ORDER-039` fixes as the tick the actor
+A refusal takes effect only from `ord+0x09 == 0`, which `AI-ORDER-039` (whose arm-`0xb` clause is
+retracted; this clause stands) fixes as the tick the actor
 stands on a cell centre (`FUN_00545c30` testing `pos+0x4 == pos+0x5 == 0x80`). An actor in transit
 is in progress state 3, whose arm still calls `FUN_005495f0` and clears the byte on arrival. **A
 stopped unit is therefore always aligned to the grid, never caught between cells.**

@@ -125,7 +125,8 @@ actor placement; `+3d` alone supplies no universal city/world shape rule.
 The 32-byte settings allocation is copied raw. Its constructor clears it and
 sets byte `+1f=2`, the formation mode. The other bytes are not specified as
 padding or safe replacements for stored state.
-— AI-FORM-037, SAV-662, SAV-663
+— AI-FORM-037 (its corpus clause is retracted; the constructor byte stated here stands), SAV-662,
+SAV-663
 
 | Consumer | Player relation |
 |---|---|

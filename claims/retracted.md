@@ -1,5 +1,12 @@
 # Overturn history
 
+## Stand Ground members between evaluations
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `AI-REACH-072` (the consequence that group order 3's members never chase only) | Verbatim: "The second scorer refuses anything past reach outright, which is why group order 3's members never chase." | High | [EXP-0411](../experiments/EXP-0411-stand-ground/EXP-0411.md), AI-350, AI-353 | The scorer refusal stands: at each evaluation the arm assigns no target past reach. The pursuit order stored at the previous evaluation is not cancelled by the arm until the next one, and the executor row 5 re-reads its victim on every actor tick, so a member follows a victim, whether it leaves reach or stays in reach, until the next evaluation, a stand or a refused route replaces the order (Medium, `AI-353`). | **NARROWED** |
+| `AI-STAND-076` (the never-take-a-step and turn-on-the-spot consequences only) | Verbatim: "Group order 3 is Stand Ground, not attack — its scorer refuses anything past reach and its members never take a step." and "the arm's whole behaviour is *hit what is already next to you, otherwise turn on the spot*" | High / Medium | [EXP-0411](../experiments/EXP-0411-stand-ground/EXP-0411.md), AI-349, AI-350, AI-353 | The name, the scorer veto and the absence of a walk order in the arm stand. The executor row 5 stored at the previous evaluation keeps stepping toward its victim until the next evaluation, a stand or a refused route replaces it (Medium, `AI-353`). A human participant's member without a target gets `ord+0x08` of 0, or 8 for a heal cast, and no turn; the idle turn 0xb is written for an AI owner's member only. | **NARROWED** |
+
 ## Dialogue rectangles, portrait window, key routing, tilde underline extent and Esc menu mouse capture
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

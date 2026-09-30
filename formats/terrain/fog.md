@@ -188,6 +188,8 @@ they agree only because the shipped value equals the code default, so **editing 
 the AI's sight and leaves the player's fog untouched**. Its byte map is cleared by
 `FUN_005474f0`, whose two callers stamp **one actor** (`FUN_0052dea0`) or **a whole group**
 (`FUN_005365e0`). Different storage, clock, consumer and lifetime — do not merge them.
+`AI-SIGHT-006`'s two location clauses (the array `FUN_00546d20` zeroes and the field
+`fog+0x25450`) are superseded by `TERR-FOG-084`.
 
 Both of the server's tables are built by **`FUN_00546790`**, called once from the object's init
 `FUN_00547510` in each of the four world constructors, before the map load; there is no other

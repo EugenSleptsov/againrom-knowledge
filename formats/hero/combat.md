@@ -186,7 +186,8 @@ selection rather than nearest distance. Both acquisition routes can fall
 back to corpses when no living enemy qualifies. See [AI acquisition](../ai/targeting.md).
 
 **A hit makes the two players mutually hostile** (bit 0, both directions) — that, not a per-actor
-assignment, is retaliation (`HERO-AGGRO-028`, bounded by `AI-DIPLO-004`'s bit 1).
+assignment, is retaliation (`HERO-AGGRO-028`, bounded by `AI-DIPLO-004`'s bit 1; that row's
+`MinimalGuardRange` default clause is superseded and does not touch the bit).
 
 ```
 death, from the killing blow to the freed id  (HERO-DEATH-026, SESS-TICK-004,
