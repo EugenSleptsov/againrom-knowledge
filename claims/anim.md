@@ -1811,6 +1811,106 @@ population; visit order alone does not guarantee opaque pixel overpainting.
 Decoder instruction totals are instrument measurements, not game properties; no
 runtime pixel equivalence claim.
 
+## Picture-7 coordinate callback
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| ANIM-097 | In the inspected picture-7 callback, each admitted pixel is a whole 16-bit word copied in place from the current buffer through a signed coordinate map. | High | ✔ promoted | [EXP-0416](../experiments/EXP-0416-projectile-callback/) |
+| ANIM-098 | The visited initializer constructs picture 7's shared coordinate map with 20 and 16, producing 19 by 19 source pairs and write offsets -18..18 around its centre. | High | ✔ promoted | [EXP-0416](../experiments/EXP-0416-projectile-callback/) |
+| ANIM-099 | The inspected picture-7 callback clips each copy's destination and source separately against its captured active rectangle; rejected copies preserve the destination. | High | ✔ promoted | [EXP-0416](../experiments/EXP-0416-projectile-callback/) |
+| ANIM-100 | The reached picture-7 draw passes a shared map and projected centre coordinates, bypassing the computed sprite frame, facing and registry-centred extents. | High | ✔ promoted | [EXP-0416](../experiments/EXP-0416-projectile-callback/) |
+
+### ANIM-097
+
+Callback 00485490 reads the buffer base at 005e43bc and its stride in words
+at 005e43a4. Receiver+0 contains row pointers; each entry is a pair of signed
+16-bit source offsets. For indices i and j descending from receiver[+0c]-1
+to 0, it copies the four reflected offsets in this order: (+i,+j), (+i,-j),
+(-i,+j), (-i,-j), from the corresponding signs of (sx,sy).
+
+Each copy reads and stores two bytes in the same buffer. It preserves the
+entire word, with no channel conversion or blending in the complete bounded
+body. It has no sprite or palette input. Axes and the centre are copied more
+than once. No source snapshot is created by this callback.
+
+**Confidence.** High for the bounded body: 195 raw instructions and four word
+stores, confirmed by independent decoder boundaries and original-instruction
+replay. The live map fits both snapshot and in-place models. A synthetic
+overlap map distinguishes them by two final words; only the in-place model
+matches the original instruction trace.
+
+**Unknown.** The actual buffer RGB masks, previous-frame retention and native
+compositing remain unobserved. Copying a packed word does not establish them.
+
+### ANIM-098
+
+Initializer 00468810 calls constructor 00485260 with A=20 and B=16. It stores
+the returned 16-byte map object at 005ea240. Its +4/+8 fields hold A/B; +0c
+holds N=trunc(sqrt(A*A-(A-B)*(A-B)))=19.
+
+Builder 00485310 defines f[0]=1 and f[k]=k/(20*sin(atan(k/4))) for k=1..18.
+For i,j=0..18, k=trunc(sqrt(i*i+j*j)+0.5). If k<19 the source pair is
+(trunc(i*f[k]+0.5),trunc(j*f[k]+0.5)); otherwise it is (i,j). The original
+0055458c conversion helper temporarily selects truncation toward zero and
+restores its incoming x87 control word.
+
+The live callback writes a 37 by 37 square, with identity copies in its outer
+corners. A unique-word 75 by 61 synthetic background at centre (37,30) receives
+1444 copies at 1369 distinct words; 1084 final words change. A constant word
+background has no changed words. Reapplying to the first output can change it
+again; the callback is not generally idempotent.
+
+**Confidence.** High for the visited construction and reached 20/16 mapping.
+Original x87 replay and an independently expressed model agree on all 361
+entries and five smaller valid synthetic parameter pairs with control word
+037f. The square-root simplification is a real-arithmetic identity, not a claim
+of every transcendental implementation's identical rounding.
+
+**Unknown.** Other precision modes, invalid/custom constructor parameters,
+initialization failures and indirect changes to the shared map remain open.
+
+### ANIM-099
+
+The callback snapshots the RECT at 005e4408 through 0044cac0/CopyRect. Every
+quadrant first calls imported PtInRect for the destination; on success it
+calls the same API for the source, then copies only if both succeed. It neither
+clamps the source nor rejects an entire straddling effect.
+
+The rectangle contract includes left/top and excludes right/bottom. Empty and
+inverted rectangles reject the selected point population. A synthetic admitted
+destination whose two reflected sources lie outside the rectangle produces no
+write. Four edges, one corner, an inset rectangle, an outside centre and an
+empty rectangle preserve all guards and match the per-copy model.
+
+**Confidence.** High for the complete local two-test/store gates. Original
+callback replay bridges the imported APIs to native host user32 on synthetic
+structs; 20 separate rectangle cases check the boundary contract. This is a
+static/synthetic result rather than an original game's native rendering witness.
+
+**Unknown.** The actual native rectangle/surface supplied during play and the
+original 32-bit OS linkage are not observed.
+
+### ANIM-100
+
+Draw 00461fc0 is projectile vtable+28 at 00599520. The picture-7 switch arm
+calls 00485490 with ECX=[005ea240], x=P[+50], and
+y=P[+54]-P[+10]-P[+68], using 32-bit arithmetic. The callback returns with
+RET 8. The registry count and nonnull-slot guards still apply.
+
+The arm reloads stored coordinates after the ordinary width/height halves,
+direction fold and frame computation. It supplies no phase or draw-entry
+argument. The complete callback reads no clock and changes no map entry.
+Position, height, the underlying buffer and clipping remain output inputs;
+unchanged centre alone does not imply unchanged pixels.
+
+**Confidence.** High for the bounded handoff and body. Six synthetic prefix
+cases per locale independently vary spatial fields and phase/facing/registry
+extents, and exercise null/count refusals. EN/RU images are byte-identical.
+
+**Unknown.** The complete invocation schedule and indirect map mutations remain
+open. Three classified whole-image absolute references to the shared pointer
+do not establish that aliases or bulk writes cannot change its object.
+
 ## Open questions
 
 1. **Opcodes `0x86` / `0x8a` / `0x8b` / `0x8c`** — *narrowed by `MAGIC-PIC-027`*: all four are

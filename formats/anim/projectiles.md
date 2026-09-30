@@ -50,6 +50,65 @@ picture 10 and 12 also blit a smoke sheet once per point of the object's trail a
 ```
 
 
+## Picture-7 coordinate callback
+
+The reached picture-7 arm transforms existing buffer pixels instead of drawing
+its sprite. It passes the shared map at 005ea240 and centre
+`cx=P[+50]`, `cy=P[+54]-P[+10]-P[+68]`. The registry count and nonnull-slot
+guards still apply. The arm bypasses the computed frame, facing, registry
+width/height halves and draw-entry arguments. It supplies no phase.
+— ANIM-100
+
+The visited initializer constructs the shared map with A=20, B=16 and
+N=trunc(sqrt(A*A-(A-B)*(A-B)))=19. For i,j in 0..18:
+
+```
+f[0] = 1
+f[k] = k / (20*sin(atan(k/4)))       k=1..18
+k = trunc(sqrt(i*i+j*j)+0.5)
+if k < 19:
+    sx = trunc(i*f[k]+0.5)
+    sy = trunc(j*f[k]+0.5)
+else:
+    sx = i
+    sy = j
+```
+
+The original conversion truncates toward zero. For these positive inputs the
+real-arithmetic simplification is `f[k]=sqrt(16+k*k)/20`; x87 rounding may
+matter when reproducing other parameter sets. The callback's write support is
+the square of offsets -18..18 in both axes. The outer corners copy themselves.
+On a synthetic unique-word background, 1084 pixels change within the 1369
+written addresses; constant backgrounds have no changed pixels. — ANIM-098
+
+For i from N-1 down to 0, then j from N-1 down to 0, the source pair produces
+copies in order:
+
+1. destination(+i,+j), source(+sx,+sy).
+2. destination(+i,-j), source(+sx,-sy).
+3. destination(-i,+j), source(-sx,+sy).
+4. destination(-i,-j), source(-sx,-sy).
+
+Each operation copies the entire 16-bit word from the current buffer into the
+same buffer. With stride S in words, destination(cx+dx,cy+dy) receives the
+word at source(cx+sourceX,cy+sourceY), indexed as y*S+x. There is no blending
+or channel conversion in this body. Axis/centre duplicates and in-place order
+are part of the contract; an arbitrary map can differ from snapshot sourcing.
+The buffer's RGB masks and native previous-frame retention remain Unknown.
+— ANIM-097
+
+At entry the callback captures the active rectangle. Every reflected copy
+checks destination and source against that rectangle. Left/top are included;
+right/bottom are excluded. A rejected point skips its copy and preserves the
+destination. It does not clamp a source or reject a whole straddling effect.
+— ANIM-099
+
+The inspected callback reads no clock and writes no map entry. Equal map,
+rectangle and freshly drawn buffer inputs reproduce the same output at the
+same centre. Repeated application to previous output can change it again.
+The complete native draw schedule, indirect changes to the shared map and
+observed frame appearance remain Unknown. — ANIM-098, ANIM-100
+
 ## Projectile clock
 
 `ANIM-PHASECLOCK-028`; its constant enumeration of the picture 34/36 ramp is amended by
