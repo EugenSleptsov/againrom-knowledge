@@ -1,5 +1,11 @@
 # Overturn history
 
+## Action cycle retention after a pending-order clear
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `AI-352` (unconditional in-flight strike consequence only) | Verbatim: "a member that was striking completes its progress cycle and stays" | Medium | [EXP-0414](../experiments/EXP-0414-cycle-orders/), AI-354, AI-355 | Progress is not directly cancelled by the setter, but its executor arm reaches the common tail. With `mover+0x98 != 0`, the tail can call acquisition, whose in-position arm writes progress 1 and `actor+0x5c` before actor dispatch without resetting phase. Old-field retention is conditional; native reachability during a running cycle remains Unknown. Immediate setter values and the step-arrival mechanism stand. | **NARROWED** |
+
 ## Room tip popup message forwarding
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

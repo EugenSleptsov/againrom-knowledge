@@ -30,6 +30,61 @@ now direct: the complete caller is the id-14 Prismatic Spray selector, which fli
 building secondaries. Its secondaries pass the builder's directional first-member diplomacy test;
 the primary does not.
 
+## Commands during an action cycle
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-354 | States 3, 0xd and 0xe apply from actor fields at phase 5; clearing the pending order alone does not cancel their progress, but the executor tail can replace active fields. | High / Medium / Unknown | ● active | [EXP-0414](../experiments/EXP-0414-cycle-orders/) |
+| AI-355 | The admitted non-self attack command changes the queued victim without directly writing the active victim or progress; the next cycle boundary depends on the executor tail and position. | High / Medium / Unknown | ● active | [EXP-0414](../experiments/EXP-0414-cycle-orders/) |
+| AI-356 | Pick-up and manual cast setters install pending data immediately; their ordinary executor rows load action fields only at progress zero, after a retained strike's application and recovery. | High / Medium / Unknown | ● active | [EXP-0414](../experiments/EXP-0414-cycle-orders/) |
+| AI-357 | Scroll casts share the manual cast setters but write actor+0x68 before the progress gate; cast and weapon-proc cleanup can clear that pointer during a running cycle. | High / Unknown | ● active | [EXP-0414](../experiments/EXP-0414-cycle-orders/) |
+
+### AI-354
+
+The raw-PE action table sends states 3, 0xd and 0xe to `004f39e8`. The body has phases 0, 5 and 7. Phase 0 loads charge and clears `actor+0x136`; phase 5 decrements `actor+0x6c` and applies at zero; phase 7 decrements recovery and at zero stores phase 0 and completion 1. Application calls read the current actor fields: `004f3bc2` passes `actor+0x5c` to `004fb942`; `004f3bfa` passes `actor+0x5c` and Spell `actor+0x64` to `004feaa2`; `004f3c1b` passes cell bytes `actor+0x60/+0x61` and `actor+0x64` to `004feadb`. The 346-instruction range `004f39e8..004f3e76` has no undecoded byte and no `+0x158` operand. This bounded body reads no pending order or progress field.
+
+`AI-350` and `AI-351` establish the progress-before-pending switch and the Stand Ground stores. The whole executor restores action 3 from progress 1, or 0xd/0xe from progress 2 and `ord+0x5c`, before actor dispatch. Clearing pending order alone therefore does not select a cancellation arm. With active fields retained, the application reads the loaded target rather than the new pending target. This is an application-call argument result; it promises no damage or successful per-spell effect.
+
+The common tail is a live exception to field retention. Progress arms jump to `0053165f`. When `mover+0x98` is nonzero, the tail clears it and, for command state other than 1, 0xa or 0x17, calls `005327d0` at `0053179c`. Its in-position target arm calls `00531b10` at `00532a52`. That complete leaf writes progress 1, counter 0, action 3 and `actor+0x5c = ord+0x0c` without changing phase `actor+0x58`. It can change the application argument before the actor body runs on that tick. State 1 and 0xa have different cleanup arms, and state 0x17 writes progress 0xff; none supplies a universal retention rule.
+
+**Confidence.** High for the named body, table, field reads and direct tail writes. `DisasmFnNoBytes`, `DisasmRangeNoBytes` and `EnumRefs` on the owned repaired Ghidra 12.1.2 project are bound to the identical EN/RU image digest. `derive.py` independently checks relative branch targets, dispatch entries and load-bearing MOV/CMP displacements from the containing PE section. Medium for retained-field next-tick composition. The image-wide `disp:`/`imm:` and overlapping-width census is preserved, not a complete typed writer census: outside the named routines, bases, arithmetic aliases, embedded objects and bulk copies remain unexamined. No High image-wide absence is claimed.
+
+**Unknown.** Native command/tick timing, whether the tail prerequisite is reachable during a native running strike or cast, effects of untraced callees and indirect calls, per-spell effect/target-loss rules, and other external writers. Death and physical application validity retain `HERO-CADENCE-115`'s separate scope.
+
+### AI-355
+
+Opcode 0x19 calls `005348c0` at `004d6414`. Its admitted, non-self arm stores command state 3 (`00534986`), `ord+0x0c = new victim` (`0053498d`), reach in `ord+0x14` and pending order 0 (`005349a5`). The member helper `005306e0` clears action `actor+0x54` at `00530763`. Neither body directly stores progress `ord+0x09`, active victim `actor+0x5c`, phase `actor+0x58`, countdown or completion. The self-target and guard-refusal arms leave command state 0xc and the post instead (`AI-CMD-054`). The store table retains writes overlapping the named fields, with register bases resolved from the actor parameter and its `+0x158/+0x154` loads for these named sites.
+
+When the tail and other writers retain active fields, a running phase-5 application passes the old `actor+0x5c` even though `ord+0x0c` differs (`AI-354`). It can still produce no damage when physical validity/reach refuses the target. Group order 0 calls `0052ce50`; command state 3 calls `0052e940` with the queued victim. Its ordinary non-spell arm writes pending 5 and that victim at `0052ea60/0052ea6a`, independent of progress. Its special-cast and target-acquisition arms are separate alternatives. Pending row 5 copies the victim into the active field only after progress zero and a successful position test (`AI-350`, `AI-PURSUE-040`).
+
+Let T0 be the retained cycle's recovery-zero tick. If the counter/completion gate clears progress at T0+1, the common tail remains quiet, pending 5 has been reissued, and the position test passes, row 5 installs the new cycle and phase 0 starts at T0+2 (`HERO-CADENCE-112`). Reissue can occur before progress clears; it need not wait for another group evaluation after T0+1. Failed position, different group/actor arms, counter wrap, disabled AI and the common-tail replacement prevent a universal tick number. The common tail can change the active victim earlier without resetting phase, so old-victim retention is conditional, not the only static route.
+
+**Confidence.** High for the named setter, helper, state-3 writer and pending-row stores. Medium for the conditional old-victim and T0+2 compositions; no runtime observation exists. The reference/store census preserves wider neighbouring stores and orphan rows without inferring their base from displacement alone.
+
+**Unknown.** The actual native next-cycle tick, whether common-tail acquisition chooses the commanded victim, admitted-command timing, untraced group/allocation and target-selection callees, and every command not named here.
+
+### AI-356
+
+Pick-up opcode 0x21 validates the cell, stores the message word at inventory `+0x1c`, and calls `005308a0` at `004d6276`. Its direct stores are action 0 (`0053092f`), command state 2 (`0053093b`), queued cell `ord+0x0a` (`00530947`) and pending 0 (`0053095e`); it writes neither progress nor active victim. Per-actor state 2 writes pending 1 while cells differ, or pending 7 at `0052d218` when they agree. Only progress zero reaches row 7. On its first pass row 7 writes action 2 (`005314e4`), whose actor body runs the sack lookup and transfer path. On the completion pass it calls the member helper, stores command state 0xc (`0053151b`), pending 0 (`00531536`) and `ord+0x50 = 1` (`0053153f`). This bridge has no direct progress or active-victim store. The contents transferred by its callees are outside this claim.
+
+Actor-cast opcode 0x1e calls `00533d00`; its admitted Spell arm clears action, writes command state 0xd, queued actor `ord+0x28`, Spell `ord+0x30`, range and pending 0 (`00533dfa..00533e31`). Cell-cast opcode 0x1f validates the cell and calls `00533ed0`; its admitted arm clears action, writes command state 0xe, queued cell `ord+0x3c`, Spell and pending 0 (`00533fcc..0053400f`). Neither setter body directly stores progress, phase or active victim. Their missing-Spell arms fall back to command state 0xc. The per-actor command arms reissue pending 8 or 9; row 8 writes progress 2, action 0xd, active victim from `ord+0x28`, Spell and `ord+0x5c=1` (`0053132c..00531352`). Row 9 calls `00531d30`, which writes progress 2, action 0xe, cell bytes, Spell and `ord+0x5c=0` (`00531d41..00531d6f`). Its `ord+0x60==0` cleanup can clear action on that installation tick; progress 2 restores the variant later.
+
+**Confidence.** High for the named direct stores and progress-zero placement of rows 7/8/9. Medium for the conclusion that these ordinary row effects follow a retained strike's application and recovery. It is conditioned on `AI-354`'s active-field retention, not a native dispatch-order observation. No direct nonzero-progress refusal is introduced by the command setters themselves.
+
+**Unknown.** Native event timing, the common-tail prerequisite during these commands, untraced validation/transfer callees, and successful spell effects after the actor-side application call. Scroll pointer handling is `AI-357`.
+
+### AI-357
+
+Opcodes 0x25 and 0x26 enter the scroll arm at `004d6466`. The arm obtains the inventory item, requires definition byte `+0x3c==0x29`, writes `actor+0x68 = item` at `004d64c4`, creates Spell from definition `+0x40`, and parks it in `actor+0x44` at `004d6524`. It then uses `00533d00` for actor target or validates and uses `00533ed0` for a cell. Failed cell validation returns the item and clears `+0x68/+0x44`. These pointer writes precede the executor's progress gate and read no progress byte. The setters move the parked Spell into pending data and clear `+0x44`; they do not immediately replace active Spell `+0x64`.
+
+The dispatcher calls `004f4c97` for resolved commanded members before the opcode arm. This helper returns without clearing an in-flight scroll cast when action is 0xd or 0xe and completion is zero (`004f4cea..004f4d08`). Its later matching-scroll branch deletes active Spell and clears `+0x64/+0x68`, not progress or victim. Its Item/Spell callees and ordinary item ownership remain separate from those direct writes.
+
+A new scroll pointer can therefore coexist statically with a retained old active Spell. The cast application reads old `+0x64` and then current `+0x68`; its cleanup clears both (`004f3ca7/004f3cb1`). An ordinary physical strike skips this cast-only cleanup. A weapon-backed conversion in the shared body instead overwrites both fields at start/application (`004f3a53/004f3a5f`, `004f3b9c/004f3ba8`). The physical application routine's weapon-proc arm also overwrites them and clears them after its Spell call (`004fbb31..004fbb60`). These paths exclude a general assertion that scroll pointer changes wait for recovery or survive every running strike.
+
+**Confidence.** High for the named pointer writes, conditions and cleanup; they are whole local paths with raw-PE branch/displacement verification. No completeness claim is made about Item/Spell indirect dispatch or every writer of these fields.
+
+**Unknown.** Which interleavings occur in native play, whether a pending scroll remains valid after such cleanup, exact inventory/resource loss, and per-spell behavior. No runtime or save corpus probe was run.
+
 ## Stand Ground member orders
 
 | ID | Claim | Confidence | Status | Evidence |
@@ -37,7 +92,7 @@ the primary does not.
 | AI-349 | `FUN_0052eb60`, the order 3 arm's call for a human participant's member with no group-assigned target, stores `ord+0x08` once, as 0 or 8, and never stores `ord+0x09`, `ord+0x0a` or `ord+0x0c`. | High / Unknown | ● active | [EXP-0411](../experiments/EXP-0411-stand-ground/) |
 | AI-350 | The per-tick executor `FUN_005310e0` runs no arm for `ord+0x08` of 0, 3, 0xd or 0xe, re-reads `ord+0x0c` on every row 5 pass, and stores `ord+0x08` only as 0 in its own body. | High / Unknown | ● active | [EXP-0411](../experiments/EXP-0411-stand-ground/) |
 | AI-351 | Both order 3 setters store `ord+0x08 = 0` for every member and never store `ord+0x09`, `ord+0x0a` or `ord+0x0c`; their other member stores are `ord+0x14`, `ord+0x38`, `ord+0x50`, `ord+0x60`, `actor+0x50`, `actor+0x54` and the post word. | High / Unknown | ● active | [EXP-0411](../experiments/EXP-0411-stand-ground/) |
-| AI-352 | A member holding `ord+0x08` of 5 or 1 when a Stand Ground setter runs holds 0 afterwards, with `ord+0x0a` and `ord+0x0c` unchanged, and a step already in progress ends at the next cell centre. | High / Medium / Unknown | ● active | [EXP-0411](../experiments/EXP-0411-stand-ground/) |
+| AI-352 | A member holding `ord+0x08` of 5 or 1 when a Stand Ground setter runs holds 0 afterwards, with `ord+0x0a` and `ord+0x0c` unchanged, and a step already in progress ends at the next cell centre. | High / Medium / Unknown | ● active (amended, partially retracted) | [EXP-0411](../experiments/EXP-0411-stand-ground/), [EXP-0414](../experiments/EXP-0414-cycle-orders/) |
 | AI-353 | Under group order 3 a human participant's member keeps pathing to its last victim between two arm evaluations until a stand or refused route ends the order; the next evaluation reissues the attack for a victim in reach, else 0 or 8. | Medium / Unknown | ● active | [EXP-0411](../experiments/EXP-0411-stand-ground/) |
 
 ### AI-349
@@ -80,11 +135,13 @@ The executor's own body stores `ord+0x08` seven times, all as 0 (`00531467`, `00
 
 A member holding `ord+0x08 = 5` (pursue, victim in `ord+0x0c`) or `ord+0x08 = 1` (walk to the cell in `ord+0x0a`) when a Stand Ground setter runs holds `ord+0x08 = 0` afterwards (`AI-351`), with `ord+0x0c` and `ord+0x0a` unchanged. Its `ord+0x14` becomes `actor+0x12c`, `ord+0x60` and `ord+0x50` become 0, `actor+0x50` becomes 0xc, its post word becomes the current cell and `mover+1` takes `mover+0`, which cancels a pending turn.
 
-The setters do not store `ord+0x09`, so a progress in flight is not cancelled. `FUN_005310e0` (`AI-350`) runs the progress switch before it reads `ord+0x08`: a step (progress 3) calls `FUN_005495f0` each actor tick until the actor stands at a cell centre, where the arrival block discards the route (`005496ff`..`00549732`) and the executor clears the progress; a strike or cast counter (progress 1 or 2) counts `ord+0x15` and clears itself as `AI-350` states. With the progress clear and `ord+0x08 == 0`, no arm runs. A member that was walking, whether row 1 or row 5, therefore stops at the next cell centre and stays; a member that was striking completes its progress cycle and stays. The next evaluation of the arm, once per full tick, reissues `ord+0x08 = 5` for a member whose scorer target is nonzero and otherwise stores 0 or 8 for a human participant's member (`AI-349`) and 0xb for an AI owner's (`00533be6`).
+The setters do not store `ord+0x09`, so they do not directly cancel a progress in flight. `FUN_005310e0` (`AI-350`) runs the progress switch before it reads `ord+0x08`: a step (progress 3) calls `FUN_005495f0` each actor tick until the actor stands at a cell centre, where the arrival block discards the route (`005496ff`..`00549732`) and the executor clears the progress; a strike or cast counter (progress 1 or 2) counts `ord+0x15` and clears itself as `AI-350` states. With the progress clear and `ord+0x08 == 0`, no pending arm runs. A step already under way therefore reaches the next cell centre. A running strike or cast follows its retained cycle only when the common tail and other writers do not replace active fields (`AI-354`). The next evaluation of the arm reissues `ord+0x08 = 5` for a member whose scorer target is nonzero and otherwise stores 0 or 8 for a human participant's member (`AI-349`) and 0xb for an AI owner's (`00533be6`); `AI-CLOCK-080` bounds the decision cadence.
 
 **Confidence.** **High** for the values after the command, which are stores at cited addresses. **Medium** for the next tick behaviour, which composes the progress switch with the tail: the step and counter arms are read whole and no runtime observation exists.
 
-**Unknown.** The actor tick's strike and cast bodies (`actor+0x54` of 3, 0xd and 0xe) are not read, so whether a blow already under way lands after the order is cleared is not established.
+**Unknown.** Native command/tick timing and untraced external writers. The bounded strike/cast body, selected command routes and common-tail replacement are covered by `AI-354` through `AI-357`.
+
+**Amended.** The unconditional in-flight strike consequence is narrowed in `retracted.md`: retaining the old active fields requires the executor common tail and other writers not to replace them (`AI-354`). The immediate setter values and step-arrival mechanism stand.
 
 ### AI-353
 

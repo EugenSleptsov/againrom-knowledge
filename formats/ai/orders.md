@@ -125,11 +125,39 @@ A pending order of `0` is not a row. The index `ord+0x08 - 1` wraps above 14 and
 the shared tail with no arm (`AI-350`). The Stand Ground setters store `0` for every member and
 leave `ord+0x0a` and `ord+0x0c` as they were (`AI-351`). The heal AI stores `0`, or `8` when it
 casts, for a human participant's member that has no group-assigned target (`AI-349`). A step under
-way ends at the next cell centre and a counted strike or cast finishes its progress first
-(`AI-352`). Row `5` re-reads `ord+0x0c` on every pass (`AI-350`). Read from the code and not
+way ends at the next cell centre (`AI-352`). Its unconditional strike consequence is
+partially retracted: a counted strike or cast finishes its progress first only when
+the common tail and other writers retain its active fields (`AI-354`).
+Row `5` re-reads `ord+0x0c` on every pass (`AI-350`). Read from the code and not
 observed at run time, a pursuit stored at one group evaluation therefore keeps stepping toward its
 victim until the next evaluation reissues or replaces it, or until a stand or a refused route ends
 it (`AI-353`).
+
+### Commands during a running cycle
+
+States 3, 0xd and 0xe share phases 0 (charge), 5 (application) and 7 (recovery).
+Phase 5 passes the current actor victim `+0x5c`, or cell bytes `+0x60/+0x61`,
+and active Spell `+0x64` to the application routine. This body does not read the
+pending order. Nonzero strike/cast progress restores the action before this
+dispatch; clearing pending order alone does not cancel it (`AI-354`). Successful
+damage and per-spell effects still require their own validity rules.
+
+| command | direct setter effect | ordinary executor effect |
+|---|---|---|
+| admitted attack at another actor, 0x19 | command state 3, queued victim replaced, action 0, pending 0; no direct progress or active-victim store | pending 5 copies the queued victim only at progress zero and in position (`AI-355`) |
+| pick-up, 0x21 | command state 2, queued cell, action 0, pending 0; no direct progress or active-victim store | row 7 at progress zero selects action 2, then completes with command state 0xc and pending 0 (`AI-356`) |
+| actor cast 0x1e, cell cast 0x1f | command state 0xd/0xe, queued target and Spell, action 0, pending 0; no direct progress or active-victim store | rows 8/9 at progress zero load progress 2 and active target/Spell (`AI-356`) |
+| scroll actor/cell cast, 0x25/0x26 | writes item `actor+0x68` before using the same cast setters | old cast or weapon-proc cleanup can overwrite or clear that pointer (`AI-357`) |
+
+With the active fields retained, the running strike passes the old victim even
+when the queued victim differs. For a retained cycle with recovery-zero tick T0,
+the new in-position cycle can start at T0+2 if the counter/completion gate clears
+progress at T0+1 and pending 5 is already reissued. There is no universal native
+tick number (`AI-355`). The executor common tail can run with progress nonzero:
+`mover+0x98 != 0` can lead to acquisition and an active-victim replacement before
+application without resetting phase. Whether that prerequisite occurs during a
+native cycle, command/tick interleaving, untraced external writers and per-spell
+target loss remain Unknown (`AI-354`).
 
 **`FUN_005310e0` (this table's own dispatcher) never runs while an actor is dying.** The per-tick
 routine's dying branch exits through its own shared tail before reaching the four instructions
