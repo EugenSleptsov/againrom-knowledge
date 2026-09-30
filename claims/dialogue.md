@@ -36,7 +36,8 @@ this file: [registry.md](registry.md).
 - It then adds:
   - a portrait (`FUN_004c4995`, id 12, 30,54–118,168), only when `panel+0x7c`;
   - a text control (`FUN_004be10e`, id 10, at 128,36–428,172 with the portrait
-    and 48,36–428,172 without), whose initial content is the literal
+    and 48,36–428,172 without, its base constructor shrinking the height to
+    135, `DLG-RECT-037`), whose initial content is the literal
     `"Nothing to say"` at `0x005b89c0`/`0x005b89d0`;
   - always a button (`FUN_004be6e3`, id 11, 200,172–280,198) whose label is
     string-table entry 77 and whose command is `0x46f`.
@@ -54,8 +55,9 @@ this file: [registry.md](registry.md).
 - The child rects are panel-relative, and the drawn layout settles it. Read as
   screen coordinates, the portrait's top edge (54) would sit 66 px above the
   panel's own (120). Read as panel-relative, all four children fall inside the
-  580×240 panel with nothing overhanging: 118 < 580, 428 < 580, 172 < 240,
-  198 < 240. Four independent literals would have to coincide for that.
+  580×240 constructor rectangle and inside the 488×232 rectangle drawn
+  (`DLG-PANEL-035`) with nothing overhanging: 118 < 488, 428 < 488, 172 < 232,
+  198 < 232. Four independent literals would have to coincide for that.
 
 **Confidence.** High for the geometry, the two layouts, the button command and
 the string-table index: each is a named `PUSH` in one routine read whole, and an
@@ -72,6 +74,14 @@ family, and all six families ship", beside five node counts.
 `FUN_004b4c70` (`inn\mercenary\npc35`) the same prefix,
 `text/inn/mercenary/` (14 nodes): six owners, five families. The entry
 enumeration and the node counts stand.
+
+A second correction (EXP-0410): the overhang bullet read "all four children
+fall inside the 580×240 panel with nothing overhanging: 118 < 580, 428 < 580,
+172 < 240, 198 < 240", and the text control bullet gave no height for the live
+rectangle. 580×240 is the constructor rectangle, whose size `FUN_004c553f`
+replaces with 488×232 when the panel is drawn (`DLG-PANEL-035`); the argument
+holds on both sizes. The text control's base constructor shrinks its height to
+135 (`DLG-RECT-037`). The child literals and the entry enumeration stand.
 
 ### DLG-PATH-002
 
@@ -148,9 +158,11 @@ measurement could have failed, since one file with a part-1 typo would show it.
 
 ### DLG-LIFE-005
 
-- Three inputs reach the same command: the button (`0x46f`), and, through
-  `vt+0x6c` `FUN_004c574d`, the keys `0x0d` (RETURN) and `0x1b` (ESCAPE), both
-  of which self-send `0x46f`.
+- Three inputs reach the same command `0x46f`: a click on the button, Enter
+  (`0x0d`) and Escape (`0x1b`). The button's own key handler `FUN_004bf182`
+  answers Enter by posting `0x46f`; the panel's key slot `vt+0x6c`
+  `FUN_004c574d` answers Escape by self-sending it, and has the same arm for
+  Enter, reached only when no child takes the key (`DLG-KEYS-040`).
 - `FUN_004c5797` answers it by calling the pager. Non-zero: redraw children 10
   and 12 and stay open. Zero: post `0x445`, which `FUN_004c52f3` turns into
   `vt+0x84` (free the text buffer) plus `0x44c`, whose window arm is
@@ -167,8 +179,11 @@ measurement could have failed, since one file with a part-1 typo would show it.
 
 **Confidence.** High for the three inputs, the pager loop, the absence of a
 timer and the drop: each is a named instruction. Medium for "no other route
-closes it": `FUN_004c52f3`'s default arm `FUN_004bd9dc` and the base key
-handler's siblings were not read line by line.
+closes it": the container dispatcher `FUN_004bd9dc` and the base key handler
+`FUN_004c5369` were read and add none, but the panel's key-release and
+system-key slots and the senders of `0x445` outside the class were not
+(`DLG-KEYS-040`). Medium for which handler answers Enter, which rests on the
+dispatcher's child order.
 
 **Amended.** EXP-0108 refutes the clear enumeration in both halves, and
 `retracted.md` withdraws it. The withdrawn sentence: "The bit is cleared by
@@ -187,6 +202,16 @@ bracket that wipes the screen through `FUN_0044f990` at level 0, calls
 enumeration rule 4 guards against: reduce by the field's own width and read
 every byte- and word-wide hit. The three inputs, the absent timer, the drop at
 `004738df` and "dropped, not deferred" stand.
+
+A second correction (EXP-0410): bullet 1 read "through `vt+0x6c`
+`FUN_004c574d`, the keys `0x0d` (RETURN) and `0x1b` (ESCAPE), both of which
+self-send `0x46f`". The container dispatcher offers a key to the panel's
+children before `FUN_004c574d`, and the button's key handler takes Enter first,
+so `FUN_004c574d` is the route for Escape and only the fallback for Enter. The
+command is the same, so the three inputs, the pager loop and the drop stand.
+The Confidence paragraph's Medium clause read "`FUN_004c52f3`'s default arm
+`FUN_004bd9dc` and the base key handler's siblings were not read line by
+line"; both were read.
 
 ### DLG-READ-006
 
@@ -215,7 +240,7 @@ one possible. The "at load" rival predicts an opener in the map-load path, and
 |---|---|---|---|---|
 | DLG-MARKUP-007 | The content model is a tag scan, not a grammar; its vocabulary is fifteen lowercase literals, four of which occur in no event file on either root, and `iamfighter` and `fighter` in no EN one. | High / Medium | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-FACE-008 | The whole file decides once whether the window has a portrait, each part decides which portrait it shows, and the two tests differ. | High / Unknown | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
-| DLG-WRAP-009 | The text is wrapped and measured against its own font, and this window clamps the line count rather than scrolling. | High / Medium | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
+| DLG-WRAP-009 | The text is wrapped and measured against its own font, and the window shows at most 7 lines of 17 px: the control scrolls by key only, and no shipped block has more than 7 lines. | High / Medium | ● active (amended, partially retracted) | [EXP-0098](../experiments/EXP-0098-mission-text/), amended [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 | DLG-LANG-010 | Only resources depend on the language root, and the roots differ in three mission events: EN silences three announcements that RU speaks. | High / Medium | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-READER-011 | Before its EXP-0101 repair, this repository's shared `.res` reader rejected the RU `MAIN.RES`, so every tool using it was blind to the RU half of `main.res`. | High | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0101](../experiments/EXP-0101-mission-end/) |
 
@@ -295,18 +320,38 @@ through this entry point.
 - The control can scroll: `vt+0x80` `FUN_004be2b0` clamps a top line into
   `[0, size − visible]`, redraws, drives a scrollbar child and notifies with
   command `0x46d`. `FUN_004217be` gives it no scrollbar child, and no arm of
-  the panel class answers `0x46d`. The base key handler `FUN_004c5369` binds
-  Tab and the four arrows to focus movement, not scrolling.
-- The rect is 300×136 px with the portrait and 380×136 without. The longest
-  shipped part body is 230 characters (EN) / 211 (RU).
+  the panel class answers `0x46d`. The control's own key handler `FUN_004c224e`
+  moves the top line on PageUp, PageDown, Up and Down while it holds focus
+  (`DLG-KEYS-040`); the base key handler `FUN_004c5369` binds Tab and the four
+  arrows to focus movement.
+- The constructor rectangle is 300×136 px with the portrait and 380×136
+  without, and the control's base constructor shrinks its height to 135
+  (`DLG-RECT-037`), so with the pitch of 17 the window shows at most 7 lines.
+  The longest shipped part body is 230 characters (EN) / 211 (RU), and no
+  shipped block wraps to more than 7 lines (`DLG-LINE-038`).
 - The per-glyph advance that turns 300 px into a character count is
   EXP-0097's, and no figure here depends on it.
 
-**Confidence.** High for the wrap, the clamp formula and the default pitch:
-four named instructions plus two one-line accessors read whole. Medium for
-"text past the clamp is unreachable in this window": `FUN_004bd9dc`, the
-panel's default command arm, was not read, and whether `panel+0x38`'s
-navigation links are ever filled was not established.
+**Confidence.** High for the wrap, the clamp formula, the default pitch and
+the control's key scroll: named instructions plus two one-line accessors read
+whole. Medium for "no shipped block has more than 7 lines" (`DLG-LINE-038`, a
+transcription of the wrapper, not an emulation) and for whether the text
+control holds focus when the panel opens, which decides whether its key scroll
+is live (`DLG-KEYS-040`).
+
+**Amended.** The headline read "this window clamps the line count rather than
+scrolling". The fifth bullet read "The rect is 300×136 px with the portrait and
+380×136 without", with no live height, and the fourth ended "The base key
+handler `FUN_004c5369` binds Tab and the four arrows to focus movement, not
+scrolling". The Medium clause read "text past the clamp is unreachable in this
+window": `FUN_004bd9dc`, the panel's default command arm, was not read, and
+whether `panel+0x38`'s navigation links are ever filled was not established.
+EXP-0410 corrects three points. The live rectangle is 135 px high, so the cap
+is `floor(135 / 17)` = 7 lines and not 8. The text control has its own key
+handler, so text past the clamp is reachable by key in principle. `FUN_004bd9dc`
+was read: it offers a key to the focused child, then to every child in order,
+then to the panel's own slot. The wrap, the clamp formula, the default pitch
+and the absence of a scrollbar child stand.
 
 ### DLG-LANG-010
 
@@ -746,8 +791,9 @@ does the Medium grade for RU carrying no fifth family.
     `0045f71c CMP EBP,EBX` / `JZ`.
 - The dialogue passes `(0, canvas, 0)`, so the colour pass runs and the
   click-map pass does not.
-- The panel then blits a fixed 72 x 96 window of the 160 x 240 canvas to
-  `(8,7)` of the 88 x 108 surface (`REG-NPC-089`).
+- The panel then blits a 72 x 96 window of the 160 x 240 canvas, or a 72 x 92
+  window on the default arm, to `(8,7)` of the 88 x 108 surface
+  (`REG-NPC-089`, `DLG-PORTRAIT-036`).
 - Every equipment-tree `.256` on both roots is a single 160 x 240 frame: 59 face
   sheets, 780 of 784 `primary/` and 144 `secondary/` parsed, and 4 `primary/`
   nodes too short to carry one. A layer therefore covers the canvas rather than
@@ -762,6 +808,11 @@ graph.
 card the canvas is the 160 x 240 scratch surface; the 88 x 108 target is the
 surface `FUN_00429520(0x58, 0x6c)` allocates and the panel receives
 (`evidence/listing-dialogue-portrait.txt`). The blit geometry stands.
+
+A second correction (EXP-0410): the blit bullet read "a fixed 72 x 96 window".
+The window is 72 x 96 when the second word of the record's portrait quadruple
+is not -1 and 72 x 92 when it is -1 (`DLG-PORTRAIT-036`). The canvas, the
+target surface and the destination `(8,7)` stand.
 
 ### DLG-FIGURE-021
 
@@ -1160,14 +1211,374 @@ counterexamples" against the seven `.wav` names the card lists.
 `evidence/dialogue-presence.csv` carries all seven: two RU-only, five
 EN-only.
 
+## Panel geometry, line placement and input
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| DLG-PANEL-035 | At 640x480 the panel is drawn 488x232 at (76,124): the 580x240 constructor rectangle is snapped and centred, then painted as a nine-piece `lm.256` frame with an 8 px shadow band. | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-PORTRAIT-036 | The portrait pane is an 88x108 picture surface at panel offset (30,54): a 72x94 black fill, a 72x96 or 72x92 picture window at (8,7), and a border frame whose opening is 72x92. | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-RECT-037 | All six opening routines (seven call sites) build the identical panel, because the constructor takes only a name; every shipped node takes the portrait layout, so the text rectangle is 300x135 at (204,160). | High | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-LINE-038 | Each wrapped line is drawn from the rectangle's left, 17 px below the previous one, justified by widening the word gaps except on a paragraph's last line and one-word lines; a paragraph's first line is indented 10 px. | High / Medium | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-BUTTON-039 | The button is drawn from lines and a font-1 label with no art and no fill: a two-colour bevel, the label centred at (316,308) in gold ink (brown on hover), and a shadow offset of 2 px (4 while pressed). | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-KEYS-040 | Enter, Escape and a click on the button each raise command `0x46f`, which turns the page or, on the last page, closes the panel; Space has no dialogue action, and the panel has no accept or decline state. | High / Medium / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+
+### DLG-PANEL-035
+
+- `FUN_004217be` passes the literals 30, 120, 610, 360 to `FUN_004c5682`
+  (`DLG-WIN-001`). Only the width and height of that rectangle, 580x240, are
+  used: the base constructor `FUN_004c54d1` calls `FUN_004c553f`, which
+  replaces the size and centres it on the screen.
+- `W' = ((W - 8) / 96) * 96 + 8` and
+  `H' = ((((H - 104) + a) >> 6) << 6) + 104`, with `a` = 63 when `H - 104` is
+  negative and 0 otherwise. Then `left = (screenW - W') >> 1` and
+  `top = (screenH - H') >> 1`. 580x240 becomes 488x232.
+- `FUN_00471790` sets the screen words `0x005ea208` and `0x005ea20c` to
+  640x480, 800x600 or 1024x768 (`0047199a`, `004719b6`) by the option strings
+  `-640`, `-800` and `-1024` it names. The panel is drawn at (76,124),
+  (156,184) and (268,268), 488x232 on all three.
+- The background bitmap argument is 0 (`FUN_004c4c93` stores it at
+  `panel+0x64`), so the panel has no bitmap background. The painter
+  `FUN_004c4da2` (`vt+0x30`) draws a frame from `interface/lm.256`
+  (global `0x005ef980`) instead.
+- It clamps the rectangle to the screen and shrinks its right and bottom by
+  8, giving a 480x224 body. The `lm.256` frames measure 0: 96x64, 1: 48x48,
+  2: 96x48, 3: 48x48, 4: 48x64, 5: 48x64, 6: 48x48, 7: 96x48, 8: 48x48, the
+  same on both roots.
+  - Corners: frame 1 at (L,T), frame 3 at (R-48,T), frame 6 at (L,B-48),
+    frame 8 at (R-48,B-48).
+  - Edges: `(bw - 96) / 96` = 4 tiles of frame 2 at `x = L+48+96i`, `y = T`,
+    and of frame 7 at `y = B-48`; `(bh - 96) / 64` = 2 tiles of frame 4 at
+    `x = L`, `y = T+48+64j`, and of frame 5 at `x = R-48`.
+  - Interior: frame 0 in 4 by 2 tiles from (L+48,T+48).
+  - The tiles cover 96 + 96*4 = 480 by 96 + 64*2 = 224, so no body pixel is
+    left to a background.
+- Frames 3, 5, 6, 7 and 8 are drawn a second time 8 px right and down through
+  `vt+0x1c` (blit mode 6), which fills the 8 px band right of and below the
+  body.
+- `FUN_00476810` darkens the whole screen behind the panel once
+  (`DLG-DIM-013`). The root container `campaign+0xcc` spans the screen from
+  (0,0) (`FUN_00472070`), so panel coordinates are screen coordinates.
+
+**Confidence.** High for the size, the position and the tiling: `FUN_004c553f`,
+`FUN_004c4da2` and `FUN_00471790` are read whole, and every figure is
+arithmetic on the nine frame sizes measured from both roots' `lm.256`. The
+rival, a panel drawn at its constructor rectangle (30,120)-(610,360), is
+refuted because `FUN_004c553f` replaces all four coordinates.
+
+**Unknown.** Whether a frame piece is drawn at an offset stored in its sprite
+record (origins were not measured), and what the shadow pieces put in the 8 px
+band (blit mode 6 was not decoded).
+
+### DLG-PORTRAIT-036
+
+- `FUN_004217be` adds the portrait child `FUN_004c4995` (id 12, bitmap 0,
+  mode 2) at panel-relative (30,54)-(118,168), 88x114, only when `panel+0x7c`
+  is set (`DLG-FACE-008`). At 640x480 it is (106,178)-(194,292).
+- Its paint `FUN_004c4a9d` first fills (L+8,T+7)-(L+80,T+101), 72x94, with
+  black (`FUN_0044f990`), then blits the picture surface at (L,T) keyed on
+  colour 0 (`vt+0x38`). The surface is 88x108, six rows shorter than the
+  child rectangle.
+- `FUN_00421b46` builds the surface (`UNIT-PICT-036`, `DLG-FIGURE-020`), in
+  this order: cleared; `interface/t_back.bmp` (160x240, 24 bpp) copied opaque
+  through the source window to (8,7); the figure canvas (160x240) copied keyed
+  through the same source window to (8,7); `interface/t_border.256` frame 0
+  (88x108) drawn at (0,0). The canvas is freed afterwards.
+- The source window depends on the second word of the record's portrait
+  quadruple at `+0x20` (`PortraitY1`, `REG-NPC-089`), tested at `00421dce`.
+  Not -1: (x0, 0x90 - y1)-(x0 + 72, 0xf0 - y1), 72x96, with x0 the first
+  word. -1: (0x24,0x8c)-(0x6c,0xe8), 72x92.
+- The border frame, measured by walking its control stream under
+  `SPR256-RLE-007`, `SPR256-RLE-020`, `SPR256-STRUCT-001` and
+  `SPR256-TRLR-021` (identical on both roots): 2231 control bytes, 1626
+  written and 7878 unwritten pixels. The unwritten region that contains
+  (44,55) has 6506 pixels and the bounding box (8,7)-(80,99), 72x92, and does
+  not fill that box. The frame writes 118 pixels inside the 72x92 window, 404
+  inside the 72x96 window and 262 inside the black fill.
+- The border is drawn last, so the picture the player sees is the part of the
+  window that the frame leaves unwritten. At 640x480 the window is
+  (114,185)-(186,277) for the -1 case and (114,185)-(186,281) otherwise; the
+  four extra rows of the second lie under 286 border pixels.
+
+**Confidence.** High for the child rectangle, the fill, the surface size, the
+layer order and the two windows: each is an operand of a named instruction in
+`FUN_004c4a9d` or `FUN_00421b46`, both read whole. High for the border
+measurement under the stated instrument (a walk of the control stream, not a
+render). Which arm a shipped record takes was not classified
+(`DLG-SPEAKER-022`).
+
+**Unknown.** Which rows of the 240-row canvas the window frames, the open
+question on record (`REG-NPC-091` grades the bottom-up reading Medium for the
+flat arm only), and the pixel blend of the keyed copy.
+
+### DLG-RECT-037
+
+- `FUN_004217be(name)` is the only constructor (`DLG-WIN-001`) and takes the
+  name alone, and it shows the panel itself (`FUN_00476810`), so no caller has
+  a step between construction and display. Every rectangle below is a
+  constructor literal offset by the panel origin (`DLG-PANEL-035`).
+- The routines, their call sites, name formats and shipped nodes. A node is a
+  `main.res` text node whose base name starts with the stem, and every one
+  contains `npc`, the whole-file test of `DLG-FACE-008`.
+
+| Routine | Call site | Name format | EN nodes | RU nodes |
+|---|---|---|---|---|
+| `FUN_00473110`, mission event | `004739ac` | `battle\m%d\event%02d` | 225 | 228 |
+| `FUN_00480fd0`, inn NPC | `00481060`, `004810a5` | `inn\NPC\npc%02dm%d` | 22 | 29 |
+| `FUN_0047e410`, mercenary hall | `0047e51a` | `inn\mercenary\npc%02d` | 14 | 14 |
+| `FUN_004b4c70`, mercenary hall | `004b4d2a` | `inn\mercenary\npc35` | 14 | 14 |
+| `FUN_004a8bc3`, shop keeper | `004a90fe` | `shop\npc31m%d` | 4 | 4 |
+| `FUN_004b7f20`, training hall | `004b8383` | `training\npc34m%d` | 3 | 3 |
+
+- The two mercenary routines share one folder, so the 14 nodes count once:
+  268 EN and 278 RU nodes in all, none without `npc`
+  (`evidence/strings.tsv`). Every shipped dialogue therefore takes the
+  portrait layout; the no-portrait layout below is not reached by shipped
+  data. `DLG-WIN-001`'s 318/22/14/4/33 count every node under each folder
+  prefix, a different population.
+- The rectangles at 640x480, as left, top, right, bottom:
+
+| Item | Rectangle | Size | Source |
+|---|---|---|---|
+| panel constructor | 30,120,610,360 | 580x240 | literal; size only |
+| panel drawn | 76,124,564,356 | 488x232 | `DLG-PANEL-035` |
+| frame body | 76,124,556,348 | 480x224 | `DLG-PANEL-035` |
+| portrait child | 106,178,194,292 | 88x114 | literal 30,54,118,168 |
+| portrait surface blit | 106,178,194,286 | 88x108 | `DLG-PORTRAIT-036` |
+| black fill | 114,185,186,279 | 72x94 | `DLG-PORTRAIT-036` |
+| picture window, -1 / other | 114,185,186,277 / 114,185,186,281 | 72x92 / 72x96 | `DLG-PORTRAIT-036` |
+| text control, constructor | 204,160,504,296 | 300x136 | literal 128,36,428,172 |
+| text control, live | 204,160,504,295 | 300x135 | base constructor |
+| text control, no portrait | 124,160,504,295 | 380x135 | literal 48,36,428,172 |
+| button | 276,296,356,322 | 80x26 | literal 200,172,280,198 |
+| button label cell, EN / RU | 305,300,327,315 / 281,300,351,315 | 22x15 / 70x15 | `DLG-BUTTON-039` |
+
+- At 800x600 and 1024x768 every rectangle moves by (80,60) and (192,144),
+  the shift of the panel origin (`evidence/layout.tsv`).
+- The text control's base constructor `FUN_004c156b` recomputes the height
+  from the font: `n = floor(136 / (h + 4))` rows of `h + 4`, plus 2. With
+  font 1 (`h` = 15) that is 7 rows and 7 * 19 + 2 = 135. `FUN_004be10e` then
+  sets the pitch to `h + 2` = 17, and the control shows
+  `min(floor(135 / 17), line count)` = min(7, line count) lines.
+
+**Confidence.** High. The literals are `PUSH` operands read in one routine;
+the derived values are arithmetic on the snap, the frame sizes and the font-1
+metrics measured on both roots (`evidence/metrics.tsv`). The stem counts are
+directory counts of both roots' `main.res` over the five folders named, so
+"every node has `npc`" is a census of those nodes and not a statement about a
+node that does not ship.
+
+### DLG-LINE-038
+
+- `FUN_004be3a7` paints the text control through
+  `FUN_00457400(font, rect, first, last, lines, ink, pitch)`: `first` is the
+  control's top line (0 for every shipped block), `last` is `first` plus the
+  visible count (`+0x8c`, at most 7), and `pitch` is 17. The wrapped lines
+  come from `FUN_004be229` through `FUN_00456ab0` at the rectangle's full
+  width, 300 with the portrait (`DLG-WRAP-009`). Each line keeps a trailing
+  space, and the last line of each paragraph piece ends in CR.
+- For line `i`, counted from 0 over the whole array of `n` lines:
+  - the line is a paragraph's first when `i = 0` or line `i - 1` ends in CR,
+    and then `p` = 10, the font-1 `.dat` dword 32; otherwise `p` = 0;
+  - it is justified when `i != n - 1` and it does not end in CR;
+  - the drawn copy has its CR removed;
+  - `x0 = rect.left + p` and `y = rect.top + 17 * (i - first)`.
+- A justified line goes to `FUN_00456fe0(x0, y, W, line, ink)` with
+  `W = rect.width - p`. It trims the right end, then repeatedly trims the left
+  end and cuts a word at the first space, so runs of blanks collapse, and it
+  sums the words' widths `m` (`FUN_00456320`). With two or more words
+  `gap = (W - sum) / (words - 1)` in floating point.
+  - Word `k` is drawn at `trunc(xacc)`, `xacc` starting at `x0` and becoming
+    `(xacc + m_k) + gap` after each word, so the first word starts at `x0` and
+    the last ends at about `x0 + W`. The natural space width is not used.
+  - A one-word line is drawn at `x0`.
+- Every other line is drawn whole at `(x0, y)`, left aligned: a paragraph's
+  last line (which includes the line before an authored break) and the last
+  array line. No line is centred.
+- Every draw goes through `FUN_00456b50(x, y, text, 0, ink, 1)`, which calls
+  the font's draw slot `vt+0x14`, `FUN_004577f0`, twice: first at
+  `(x + 1, y + 1)` with the shadow ramp `0x005e9be8` (flat 8,8,8), then at
+  `(x, y)` with the ink ramp `0x005e8878`, whose level 15 is (255,255,255)
+  (`MISSION-MSGLINE-056`). The first line's top edge is the rectangle top:
+  no ascent offset is added.
+- At 640x480 with the portrait, line tops are 160, 177, 194, 211, 228, 245
+  and 262; the left is 204, or 214 on a paragraph's first line; the justify
+  width is 300, or 290 on that line (`evidence/text.tsv`).
+- Shipped population, both roots' five families, from a transcription of the
+  splitter, the wrapper and the measure (`tools/dlglayout`, no emulation):
+  EN 688 blocks and RU 732, one per tag containing `part=`. The 535 EN and
+  543 RU mission event blocks equal the tag-body census of `DLG-TAGARM-027`.
+  - Lines per block, 1 to 7: EN 48, 154, 172, 104, 76, 64, 70; RU 74, 171,
+    145, 115, 87, 76, 64. No block exceeds 7 lines.
+  - Authored breaks (a CRLF inside a block): EN 0 blocks; RU 12 (7 mission
+    event, 4 inn, 1 shop).
+  - No block has a one-word line that is not a paragraph's last, an unclosed
+    line wider than 300, an empty text, a glyph outside `font1.dat`, or a
+    wrapper stall, and no block contains a `~` byte, so the tilde markup
+    (`TEXT-079`) never reaches a shipped dialogue.
+
+**Confidence.** High for the placement rule: `FUN_00457400`, `FUN_00456fe0`
+and `FUN_00456b50` are read whole, and each operand is traced to its source.
+The alternatives of one left x for every line and of centring are excluded by
+the justify path and by the absence of any centring flag in the call. Medium
+for the population figures: the wrapper is transcribed from its listing and
+checked by hand traces, not emulated or observed.
+
+**Unknown.** Whether the x87 extended-precision intermediates of the running
+sum move any shipped word by a pixel against a double-precision transcription;
+it could matter only where a running sum lands within about 10^-13 of an
+integer.
+
+### DLG-BUTTON-039
+
+- The button is `FUN_004be6e3`: id 11, panel-relative (200,172)-(280,198),
+  80x26, font 1 (`[0x005e88b8]`), command `0x46f`, and the label is
+  string-table entry 77 (`DLG-LANG-010`): "Ok" in EN, 22 px wide, and
+  "Принять" in RU, 70 px wide. It has no `~` accelerator in either root.
+- `FUN_004be98d` paints it from primitives. There is no art and no interior
+  fill: the parent repaints its frame under the rectangle first, then the
+  label is drawn, then the bevel.
+- The two colours are RGB (41,69,63), light, and RGB (7,12,9), dark, each
+  channel reduced to the screen format's width and shift. With `R' = R - 1`
+  and `B' = B - 1`, lines run through `FUN_0044fcd0` (both ends drawn) and
+  pixels through `FUN_00450390`:
+  - colour 1: vertical `x = R'`, `y = T+2..B'-2`; vertical `x = R'-1`,
+    `y = T+1..B'-1`; horizontal `y = B'`, `x = L+2..R'-2`; horizontal
+    `y = B'-1`, `x = L+1..R'-1`; pixel (R'-2,B'-2);
+  - colour 2: horizontal `y = T`, `x = L+2..R'-2`; vertical `x = L`,
+    `y = T+2..B'-2`; pixel (L+1,T+1).
+- Idle, colour 1 is dark and colour 2 light, which is a raised bevel with a
+  one-pixel light top and left and a two-pixel dark bottom and right. Pressed,
+  which needs the pressed flag (`+0x6c`, set by the mouse press) and the
+  cursor inside the rectangle, colour 1 is light and colour 2 dark.
+- The label is drawn through `FUN_00456b50` at
+  `(L + (R' - L) / 2 + 1, T + (B' - T) / 2)` = (316,308) at 640x480, with the
+  anchor flags 0xa (`TEXT-078`), which put the cell at (305,300)-(327,315) in
+  EN and (281,300)-(351,315) in RU. The shadow offset is 2 idle and 4 pressed.
+- The ink ramp is `0x005e9b88` idle, level 15 = (185,159,73), and
+  `0x005e9b48` while the hover flag (`+0x68`, set by the mouse move
+  `FUN_004bef8e`) is set, level 15 = (150,90,0). The shadow ramp is
+  `0x005e9be8`, flat (8,8,8). The ramp entries are from CPU emulation of the
+  executable's own ramp builder `FUN_00457c40` over synthetic memory
+  (`evidence/ramps.tsv`); the original was not run.
+- The paint ends by testing flag 1 of the control word `+0x18` (`vt+0x20`,
+  `FUN_004bd409`, an AND). With it clear the routine remaps the button's
+  screen rectangle through `FUN_0044fad0` at level 3 (`004beea2`), the shade of
+  `DLG-DIM-013`. The word starts as 3: the base constructor stores 1
+  (`FUN_004bc98f`, `004bca21`) and the button constructor ORs 2 (`004be81b`).
+  `FUN_004217be` appends the button and shows the panel without another write,
+  so the dialogue button is drawn undimmed. No routine read here clears flag 1.
+
+**Confidence.** High for the geometry, the colour assignment, the label
+anchor and the offsets: every operand is read in `FUN_004be98d`, listed whole.
+High for the ramp values under the stated instrument.
+
+**Unknown.** How the display's colour depth quantises the ramp entries and the
+two bevel colours; the reduction to the screen format was read, not applied to
+a format.
+
+### DLG-KEYS-040
+
+- A key reaches the panel through the campaign window's key handler
+  `FUN_00472b80` (message-map record for `0x100`). Enter and Space take its
+  forwarding arm `0x00472e4b`. Escape takes arm `0x00472c4c`, which posts
+  `0x416` only when `campaign+0x3dc` is 1 and `0x41f` only when it is 0 with
+  `campaign+0x3b4` empty; a panel on screen sets bit 3, so Escape forwards as
+  well (`MENU-ESC-010`, `MENU-INPUT-016`). `FUN_00475250` forwards `WM_CHAR`
+  the same way. The arm calls `vt+0x48` of the root container `campaign+0xcc`.
+- The class's show slot `vt+0x80` (`FUN_004c584a`) calls the base show
+  `FUN_004c5275` at `004c585c`. That routine calls `vt+0x24(1)`, which is
+  `FUN_004bd456` in the base and dialogue class tables (`0x0059b710`,
+  `0x0059b798`): it saves the root's capture object at `root+0x40` and stores
+  the panel in `root+0x34`. `FUN_004bd9dc` gives a mouse message
+  (`0x200`..`0x206`, `0x400`) to that object before any child
+  (`004bda2d`..`004bda50`), so the panel receives the mouse while it is up.
+- The root offers the key to its focus object, `root+0x38`, which is the
+  panel after `FUN_004c5275` (`vt+0x28(1)`, `FUN_004bd4c5`). The panel's
+  `vt+0x48` is `FUN_004c5797`; a message other than `0x46f` goes through
+  `FUN_004c52f3` to the container dispatcher `FUN_004bd9dc`, which offers a
+  key to the focused child `panel+0x38`, then to every child in order
+  (portrait, text control, button), then to the panel's own key slot
+  `FUN_004c574d`.
+- Enter (`0x0d`): the button's key handler `FUN_004bf182` answers in the
+  second step. It posts `0x46f` to the main window and returns 1, so the
+  panel's own arm never sees the key.
+- Escape (`0x1b`): no child takes it, and `FUN_004c574d` calls
+  `vt+0x48(0x46f)` on the panel directly and returns 1. That routine has the
+  same arm for `0x0d`; every other key goes to the base handler
+  `FUN_004c5369`.
+- A click on the button: the press (`FUN_004bf0a0`) sets the pressed flag,
+  the release (`FUN_004bf0e7`) clears it and, with the point inside the
+  rectangle, posts `0x46f`. The main window's default arm (`00475053`)
+  forwards a posted `0x46f` to the root, and `FUN_004c5797` answers it.
+- Space (`0x20`) has no dialogue action. The text control takes only
+  `0x21`, `0x22`, `0x26` and `0x28`; the button takes only `0x0d`;
+  `FUN_004c574d` takes `0x0d` and `0x1b`; the base handler's table covers
+  `0x09` and `0x25`..`0x28`. The button's `WM_CHAR` handler `FUN_004bf1d3`
+  fires only on its accelerator `+0x74`, which is 0 for label 77.
+- `0x46f` in `FUN_004c5797` calls the pager `FUN_004c5886`, which adds 1 to
+  `panel+0x68` and looks up that part (`FUN_004c607a`, `DLG-MARKUP-007`).
+  - Found: the text of child 10 is replaced (`FUN_004be229`), children 10
+    and 12 repaint, and the panel stays open. A dialogue of N parts takes N
+    presses.
+  - Not found, the last page or a suppressed part (`DLG-TAGARM-027`): when
+    `panel+0x80` is nonzero the panel posts `0x45b` to the main window with
+    that value, then calls `FUN_004c52f3(0x445)`, which hides the panel
+    (`vt+0x84`) and posts `0x44c`, whose arm is `0047333c CALL 0x004757b0`
+    (`DLG-LIFE-005`).
+- The `tips=` arm of the pager (`004c68d7`..`004c694f`) reads the five
+  characters after `tips=` in the part's tag with `%d` into `panel+0x80`.
+  The `0x45b` arm of the main window (`00474cef`) does nothing while the
+  global `0x005eb52c` is 0.
+  - Census over the five families' shipped blocks (`evidence/wrap.tsv`):
+    `tips=` is in 12 EN and 12 RU mission event blocks, with the numbers 1 to
+    7, and in no inn, mercenary, shop or training block on either root. No
+    shipped town dialogue sets `panel+0x80`, so the `0x45b` post exists only
+    at the close of some mission event dialogues.
+- A key on the focused text control: `FUN_004c224e` acts on `0x21`
+  (`FUN_004c1939`), `0x22` (`FUN_004c1993`), `0x26` (`FUN_004c18e1`) and
+  `0x28` (`FUN_004c1913`) when focus flag 4 is set. Each moves the top line
+  through `FUN_004be2b0`, which clamps it to `[0, lines - visible]`, then
+  sends `0x46d` to the panel and returns 1; `0x23`, `0x24`, `0x25` and `0x27`
+  return 0. With 7 or fewer lines the range is 0, and no shipped block has
+  more (`DLG-LINE-038`).
+- On the last page of a quest offer Enter, Escape and the click do the same
+  close, so the alternative of Escape declining is refuted. The panel has
+  three children and no accept state: its fields are the page `+0x68`, the
+  name `+0x6c`, an object pointer `+0x70` that the pager deletes and replaces,
+  the payload `+0x74` and its size `+0x78`, the portrait flag `+0x7c` and the
+  tips value `+0x80`, written by the constructor, the loader `FUN_004c5f06`,
+  the pager and the part lookup `FUN_004c607a`, and by neither key handler.
+  Registration does not wait for the close:
+  the shop calls `FUN_0048a360` at `004a9110` and the training hall at
+  `004b8393`, right after the constructor returns, and the inn appends the
+  mission to its queue at `00481060` for `FUN_00480ad0` to commit when the
+  player leaves (`REG-SCN-062`, `REG-SCN-064`, `DLG-ZEROARM-029`).
+
+**Confidence.** High for what each handler does with each key and for the
+command flow: every arm is a named instruction in a routine read whole, and
+the answer to the last-page question follows from one command. Medium that
+the button rather than the panel answers Enter (it rests on the dispatcher's
+child order, derived by reading and not observed, and both arms send the same
+command), that the text control holds focus at open (its base constructor sets
+flag 2, the portrait lacks it, and the show routine focuses the first child
+with flags 1 and 2, `FUN_004bd0a4`), and that the posted `0x46f` reaches the
+panel before another child of the root.
+
+**Unknown.** Whether siblings of the panel under the root react to Space; the
+handlers for key release (`0x101`), system keys and the panel's own `0x101` and
+`0x102` slots, which were not read; what a click outside the button does once
+the panel holds the capture (the panel's mouse slots were not read); senders of
+`0x445` and `0x446` outside this class, which were not enumerated; what the
+`0x45b` arm shows and where `0x005eb52c` is set.
+
 ## Open questions
 
 - Which 96 rows of the 240-row composition the portrait pane frames
-  (`DLG-FIGURE-020`). `FUN_00421b46` blits a fixed 72 x 96 window of the
-  160 x 240 canvas to `(8,7)` of the 88 x 108 surface the panel shows, with
-  source top `0x90 - PortraitY1` or the default `(0x24, 0x8c)-(0x6c, 0xe8)`
-  (`REG-NPC-089`). Reading those canvas rows as picture rows needs the
-  canvas's row order. `REG-NPC-091` grades the bottom-up reading Medium on the
+  (`DLG-FIGURE-020`). `FUN_00421b46` blits a 72 x 96 window of the
+  160 x 240 canvas, or 72 x 92 on the default arm, to `(8,7)` of the 88 x 108
+  surface the panel shows, with source top `0x90 - PortraitY1` or the default
+  `(0x24, 0x8c)-(0x6c, 0xe8)` (`REG-NPC-089`, `DLG-PORTRAIT-036`). Reading
+  those canvas rows as picture rows needs the canvas's row order. `REG-NPC-091` grades the bottom-up reading Medium on the
   flat arm, from 33/33 renders judged by eye, and does not address the composed
   arm, whose filler is the sprite blitter rather than a DIB loader. Bottom-up
   frames the top of the figure; top-down frames the lower legs; the two are up

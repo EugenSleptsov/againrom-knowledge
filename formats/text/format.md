@@ -78,13 +78,38 @@ a text measurer must add. — `SPR16A-FONT-018`
 
 ## Markup byte
 
-The tilde byte has markup semantics in the relevant text-drawing path:
+The tilde byte has markup semantics in the font1-3 draw path:
 
-- a doubled tilde represents a literal tilde glyph;
-- a lone tilde activates the original rule/markup behaviour and is not measured like a
-  normal character advance.
+- a doubled tilde represents one literal tilde glyph;
+- a lone tilde draws no glyph and takes no pen advance. It underlines the next glyph: a line
+  from the pen x to x plus that glyph's advance-table entry, on row y plus the height of the
+  font's frame 0 (the row under the glyph cell), in entry 15 of the ink ramp, with both end
+  pixels drawn;
+- the measurer skips a lone tilde and counts a doubled one once.
 
-A text measurer must mirror the draw path's markup handling or widths can diverge.
+A text measurer must mirror the draw path's markup handling or widths can diverge. The font4
+draw has no tilde arm: it draws the byte as glyph 0x5e, so a font4 string that holds a tilde is
+measured narrower than it is drawn. A tilde in the last byte of a string reads the advance table
+one entry past its end. No shipped dialogue text or dialogue button label holds a tilde; other
+text was not searched. — `TEXT-TILDE-009` (underline extent partially retracted),
+`TEXT-TILDE2-017`, `TEXT-079`
+
+## Draw anchors
+
+The font draw routines take a flag word of which only the values 1, 2, 4 and 8 are read. The
+effects add:
+
+| value | effect on the drawing origin |
+|---|---|
+| 1 | x moves left by the width of the string |
+| 2 | x moves left by half of that width |
+| 4 | y moves up by the width of the font's frame 0 |
+| 8 | y moves up by half of that width |
+
+The vertical anchors use the width of frame 0 where its height would be expected. Frame 0 of
+font 1 is 16 wide and 15 high, so value 8 moves y up by 8. Value 10, the two centring values,
+centres a string on x and puts the top of its cell at y - 8. The callers' other values are not
+enumerated. — `TEXT-078`
 
 ## Resource string tables
 
@@ -250,7 +275,10 @@ The published rules do not establish:
 - the caret's visible blink period, which adds the repaint interval to 500 ms
   (`TEXT-076`);
 - the displayed pixel of the prompt and name inks, which depends on the framebuffer's
-  channel widths, and whether a native original runs with the `/18` ramp (`TEXT-077`).
+  channel widths, and whether a native original runs with the `/18` ramp (`TEXT-077`);
+- which anchor values callers other than the dialogue pass to the draw routines
+  (`TEXT-078`), what a tilde in the last byte of a string reads past the end of the advance
+  table, and whether any text outside the dialogue families holds a tilde (`TEXT-079`).
 
 ## Decode and encode sequence
 

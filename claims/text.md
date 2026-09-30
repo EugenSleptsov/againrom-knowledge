@@ -294,10 +294,11 @@ What this does **not** establish is whether anything downstream — a save file,
 |---|---|---|---|---|
 | TEXT-API-007 | The text API is four routines on one class, and all three that touch a string byte convert. | High / Medium | ● active | [EXP-0097](../experiments/EXP-0097-ru-text/) |
 | TEXT-FONT3-008 | One shipped atlas cannot render Russian at all, and it is a structural fact rather than a gap in its art. | High / Medium | ● active | [EXP-0097](../experiments/EXP-0097-ru-text/) |
-| TEXT-TILDE-009 | `~` is markup, not a character, and a consumer that measures text must know it. | High / Unknown | ● active (amended, superseded) | [EXP-0097](../experiments/EXP-0097-ru-text/), amended [EXP-0103](../experiments/EXP-0103-ru-text-domain/) |
+| TEXT-TILDE-009 | `~` is markup, not a character, and a consumer that measures text must know it. | High / Unknown | ● active (amended, partially retracted, superseded) | [EXP-0097](../experiments/EXP-0097-ru-text/), amended [EXP-0103](../experiments/EXP-0103-ru-text-domain/) |
 | TEXT-FONT-015 | Every value the converter can produce reaches a record that has ink, on every 224-record atlas, on both roots — so "converts correctly, then draws nothing" does not happen. | High / Medium | ● active | [EXP-0103](../experiments/EXP-0103-ru-text-domain/) |
 | TEXT-FONT2-016 | `font2` is the only atlas the roots do not share, and the RU build blanked its entire Latin high half — which is free under selector 1 and destroys text under selector 0. | High / Medium | ● active | [EXP-0103](../experiments/EXP-0103-ru-text-domain/) |
 | TEXT-TILDE2-017 | The two byte loops do not test `~` at the same point: the measurer tests the raw byte, the draw tests the converted one. The conclusion survives; the published reason does not. | High | ● active | [EXP-0103](../experiments/EXP-0103-ru-text-domain/) |
+| TEXT-079 | A lone `~` in the font1-3 draw underlines the next glyph and takes no pen advance: a line from x, that glyph's advance-table width long, one row below frame 0, in ramp entry 15. `~~` is one literal glyph; the font4 draw has no tilde arm. | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 
 ### TEXT-API-007
 
@@ -355,20 +356,28 @@ then skips its partner (`00457950 CMP byte ptr [ESP+0x20],BL` / `JNZ` /
 `00457956 INC dword ptr [ESP+0x2c]`), and the measurer does the same at `00456383`. **Single**, it
 draws a **rule** and occupies no width: the draw calls `0044fcd0` — a Bresenham line routine — with
 the colour taken from `word ptr [arg+0x1e]` (`004578c8`), from `(x, y + GetHeight(0))` to
-`(x + dat[0x5e], y + GetHeight(0))` (`004578d3`…`004578ff`), and then **jumps past the advance
+`(x + dat[j], y + GetHeight(0))` (`004578d3`…`004578ff`), `j` the glyph index of the byte after
+the `~` (`TEXT-079`), and then **jumps past the advance
 block** (`00457907 JMP 0045794b`), so `x` does not move; the measurer's single-`~` arm likewise
 reaches `004563c3` without adding anything to its running total. The two routines therefore agree,
 which is what makes this a rule rather than a quirk of one of them
 
 **Confidence.** **High** (both arms of both routines are quoted, and the two agree — a consumer's
 width calculation and its draw would desynchronise if either were read wrong) / **Unknown** what the
-rule is *for*, and which shipped strings use it: no census of `~` in the shipped text was run, and
-the argument struct whose `+0x1e` supplies the colour was not identified. The "after conversion"
+rule is *for*, and which shipped strings use it: the five dialogue families and string 77 hold no
+`~` (`TEXT-079`), and no other text was searched. The "after conversion"
 clause carried **High** and was wrong for the measurer; see [`retracted.md`](retracted.md)
 
 **Amended.** The clause that both byte loops test `~` at the same point and after conversion is
 superseded by `TEXT-TILDE2-017` (EXP-0103; [`retracted.md`](retracted.md), SUPERSEDED): the measurer
 tests the raw byte. The markup rule stands.
+
+A second correction (EXP-0410): the single-`~` sentence read `to (x + dat[0x5e], y + GetHeight(0))`,
+and the Unknown read "the argument struct whose `+0x1e` supplies the colour was not identified" and
+"no census of `~` in the shipped text was run". The line ends at `x + dat[j]`, `j` the recoded byte
+after the `~`, and the colour word is entry 15 of the fifth argument, the ink ramp (`TEXT-079`). The
+dialogue families and string 77 were counted: no `~`. The rule, the doubled case, the no-advance
+jump and the measurer's arm stand.
 
 ### TEXT-FONT-015
 
@@ -434,6 +443,47 @@ rival — that the addresses are one routine read twice, or that a second `CMP` 
 `CALL` — is killed by the measurer's own listing, in which the only `CMP` against `0x7e` before
 `00456383` is the one at `0045634c`
 
+### TEXT-079
+
+- Each loop step of `FUN_004577f0` recodes the byte at `i` and the byte at `i + 1`
+  (`FUN_004562f0`) and subtracts 0x20 from both, so `~` becomes 0x5e. The tilde arm
+  (`004578ae`..`00457907`) runs when byte `i` is 0x5e and byte `i + 1` is not (`004578b7 CMP
+  AL,BL` / `JZ`). When both are 0x5e the ordinary glyph path draws one `~` glyph and the loop
+  skips the partner (`00457950`..`00457956`): the doubled case of `TEXT-TILDE-009`.
+- The arm calls the line routine `FUN_0044fcd0(x1, y1, x2, y2, colour)`, which plots both
+  endpoints, with
+  - x1 = x, the pen position;
+  - x2 = x + `dat[j]`, where `j` is the recoded index of byte `i + 1` (the stack slot written
+    at `004578b1` and read at `004578da`) and `dat` is the font's advance table, without the
+    letter spacing;
+  - y1 = y2 = y + `vt+0x24(0)`, the row below frame 0's height, which is 15 in font1
+    (`TEXT-078`);
+  - colour = the 16-bit word at `ramp + 0x1e` (`004578c8`): entry 15 of the fifth argument,
+    the top level of the ramp that inks the text.
+- The arm then jumps past the advance block (`00457907 JMP 0045794b`), so the pen stays at x
+  and the next step draws the next glyph there. The line is `dat[j] + 1` pixels long and lies
+  under that glyph.
+- Through the wrapper `FUN_00456b50` both calls draw the line, the first `d` pixels right and
+  down in the shadow ramp's entry 15 (`TEXT-078`).
+- A tilde in the last byte of a string reads its partner from the terminating NUL, index 0xe0
+  after the recode, which is one dword past the end of font1's 224-entry table
+  (`evidence/metrics.tsv`). The line length then depends on what follows the table in memory.
+- The font4 draw `FUN_00457b50` (`TEXT-067`) has no tilde arm. Its loop recodes each byte,
+  subtracts 0x20 and either draws the glyph or advances for a space, so it draws `~` as glyph
+  0x5e and advances by that entry, while the measurer skips a lone `~` (`TEXT-TILDE2-017`). A
+  font4 string that holds a tilde is measured narrower than it is drawn. No font4 string was
+  searched for one.
+- Census: the five dialogue families of both roots contain no `~` byte (`DLG-LINE-038`), and
+  the button label, string 77, contains none (`DLG-BUTTON-039`). No other text was searched.
+
+**Confidence.** High for the arm's operands and the doubled case: `FUN_004577f0` and
+`FUN_0044fcd0` are read whole and each operand is traced to its stack slot, which settles the
+extent as the next glyph's advance and not the tilde glyph's own entry, 0x5e. High for the
+missing arm in `FUN_00457b50`, read whole, which holds no compare against 0x5e.
+
+**Unknown.** The read past the end of the advance table for a final tilde, what lies after the
+table, and whether any shipped string outside the searched population reaches the arm.
+
 ## Draw routines
 
 | ID | Claim | Confidence | Status | Evidence |
@@ -445,6 +495,7 @@ rival — that the addresses are one routine read twice, or that a second `CMP` 
 | TEXT-069 | No surviving claim in the corpus asserts anti-aliasing, supersampling or sub-pixel filtering anywhere in the sprite/text pixel path, and neither text draw routine's own body contains filtering logic. | Medium | ● active | [EXP-0399](../experiments/EXP-0399-text-presentation/EXP-0399.md) |
 | TEXT-070 | Colour reaches a font4 pixel through a table-pointer selector, not a level shift: the `SHL EDX,0x9` level addressing belongs to `FUN_00428fc0`, not to font4's real receiver `FUN_0042b970`. | High / Medium / Unknown | ● active | [EXP-0399](../experiments/EXP-0399-text-presentation/EXP-0399.md) |
 | TEXT-071 | `FUN_00428fc0` unconditionally dereferences the argument `DrawText` supplies as a literal zero, on both branches, before any pixel work: a null-pointer-plus-8 fault, not a benign argument miscount. | High / Unknown | ● active | [EXP-0399](../experiments/EXP-0399-text-presentation/EXP-0399.md) |
+| TEXT-078 | The font's two draw routines read flag values 1, 2, 4 and 8 as anchors: 1 and 2 move x left by the string's width and by half of it, 4 and 8 move y up by frame 0's width, not its height, and by half of it. | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 
 ### TEXT-065
 
@@ -615,6 +666,47 @@ routine split (`DrawText` draws `.16` only, `FUN_00457b50` draws `.16a` only) �
 instruction reads cross-checked against Win32 memory-protection semantics, not a probabilistic
 count. Explicit **Unknown**, narrowed: which callers/screens invoke `FUN_00457b50` with font4 active
 — that needs a caller-side census this experiment did not run
+
+### TEXT-078
+
+- `FUN_004577f0`, the draw slot `vt+0x14` (`TEXT-API-007`), takes x, y, the string, a flag word
+  and a ramp (`RET 0x14`). It tests the flag byte at `004577f7`, `0045781b`, `0045782e` and
+  `00457843`, one value each, and reads no other bit. The second draw `FUN_00457b50`
+  (`TEXT-067`) repeats the four tests at `00457b57`, `00457b79`, `00457b8a` and `00457b9d` with
+  the same operations.
+- The tests are independent, so the effects add.
+
+| Flag value | Effect on the origin |
+|---|---|
+| 1 | x = x - width of the string (`FUN_00456320`) |
+| 2 | x = x - (width >> 1) |
+| 4 | y = y - `vt+0x20(0)` of the glyph sprite |
+| 8 | y = y - (`vt+0x20(0)` >> 1) |
+
+- Slot `+0x20` of both sprite class tables, `0x005973e0` (font1-3) and `0x005974f8` (font4),
+  read as raw dwords, is `FUN_00428b00`. It returns the first dword of frame 0's record, its
+  width. Slot `+0x24` is `FUN_00428b10`, which returns the second dword, its height.
+  `FUN_004577f0` uses the height getter for the advance of a space (half of it) and for the
+  underline row (`TEXT-079`), so the two vertical anchors take the width where the height would
+  be expected.
+- Font1 frame 0 measures 16 wide and 15 high on both roots (`evidence/metrics.tsv`). Value 4
+  subtracts 16 and value 8 subtracts 8; the height would give 15 and 7.
+- Value 10, the anchor of the dialogue button label (`DLG-BUTTON-039`), centres the string on x
+  by its measured width and puts the top of a font1 string's cell at y - 8, so the cell spans
+  rows y - 8 to y + 6.
+- `FUN_00456b50(x, y, string, anchor, ramp, d)` calls the font's draw slot twice with the same
+  anchor: at (x + d, y + d) with the shadow ramp that the font's slot `+0x18` returns
+  (`FUN_00457980`, `0x005e9be8`), then at (x, y) with `ramp`. Each call applies the anchors
+  itself, so the shadow keeps the ink's alignment. `TEXT-068` stands: the offset pass is the
+  caller's second call, not a pass inside the routine.
+
+**Confidence.** High. Both routines are read whole, each test and both getters are named
+instructions, and the class-table slots are raw dwords. The font1 frame 0 size is a decode of
+`font1.16` on both roots.
+
+**Unknown.** Which callers pass which flag values was not enumerated; the dialogue's own values,
+0 for the text lines (`DLG-LINE-038`) and 10 for the button label, are the only ones established
+here.
 
 ## Root corpora
 

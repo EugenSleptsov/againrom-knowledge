@@ -152,7 +152,7 @@ Action parses the edit, resolves the entered amount, subtracts it from the purse
 `0x23` at the current map cell before closing. Cancel closes without an order. Its screen placement
 and child geometry are executable constants; all six strings are localised `main.res` data. The generic dialog-frame assets are outside this command-panel contract.
 
-## The in-play Esc menus (`MENU-ESC-010` (partially retracted)…`MENU-INPUT-016`)
+## The in-play Esc menus (`MENU-ESC-010` (partially retracted)…`MENU-INPUT-016` (partially retracted))
 
 Two surfaces, not one. `VK_ESCAPE` reaches the frame window's `WM_KEYDOWN` handler
 `FUN_00472b80`, which reads the UI state word `campaign+0x3dc`:
@@ -228,8 +228,8 @@ Frames 9..17 are a second nine-patch at 32/48 px, unused by this routine
 **Compositing and modality** are not part of this contract and are specified by the
 claims: the whole screen is darkened once, destructively, at shade level 3
 (`MENU-STOP-015`, `DLG-DIM-013`); the world stops on the `0x4008` idle gate
-(`MENU-STOP-015`, `DLG-STOP-012`); Esc also closes, and the panel does not capture
-the mouse (`MENU-INPUT-016`).
+(`MENU-STOP-015`, `DLG-STOP-012`); Esc also closes, and the panel is the root's capture
+object while it is up (`MENU-INPUT-016`, partially retracted).
 
 <a id="open--not-established"></a>
 
@@ -246,5 +246,5 @@ the mouse (`MENU-INPUT-016`).
 - What each entry's raised panel then does. `MENU-ITEM-011` and `MENU-ITEM-012` name the constructor and rect each
   message raises and stops there; the two exit rows of both `0x41c` confirmations post the same
   `0x41e` and differ only in control id, and how the exit target is distinguished is unread.
-- Whether a click landing outside an Esc panel changes anything, as opposed to merely being
-  delivered to the window under the cursor, which is all `MENU-INPUT-016` claims.
+- Whether a click landing outside an Esc panel changes anything: the panel holds the root's mouse
+  capture and the slots read drop the click (`MENU-INPUT-016`, partially retracted).
