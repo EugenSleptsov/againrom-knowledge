@@ -2,6 +2,16 @@
 
 [Reference](format.md)
 
+## Campaign offer handoff
+
+The reached shop show tail tests campaign offer count `+638`, reads the head
+word through array header/data `+630/+634`, and builds `shop\npc31m<word>`.
+After normal builder return it registers the word and removes array element 0,
+count 1, without testing the return value. A failed first text part does not
+supply a rejection result to this caller. Earlier room initialization, resource
+exceptions, native entry and downstream registration effects remain Unknown.
+(DIALOGUE-048)
+
 ## Trading
 
 A customer opens the shop through `Shop::Open`, which creates a `CMultiShopInstance` (max 250

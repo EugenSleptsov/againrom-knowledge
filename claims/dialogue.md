@@ -23,7 +23,7 @@ this file: [registry.md](registry.md).
 | DLG-WIN-001 | One `0x84`-byte panel class with one constructor draws every line of authored dialogue, and its six calling routines are the complete set of entries into it. | High | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 | DLG-PATH-002 | Script and outcome announcements share one transport; the failure close is selected by its own stored panel pointer. | High | ● active (partially retracted, amended) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0101](../experiments/EXP-0101-mission-end/), [EXP-0274](../experiments/EXP-0274-defeat-modes/) |
 | DLG-ABSENT-003 | A named event text that does not ship produces nothing: no window, no fallback, no fault, no blocked state; this answers `MISSION-TEXT-005`'s Unknown. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
-| DLG-EMPTY-004 | The window's `"Nothing to say"` fallback is reached only by an existing file that yields no part 1, and no shipped file on either root reaches it. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
+| DLG-EMPTY-004 | The window's `"Nothing to say"` fallback is reached only by an existing file that yields no part 1, and no shipped event file in the measured corpus reaches it. | High | ● active (amended) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0417](../experiments/EXP-0417-offer-first-part/) |
 | DLG-LIFE-005 | Only input ends the display, nothing queues, and an announcement that arrives while any dialog is open is discarded. | High / Medium | ● active (amended, partially retracted) | [EXP-0098](../experiments/EXP-0098-mission-text/), [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-READ-006 | The event text is read at fire time, not at map load, and it is read twice per announcement. | High | ● active | [EXP-0098](../experiments/EXP-0098-mission-text/) |
 
@@ -142,8 +142,9 @@ builder.
   pager `FUN_004c5886` once and discards its return.
 - The pager returns 0 when `FUN_004c607a` cannot find a tag containing
   `part=<n>`. On that path nothing sets the text control, so the window opens
-  on the constructor's own literal `"Nothing to say"` and its button then
-  closes it.
+  on the constructor's own literal `"Nothing to say"`. The next pager call
+  increments to part 2. It closes through command `0x46f` only if that lookup
+  fails; an accepted part 2 replaces the literal and continues.
 - Corpus: 0 of 225 EN and 0 of 228 RU event files lack a `part=1` tag, and 0
   files on either root have a gap in their part sequence before their own
   maximum (`evidence/markup-en.txt`, `markup-ru.txt`).
@@ -155,6 +156,11 @@ builder.
 are named instructions, and the pager's zero return is its own `if`. High for
 the corpus half: exhaustive over every event file of both roots, and the
 measurement could have failed, since one file with a part-1 typo would show it.
+
+**Amended.** DIALOGUE-049 corrects the former automatic button-close clause:
+failure of part 1 does not preclude part 2. The corpus clause names the measured
+event files, not every text family. The default text and ignored show return
+stand. Native presentation of an authored missing-first-part file is Unknown.
 
 ### DLG-LIFE-005
 
@@ -1722,3 +1728,139 @@ click experiment. The rectangle's right and bottom edges use `PtInRect`.
 
 **Unknown.** Native delivery after a press, arbitrary capture replacement,
 disabling or deleting the button between events, and sound/paint side effects.
+
+## Shop and training offer first part
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| DIALOGUE-048 | Reached shop and training offer tails test their array count, name its head in the dialogue builder, then register and remove that head after normal return without testing the builder result. | High | ● active | [EXP-0417](../experiments/EXP-0417-offer-first-part/) |
+| DIALOGUE-049 | On a constructed dialogue panel, a failed first-part lookup leaves the default text and still calls base show; the next pager call tries part 2 and can continue rather than close. | High | ● active | [EXP-0417](../experiments/EXP-0417-offer-first-part/) |
+| DIALOGUE-050 | Dialogue tag rejection resumes the same-part scan; portrait and tips fields can be changed before a parser return of 0, with no rollback in the reached body. | High | ● active | [EXP-0417](../experiments/EXP-0417-offer-first-part/) |
+| DIALOGUE-051 | Each EN/RU shop and training offer node in the measured MAIN.RES trees has one unconditional part-1 candidate; none of those 14 nodes represents an absent or conditionally rejected first part. | High / Medium | ● active | [EXP-0417](../experiments/EXP-0417-offer-first-part/) |
+
+### DIALOGUE-048
+
+Shop show `004a8bc3`, table `0059ac88+80`, reaches an offer-count test through
+`004ae4c0` and `004ae4f0`. Its array header is `campaign+630`, data pointer
+`+634`, count `+638`. A positive count reads the head word, builds
+`shop\npc31m<word>` and calls `004217be` at `004a90fe`. After normal return it
+calls registration `0048a360` at `004a9110`, then `004570ad5(array,0,1)` at
+`004a9122`. There is no builder-result branch between these calls.
+
+Training show `004b7f20`, table `0059b088+80`, reaches the count test for
+`campaign+64c` from `004b833a`. Its array header is `+644`, data pointer `+648`. A positive count
+reads the head word, builds `training\npc34m<word>` and calls the same builder
+at `004b8383`. Normal return reaches registration at `004b8393`, then removal
+of element 0 with count 1 at `004b83a0`, with no builder-result branch.
+
+The eight original-tail controls vary count 0/1 and a synthetic builder return
+0/1 for each caller. Count 0 emits none of the three calls. Count 1 emits
+builder, registration and removal in that order for either return value.
+Mission word 31 is supplied to both tails; training word 31 is a synthetic
+control, not a shipped training node. Existing REG-SCN-064 (amended) and
+REG-SCN-065 describe the registration consequences separately.
+
+**Confidence.** High for these reached tails, their count/head reads and their
+local order after a normal builder return. Raw listing rows and direct branch
+targets are bound to the input executable. Original tail instructions run;
+builder, registration and removal are explicit host boundaries in the probe.
+
+**Unknown.** Earlier room initialization, native room entry, actual array
+contents at entry, construction failure or resource exceptions, asynchronous
+delivery and downstream registration/removal effects under this instrument.
+An absent text part is not treated as a missing resource or a thrown exception.
+
+### DIALOGUE-049
+
+The panel constructor `004c5682` initializes current part `+68`, voice `+70`
+and tips `+80` to zero. Loader `004c5f06` stores payload at `+74`, allocates its
+length plus one at `+78` and writes the final NUL. The builder `004217be` adds
+text child 10 containing `"Nothing to say"`, button 11 sending `0x46f`, and
+portrait child 12 when `+7c` is nonzero (DLG-WIN-001, DLG-RECT-037).
+
+Builder handoff `00476810` calls virtual `+80`, panel slot `004c584a`. That
+slot calls pager `004c5886` at `004c5854` and calls base show `004c5275` at
+`004c585c` without testing the pager return. The pager increments `+68` before
+parser `004c607a`. A zero parser return branches at `004c5985` before the text,
+voice, portrait and tune updates. Thus an existing readable payload yielding
+no accepted part 1 leaves the constructed text and still reaches base show.
+
+In original-code controls with either no part-1 tag or a conditionally rejected
+part-1 tag, show advances to 1 and reaches only the hooked base-show boundary.
+A following pager call advances to 2 and accepts the synthetic body
+`B\r\n`, reaching text, voice and portrait boundaries. The voice filename
+argument is `speech\shop\npc31m31p2.wav`. A payload with neither part reaches
+return 0 on the second call instead. These discriminate continuation from an
+automatic first-failure close.
+
+Command `0x46f` in `004c5797` calls the pager, tests its result, and on failure
+sends campaign message `0x45b` when `+80` is nonzero, followed by base message
+`0x445`. Failure of the first lookup is therefore different from failure of
+the next lookup through this command. This corrects DLG-EMPTY-004's former
+automatic button-close clause.
+
+**Confidence.** High for the constructor stores, named call order, omitted
+result test and executed synthetic continuation. Text, voice, portrait and
+base-window callees are hooked boundaries, not observed output.
+
+**Unknown.** Native visibility, text pixels, focus/input delivery, real voice
+loading/playback, portrait construction and exceptions. The full builder and
+earlier room code were read but not executed end to end. Allocation success is
+an instrument premise; explicit `sound=` routing is outside the probe.
+
+### DIALOGUE-050
+
+Parser `004c607a` searches tag substrings for `part=<current>`. A condition
+failure branches to `004c6a1d` and resumes the scan from `004c60b1`, so another
+tag declaring the same part can succeed (DLG-TAGARM-027). The synthetic
+same-part control rejects its first candidate and accepts its second.
+`part=10` also satisfies the part-1 substring search; this is a separate
+synthetic positive control, not a shipped malformed tag.
+
+The loader's whole-payload `npc` test sets `+7c`; the candidate's `npc=` test
+overwrites it at `004c61c2` before the player conditional gates. A rejected
+candidate with no `npc=` clears the flag even when another part put `npc` in
+the payload. A candidate rejected after `npc=31` retains the flag and output
+speaker 31. Neither change is rolled back on the parser's zero-return path.
+
+After the conditional gates, `tips=` stores the parsed integer at panel `+80`
+before the header-LF scan. A synthetic accepted-condition tag with `tips=7`
+and no following LF returns 0 but leaves `+80=7`. Show leaves the default text;
+a following failed `0x46f` call reaches messages `0x45b` and `0x445`. Controls
+with tips 0 and 7 distinguish the conditional extra message. This says nothing
+about what the `0x45b` receiver presents.
+
+**Confidence.** High for these stores, same-part retry and bounded original
+parser/pager controls. CString, registry, actor lookup and sscanf operations
+are declared host hooks. Start, resolution and sex/class bits are supplied;
+the Start/resolution control is not an independent native actor observation.
+
+**Unknown.** Native reachability of each supplied actor state, arbitrary tag
+combinations, real message delivery, explicit `sound=` and receiver effects.
+No universal absence of other writers or caller-side rollback is claimed.
+
+### DIALOGUE-051
+
+The input reader enumerates every MAIN.RES node in the preserved EN and RU
+roots, selecting `text/shop/npc31m<digits>.txt` and
+`text/training/npc34m<digits>.txt`. Each root has four shop nodes (31, 91, 110,
+130) and three training nodes (61, 121, 131). All 14 selected payloads contain
+one part-1 candidate, none carries a first-part conditional, and all contain
+the whole-payload `npc` substring. The census does not cover other families,
+other installs, loose overrides or custom resources.
+
+The original parser accepts part 1 for all 448 vectors: 14 payloads times
+four supplied hero bit patterns times four supplied speaker bit patterns times
+two coupled Start/resolution gates. This confirms the selected first tags do
+not depend on those controls; it does not enumerate actual actors or all
+independent combinations of Start and resolution.
+
+**Confidence.** High for the archive census, lengths, tag counts and digests.
+Medium for the corpus parser projection under the declared hooks. Corpus
+agreement does not prove a native panel was shown. EN/RU executable equality
+is one code observation, not an independent replication.
+
+**Unknown.** Native content overrides, offer-array reachability and renderer
+or input causes of an apparently absent panel. These stock payloads cannot
+distinguish native failure models; the synthetic controls establish the local
+missing/rejected-part mechanism separately.

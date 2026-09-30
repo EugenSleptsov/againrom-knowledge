@@ -66,6 +66,14 @@ room arms send `445h` first, which leaves the town view. The shop and the
 school speak on entry when the campaign holds an offer for them. No separate
 mercenary hall is reached from the town. (`TOWN-475`)
 
+The reached school show tail tests offer count `campaign+64c`, reads the head
+word through array header/data `+644/+648`, and builds
+`training\npc34m<word>`. After normal builder return it registers that word
+and removes array element 0, count 1, without testing the builder result.
+The shop tail has the same order using `+630/+634/+638` and
+`shop\npc31m<word>`. Earlier room initialization, resource exceptions and
+native offer-array contents remain Unknown. (DIALOGUE-048)
+
 Inside the shop the merchant panel tests four shelf rectangles and two prompt
 rectangles, and the painted merchant is not tested in that panel. The school
 view tests the mage panel in one state and the fighter panel in another through

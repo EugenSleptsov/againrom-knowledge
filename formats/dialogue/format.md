@@ -4,7 +4,7 @@
 
 Script and outcome messages select a dialogue or outcome panel through the
 client dispatcher. Text resources, speaker flags and current panel state
-control the displayed content. Missing text is silent; an announcement
+control the displayed content. Missing mission-event text is silent; an announcement
 arriving while a dialogue is open is discarded. — DLG-PATH-002 (amended),
 DLG-MSGNUM-025
 
@@ -17,7 +17,7 @@ defined in [TEXT](../text/format.md).
 
 ## State and identity
 
-An absent text resource returns without fallback, retry or error. If the
+An absent mission-event text resource returns without fallback, retry or error. If the
 dialogue-open flag is set, the arriving announcement is dropped.
 — DLG-PATH-002 (amended)
 
@@ -91,9 +91,41 @@ the mercenary hall (two routines, `inn\mercenary\npc%02d` and `…\npc35`, shari
 shop (`shop\npc31m%d`) and the training hall (`training\npc34m%d`). — `DLG-WIN-001`, its
 six-families clause amended to five
 
-All six routines build the same panel, because the constructor takes only the name and shows the
+All six routines use the same builder, because it takes only the name and shows the
 panel itself. Every shipped node (268 EN, 278 RU) contains `npc`, so every shipped dialogue takes
 the portrait layout. — `DLG-RECT-037`
+
+### Offer handoff and failed first part
+
+The reached shop and training show tails require a positive offer-array count.
+They read its head mission word and pass `shop\npc31m<word>` or
+`training\npc34m<word>` to the builder. After normal return they register the
+word and remove array element 0, count 1, without testing the builder result.
+Shop array header/data/count are campaign `+630/+634/+638`; training uses
+`+644/+648/+64c`. Earlier room initialization, constructor/resource exceptions
+and downstream registration effects are outside this local order. — DIALOGUE-048
+
+The panel starts with part `+68=0`, voice `+70=0`, tips `+80=0`, payload at
+`+74` and allocation length plus one at `+78`. Its show slot increments to
+part 1, ignores a failed lookup and still calls base show. No successful parse
+means no text replacement: child 10 retains `"Nothing to say"`. The next pager
+call tries part 2, which can succeed and continue. Command `0x46f` closes only
+when its own next lookup fails. Native visibility and input delivery remain
+Unknown. — DIALOGUE-049, DLG-EMPTY-004 (amended)
+
+A rejected candidate resumes the same-part scan, rather than advancing the
+part. Its `npc=` test can already have changed portrait flag `+7c`. After the
+conditions, `tips=` can store `+80` before a missing header LF forces return 0.
+Those stores have no rollback in the parser body. A later failed `0x46f`
+lookup sends `0x45b` when tips is nonzero, then `0x445`; receiver presentation
+is Unknown. — DIALOGUE-050
+
+Each preserved EN/RU MAIN.RES tree contains four shop offer nodes and three
+training offer nodes. All 14 contain one unconditional part-1 candidate.
+The original parser accepts those first parts across 448 supplied actor/gate
+vectors under declared primitive hooks. No selected stock node exercises the
+absent or rejected first-part controls. Native overrides, actor reachability
+and renderer/input effects remain Unknown. — DIALOGUE-051
 
 ### Drawn geometry
 
@@ -278,8 +310,10 @@ lowercased file** picks the layout once, and the per-part `Find("npc=")` refresh
 ### The eight sex-and-class conditionals
 
 Each **abandons the tag and resumes the scan** when the tag and the bit disagree; the scan is
-one forward pass, so another tag declaring the same part can still match, and only when no
-tag matches does the routine return 0 and the window close. `iam*` tests the player's own hero;
+one forward pass, so another tag declaring the same part can still match. When no tag is
+accepted, the parser returns 0; show ignores it, while command `0x46f` closes on that failure
+(DIALOGUE-049).
+`iam*` tests the player's own hero;
 the bare four test the speaker, and are skipped entirely unless the npc section has a `Start`
 key and a speaker resolves.
 

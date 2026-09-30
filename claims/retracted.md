@@ -1,5 +1,11 @@
 # Overturn history
 
+## Missing first dialogue part and continuation
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `DLG-EMPTY-004` (automatic button-close clause only) | Verbatim: "the window opens on the constructor's own literal `"Nothing to say"` and its button then closes it" | High | [EXP-0417](../experiments/EXP-0417-offer-first-part/), DIALOGUE-049 | The next pager call increments to part 2. An accepted part 2 replaces the default text and continues. Command `0x46f` closes only when that next lookup fails. The ignored show return and default-text mechanism stand; the corpus clause names the measured event files. Native presentation remains Unknown. | **CORRECTED** |
+
 ## Action cycle retention after a pending-order clear
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

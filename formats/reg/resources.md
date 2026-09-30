@@ -76,6 +76,14 @@ below define only their own keys.
   mission nor a roster length (`REG-SCN-067`). TotalMissions has no named
   literal consumer.
 
+  The reached shop and training show tails consume the head mission word only
+  when their campaign offer-array count is positive. Shop header/data/count
+  are `+630/+634/+638`; training uses `+644/+648/+64c`. They name
+  `shop\npc31m<word>` or `training\npc34m<word>`, call the shared dialogue
+  builder, then register and remove the head after normal return without a
+  result test. This local consumer order does not establish native array
+  population or exception handling. — DIALOGUE-048
+
   **Cross-root closure of `InnNPC`/`InnMission` against the shipped inn text, and per-stage
   divergence across a third comparison population, over four roots — the live/EN/RU triple this
   page's other rows already cover plus a fourth, owner-supplied pre-release data snapshot**
