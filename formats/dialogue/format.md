@@ -175,6 +175,30 @@ blits the surface. Which rows of the 240-row canvas the window frames stays Unkn
 A synthesised speaker's twelve visible-equipment slots are zero, so its figure is the face sheet
 alone. A live speaker's figure carries whatever it is wearing at that moment.
 
+The synthesiser `FUN_00421f46` starts the flags word at `0x48` and reads a subset of the section's
+`Flags` tokens: `Hero` ORs 1, `Human` `0x10`, `Female` 4 and `Mage` 2; `MySex` and `MyClass` OR the
+primary actor's own 4 and 2 (sex and class), and `!MySex` and `!MyClass` OR their inverse. `Me`,
+`!Me`, `!Mage`, `!Female`, `!Hero`, `!Human`, `Platoon` and `Face` have no arm. A section with
+`Start` takes its face from the `Face` key of the `npc.reg` section chosen by `bits & 6`
+(`MaleFighter` 0, `MaleMage` 2, `FemaleFighter` 4, `FemaleMage` 6, default 1); any other section
+takes its own `Face`. The figure is then `graphics\equipment\<directory>\<face>.256`, the directory
+chosen by `bits & 6` (`mfighter`, `mmage`, `ffighter`, `fmage`), and a result whose `bits & 3` is 1
+also draws the hero back layer. When no live actor passes their terms, `npc21` to `npc24` draw an
+archetype chosen by the tokens and the primary's sex and class (`npc21` always `MaleFighter`).
+Whether a live hero passes the terms for a given party, so that the synthesiser is never reached, is
+Unknown. No party hero, no stock mercenary and no placement of the chapter-140 map (`scn:140.alm`)
+passes the terms of `npc62`. If the tavern's client holds no other actor that passes, the dialogue
+draws the synthesised `fmage\4.256` for it. The client's actor map was not enumerated; actors that
+do pass exist in `scn:141.alm` and, on the EN root, in `Beast.ALM`, `Cross.ALM` and `Horror.alm`.
+— `DLG-SYNTH-042`, `DLG-SPEAKER-041`
+
+A person the client creates from a state message with a type id below `0x1a` takes its face from the
+low seven bits of the message's face byte, and bit 7 is its Female bit. For a person the npc arm of
+a placement creates in zero mode, the constructor takes the byte from the Humans row's `face` column
+and ORs the row's gender column into bit 7; a row whose gender column is -1 keeps the default,
+female. A face of 0 names a sheet that no root ships, and drawing it aborts the program.
+— `DLG-FACEBYTE-043`
+
 ## Lifecycle
 
 ```
