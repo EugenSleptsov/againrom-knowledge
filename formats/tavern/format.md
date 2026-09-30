@@ -182,7 +182,10 @@ all three alike — 0 asymmetric — but voice does not: most `inn/mercenary/*.w
 two differ EN-vs-RU inside the same bio, and where the pre-release root does carry mercenary voice its
 byte size matches EN's exactly rather than RU's (`TAVERN-MERCVOICE-008`). Thirteen of the fourteen are
 type bios, for types 1..10, 12, 13 and 14; the fourteenth, `npc35`, is the town gate line
-(`TAVERN-BUTTON-020`).
+(`TAVERN-BUTTON-020`). The npc35 panel has one pager button; show starts the
+voice, and the next pager call stops it, including the last-page press. A
+missing node takes the exception path without building a panel; native error
+text remains Unknown. (`TOWN-484`)
 
 ## Roster progress and selected-entry prerequisites
 
@@ -260,10 +263,17 @@ which picture it shows is Unknown.
 A click on an occupied roster cell selects it and refreshes the first button
 caption. Only occupied cells are tested, mercenary cells first. A double click
 on a mercenary cell hires or dismisses its type, and on a talk-only cell opens
-its talk dialogue. No routine read tests the candle, cauldron or tender, and
-the tavern view's own message handler and the controls of its tip popup were not
-read for mouse messages; a click on them reaches the cell rectangles that
-overlap them. — TAVERN-CLICK-019
+its talk dialogue. With the tip popup absent, figure presses reach the
+roster's occupied-cell test:
+with 18 cells, none of the candle's pixels select, 5456 of the cauldron's
+15120 and 13680 of the tender's 38160 select. Other figure pixels pass the
+press and release without a message, dialogue, sound or state write. These
+counts use painter rectangles, not opaque masks, and assume no capture child.
+With the tip popup shown, list/body passes down below, checkbox consumes down
+and writes the tips flag, and Close consumes down and can post `45ah` on release
+inside. Checkbox overlaps 320 candle and 1728 tender pixels; Close overlaps
+1224 tender and 216 cauldron pixels. These known actions lie outside every
+roster cell. — TAVERN-CLICK-019, TAVERN-FIGURE-021, TOWN-480
 
 The button column has three rectangles that act on release over the pressed
 one. The upper hires or dismisses the selected mercenary and does nothing for a
@@ -271,5 +281,18 @@ talk-only cell. The middle opens the bio dialogue `inn\mercenary\npc<NN>` for a
 mercenary cell, where `NN` is the type, or the talk dialogue for a talk-only
 cell. The lower leaves the tavern and returns to the town view. The talk
 dialogue is `inn\NPC\npc<NN>m<M>`, with `M` from `InnMission` or, when that
-entry is 0, the live main mission. Delivery of the double click and the sound
-files of these actions are Unknown. — TAVERN-BUTTON-020, TAVERN-CLICK-019
+entry is 0, the live main mission. The roster's double-click slot runs the
+occupied-cell test before its hire/dismiss/talk action; native delivery and
+hover capture remain Unknown. — TAVERN-BUTTON-020, TAVERN-CLICK-019,
+TAVERN-FIGURE-021
+
+## Refusals, sound slots and message-line boundary
+
+The tavern, school, shop and town routines read post no message line. Hire
+refusal requests sound slot `+a0`; success uses `+98`, dismiss `+9c`, helper
+`+a8` (`Helper.wav`), exit `+b0` (`Out.wav`) and talk `+b4` (`Talk.wav`).
+The two read training refusal conditions are silent. The imported Sleep
+calls belong to four network owners; the shipped text search found no tavern
+Sleep action. These are bounded searches and instruction-level sound requests,
+not observations of native playback or every indirect caller.
+(`TAVERN-LINES-022`)

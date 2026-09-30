@@ -2,13 +2,13 @@
 
 ## Snapshot
 
-Snapshot k93, exported from the private research repository at commit
-`97aadc93bcd7b54ca8eb158a1a1a8a340a0c19f3`.
+Snapshot k94, exported from the private research repository at commit
+`439099599664dee0bcdb2bd751605298e23fef31`.
 
 | Field | Count |
 |---|---:|
-| Claim ids | 2436 |
-| Retracted ids | 433 |
+| Claim ids | 2444 |
+| Retracted ids | 434 |
 | Format pages | 116 |
 
 Each count is recomputed from this snapshot's own exported ledgers, not carried

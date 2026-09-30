@@ -40,8 +40,13 @@ other pixel does nothing in that routine. The mask is 640x480 at 8 bits. Each
 value forms one large connected region, and `80h`, `90h` and `a0h` also hold
 single stray pixels elsewhere. While the tips option is on, its initial value,
 the tip popup over (328,0)-(640,200) is offered a click first, with its text
-area, Close button and checkbox (`TOWN-185`, `TOWN-186`); what they do with a
-left click is not read here (`TOWN-207`). (`TOWN-473`)
+area, Close button and checkbox. The list/body passes left-down below; the
+checkbox consumes it and writes the tips flag, while Close consumes it and
+posts `45ah` on release inside. The list consumes left-up; the checkbox passes
+it below. Delivery of Close's command to the room depends on campaign child
+`10h`. The popup message slot returns 0 for `100h`, `445h` and `446h` and
+forwards the rest; this corrects TOWN-186's former forwarding clause.
+(`TOWN-185`, `TOWN-186`, `TOWN-207`, `TOWN-473`, `TOWN-480`)
 
 Ten painted figures overlap a region: tavern door and label (`80h`),
 shopkeeper and label (`90h`), gate door and guards (`a0h`), statue star
@@ -67,7 +72,19 @@ view tests the mage panel in one state and the fighter panel in another through
 their class masks. A click on one of the five skill icons of the shown panel
 changes that icon's state, plays its sound and selects its skill. The school
 slots read do not test the trainers, the diamond or the column picture; the
-other children of the shop and school views were not read. (`TOWN-478`)
+remaining constructor children have bounded figure routes with the tip popup
+absent. The merchant passes left-down: it is inert only with the prompt arm
+disabled or a proved prompt miss. An enabled prompt hit clears bit `80h` and
+returns the held item, still passing down; live prompt state and geometry are
+Unknown. Merchant left-up is consumed and acts only while an item is carried.
+The school view consumes figure presses and acts only inside a class panel.
+School left-up returns 0 except for the fighter's 608-pixel button-child overlap
+at x 464..479, y 200..237, which returns 1 without a button action. These are
+painter rectangles and assume no capture child. (`TOWN-478`, `TOWN-479`)
+
+With the shop tip popup shown, its checkbox (204,258)-(352,274) intersects the
+merchant figure and writes the tips flag on down. The base figure no-action
+result excludes this known overlay action. (`TOWN-479`, `TOWN-480`)
 
 ## Entrance state
 
@@ -98,6 +115,41 @@ All sound requests above are conditional calls to `00453b08`, not guarantees
 of audible output. Null pointers, status lookup, audio availability and indirect
 buffer operations can prevent playback. Latch behavior is separate from the
 animation frame. (`TOWN-399`, `TOWN-400`, `TOWN-401`, `TOWN-402`, `TOWN-403`)
+
+## Room return, gate latches and dialogue
+
+Town enter calls a synchronous repaint before queued pointer delivery. When
+the view's `+18` bit `20h` is clear and more than 67 ms passed, that repaint
+admits the hub with guard step 0. The first process paint only primes the
+clock. Re-entry flags and native timing remain unmeasured. The room-close and
+enter routines read make no window/capture/cursor/clip call; the executable's
+cursor pump posts `400h`. This does not decide OS-generated pointer messages
+after a room closes. (`TOWN-481`)
+
+The 96 guard-displacement stores outside the town/merchant clusters belong to
+33 owners. None is reached by the direct-call closure of 62 town roots and
+567 functions; ten stores in six owners remain unattributed. Frames 0 and 1
+of the eight-frame guard sheet show crossed halberds. In the measured closing
+sweep a request starts at tick 1 and reaches frame 0 at tick 7. Guard1's
+418.14-ms sample can remain active there only with mean intervals below
+69.69 ms; Guard2's 356.96-ms sample cannot under the strict >67-ms hub gate.
+The fresh-enter latch suppresses Guard1's first closing request. Actual audio
+output and native hub intervals remain Unknown. (`TOWN-482`)
+
+The gate offer helper returns -1 exactly when the main latch and all child
+latches are zero. Hearing does not latch; acceptance does. Loading the next
+main record clears its latch, ages children and deletes them at age 2, so a
+retained latched child can still be offered. The last-main-win arm posts
+`428h` and skips that town-entry route; its later effect and a loaded last-mission
+town state are not established. (`TOWN-483`)
+
+The unavailable gate opens the non-modal npc35 dialogue with one pager button.
+Its voice starts when the panel is shown and stops at the next pager call,
+including the last-page press. The town's `402h` repaint skips while the whole
+campaign `+3dc` dword is nonzero; other paint sources are not closed. Outside
+the button, the model passes 305120 of 307200 pixels to the town click slot.
+A missing node throws to the default exception handler without constructing
+a panel; the displayed error text remains Unknown. (`TOWN-484`)
 
 ## Clock and independent ambience
 
@@ -208,13 +260,13 @@ latch persistence through focus changes, screen reuse, untaken indirect calls,
 or changing gate availability is not closed. School interiors are outside this
 contract. (`TOWN-399`, `TOWN-402`, `TOWN-403`)
 
-The click and guard contracts read the town routines only. The tip popup's
-controls, the per-instance handler at `+34` and 96 stores at the guard fields'
-displacements in other routines, counted and not attributed, were not read, and
-children added outside the constructor and enter routines were not searched. The
-crossed-halberd frame, audible guard playback and pointer messages the system
-generates after a room closes remain Unknown. (`TOWN-473`, `TOWN-476`,
-`TOWN-477`)
+The room figure and popup routes assume the enumerated constructor/enter
+children and no capture child at the press. The merchant's live prompt
+rectangles and children added by other paths remain Unknown. The guard-store
+closure leaves ten stores unattributed and does not exclude code-pointer or
+bulk-copy paths. Guard audibility is conditional on timing and a successful
+audio request; OS-side pointer messages remain Unknown.
+(`TOWN-479`, `TOWN-480`, `TOWN-481`, `TOWN-482`)
 
 ## Tavern interior draw and clocks
 

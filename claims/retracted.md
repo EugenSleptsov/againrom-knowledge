@@ -1,5 +1,11 @@
 # Overturn history
 
+## Room tip popup message forwarding
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `TOWN-186` (message-forwarding clause only) | Verbatim: "it also forwards `0x100`/`0x445`/`0x446` to `TOWN-139`'s already-documented `FUN_004c52f3` chain and drops every other id" | High | [EXP-0412](../experiments/EXP-0412-town-square/EXP-0412.md), TOWN-480, `evidence/d-popup.txt` | The complete slot `004c7a76` returns 0 for those three ids at `004c7a94`..`004c7aaf` and forwards every other id to `004c52f3` at `004c7ab3`..`004c7ac2`. The flag write at `004c7a7d`..`004c7a8f` and the registry-persistence clauses stand. | **CORRECTED** |
+
 ## Stand Ground members between evaluations
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
