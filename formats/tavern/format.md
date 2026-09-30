@@ -286,6 +286,29 @@ occupied-cell test before its hire/dismiss/talk action; native delivery and
 hover capture remain Unknown. — TAVERN-BUTTON-020, TAVERN-CLICK-019,
 TAVERN-FIGURE-021
 
+## Pending mission identities
+
+A nonzero heard `InnMission` value is appended to the inn view's dword array
+at `+0x110`, whose data and count are `+0x114` and `+0x118`. The append routine
+grows the array and stores at the old count, with no mission-identity comparison.
+Repeating a heard identity therefore retains two pending entries. The exit
+commit visits every entry in order and calls campaign registration for each,
+including repeats. A zero offer opens its dialogue without appending. Native
+event ordering and reentry remain Unknown. — TAVERN-023
+
+Each registration removes the first matching InnMission/InnNPC pair. A second
+registration searches the remaining offers again, so offer-array multiplicity
+and pending-array multiplicity are separate. An already-current main identity
+takes a setter equality arm without reloading the mission. Side registration
+finds the first matching campaign record; its announce flag is latched to 1.
+The offered-mission consumer walks flagged campaign records, not the inn
+pending array. — TAVERN-024
+
+The journal insertion routine separately compares identities and skips an
+identity already present. That guard does not deduplicate the pending array or
+the commit calls. Complete reward effects, preexisting duplicate campaign
+records, outside aliases and native interleaving remain Unknown. — TAVERN-024
+
 ## Refusals, sound slots and message-line boundary
 
 The tavern, school, shop and town routines read post no message line. Hire

@@ -669,3 +669,80 @@ No Sleep action was found in the inspected tavern handlers. The imported `Sleep`
 **Confidence.** High for the local hire and training refusal branches and the loader-to-slot associations: the preserved instructions distinguish a sound request from a message post and read the refusal tests themselves. Medium for absence of room message posts or a Sleep action beyond those paths: the direct-reference export misses computed pointers, and a bounded vocabulary/ASCII search cannot exclude an action named by other text or assembled dynamically. The recorded counts state the searched population. EN/RU instruction agreement is one program, not independent confirmation (`evidence/rom-program-digest.tsv`).
 
 **Unknown.** Unread indirect message-poster callers, callers through code pointers outside the inspected tables, a differently named or dynamically composed action outside the read handlers, and the consumers of `0x472` and `0x444`.
+## Pending mission identities
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TAVERN-023 | The inn appends each nonzero heard mission to a dword array without an identity comparison; its commit loop calls registration for every entry, including repeats. | High | ✔ promoted | [EXP-0415](../experiments/EXP-0415-dialogue-queue/) |
+| TAVERN-024 | Repeated inn registration removes the first matching offer, sets one mission's announce flag and skips an existing journal identity; the offered-mission consumer reads flagged campaign records. | High / Unknown | ✔ promoted | [EXP-0415](../experiments/EXP-0415-dialogue-queue/) |
+
+### TAVERN-023
+
+`00480fd0` reads paired `InnMission`/`InnNPC` words. The nonzero mission arm
+opens the dialogue at `00481060`, then passes the mission and current count
+`view+0x118` to `00570e15` with `this = view+0x110`. The zero arm opens dialogue
+keyed by the live main mission and skips append (`REG-SCN-064`).
+
+The embedded array holds data at `+0x114`, count at `+0x118`, capacity at
+`+0x11c` and growth at `+0x120`. `00570e15` compares the supplied index with
+array `+8`; when needed it calls `00570c46(index+1,-1)`, then stores the supplied
+dword at `data[index]`. `00570c46` allocates/grows, copies old dwords, zeroes
+new storage and sets count. Neither compares stored mission identities.
+
+`00480ad0` reads count and visits indices 0 through count-1. At `00480b1a` it
+calls `0048a360` on `campaign+0x548` for each stored dword. It does not compare
+the current mission with an earlier entry and does not clear the array in
+this loop. Its later UI teardown is outside the queue proof.
+
+Original-code Unicorn vectors execute `00570e15` and `00570c46`, with explicit
+allocation, free, zero-fill and overlap-safe copy hooks. The commit range
+`00480afc..00480b2c` runs with registration hooked to record arguments. Inputs
+`31`, `31,31`, `31,41,31` and `0,31` produce exact stored and called sequences.
+Zero is a container control, not a value the talk path appends.
+
+**Confidence.** High for this append/container/commit path. The repeated and
+mixed vectors distinguish retention from deduplication or replacement. The
+callee hook proves commit calls, not registration effects; those use the
+separate read in `TAVERN-024`. EN/RU have identical code, one observation.
+
+**Unknown.** Native reentry/event ordering and aliases outside the named bodies.
+No claim says the queue survives another inn visit or that repeated calls imply
+repeated rewards, missions or visible journal entries.
+
+### TAVERN-024
+
+`0048a360` calls `0048a300`, `004883f0`, `004887c0` and `0048a390` in that order.
+`0048a300` searches the u16 InnMission array at record `+0xd4` by identity and
+removes the first match from both it and the paired InnNPC array at `+0xc0`,
+using `00570ad5(index,1)`. A second call searches the remaining array again.
+Thus a duplicated offer array could lose a second matching row; with one
+matching offer, the second search finds none. Offer multiplicity is distinct
+from the inn pending array's multiplicity.
+
+`004883f0` routes multiples of ten to `00488460`; an already-current main
+identity takes its equality arm and writes selected `record+0x118` from the
+current identity, without calling the mission loader `004879f0`. Other
+identities use `00488420`, a first-match search of 0x4c-byte side records whose
+identity is `+4`, and write selected `record+0x118`.
+
+`004887c0` finds the current main record or the first side record with that
+identity and calls `00486fd0`. The latter writes announce `+0x18 = 1` only
+when it is zero. `00488760`, called by `00464140` and through `00488740`, walks
+side records with a cursor at `record+0x44`, skips entries whose `+0x18` is
+zero, and returns a flagged entry's `+4` identity. It consumes campaign flags,
+not the inn pending array. Repeated flag writes do not add campaign records.
+
+`0048a390` compares the mission with each 0x14-byte journal record's first
+dword at `record+0x15c`, count `+0x160`. A match at `0048a405` skips the journal
+append at `0048a5a6..0048a5ca`. This is an independent identity guard after the
+other three calls, not deduplication of the pending queue or commit loop.
+
+**Confidence.** High for the named comparisons, first-match removals, main
+identity equality branch, flag latch, journal guard and first consumer. Unknown
+for complete campaign consequences: the mission loader, registry/string
+helpers, journal constructors/copy helpers and later mission execution are not
+read here. No reward-count or native-play conclusion is drawn.
+
+**Unknown.** Mutation by external aliases, preexisting duplicate campaign side
+records or journal records, native interleaving and later reward effects. The
+selected flow does not prove all repeated registrations are globally harmless.

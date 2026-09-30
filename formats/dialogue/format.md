@@ -225,10 +225,33 @@ leaves), not when it closes. A `tips=` tag stores the number after it in `panel+
 12 RU mission event blocks carry one and no inn, mercenary, shop or training block does.
 That the button's key handler rather than the panel's key slot answers Enter is Medium: it rests
 on the dispatcher's child order, and both send the same command. Whether siblings of the panel
-under the root answer Space, what a click outside the button does while the panel holds the
-capture, the key-release and system-key routes and what the `0x45b` arm shows are Unknown.
+under the root answer Space, the key-release and system-key routes and what the `0x45b` arm
+shows are Unknown.
 — `DLG-KEYS-040`, `DLG-LIFE-005` (amended for the routing of Enter; its clear enumeration partially
 retracted)
+
+### Captured mouse input
+
+The captured panel gives mouse messages to its own children. A left press
+outside every child returns 0 through the panel's own down slot. The root
+dispatcher then runs its own mouse slot, which returns 0; it does not retry
+hit tests on siblings behind the panel. The panel makes no call into its
+parent to forward the press and emits no pager or close command on that path.
+This composition assumes the shown campaign root and dialogue vtables; native
+event ordering and capture changes by outside callers remain Unknown.
+— DIALOGUE-044
+
+The button press sets its pressed field and requests capture in the panel.
+Release with that field set clears it, restores capture and tests the release
+point against the button rectangle. Inside posts `0x46f`; outside posts no
+command. Release without a press also posts no command. The hit test calls
+`PtInRect`. The panel's own release, double-click
+and right-button slots return 0. — DIALOGUE-045, DIALOGUE-044
+
+The text child's left-down returns 0; its up and double click send `0x472` and
+`0x444` to the panel, not `0x46f`. Those messages do not enter the panel's close
+arm. Its drag route can scroll with mouse flag 1 and its own scroll state set.
+No native input or window-timing result is established. — DIALOGUE-044
 
 ## Content
 

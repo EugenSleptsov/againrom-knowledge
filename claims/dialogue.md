@@ -1283,7 +1283,7 @@ EN-only.
 | DLG-RECT-037 | All six opening routines (seven call sites) build the identical panel, because the constructor takes only a name; every shipped node takes the portrait layout, so the text rectangle is 300x135 at (204,160). | High | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 | DLG-LINE-038 | Each wrapped line is drawn from the rectangle's left, 17 px below the previous one, justified by widening the word gaps except on a paragraph's last line and one-word lines; a paragraph's first line is indented 10 px. | High / Medium | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 | DLG-BUTTON-039 | The button is drawn from lines and a font-1 label with no art and no fill: a two-colour bevel, the label centred at (316,308) in gold ink (brown on hover), and a shadow offset of 2 px (4 while pressed). | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
-| DLG-KEYS-040 | Enter, Escape and a click on the button each raise command `0x46f`, which turns the page or, on the last page, closes the panel; Space has no dialogue action, and the panel has no accept or decline state. | High / Medium / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-KEYS-040 | Enter, Escape and a click on the button each raise command `0x46f`, which turns the page or, on the last page, closes the panel; Space has no dialogue action, and the panel has no accept or decline state. | High / Medium / Unknown | ● active (amended) | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 
 ### DLG-PANEL-035
 
@@ -1634,6 +1634,10 @@ the panel holds the capture (the panel's mouse slots were not read); senders of
 `0x445` and `0x446` outside this class, which were not enumerated; what the
 `0x45b` arm shows and where `0x005eb52c` is set.
 
+**Amended.** DIALOGUE-044 and DIALOGUE-045 establish the named captured mouse
+slots and outside-button release path. Native event ordering remains Unknown.
+
+
 ## Open questions
 
 - Which 96 rows of the 240-row composition the portrait pane frames
@@ -1655,3 +1659,66 @@ the panel holds the capture (the panel's mouse slots were not read); senders of
   the section's predicate in that mission, which is per-map state. The
   measurement: for each tagging mission, resolve its `.alm` humans' `+0x18c`
   bits and face bytes against the tagged sections' `Flags` and `Face`.
+## Captured mouse input
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| DIALOGUE-044 | The captured dialogue panel routes mouse input to its children; an outside left press returns 0 without a pager or close command, and its root does not retry sibling hit tests. | High / Medium | ✔ promoted | [EXP-0415](../experiments/EXP-0415-dialogue-queue/) |
+| DIALOGUE-045 | The dialogue button posts its command only for a release inside its rectangle after a press; a release outside clears the press and posts no command. | High | ✔ promoted | [EXP-0415](../experiments/EXP-0415-dialogue-queue/) |
+
+### DIALOGUE-044
+
+The constructor installs table `0059b798`. Show `004c5275` calls slot `+0x24`,
+`004bd456`, which stores the panel in its parent capture pointer `+0x34` and
+saves the old pointer at `+0x40`. The campaign root is constructed by
+`004bc98f` with table `0059b188`.
+
+`004bd9dc` gives messages `0x200..0x206` and `0x400` to capture first. After
+that call it jumps to `004bdad2`; a zero return runs the root's own mouse slot,
+not `004bd87e`'s sibling loop. The root's down/up/double/right slots return 0.
+This is return-value propagation to the parent dispatcher, not a panel call
+into the parent or a second hit test behind the panel.
+
+The dialogue's own slots `+0x4c/+0x50/+0x58/+0x5c/+0x60/+0x64/+0x68` return 0.
+Its left-down slot `+0x54` is `004c560d`. When panel `+0x40 == +0x34`, it clears
+`+0x40`, recursively hit-tests children through `004bd564`, and calls a found
+child's `+0x54`. No hit or a hit on the panel itself reaches `00436df0`, which
+returns 0. A point outside all child rectangles is also excluded from the
+preceding `004bd87e` child-message pass by `004ade50`'s `PtInRect` call.
+
+Text child down returns 0. Its up sends `0x472` and double click sends `0x444`
+to the panel; neither is `0x46f`, and neither enters the panel's `0x445/0x446`
+close arm. Its drag route scrolls only with mouse flag 1 and child `+0x90`
+nonzero. Scroll helpers are reused from `DLG-KEYS-040`, not reread here.
+
+**Confidence.** High for the named slots, branches, returned values and absence
+of pager/close commands in these bodies. The instrument reads 50 selected
+functions, raw PE vtable dwords and independent branch destinations; this is
+not a whole-image absence claim. Medium for the composed campaign input route:
+the capture/root dispatch is static and assumes the shown root/panel identity.
+
+**Unknown.** Native input ordering, actual OS events, capture changes by outside
+callers, window teardown during dispatch and panel types with another vtable.
+The text scroll helper bodies and drawing/sound callees are outside this read.
+
+### DIALOGUE-045
+
+Button table `0059b308` maps `+0x54` to `004bf0a0` and `+0x58` to `004bf0e7`.
+Down requires a parent and enabled flag 1. With pressed field `+0x6c` zero it
+calls `004beeb4(1)`. That routine sets `+0x6c = 1` and, when flag 8 is clear,
+requests capture in the button's parent, the dialogue panel.
+
+Up has the same parent/enabled prerequisite. With `+0x6c != 0` it calls
+`004beeb4(0)`, clearing the flag and restoring capture when flag 8 was set.
+Only then does `004bf153` test the release point against the screen rectangle
+through `004ade50`; its false branch skips `004bf15c..004bf16e`, the command
+post. No pressed flag means no post even for a release inside. The dialogue
+constructor binds command `0x46f`; that command's pager/close behavior is
+`DLG-KEYS-040`.
+
+**Confidence.** High for the two handler bodies, flag stores, capture calls and
+release hit-test branch. These are checked original instructions, not a native
+click experiment. The rectangle's right and bottom edges use `PtInRect`.
+
+**Unknown.** Native delivery after a press, arbitrary capture replacement,
+disabling or deleting the button between events, and sound/paint side effects.
