@@ -7,6 +7,32 @@ state, ambient episodes, tavern selection and school-training pictures. These
 contracts are conditional on the named handlers being reached. Physical-pointer
 delivery and audio-device results remain Unknown.
 
+## World-map Return input
+
+The world-map key-down and character slots call the same progress helper
+without testing the key value; each returns handled. Return is one admitted
+value. The world-map key-up slot returns unhandled and changes no travel
+field. These are local message-slot contracts, not a physical keyboard
+observation. (`TOWN-485`)
+
+At zero route progress, the helper writes nothing. At nonzero progress it
+assigns route-count-plus-one to progress and Cross-frame-count-plus-one to
+Cross. It reads neither selected mission nor destination or current position,
+and it neither builds a route nor posts arrival. Even when the route has been
+fully revealed, a remaining Cross animation takes this same assignment.
+Completion and destination entry belong to later paint. Outward/homeward
+coordinates do not change the helper's local rule. Native admission of the
+supplied idle and ready-counter states remains Unknown. (`TOWN-486`)
+
+The inspected campaign Return key-down and character handlers forward to the
+root with the third parameter replaced by zero. The root offers keyboard
+messages to focus first. A nonzero result stops the route; zero permits the
+ordered child pass and then the root's own slot. Mouse capture does not
+select that keyboard recipient. Live focus, child identity, physical
+main/keypad Return translation, system keys and the campaign key-up route
+remain Unknown. The instruction-bound input does not establish native paint
+cadence or a completed transition. (`TOWN-487`)
+
 ## Tavern entry ordering boundary
 
 The located campaign tavern helper calls the command 37 sender before its

@@ -2476,3 +2476,122 @@ A missing node read throws through `004ca140` and reaches the runtime window-pro
 **Confidence.** High for the constructor geometry, pager voice operations, message-slot actions, local town repaint predicate and exception unwind/catch chain: they are preserved instruction bodies and exception metadata. High for the stated pixel counts within the supplied dispatcher/window model; Medium that it exhausts native input behavior, since capture state and indirect children remain runtime inputs. Medium for the speaker drawable inference and for guard/crowd behavior beyond the named repaint. EN/RU executable equality is one instruction source; the two PCM lengths are separate data measurements (`evidence/rom-program-digest.tsv`).
 
 **Unknown.** Runtime portrait construction, capture state at a press, other repaint sources, campaign handling of `0x41f` while the dialogue is open, identity and presence of child `0x10` of `[campaign+0xd0]` while a popup is shown, voice lifetime after exits that bypass the pager, and exception message text.
+
+## World-map Return input
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TOWN-485 | The world-map key-down and character slots call one progress helper without testing the key value and return handled; its key-up slot returns zero. | High | ● active (branch candidate) | [EXP-0423](../experiments/EXP-0423-world-map-enter/) |
+| TOWN-486 | The world-map input helper changes only progress and Cross counters when progress is nonzero; zero progress does nothing, and selection, route and position are untouched. | High | ● active (branch candidate) | [EXP-0423](../experiments/EXP-0423-world-map-enter/) |
+| TOWN-487 | Campaign Return key-down and character forwarding discard the third message parameter; keyboard focus and ordered child return values condition whether the world-map handler is reached. | High / Medium | ● active (branch candidate) | [EXP-0423](../experiments/EXP-0423-world-map-enter/) |
+
+### TOWN-485
+
+World-map table `00599550` maps key-down slot `+0x6c` to `004654b0`,
+key-up `+0x70` to `00423c90` and character `+0x74` to `004654a0`.
+The key-down and character bodies each contain three instructions: call
+`00465470`, return value 1, and return with one stack argument consumed.
+Neither reads that argument. The key-up body returns 0 without touching
+the world-map object. Container dispatcher `004bd9dc` selects these slots
+for messages `0x100`, `0x101` and `0x102` respectively.
+
+The original-instruction controls supply keys 0 through 255 to each of
+key-down and character at progress 0 and 1, 1024 vectors. Each 256-key
+population has one result (`evidence/key-controls.tsv`). This local identity
+does not mean the campaign forwards every physical key; TOWN-487 binds Return.
+
+**Confidence.** High for the three table dwords and complete local bodies.
+The direct PE/recursive-descent instrument binds instruction digests and
+independently computes relative branch operands. A raw file-offset scan
+retains the two input-handler pointers at `005995bc` and `005995c4`, and
+all pointer occurrences of the shared key-up body. This does not depend on
+named function ownership or assert image-wide key-handler absence.
+
+**Unknown.** Physical delivery, system-key messages, native child lifetime,
+other world-map classes and whether a key-down is followed by a character.
+
+### TOWN-486
+
+Helper `00465470` has eleven instructions. It tests the whole dword at
+world-map `+0x120`. Zero branches directly to return. Nonzero reads route
+count `+0xdc`, adds one in a register and stores the result at `+0x120`. It reads
+the Cross object through `+0x7c`, reads its frame count at `Cross+4`, adds one
+in a register, and stores the result at world-map `+0x128`. The Cross object
+is not written. Both additions have dword semantics. The complete body has
+no other store, call, selection read, destination read or current-position read.
+
+The 33 supplied-state/message vectors preserve the selected mission at
+campaign `+0x660`, current/destination points at view `+0xf8/+0xfc/+0x100/+0x104`,
+route count and synthetic route-array digest. Progress-zero idle and
+pre-first-reveal cases write nothing. Nonzero outward, homeward and
+fully-revealed/Cross-active cases write the two counter assignments. Independent
+route/frame counts 1/1 and 31/13 distinguish dynamic counts from constants.
+An already-larger Cross counter is assigned frame-count-plus-one too
+(`evidence/state-controls.tsv`). These labels describe supplied fields,
+not observed native state admission.
+
+The helper does not copy destination to current or post arrival. The later
+paint completion remains TOWN-121's route; this experiment rereads its
+counter checks and destination-copy/post instructions but does not replay
+paint or establish its cadence.
+
+**Confidence.** High for this complete helper's reads, stores and local state
+relation. Its sole conditional transfer is bound to an internal instruction
+start. Its operands use one unchanged object base; no whole-image field or
+writer enumeration is claimed. Controls execute these original instructions,
+and no supplied service replaces the helper or its counts.
+
+**Unknown.** Native admission of selected-idle or already-ready counter states,
+malformed counts, arithmetic overflow, invalid Cross pointers, paint scheduling,
+visible final animation and the physical mission/town transition.
+
+### TOWN-487
+
+The campaign message-map records at `00599c50` and `00599cb0` bind `0x100`
+to `00472b80` and `0x102` to `00475250`. For Return value `0x0d`, the first
+handler subtracts 8, reads byte-table index 5 as arm 1 and selects
+`00472e4b`. That arm forwards `0x100`, the key value and a literal zero to
+root `campaign+0xcc`, slot `+0x48`. The character handler forwards
+`0x102`, the character and zero to the same root. The complete handler
+listings show that neither reads its second or third argument. Those
+arguments therefore cannot distinguish main/keypad Return in these handlers;
+their selected forwarding passes a literal zero as the third root parameter.
+
+Root table `0059b188` maps `+0x48` to container dispatcher `004bd9dc`.
+Keyboard messages `0x100..0x102` take focus pointer `+0x38`, not mouse
+capture pointer `+0x34`. A nonzero focused result stops dispatch. A zero
+result calls ordered child pass `004bd87e`, then the root's own slot if no
+child consumes the message. That keyboard child pass does not require a
+rectangle hit. The world-map message slot `00465a40` passes these messages
+through `004c52f3` to the same container dispatcher and its own input slots.
+World-map enter `00464140` calls base show `004c5275`; that show calls the
+capture and focus setters. This binds setters, not persistent live ownership.
+
+Twenty-four private dispatcher vectors vary focus, capture, child order and
+an explicit alternate-recipient result. World-map focus reaches the helper;
+alternate focus or an earlier child returning 1 excludes it. Zero permits
+the child walk. Changing mouse capture alone leaves the supplied keyboard
+routes unchanged. Four campaign vectors vary key-down/character and an unread
+third argument, supplied as `0x001c0001` or `0x011c0001`. Both values reach
+the same local state result; they do not model the native extended flag
+(`evidence/dispatch-controls.tsv`, `evidence/campaign-controls.tsv`).
+
+**Confidence.** High for the message-map records, Return table target,
+forwarded arguments and named dispatch predicates. Medium for the composed
+campaign route: private focus, child identity/order, state, clock and alternate
+recipient returns are supplied. The world map's own focus pointer `+0x38`
+is supplied null and its child array at `+0x1c` has zero supplied children.
+The clock, rectangle and label-string services are declared in
+`evidence/services.tsv`; none supplies the world-map helper's
+result. Replays stop before unrelated campaign cleanup. These controls do not
+establish a native focus or capture observation.
+
+**Unknown.** Physical main/keypad Return translation, system keys, actual
+key-down/character ordering, native focus/capture changes, other indirect
+recipients, object teardown, campaign key-up entry, and the paint cadence or
+presentation after these local assignments. The world-map vtable `+4` routine
+`00463150` and the native world-map child population were not read. Native
+world-map focus was not observed. Its own null focus and empty child array are
+supplied replay conditions; a native focusable child could receive the key before its
+own input slot. An authorized native message/focus trace is the next
+discriminator.

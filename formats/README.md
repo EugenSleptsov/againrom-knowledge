@@ -49,7 +49,7 @@ file encoding. Their save fields link to the relevant stored formats.
 | **ITEM** | [Reference](item/format.md) | Class fields, effect grammar, formulas, containers, equipment, transfers, activation and sacks; unnamed columns/flags and selected lifecycle paths remain Unknown |
 | **AI** | [Reference](ai/format.md) | Input commands, ownership, diplomacy, sight, target selection, group/member states, orders and retreat; broader execution and saved-continuation gaps remain Unknown |
 | **MISSION** | [Reference](mission/format.md) | Placement, mission entry/exit, persistent party and campaign state (`PARTY-ORIGIN-010`, its only-reader clause for the flat index partially retracted); selected sentinel and fresh-campaign gates remain Unknown |
-| **TOWN** | [Reference](town/format.md) | Exterior reactions, tavern drawing/clocks and school presentation; wider room/world-map behavior is outside this page |
+| **TOWN** | [Reference](town/format.md) | Exterior reactions, tavern drawing/clocks, school presentation and bounded world-map Return input; wider room/world-map behavior remains outside this page |
 
 ## ROM2
 
