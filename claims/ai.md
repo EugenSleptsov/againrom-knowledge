@@ -2475,3 +2475,199 @@ identity/mechanism finding for `ord+0x78`..`+0x8c` and the class-reachability ga
 fit inside one row together with the `MAGIC-221`/`SAV-1066` cross-references that carry
 the rest of the brief's ten questions. A returned range stays retired; the next free
 `ai.md` id is therefore past it, at `AI-344`.
+
+## Original reacquisition and Retreat boundaries
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-360 | In 005327d0, a later diplomacy-rejected or dead candidate can lower the running-nearest gate; permuting the same actors can change the surviving list and winner. | High | ● active | [EXP-0420](../experiments/EXP-0420-reacquisition-cycle/) |
+| AI-361 | Reacquisition scores admitted candidates by the circular byte turn cost alone; equal scores replace the winner, so the last surviving equal-score candidate wins. | High | ● active | [EXP-0420](../experiments/EXP-0420-reacquisition-cycle/) |
+| AI-362 | Reacquisition traverses the bound actor manager head to tail; the selected creator, return and unlink paths append or preserve survivor order, rather than sorting by actor ID. | High / Medium | ● active | [EXP-0420](../experiments/EXP-0420-reacquisition-cycle/) |
+| AI-363 | The selected original load rebuild appends on-map actors in player, group and member order; it does not preserve the pre-load global actor-list sequence as a separate ordering input. | Medium | ● active | [EXP-0420](../experiments/EXP-0420-reacquisition-cycle/) |
+| AI-364 | Group order 0 dispatches command state 0x16 without a progress gate; an executor invocation that clears nonzero progress skips pending dispatch, while the next invocation entered at zero can execute it. | High / Medium / Unknown | ● active | [EXP-0420](../experiments/EXP-0420-reacquisition-cycle/) |
+| AI-365 | The executor's active route-failure tail is a same-invocation exception: command state 0x16 can reacquire and reinstall strike progress after its old progress was cleared, without resetting action phase. | High / Unknown | ● active | [EXP-0420](../experiments/EXP-0420-reacquisition-cycle/) |
+
+### AI-360
+
+The complete selected selector is 005327d0. Distance admission tests reach at
+0053283f and the running minimum at 00532845. Self exclusion at 00532849
+precedes the accepted candidate's append and minimum store at 00532857.
+Previously appended candidates are not removed when a later candidate lowers
+that minimum. The diplomacy pass runs afterward at 0053287f. The signed-HP
+partition begins at 005328b1 and restores parked dead candidates when the
+living list is empty. Neither filter rebuilds the earlier distance admission.
+
+Original-instruction replay uses two hostile living actors at cell distances
+4 and 3 plus a distance-1 actor. All six permutations are measured for a
+nonhostile third actor and all six for a dead hostile third actor. With the
+nonhostile first, only it is admitted and diplomacy removes it, leaving no
+winner. With it last, the two living hostiles survive. A dead actor first
+can exclude both living actors and then win the corpse fallback. The actual
+original diplomacy and partition instructions run; no hostility-filter hook
+supplies these outcomes.
+
+**Confidence.** High for the bounded original routine and these controlled
+permutations. EN/RU are one identical executable population. The 268-instruction
+selector has no unresolved transfer. Section mappings, instruction digests,
+raw relative targets and load-bearing starts are preserved. Explicit synthetic
+allocation, footprint and post-selection hooks do not move either filter or
+the minimum store.
+
+**Unknown.** Native occurrence of the controlled actor arrangements and their
+full-game construction history; invisibility paths and external list writers
+outside this selected population.
+
+### AI-361
+
+0054f090 masks both arguments to a byte, subtracts them, takes the absolute
+value and negates the low byte when it exceeds 128. Its low-byte result is
+min(abs(facing-direction), 256-abs(facing-direction)). All 65,536 byte pairs
+are replayed. The selector masks the return at 005329bb. The selected direction
+helper 0054a680 returns one of eight byte headings, multiples of 32; it rounds
+its sector before the final shift. The 81 controlled centre-coordinate
+deltas also retain the coincident-centre result rather than assuming a
+special no-direction sentinel. This byte-pair enumeration does not assume
+which facings native movement can produce.
+
+The selector compares only this cost at 005329c0. JG at 005329c2 skips a
+larger cost; equal cost executes the winner store at 005329c4. A two-actor
+equal-cost permutation selects the later survivor. Changing that private
+branch to JGE makes the same loss control select the earlier survivor.
+The distance-4 actor can win over an admitted distance-3 actor when its turn
+cost is lower. Reversing their scan order can exclude the farther actor before
+scoring. Distance gates admission; it is not a final score term here.
+
+**Confidence.** High for this helper's complete 12-instruction body and this
+selector's complete score loop. The byte enumeration is finite and includes
+the 128 boundary. The source score data flow and private branch mutation
+exclude strict first-winner ties and a distance-weighted final score.
+
+**Unknown.** Native facing reachability, native actor arrangement, and other
+acquisition or group scorers, which are separate routines.
+
+### AI-362
+
+The selector reads manager+8 as head, node+0 as next and node+8 as actor at
+00532803..0053280f. The original server constructor stores the manager at
+00609558 at 004d0015. The selected map-load call passes it to the world
+constructor at 004e1c31/004e1c3f; 00547ed6 binds it at world+0xa4554.
+The manager constructor initializes the list at manager+4. The controlled
+construction returns head, tail and count zero and block size 10.
+
+0050fc0a calls the original tail append before allocating actor+4. The
+selected type-6 creation walk calls that wrapper at 004e2f0b. 00518de0
+links the previous tail's next pointer, or the empty head, then stores the
+new tail. 00519710 unlinks a selected node and keeps every survivor's relative
+order. Original replay gives A,B,C; removing B gives A,C; reappending B gives
+A,C,B. Selected leave/return paths 004f47e6, 004f4865 and 004f4905 remove or
+append, and selected death teardown appends to a different dead-list manager.
+
+**Confidence.** High for these local pointer relations and the selected
+manager binding. Medium for their composition into a complete session order.
+This experiment reads selected complete bodies and preserves their outgoing
+direct and indirect calls. It does not rerun an image-wide typed mutation
+census or claim that every creation, alias, bulk copy or indirect lifecycle
+path has been excluded. Synthetic node allocation supplies storage, not a
+native pool/free-list chronology. MOVE-TICK-013 and MOVE-TICK-015 retain their
+separately established scope.
+
+**Unknown.** Full-game party, spawn, summon, event and return chronology for
+an arbitrary session. A native controlled creation/return sequence followed
+by a list observation would discriminate an external reorder.
+
+### AI-363
+
+The selected world-load rebuild 004d0cb7 walks players, then each player's
+manager at +0x20. It skips actor+0x4c bit 8 and calls 0050fbee on 00609558 at
+004d1120. Player load 00511089 builds that per-player manager from the player's
+group list and each group's member list, appending at 005113f9. The selected
+actor-list and group serializers retain file order through head-to-tail
+iteration and tail append. These are the directly traced load relations, not
+an actor-ID sort or a claim that a save preserves the old global manager order.
+
+**Confidence.** Medium. The selected whole bodies, their starts, section
+mappings and relative transfers are bound to the installed original. Their
+local iteration and append relations are direct source evidence. Complete
+archive-object creation, fixups, callbacks and native post-load interleaving
+are not replayed in this experiment. Earlier MOVE-TICK and SAV claims are
+navigation and supporting authorities, not a second code population.
+
+**Unknown.** The final native traversal after an arbitrary load and any
+untraced post-load reorder. A controlled save whose global actor order differs
+from player/group/member order, followed by a native list observation, would
+discriminate the remaining alternative.
+
+### AI-364
+
+The group-order-0 caller 00533ae0 calls 0052ce50 at 00533b43 without testing
+ord+9 or actor+0x58. Its original state table maps 0x16 to 0052d24a, which
+calls withdrawal 0052f090 at 0052d24d. The separate selected global pass
+0052cd10 also calls the actor-policy routine without a progress test; this
+does not prove that pass occurs in ordinary play.
+
+The actor tick first takes its HP branch. On its positive-HP route, getter
+00523360 returns actor+0x3c == 0, and 004f3980 skips the executor when that
+return is nonzero. With actor+0x3c nonzero, 004f398c calls 005310e0 before
+reading action and dispatching its body at 004f39b8. The executor first reads
+ord+9. For progress 1/2 it restores attack/cast action, increments the byte
+counter and clears progress only when the incremented counter exceeds 2
+and actor+0x136 is nonzero. The clear jumps to the common tail, not back to
+pending dispatch. Progress 3's cell-centre clear and progress 4's released
+status hold also jump to that tail. The hold arm retains action 0x1a.
+
+If an invocation enters with progress already zero, its pending switch has no
+retained-phase gate, but its entry activity gate still applies. When controller
++0xb388 and group AI+0x45 are both zero, zero progress returns early with action
+0x1a. Nonzero progress bypasses that refusal, so a completion-clear invocation
+can end at zero and the following invocation can newly refuse pending dispatch.
+Setting group AI+0x45 admits the zero-progress executor with controller+0xb388
+still zero. If an invocation itself clears nonzero progress, a quiet
+tail leaves action zero for progress 1/2/3 and the next entered-zero invocation
+can dispatch the pending order. The reproduced recovery sequence has body
+phase 7->0 and completion 1 at T0; progress/action clear at T0+1; pending move
+dispatch at T0+2. The pending flee order was already written while progress
+was nonzero; another policy evaluation after clearing is not required for
+that order to be present. An entered-zero invocation with retained phase 5
+dispatches pending move immediately at the executor boundary. These two
+meanings of 'progress returns to zero' must not be conflated.
+
+**Confidence.** High for the named caller, table, tests and jumps. Medium
+for the composed private sequence: occupancy, allocation, profile imports,
+automatic-tail predicates and movement services have explicit hooks. The
+recovery action region executes original instructions; full native tick
+cadence, physical movement and application are not supplied by the hooks.
+Unknown for an unconditional native first-tick or wall-clock promise. The
+AI-CLOCK-080 caller alternative and untraced external writers remain live.
+
+The selected 004d2551 route evaluates group policy at pre-increment server
+counter modulo 16 equal 6, then invokes 004d891a, which increments the counter
+and walks actor ticks. 005336a0 admits a group on controller+0xb388 or group
+AI+0x45. Other selected wrappers 00533a60, 0052cd10 and 00531070 preserve
+different caller boundaries. No universal frequency is inferred from the
+first caller alone.
+
+**Unknown.** Native command-versus-group-versus-actor timing; inactive group,
+disabled executor and outside-writer occurrence; arbitrary cycle completion,
+counter wrap and spell effects. Observe ord+9, actor+0x58/+0x136, both dispatch
+entries and mover+0x98 around a separately authorized native Retreat sequence
+to discriminate the remaining timing alternatives.
+
+### AI-365
+
+Every selected progress arm reaches the executor common tail at 0053165f.
+Nonzero mover+0x98 is consumed before the actor body. State 1 has teardown,
+0xa has patrol advance and 0x17 writes progress 0xff. State 0x16 takes the
+remaining arm at 00531798/0053179c and calls 005327d0. Its successful
+in-position branch calls 00531b10, whose original leaf stores progress 1,
+counter 0, action 3 and the newly selected active victim. It does not store
+actor+0x58. The controlled composed case clears old progress and then
+reinstalls strike progress on the same invocation, retaining phase 5.
+
+**Confidence.** High for this bounded original path and private replay with
+an explicit successful position result. The quiet-tail control ends at zero
+and does not enter pending dispatch on that invocation. Unknown for native
+reachability of the route-failure prerequisite during a retained cycle.
+
+**Unknown.** Whether that prerequisite occurs during a native retained
+strike/cast, and its actual victim or application effect. A native trace of
+mover+0x98 and the actor's phase before the common tail would discriminate it.

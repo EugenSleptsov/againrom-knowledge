@@ -133,6 +133,23 @@ victim is not excluded by identity — only the pursuer's own self is. Footprint
 exactly once, after a winner is already chosen: the same in-position test ordinary pursuit uses
 (above) decides whether the newly-acquired target is struck immediately or walked toward first.
 
+The running gate precedes both later filters. A closer nonhostile or dead
+candidate can lower it and prevent later living hostiles from entering the
+list. Previously admitted farther candidates remain. Permuting identical
+actors can therefore change the survivors, select a corpse through fallback,
+or leave no winner (`AI-360`). The final score is only circular byte turn cost:
+`min(abs(facing-direction), 256-abs(facing-direction))`. The selected direction
+helper returns eight headings, multiples of 32. Equal scores replace the
+winner, so the last surviving tied candidate wins; a farther admitted actor
+can beat a nearer one on turn cost (`AI-361`).
+
+This scan follows the bound manager from head to tail. Selected creation and
+return paths append, while unlink preserves survivor order (`AI-362`). The
+selected load rebuild instead appends in player, group and member order,
+skipping off-map members. It need not preserve the pre-load global sequence
+(`AI-363`). Full-game creation chronology and arbitrary native post-load
+reordering remain Unknown; local pointer relations do not establish them.
+
 On total refusal — no candidate within reach survives the filters — the order kind still changes
 (`order+8 = 0` for a human-owned actor, `0xb` for an AI-owned one), but the stale target pointer at
 `order+0xc` is left exactly as it was: the scan's only write to that field sits inside the

@@ -159,6 +159,13 @@ application without resetting phase. Whether that prerequisite occurs during a
 native cycle, command/tick interleaving, untraced external writers and per-spell
 target loss remain Unknown (`AI-354`).
 
+Explicit Retreat's group-policy dispatch has no progress gate. Its ordinary
+pending order is skipped on an invocation that itself clears nonzero progress,
+then can run on an admitted invocation entered at zero. The entry activity
+predicate can newly refuse that following invocation (`AI-364`). The active
+route-failure tail can instead reinstall strike progress on the clearing
+invocation while retaining phase (`AI-365`). Native interleaving remains Unknown.
+
 **`FUN_005310e0` (this table's own dispatcher) never runs while an actor is dying.** The per-tick
 routine's dying branch exits through its own shared tail before reaching the four instructions
 that call it, on every tick from the first health-`<=`-0 tick to teardown, not only the first

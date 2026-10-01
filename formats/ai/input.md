@@ -116,6 +116,23 @@ actor's animation flag `+0x136`. Progress 3 completes the current movement step 
 centre. Progress 4 remains held while its status bit is set. The setter's action reset is
 therefore not proof that the old action was cancelled (`AI-RETREAT-272`).
 
+Group order 0 dispatches state `0x16` without testing progress or retained
+phase. Policy dispatch and pending execution are separate boundaries. An
+executor invocation that clears nonzero progress jumps to its common tail
+and does not execute the pending order on that invocation. A subsequent
+invocation entered at zero can execute it even with a retained phase, provided
+the activity gate admits it. With controller `+0xb388` and group AI `+0x45`
+both zero, zero-entry progress instead returns action `0x1a`; a nonzero
+completion-clear invocation can be followed by this new refusal. The selected
+positive-HP actor caller also requires actor `+0x3c` nonzero. A conditional
+recovery-zero sequence executes pending move at T0+2; native cadence and
+command interleaving remain Unknown (`AI-364`).
+
+An active route-failure tail is a same-invocation exception. State `0x16` can
+reacquire and reinstall strike progress after clearing the old progress,
+without resetting retained action phase. Native occurrence of this prerequisite
+during a running cycle remains Unknown (`AI-365`).
+
 While group order is 0, state `0x16` recomputes a flee order through the first withdrawal
 helper below. Its radius is mover field `+8`, not a player-supplied destination. A zero
 positive-HP count falls back to ordinary acquisition, which can choose a pursuit, idle or
