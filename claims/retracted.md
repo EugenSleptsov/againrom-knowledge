@@ -1,5 +1,13 @@
 # Overturn history
 
+## Dialogue frame order, wrapping markers and pressed shadow
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `DLG-PANEL-035` (second-draw order, band-fill wording and opaque body coverage only) | Verbatim: "Frames 3, 5, 6, 7 and 8 are drawn a second time 8 px right and down", "fills the 8 px band" and "so no body pixel is left to a background" | High / Unknown | [EXP-0419](../experiments/EXP-0419-dialogue-render/), DIALOGUE-063 | The selected painter requests nine shadows before all 24 body sprites. Forward level 6 remaps existing destination pixels under the stream mask, not every pixel in the band. Tile rectangles span the body, but forward sprite skip runs preserve destination pixels. Panel size, position and geometric body tiling stand. Native pixels remain Unknown. | **CORRECTED** |
+| `DLG-LINE-038` (unconditional trailing-space and CR marker rule only) | Verbatim: "Each line keeps a trailing space, and the last line of each paragraph piece ends in CR." | High / Medium | [EXP-0419](../experiments/EXP-0419-dialogue-render/), DIALOGUE-060 | The ordinary fitting nonempty pieces have that shape. An over-wide lone word remains whole without either marker; empty and space-only controls have distinct results. Selected exact-width and bare-CR controls repeat unchanged remainder under declared services. Placement geometry and the named corpus counts stand. | **NARROWED** |
+| `DLG-BUTTON-039` (unqualified pressed shadow offset only) | Verbatim: "a shadow offset of 2 px (4 while pressed)" | High / Unknown | [EXP-0419](../experiments/EXP-0419-dialogue-render/), DIALOGUE-065 | Offset 4 requires the pressed flag and cursor membership true. Pressed outside uses 2. The independently supplied hover field selects the ink ramp; label anchor and bevel geometry stand. | **NARROWED** |
+
 ## Dialogue backdrop reduced-table arithmetic
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

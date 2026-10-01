@@ -183,11 +183,21 @@ corners   frame 1 at (L,T)   3 at (R-48,T)   6 at (L,B-48)   8 at (R-48,B-48)
 edges     frames 2 (top) and 7 (bottom): 4 tiles at x = L+48+96i
           frames 4 (left) and 5 (right): 2 tiles at y = T+48+64j
 interior  frame 0: 4 x 2 tiles from (L+48,T+48)
-shadow    frames 3, 5, 6, 7 and 8 again at (+8,+8), blit mode 6
+shadow    frames 3, 5, 6, 7 and 8 at (+8,+8), blit mode 6, before the body
 ```
 
-Whether a frame piece is drawn at an offset held in its sprite record, and what the shadow pieces
-put in the 8 px band, are Unknown.
+The selected painter requests nine shadow sprites before 24 body sprites at
+each supplied screen geometry. The selected sprite wrapper adds no record
+origin. The selected forward normal path writes the palette word chosen by
+each literal, including palette word zero; skip runs leave the destination
+unchanged. Sixteen private literal/palette/clip controls exclude blending
+and palette-zero keying on that path. Forward mode 6 instead remaps existing destination pixels;
+literal byte values are discarded. Full RGB565/RGB555 tables apply
+`floor(channel * 10 / 16)`. Reduced tables replace the blue channel with
+`(blue & ~7) + 4` before that law. Shadow requests do not fill every pixel of
+the 8 px band. DLG-PANEL-035's former second-draw order and band-fill wording
+are amended. Native clip/table selection, reverse decoding and final frame
+pixels remain Unknown. — DIALOGUE-063, DLG-PANEL-035 (amended)
 
 The rectangles at 640x480. At 800x600 they move by (80,60) and at 1024x768 by (192,144).
 — `DLG-PORTRAIT-036`, `DLG-RECT-037`
@@ -237,6 +247,20 @@ box 72 x 92 at (8,7), with 118 frame pixels inside it, and 286 of the 288 pixels
 rows of the 72 x 96 window lie under the frame. The child fills its 72 x 94 region black before it
 blits the surface. Which rows of the 240-row canvas the window frames stays Unknown.
 — `DLG-PORTRAIT-036`, `DLG-FIGURE-020` (its window height amended)
+
+The selected portrait suffix reverses the background before its opaque copy,
+copies the canvas through the keyed path, reverses the background back and
+requests the border last. Both copy requests use destination (8,7) and the
+same selected window. The third/fourth metadata words do not change the four
+supplied suffix controls. The original bitmap reversal reverses physical
+rows. — DIALOGUE-064
+
+In the selected opaque/keyed primitives, destination y advances while
+physical source rows descend from `H - 1 - sourceTop`. Opaque copy writes
+zero; keyed copy skips 16-bit zero and copies nonzero words unchanged. It
+does not blend. These marker/zero/clip controls do not establish upstream
+canvas contents or final native orientation and exposed rows.
+— DIALOGUE-064, DLG-PORTRAIT-036 (amended)
 
 A synthesised speaker's twelve visible-equipment slots are zero, so its figure is the face sheet
 alone. A live speaker's figure carries whatever it is wearing at that moment.
@@ -391,8 +415,11 @@ ctrl+0x8c = min( (bottom - top) / pitch , lineCount )        pitch = fontHeight 
 
 The control's base constructor first cuts its height to `n * (h + 4) + 2` with
 `n = floor(136 / (h + 4))`. With font 1 (`h` = 15) the height is 135 and the pitch 17, so the
-window shows at most 7 lines. No shipped block wraps to more than 7: 688 EN and 732 RU blocks,
-counted with a transcription of the wrapper.
+window shows at most 7 lines. Original wrapping instructions with declared
+string/array services process the selected five families' 688 EN blocks into
+2542 lines and 732 RU blocks into 2650 lines. Each maximum is 7. The installed
+candidate population includes conditional parts; it does not establish native
+reachability or a universal maximum. — DIALOGUE-062
 
 The control has a scroll setter (`vt+0x80`, notify `0x46d`), and this window builds it no
 scrollbar and answers no `0x46d`. The control's own key handler moves the top line on PageUp,
@@ -402,9 +429,26 @@ wrapping calls the text measurer (`TEXT-API-007`), whose per-glyph advance is
 `lineCount`, not a fixed pixel-to-character conversion. — `DLG-WRAP-009` (amended, partially
 retracted), `DLG-RECT-037`, `DLG-LINE-038`, `DLG-KEYS-040`
 
+### Fitting and breaks
+
+The selected wrapper uses strict width comparisons. With synthetic advances
+8 and spacing 2, A measures 10, A-space 27 and A-space-B 37. At exact width
+10 a lone A repeats unchanged remainder; at width 37 A-space-B becomes two
+lines. At exact prefix width 27 it repeats unchanged remainder. An over-wide
+first word remains whole rather than splitting by glyph. — DIALOGUE-060
+
+CRLF separates paragraph pieces. LF alone remains data; bare CR and trailing
+bare CR repeat unchanged remainder under the declared services. Leading
+CRLF yields an empty first line; empty input yields no line and spaces alone
+yield one empty line. This finite result does not prove native hangs or
+universal malformed-input termination. — DIALOGUE-060
+
 ## Line placement
 
-Each wrapped line keeps a trailing space, and the last line of each paragraph piece ends in CR.
+Ordinary fitting nonempty pieces keep a trailing space and their last line
+ends in CR. Empty and over-wide controls have exceptions; DLG-LINE-038's
+former unconditional marker rule is narrowed. — DIALOGUE-060, DLG-LINE-038 (amended)
+
 For line `i` of `n`, counted from 0 over the whole array, with `first` the control's top line (0
 unless scrolled):
 
@@ -419,8 +463,10 @@ justified       W = rect.width - p
                         before each word, so runs of blanks collapse
                 one word: drawn at x0
                 gap = (W - sum of the word widths) / (words - 1), floating point
-                word k drawn at trunc(xacc); xacc = x0 at the start,
-                        (xacc + width_k) + gap after each word
+                gap stored as double; xacc = x0 stored as double
+                word k drawn at trunc(xacc)
+                integer width_k + stored xacc, then + stored gap in x87
+                result stored as double after each word
 otherwise       the whole text drawn at (x0, y), left aligned
 ```
 
@@ -431,13 +477,29 @@ with anchor 0. At 640x480 with a portrait the line tops are 160, 177, 194, 211, 
 the left edge is 204 (214 on a paragraph's first line) and the justify width 300 (290 on that
 line). — `DLG-LINE-038`, `TEXT-078`
 
+The gap and accumulator spill as doubles. Each word performs two x87
+additions before the next double store; the accumulator is not retained
+between words. Integer conversion temporarily selects truncation and restores
+the incoming control word. Supplied nearest-even PC24/PC53/PC64 controls
+confirm this sequence. PC64 can differ by a pixel from per-add double on
+discriminating synthetic widths. — DIALOGUE-061
+
+Over the selected corpus's 11415 EN and 9550 RU justified word positions,
+nearest-even PC53/PC64 spilled models agree with per-add double. Retained
+PC64 differs at 634 EN and 332 RU positions. These are Medium model results
+over original-hooked wrapped lines. Native precision/rounding and visible
+word coordinates remain Unknown; the corpus does not select native FPU state.
+— DIALOGUE-062, DLG-LINE-038 (amended)
+
 ## Button
 
 The button is panel-relative (200,172)-(280,198), font 1, command `0x46f`, with the label of
 `main.txt` line 77: "Ok" in EN, 22 px wide, and "Принять" in RU, 70 px, with no accelerator. It
-has no art and no fill: the panel's frame shows through, and its paint routine draws a two-colour
-bevel and the label. The paint dims the rectangle to 13/16 of each channel only when the control's
-flag 1 is clear; the dialogue button is built with it set.
+has no art and no fill: its painter requests parent repaint, then the label
+and a two-colour bevel. It requests level-3 remapping after painting when
+flag 1 is clear; the dialogue button is built with it set. Full/reduced
+level-3 laws are stated above. Native parent-paint effects remain Unknown.
+— DLG-BUTTON-039 (amended), DIALOGUE-065, DIALOGUE-055
 
 ```
 light RGB (41,69,63)   dark RGB (7,12,9)   each reduced to the screen format;  R' = R-1, B' = B-1
@@ -452,8 +514,25 @@ label     centred at (L + (R'-L)/2 + 1, T + (B'-T)/2) = (316,308) at 640x480, an
 ink       idle ramp level 15 = (185,159,73);  hover ramp level 15 = (150,90,0);  shadow flat (8,8,8)
 ```
 
-The ramp levels come from emulating the executable's own ramp builder. How the display's colour
-depth quantises the bevel colours and ramp entries is Unknown. — `DLG-BUTTON-039`, `TEXT-078`
+For supplied RGB565 and RGB555 fields, original painter/line/point controls
+write all 299 distinct bevel pixels exactly. Label anchor (316,308) stays
+fixed. Hover selects its ramp independently; pressed presentation requires
+both pressed state and cursor membership. Pressed outside uses shadow 2
+and the idle bevel. Twelve finite state controls cover both layouts.
+— DIALOGUE-065, DLG-BUTTON-039 (amended)
+
+The original ramp-builder prefix gives these conditional packed values.
+— DIALOGUE-065
+
+| Layout | Light bevel | Dark bevel | Text level 15 | Idle level 15 | Hover level 15 | Flat shadow |
+|---|---|---|---|---|---|---|
+| RGB565 | 10791 | 97 | 65535 | 48361 | 37568 | 2113 |
+| RGB555 | 5383 | 33 | 32767 | 24169 | 18784 | 1057 |
+
+Native format selection, glyph pixels, parent repaint, disabled-remap pixels,
+hover/capture delivery and cadence remain Unknown. Conditional quantization
+closes DLG-BUTTON-039's former supplied-format question without claiming a
+native display witness. — DIALOGUE-065, DLG-BUTTON-039 (amended), TEXT-078
 
 ## Language
 

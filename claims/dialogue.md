@@ -1299,11 +1299,11 @@ EN-only.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| DLG-PANEL-035 | At 640x480 the panel is drawn 488x232 at (76,124): the 580x240 constructor rectangle is snapped and centred, then painted as a nine-piece `lm.256` frame with an 8 px shadow band. | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
-| DLG-PORTRAIT-036 | The portrait pane is an 88x108 picture surface at panel offset (30,54): a 72x94 black fill, a 72x96 or 72x92 picture window at (8,7), and a border frame whose opening is 72x92. | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-PANEL-035 | At 640x480 the panel is drawn 488x232 at (76,124): the 580x240 constructor rectangle is snapped and centred, then painted as a nine-piece `lm.256` frame with an 8 px shadow band. | High / Unknown | ✔ promoted (amended) | [EXP-0410](../experiments/EXP-0410-dialogue-layout/), [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DLG-PORTRAIT-036 | The portrait pane is an 88x108 picture surface at panel offset (30,54): a 72x94 black fill, a 72x96 or 72x92 picture window at (8,7), and a border frame whose opening is 72x92. | High / Unknown | ✔ promoted (amended) | [EXP-0410](../experiments/EXP-0410-dialogue-layout/), [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
 | DLG-RECT-037 | All six opening routines (seven call sites) build the identical panel, because the constructor takes only a name; every shipped node takes the portrait layout, so the text rectangle is 300x135 at (204,160). | High | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
-| DLG-LINE-038 | Each wrapped line is drawn from the rectangle's left, 17 px below the previous one, justified by widening the word gaps except on a paragraph's last line and one-word lines; a paragraph's first line is indented 10 px. | High / Medium | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
-| DLG-BUTTON-039 | The button is drawn from lines and a font-1 label with no art and no fill: a two-colour bevel, the label centred at (316,308) in gold ink (brown on hover), and a shadow offset of 2 px (4 while pressed). | High / Unknown | ● active | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
+| DLG-LINE-038 | Each wrapped line is drawn from the rectangle's left, 17 px below the previous one, justified by widening the word gaps except on a paragraph's last line and one-word lines; a paragraph's first line is indented 10 px. | High / Medium | ✔ promoted (amended) | [EXP-0410](../experiments/EXP-0410-dialogue-layout/), [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DLG-BUTTON-039 | The button is drawn from lines and a font-1 label with no art and no fill: a two-colour bevel, the label centred at (316,308) in gold ink (brown on hover), and a shadow offset of 2 px (4 while pressed inside). | High / Unknown | ✔ promoted (amended) | [EXP-0410](../experiments/EXP-0410-dialogue-layout/), [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
 | DLG-KEYS-040 | Enter, Escape and a click on the button each raise command `0x46f`, which turns the page or, on the last page, closes the panel; Space has no dialogue action, and the panel has no accept or decline state. | High / Medium / Unknown | ● active (amended) | [EXP-0410](../experiments/EXP-0410-dialogue-layout/) |
 
 ### DLG-PANEL-035
@@ -1334,11 +1334,13 @@ EN-only.
     and of frame 7 at `y = B-48`; `(bh - 96) / 64` = 2 tiles of frame 4 at
     `x = L`, `y = T+48+64j`, and of frame 5 at `x = R-48`.
   - Interior: frame 0 in 4 by 2 tiles from (L+48,T+48).
-  - The tiles cover 96 + 96*4 = 480 by 96 + 64*2 = 224, so no body pixel is
-    left to a background.
-- Frames 3, 5, 6, 7 and 8 are drawn a second time 8 px right and down through
-  `vt+0x1c` (blit mode 6), which fills the 8 px band right of and below the
-  body.
+  - The tile rectangles cover 96 + 96*4 = 480 by 96 + 64*2 = 224.
+    This is geometric coverage, not opaque coverage: the selected forward
+    sprite decoder preserves destination pixels at skip runs (DIALOGUE-063).
+- Frames 3, 5, 6, 7 and 8 request shadows 8 px right and down through
+  `vt+0x1c` (blit mode 6). The nine shadow requests precede all 24 body
+  requests. Their mask remaps existing destination pixels rather than
+  filling every pixel in the band (DIALOGUE-063).
 - `FUN_00476810` darkens the whole screen behind the panel once
   (`DLG-DIM-013`). The root container `campaign+0xcc` spans the screen from
   (0,0) (`FUN_00472070`), so panel coordinates are screen coordinates.
@@ -1349,9 +1351,15 @@ arithmetic on the nine frame sizes measured from both roots' `lm.256`. The
 rival, a panel drawn at its constructor rectangle (30,120)-(610,360), is
 refuted because `FUN_004c553f` replaces all four coordinates.
 
-**Unknown.** Whether a frame piece is drawn at an offset stored in its sprite
-record (origins were not measured), and what the shadow pieces put in the 8 px
-band (blit mode 6 was not decoded).
+**Unknown.** Native table mode, clipping, final pixels and parent repaint
+effects. The selected sprite wrapper passes the requested position without
+adding a record origin; selected forward mode 6 is decoded (DIALOGUE-063).
+
+**Amended.** DIALOGUE-063 replaces the former second-draw order, unqualified
+band-fill wording and opaque body-coverage conclusion. Tile rectangles span
+the body, while stream skips preserve destination pixels. It closes the
+selected-wrapper origin and shadow-primitive questions under supplied private
+state, without claiming native pixels.
 
 ### DLG-PORTRAIT-036
 
@@ -1390,9 +1398,16 @@ measurement under the stated instrument (a walk of the control stream, not a
 render). Which arm a shipped record takes was not classified
 (`DLG-SPEAKER-022`).
 
-**Unknown.** Which rows of the 240-row canvas the window frames, the open
-question on record (`REG-NPC-091` grades the bottom-up reading Medium for the
-flat arm only), and the pixel blend of the keyed copy.
+**Unknown.** Which rows are finally visible from the produced 240-row canvas
+(`REG-NPC-091` grades the bottom-up reading Medium for the flat arm only).
+Upstream canvas contents and native orientation remain outside the suffix
+and primitive controls.
+
+**Amended.** DIALOGUE-064 establishes the selected suffix's reversal/copy order
+and windows. The keyed primitive copies nonzero source words unchanged and
+skips zero; it descends physical source rows as destination y increases.
+These local facts close the keyed-blend question without identifying final
+native visible canvas rows.
 
 ### DLG-RECT-037
 
@@ -1458,8 +1473,9 @@ node that does not ship.
   control's top line (0 for every shipped block), `last` is `first` plus the
   visible count (`+0x8c`, at most 7), and `pitch` is 17. The wrapped lines
   come from `FUN_004be229` through `FUN_00456ab0` at the rectangle's full
-  width, 300 with the portrait (`DLG-WRAP-009`). Each line keeps a trailing
-  space, and the last line of each paragraph piece ends in CR.
+  width, 300 with the portrait (`DLG-WRAP-009`). Ordinary fitting nonempty
+  pieces keep a trailing space, and their last line ends in CR. The empty
+  and over-wide controls have exceptions (DIALOGUE-060).
 - For line `i`, counted from 0 over the whole array of `n` lines:
   - the line is a paragraph's first when `i = 0` or line `i - 1` ends in CR,
     and then `p` = 10, the font-1 `.dat` dword 32; otherwise `p` = 0;
@@ -1507,10 +1523,17 @@ the justify path and by the absence of any centring flag in the call. Medium
 for the population figures: the wrapper is transcribed from its listing and
 checked by hand traces, not emulated or observed.
 
-**Unknown.** Whether the x87 extended-precision intermediates of the running
-sum move any shipped word by a pixel against a double-precision transcription;
-it could matter only where a running sum lands within about 10^-13 of an
-integer.
+**Unknown.** Native x87 precision and rounding mode. DIALOGUE-061 establishes
+double stores between words and two x87 additions before each store.
+DIALOGUE-062 measures zero coordinate differences between nearest-even
+PC53/PC64 spilled models and per-add double over the stated 20965 word
+positions; this corpus agreement does not select native floating-point state.
+
+**Amended.** DIALOGUE-060 narrows the unconditional trailing-space/CR rule.
+DIALOGUE-061 closes the retained-accumulator operation-order alternative;
+DIALOGUE-062 reproduces the named census through original wrapping instructions
+with declared services. The census remains Medium and does not prove native
+reachability or visible words.
 
 ### DLG-BUTTON-039
 
@@ -1537,7 +1560,8 @@ integer.
 - The label is drawn through `FUN_00456b50` at
   `(L + (R' - L) / 2 + 1, T + (B' - T) / 2)` = (316,308) at 640x480, with the
   anchor flags 0xa (`TEXT-078`), which put the cell at (305,300)-(327,315) in
-  EN and (281,300)-(351,315) in RU. The shadow offset is 2 idle and 4 pressed.
+  EN and (281,300)-(351,315) in RU. The shadow offset is 2 idle/outside and 4
+  while pressed with cursor membership true.
 - The ink ramp is `0x005e9b88` idle, level 15 = (185,159,73), and
   `0x005e9b48` while the hover flag (`+0x68`, set by the mouse move
   `FUN_004bef8e`) is set, level 15 = (150,90,0). The shadow ramp is
@@ -1556,9 +1580,14 @@ integer.
 anchor and the offsets: every operand is read in `FUN_004be98d`, listed whole.
 High for the ramp values under the stated instrument.
 
-**Unknown.** How the display's colour depth quantises the ramp entries and the
-two bevel colours; the reduction to the screen format was read, not applied to
-a format.
+**Unknown.** Native screen-format selection, event delivery, parent repaint,
+glyph pixels and cadence. The selected builder and bevel are now executed
+under supplied RGB565/RGB555 fields (DIALOGUE-065).
+
+**Amended.** DIALOGUE-065 closes quantization for the two supplied layouts.
+Pressed presentation requires the pressed flag and cursor membership; the
+hover field independently selects the ramp. Level-3 disabled remapping follows
+painting; its full/reduced arithmetic is DIALOGUE-055.
 
 ### DLG-KEYS-040
 
@@ -1986,3 +2015,198 @@ is one code observation, not an independent replication.
 or input causes of an apparently absent panel. These stock payloads cannot
 distinguish native failure models; the synthetic controls establish the local
 missing/rejected-part mechanism separately.
+
+## Selected rendering instructions and private controls
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| DIALOGUE-060 | Selected original wrapping uses strict fitting, keeps an over-wide first word whole and splits paragraphs on CRLF; exact-width and bare-CR controls can repeat an unchanged remainder under declared services. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DIALOGUE-061 | Selected justification stores the gap and accumulator as doubles, adds integer width to the accumulator then gap before each spill, and truncates draw x with a restored control word; native FPU state is Unknown. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DIALOGUE-062 | Over 688 EN and 732 RU selected blocks, original-hooked wrapping yields at most 7 lines; nearest-even PC53/PC64 spilled models agree with per-add double at 20965 justified word coordinates. | Medium | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DIALOGUE-063 | At each supplied panel geometry, the selected painter requests 9 shadows before 24 body sprites; forward mode 6 remaps destination pixels through its mask, without adding a sprite-record origin. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DIALOGUE-064 | The selected portrait suffix places its 72x92 default or 72x96 metadata window at (8,7); original copy controls descend physical source rows, copying nonzero words unchanged and skipping zero on the keyed path. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DIALOGUE-065 | With supplied RGB565/RGB555 and cursor state, the selected OK painter keeps anchor (316,308), selects hover ink independently, and swaps bevel colors and shadow 2 to 4 only when pressed and inside. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+
+### DIALOGUE-060
+
+The selected wrapper `004563e0`, paragraph splitter `00456900` and combined
+entry `00456ab0` run as original instructions in private memory. CString
+construction, slicing, trimming and line-array storage are declared service
+hooks. Width measurement `00456320`/`004562f0` runs original instructions.
+Allocation and C whitespace classification are supplied.
+
+Fourteen controls use synthetic advances 8, spacing 2 and the original extra
+space width 7. A measures 10, A-space 27 and A-space-B 37. A at width 10
+and A-space-B at width 27 revisit the same unchanged remainder. The complete
+37-wide A-space-B at width 37 becomes two lines, excluding inclusive fitting.
+An A wider than width 9 stays whole without a trailing space or CR. The
+first word AAAA at width 15 also stays whole rather than splitting by glyph.
+
+CRLF separates pieces. LF alone remains data. Bare CR and trailing bare CR
+repeat unchanged remainder. Leading CRLF produces an empty first line;
+empty input produces no line and spaces alone produce one empty line.
+Ordinary fitting pieces receive a trailing space and their final line CR.
+
+**Confidence.** High for the selected comparisons and finite controls under
+these services. Instruction starts and direct targets are bound to the
+preserved image. The exact-width, over-wide and three newline controls
+discriminate strict/inclusive fitting, word/glyph splitting and CRLF/any-newline
+models. A repeated remainder is detected at the second equal loop entry,
+not interpreted as a completed native hang.
+
+**Unknown.** Native locale, allocator behavior, arbitrary malformed bytes,
+pointer faults, termination outside this finite population and native pixels.
+
+### DIALOGUE-061
+
+In `00456fe0`, the integer residual width divided by the word-count minus one
+is stored as a double at `00457114`. Initial integer x is stored as a double
+at `00457120`. Each word loads its integer width, adds the stored accumulator
+at `0045716b`, adds the stored gap at `0045716f` and stores the accumulator
+as a double at `00457173`. The two additions precede this store.
+
+Conversion `0055458c` saves the incoming x87 control word, selects truncation,
+converts to an integer and restores that word. Thus truncation of draw x is
+separate from precision and rounding of the preceding arithmetic.
+
+Twenty-four supplied width vectors run at nearest-even PC24, PC53 and PC64,
+72 original-instruction controls. Every x equals the corresponding binary
+rational instruction model and the incoming control word is preserved. For
+x=214, width=290 and widths 10,20,30,40, spilled PC64 yields last x=463;
+retaining the accumulator yields 464. For x=159, width=1469 and widths
+61,204,61,52,33,69, spilled PC64 yields last x=1559; per-add double yields
+1558. A negative-x vector gives the opposite one-pixel distinction.
+
+**Confidence.** High for the selected operation sequence and bounded controls.
+Original double stores exclude a retained accumulator. The distinguishing
+positive and negative controls exclude per-add double as an unconditional
+replacement for the two-addition PC64 sequence. Supplied width, draw and
+string services do not establish native font or floating-point state.
+
+**Unknown.** Native precision/rounding selection, exceptional values, arbitrary
+integer overflow, visual word coordinates and native invocation cadence.
+
+### DIALOGUE-062
+
+The selected MAIN.RES families are mission event stems, inn NPC, mercenary
+NPC, shop npc31m and training npc34m. Each tag containing part= contributes
+its body through the next tag or payload end. Conditional bodies are included
+as installed candidates. Font-1 advances come from each original graphics
+archive; first-record geometry is 16x15 and the advance table has 224 entries.
+The font conversion selector is supplied as 0 for EN and 1 for RU, and the
+font-height service is supplied as 15. Native configuration is not observed.
+
+Original wrapping instructions with declared services yield EN 688 blocks,
+2542 lines, maximum 7 and no multi-paragraph block. RU yields 732 blocks,
+2650 lines, maximum 7 and 12 multi-paragraph blocks. The populations contain
+1854 EN and 1906 RU justified lines, 11415 EN and 9550 RU word positions.
+
+Binary rational nearest-even PC53/PC64 models with the original spill points
+give zero coordinate differences from per-add double over those 20965
+positions. A retained-PC64 accumulator differs at 634 EN and 332 RU
+positions. These are arithmetic models over original-hooked wrapped lines,
+not original justification execution on every corpus line. The 16 corpus
+width vectors used in DIALOGUE-061 are additional finite controls.
+
+**Confidence.** Medium for the corpus projection and model agreement. EN/RU
+executable equality gives one code population. Agreement cannot select
+native precision or prove the population's conditional reachability.
+
+**Unknown.** Loose overrides, other installs, native reachability, native FPU
+state and visible line/word positions. No universal maximum is claimed.
+
+### DIALOGUE-063
+
+With the three existing 488x232 panel geometries supplied to coordinate
+conversion, `004c4da2` requests 9 shadow sprites before 24 body sprites at
+each screen size, 99 captured requests. Shadows use frames 3,5,6,7,8,
+offset (+8,+8), level 6 and reverse argument 0. Body requests use level 0.
+Parent coordinates, locks and clip services are explicit boundaries.
+
+The original sprite vtable selects `00428e60` for body and `00429040` for
+shadow. The selected wrapper reads width/height and starts data at frame+12;
+it passes the requested coordinates without adding a record origin.
+Sixteen private forward-body controls execute `0044db00`. RLE literals
+select and write a supplied palette word, including palette value zero;
+skip runs leave destination values unchanged. Source indices 0,1,127,255,
+whole/clipped masks and padded buffers exclude destination blending and
+palette-zero keying on this selected normal path.
+The forward shadow selects `0044e010` for reduced tables or `0044e240` for
+full tables. Stream literals mark covered pixels; their byte values are
+discarded and existing destination values index the level-6 table.
+
+Twenty-four private controls cover RGB565/RGB555, full/reduced selection,
+literal bytes 1/127/255 and whole/clipped two-row masks. All pixels, 8-byte
+row padding and trailing guards agree. The full-table law is
+floor(channel*10/16). The reduced path substitutes the low blue-channel
+representative (blue & ~7)+4, then applies that law. This excludes copying
+the literal color and an unqualified full-channel law for reduced lookup.
+
+**Confidence.** High for the selected request order, wrapper and forward
+primitive under the stated formats and services. Fresh vtable/data, instruction
+and transfer bindings connect caller, wrapper and decoder. Literal variation
+and varied destination markers discriminate replacement from remapping.
+
+**Unknown.** Native table/clip selection, reverse decoding, other layouts,
+every shipped frame pixel, parent repaint and final native shadow pixels.
+
+### DIALOGUE-064
+
+The locally targeted suffix `00421d78` runs with supplied actor, record,
+canvas, background and destination state. Four record vectors choose
+(36,140)-(108,232) when the second word is -1, otherwise
+(x0,144-y1)-(x0+72,240-y1). Both opaque background and keyed canvas requests
+place the selected window at (8,7). Varying the third/fourth words leaves
+the selected requests unchanged. The background reverses before the opaque
+copy and reverses back after the keyed canvas copy; border frame 0 is last.
+
+Original bitmap reversal `00429840` reverses four three-pixel marker rows.
+Sixteen copy controls run `0044d2a0`/`0044d4a0` over RGB565/RGB555, opaque/keyed,
+whole/window/clipped/outside cases. Destination rows advance while physical
+source rows descend from H-1-sourceTop. Opaque copy writes zero; keyed copy
+skips 16-bit zero and copies every other supplied word unchanged. Pixels,
+8-byte padding and guards agree. No blend occurs on this selected keyed path.
+
+**Confidence.** High for the selected suffix, four metadata vectors and
+finite primitive controls. Original vtable/data and instruction bindings
+connect the requests to these primitives. Marker rows discriminate physical
+address order; zeros discriminate opaque copy, keying and blending.
+
+**Unknown.** Upstream actor/canvas production, final canvas orientation and
+which rows are visibly exposed through the border. The suffix captures clear,
+copy, border and cleanup services; it does not render their composition
+end to end or prove native pixels.
+
+### DIALOGUE-065
+
+Original `004be98d` paints the button with supplied screen rectangle
+(276,296)-(356,322), cursor state and RGB565/RGB555 fields. Parent painting,
+coordinate conversion, label drawing and disabled remapping are captured
+services. Original line `0044fcd0` and point `00450390` primitives write all
+299 distinct bevel pixels exactly; padding and trailing guards remain intact.
+The builder passes nonzero `005e9720` through constructor `004be6e3` to +64,
+selecting the dialogue ink arm. Constructor stores hover/press as zero and
+sets flag word 3 through base `004bc98f`. These selected stores are read;
+construction and parent attachment are not replayed end to end.
+
+Six state vectors per format cover idle, hover, pressed-inside, pressed-outside,
+pressed without hover and disabled-hover. Every label request uses (316,308)
+and anchor 10. Hover +68 selects its ramp independently of press +6c. The
+pressed flag plus supplied inside membership exchanges bevel colors and
+changes shadow offset from 2 to 4; pressed outside retains offset 2.
+Parent paint precedes label/bevel, and disabled level-3 remap follows painting.
+
+The selected ramp-builder prefix `00457c40` runs to its first allocation
+boundary with supplied format fields. Level-15 text, idle and hover words
+are RGB565 65535,48361,37568 and RGB555 32767,24169,18784. Flat shadow words
+are 2113 and 1057. Light/dark bevel words are RGB565 10791/97 and RGB555
+5383/33. This is conditional quantization, not native format detection.
+
+**Confidence.** High for the selected painter, 12 state controls, bevel pixels
+and supplied-format ramp outputs. The outside-cursor and no-hover controls
+discriminate pressed-only and coupled-hover models. Whole-buffer comparisons
+cover unchanged pixels as well as the bevel.
+
+**Unknown.** Native format, hover/capture delivery, label glyph pixels, parent
+frame repaint, disabled-remap pixels and cadence. DIALOGUE-055 separately
+defines full/reduced level-3 arithmetic; this painter only captures its request.
