@@ -1026,3 +1026,233 @@ that may invalidate or recompute between them.
 transitive archive callbacks, post-load gameplay and visible price agreement.
 The negative result covers the listed bodies and the SHOP-104 consumers,
 not the whole image.
+
+## Held item release over the character panel
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SHOP-096 | Five direct stores write `session+0x3cc`, and origin fields `+0x3d0` and `+0x3d4` beside it; the pick-up routines, cursor setter and clear contain no store to `+0x18`. | High / Medium | ● active | [EXP-0424](../experiments/EXP-0424-panel-release/EXP-0424.md) |
+| SHOP-097 | Element `+0x18` is its own stamp: contents load gives shelf index + 5, tray 2 or 5 by flag 0x80, new party equipment 1; insert slots give backpack 2 and keep other tray values; it is not the origin code for tray objects. | High / Medium | ● active | [EXP-0424](../experiments/EXP-0424-panel-release/EXP-0424.md) |
+| SHOP-098 | The panel left-up routes stamps 1 and 2 to the equip arm and 5 to 8 to `004a91f5`, whatever the origin code; other values leaving the object held and return 1 on every path are Medium. | High / Medium | ● active | [EXP-0424](../experiments/EXP-0424-panel-release/EXP-0424.md) |
+| SHOP-099 | `004a91f5` dispatches on the origin code; its own instructions contain no call to `0041c98f`, but origin 1 calls the equip arm (SHOP-101); drop and refresh bodies were not read; dirty bits vary by code. | High / Medium | ● active | [EXP-0424](../experiments/EXP-0424-panel-release/EXP-0424.md) |
+| SHOP-100 | For the supplied shop child rectangles, a button-up reaches the panel only with no capture child set and the point in `(480,238)-(640,480)`; focus is irrelevant; the shop's use of `004bd9dc` is inherited. | High / Medium | ● active | [EXP-0424](../experiments/EXP-0424-panel-release/EXP-0424.md) |
+| SHOP-101 | The panel equip arm `00492410` equips through command `0x22` from the origin container or rejects through grid `session+0xe8` (identity with the shop backpack Unknown); 14 replay rows are not a full gate matrix. | High / Medium / Unknown | ● active | [EXP-0424](../experiments/EXP-0424-panel-release/EXP-0424.md) |
+
+### SHOP-096
+
+Direct stores to displacement `0x3cc` in `.text`: `004719e4` (view reset,
+stores the zero-valued register), `0047648e` (cursor setter, stores its
+first argument), `004764eb` (cursor clear, stores 0), `004827bd` (grid
+take, stores the result of grid `vt+0x84`) and `004923b9` (panel take,
+stores member slot `+0x15c+4*i` and zeroes that slot). The raw scan of the
+four-byte displacement over `.text` finds 99 occurrences; 5 are stores and
+all 99 sit inside mapped instructions.
+
+Each pick-up writes the origin fields beside the slot. The grid take
+stores origin index from its argument at `+0x3d0` and `vt+0xa8` of the
+source grid at `+0x3d4` (`004827af`, `004827c7`). The panel take stores the
+slot index and panel `vt+0x80` (`004923cc`, `004923da`). The `vt+0xa8`
+bodies return: shelf grid class `0059aa48` shelf index + 5 (`004a67b0`:
+u16 at `[grid+0x20ac]+0x132` plus 5), shop backpack class 2 (`004a6810`),
+tray class 4 (`004a6820`), session backpack class 2 (`00483ae0`), base grid
+class -1 (`004a6780`); the panel returns 1 (`00492e80`, slot `0x80` of
+`0059a768`). The four read functions (grid take, panel take, cursor setter, cursor
+clear) contain no store to `+0x18`.
+
+**Confidence.** High for the five stores, the raw-scan reconciliation, the
+origin-field sources and the absence of a `+0x18` store in the four read
+functions. Medium for any wider statement: a bulk copy of the session
+block or a computed address that reaches `+0x3cc` is not excluded by a
+displacement scan, and 168 raw `[reg+0x18]` store encodings lie outside
+mapped instruction starts and were not classified by object.
+
+**Unknown.** Writers through computed addresses and the values the
+origin fields hold in a running original.
+
+### SHOP-097
+
+The element class has vtable `0059a250`. Its default constructor
+(`00483af8`) and code constructor (`00483b5d`) store 0 at `+0x18`; its copy
+constructor (`004849c3`) copies the source value. Stamp stores in the
+mapped code map, with the value each writes:
+
+- Grid contents load, slot `vt+0xb0` of the base, shelf, shop backpack and
+  tray grid classes
+  (`004a2d30`): when the grid's `vt+0xa8` result is not 4, every element
+  receives that result (`004a2d63`); when it is 4, an element with flag
+  byte `+8` bit 0x80 receives 2 (`004a2d98`) and any other element 5
+  (`004a2d9d`).
+- Shelf populate `004a8495`, called from `004a7519`: shelf index + 5
+  (`004a84d8`).
+- Insert slots `vt+0x78` and `vt+0x7c` of the shop backpack class
+  (`004a67d5`, `004a67fa`) and of the session backpack class (`00483aa5`,
+  `00483aca`): 2.
+- Shop tray class insert `vt+0x78` (`004a6141`): a stamp of 1 becomes 2,
+  other values are kept, so an element inserted into the tray from a
+  shelf keeps its shelf stamp. The tray 2 or 5 rule is the contents load
+  only.
+- Function `004104e8` builds an element, sets `+0x18` to 1 and stores it in
+  a member slot of the `+0x15c` array (`00412f7b` then `00412f94`;
+  `00413b1c` then `00413b89`).
+
+So the stamp is a field of its own. The origin code (SHOP-096) equals it
+for a shelf object (index + 5) and a shop backpack object (2). It differs
+for a tray object (origin 4, stamp 2 or 5). Equipment pick-up writes no
+stamp: the object keeps the value it had when it was stored, 1 for the
+equipment of a member built by `004104e8` and 2 for a backpack object that
+was equipped. The trade totals compare the same field with 2
+(`004a9503`, `004a966d`).
+
+The session backpack class loads through `vt+0xb0` = `00572729`, which
+was not read; backpack 2 rests on the insert slots and `vt+0xa8`.
+
+**Confidence.** High for each named store and value; the class slots are
+the replay-independent reads of `class-slots.tsv`. Medium for completeness.
+The code map covers 1,465,770 of 1,660,928 `.text` bytes; the raw scan of
+disp8 `0x18` store encodings finds 1,186 hits of which 168 are not at a
+mapped instruction start, 148 inside 5,655 uncovered runs and 20 inside
+mapped instructions. The uncovered hits include an unreferenced body with
+a stamp-2 store (`004a8486`). They were decoded but not classified by
+object.
+
+**Unknown.** Stamps carried by elements loaded from a SAV, by the 148
+uncovered hits and by the equipment elements of heroes created elsewhere.
+
+### SHOP-098
+
+Panel `vt+0x58` (`00491330`) loads the session through the app object,
+reads `session+0x3cc`, and when non-zero compares `+0x18`. Value 2 or 1
+goes to `00491459`: it plays the cursor sound and calls panel `vt+0x7c`
+(`00492410`) with the argument `((word [+6] >> 8) & 0xf) - 1`. A value
+from 5 to 8 calls `004a91f5` on `session+0xf0` and returns 1. Any other
+value (0, 3, 4, 9 and above, -1) skips both arms and continues into the
+routine's rectangle and mode tests; none of them reads `+0x3cc`. No path
+tests the origin code. The routine returns 1 on every path.
+
+Replay of the original routine with supplied services over `+0x18` from -1
+to 16, one held object and the point `(500,300)` reaches the equip service
+for 1 and 2 only, the return service for 5 to 8 only, and no service for
+the other 13 values; the cursor slot stays set in all of them because the
+return routine is a recorder in this run. A stamp-2 object with origin 6
+still reaches the equip service, and a stamp-5 object with origin 1 reaches
+the return service. With no held object neither service is reached.
+
+**Confidence.** High for the routing of stamps 1, 2 and 5 to 8: the
+routine is read whole and the routing reproduces by replay with controls
+that decouple stamp, origin code and point (a stamp-2 object at a point
+outside the panel still reaches the equip service). Medium for "other
+values leave the object held" and "every path returns 1": the replay fixed
+`session+0x3dc` at 0, used one point and a supplied point-in-rect service,
+and did not replay the tail tests. The equip and return services are
+recorders here; SHOP-099 and SHOP-101 replay them separately.
+
+**Unknown.** The effect of the remaining rectangle tests on a release at
+a point inside the panel is not replayed; they act on the cursor-mode bits
+`session+0x3dc`.
+
+### SHOP-099
+
+`004a91f5` fetches the session, calls `004ae560` with `[0x005ef9b4]`
+(the cursor reset), reads origin code `session+0x3d4`, and jumps through
+a table indexed by the code minus 1:
+
+| Origin code | Container | Calls | Shop bit set |
+|---|---|---|---|
+| 1 | panel `shop+0x7c` | `vt+0x7c(origin index)` | 0x8 |
+| 2 | backpack `shop+0x6c` | `vt+0xa4(origin index)`, `004a2cd0` | 0x1 |
+| 4 | tray `shop+0x70` | `vt+0xa4(origin index)`, `004a2cd0` | 0x4 only when `shop+0x84` is 0 |
+| 5 to 8 | shelves `shop+0x68` | `vt+0xa4(origin index)`, `004a2cd0` | 0x2 |
+| 3, 0, 9 and above | none | none | none |
+
+All arms end with `004764c0`, which stores 0 at `+0x3cc` and resets the
+origin fields to -1. The bit is stored at `shop+0x14c`. The routine
+itself contains no call to the move command `0041c98f`. Origin code 1
+calls panel `vt+0x7c`, the equip arm `00492410`, which issues command
+`0x22` when its gates are open (SHOP-101). The drop and refresh bodies
+were not read for such a call. The dirty bit is set only for codes 1, 2,
+4 and 5 to 8, and for the tray only when `shop+0x84` is 0. Replay with recorders over origin codes 0 to 10
+reproduces the table, and the cursor slot is 0 afterwards in every case.
+
+**Confidence.** High for the dispatch, the bits and the absence of a call
+to `0041c98f` in this routine's own instruction stream. Medium for what the object does inside the
+container: the `vt+0xa4` bodies (`00482820`, `004a4e40`, `004a6380`) were
+not replayed, so placement, merging and quantity are not claimed.
+
+**Unknown.** The `vt+0xa4` bodies and the origin-index meaning for a
+tray that was reordered while the object was held.
+
+### SHOP-100
+
+The shop view is the base container (`004bd9dc`). A mouse message goes to
+the capture child `view+0x34` when it is set, otherwise to the first child
+whose rectangle contains the point; the traversal stops after that child
+even if it returns 0, and the view's own slot runs only when the child
+result is 0. A key message goes to the focus child `view+0x38`. The shop
+view's children are, in order, shelf `(0,0,164,303)`, backpack
+`(0,390,480,480)`, table `(0,303,480,390)`, merchant `(164,0,480,303)`,
+buttons `(464,0,640,238)` and the borrowed character panel
+`(480,238,640,480)` (SHOP-FIGURE-041). No other child contains a point of
+the panel rectangle.
+
+Replay of `004bd9dc` with those rectangles as supplied input. The
+point-in-rect service (the USER32 import) and each child's return value
+(panel 1, others 0) are supplied, so the edge sweep shows the supplied
+half-open rectangle semantics and a panel hit stopping the traversal is
+supplied; the discriminating rows are the traversal order (merchant before
+buttons at `(470,250)`) and the capture rows. A capture child that returns 0 receives the release and then
+the view's own slot, never the panel; a capture child that returns 1 ends
+the traversal; a focus child leaves a button-up unchanged and receives a
+key message.
+
+**Confidence.** High for the dispatch order and the capture and focus
+conditions of `004bd9dc` (instruction replay with controls). Medium for
+the rectangles themselves and for the shop view dispatching through
+`004bd9dc`, which rests on earlier container-dispatcher claims and was not
+read from a shop view vtable here: they are the literals SHOP-SCREEN-030 and SHOP-FIGURE-041
+established and are supplied, not re-derived. No capture child is set by
+the shop's own code in the routines read here, but the population of
+`capture-set` callers was not enumerated.
+
+**Unknown.** Whether a capture child is set during a held-object drag.
+
+### SHOP-101
+
+`00492410` (panel `vt+0x7c`, argument = equipment slot) returns 0 without
+touching the object when the host's member owner `+0x14` differs from the
+host player `+0x9b4`. It rejects, calling `vt+0xa4` of the grid at
+`session+0xe8` with the origin index and returning 0, when any of these
+holds: panel host `+0x140` is not 1; for slot 0 or 1 the member state
+`+0x74` is 3, 7 or 8; the usability test `00460440` fails; or item
+attribute `0x2a` is non-zero and either member flag `0x18c` bit 2 is clear
+or member `+0x1c` bit `1 << attribute` is set. Grid `session+0xe8` is
+constructed at `004722ac` by `00482d20`, which writes vtable `0059a1a0`
+(the session backpack class of SHOP-096). That it is the grid the shop
+displays at `shop+0x6c` was not established.
+
+With every gate open the replay reproduces these effects for a stamp-2
+object with element flags 0x06: member flag `0x18c |= 8`, a `0x408` post to
+the panel, the held element stored in member slot `+0x15c+4*slot`, command
+`0x22` through `0041c98f` with source code = origin code, source index =
+origin index, destination code 1, destination position `slot+1`, quantity
+the element quantity, cursor clear, recomposition `0045fb00` and a `0x46d`
+post to the session root. The position and quantity pushed before the container-code call stay on the stack, because that slot (`00492e80`) is a plain return, and become the last two command arguments. With origin code 4 the command carries source code 4. An occupied slot first moves the old element to grid
+`session+0xe8` through `vt+0x78` and rebinds it through `vt+0x94`. Element
+flag byte `+8` bits 0x10 and 0x01 together select a use arm (grid drop, use
+hook, command 0xa, grid drop) instead of an equip. Bit 0x01 without bit
+0x10 selects a stack arm: command `0x22` for one unit to position `slot+1`
+with no member-slot store; with quantity above 1 the remainder is a copy
+dropped back through the grid at the origin index (replayed), and with
+quantity 1 the held element is deleted and the cursor cleared (read, not
+replayed).
+
+**Confidence.** High for the gate list and the effect list as instruction
+facts. Medium for replay coverage: the 14 rows are not a full gate matrix
+(member states 7 and 8, slot 1 and attribute `0x2a` with the member flag
+clear are not each a row). Medium for which gates are open
+in a running shop visit. Unknown for the bodies the replay supplies:
+`00482820` (the drop that follows each rejection and use arm), the move
+command's own acceptance rules in `0041c98f`, and the usability test.
+
+**Unknown.** The value of panel host `+0x140` during a shop visit; whether
+`0041c98f` accepts source code 4 into destination code 1; whether the
+rejection drop clears the cursor slot.

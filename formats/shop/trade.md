@@ -315,6 +315,46 @@ shipped UI. (2) The screen halves **per unit** and the shop pays **per stack**, 
 the displayed sell total exceeds the coins received by `⌊qty/2⌋` (`SHOP-TRAY-027`) — the same delta
 as splitting the stack. A consumer that makes them agree has removed a visible engine behaviour.
 
+### A held item released over the character panel
+
+The held object `session+0x3cc` carries two separate tags. Its origin code `session+0x3d4` and index
+`session+0x3d0` are written by the pick-up beside the slot; the origin code is the source
+container's `vt+0xa8`: `1` equipment, `2` backpack, `4` tray, shelf index + 5 for a shelf
+(`SHOP-096`). The element's own `+0x18` is a stamp written when it enters a container: shelf index
++ 5 for a shelf element, `2` for a backpack element, `2` or `5` for a tray element by flag bit
+0x80 at contents load (a tray insert keeps any stamp other than 1), `1` for new party equipment,
+`0` from a constructor, and carried unchanged by the read pick-up functions (`SHOP-097`). The
+stamp and the origin code agree for a shelf or backpack object and differ for a tray object.
+
+The panel's button-up slot routes by the stamp alone (`SHOP-098`):
+
+```
+stamp 1, 2        equip arm  panel vt+0x7c(slot = item class nibble - 1)
+stamp 5 .. 8      return arm 004a91f5 on the shop view
+any other value   no release arm; replay left it held (Medium)
+every path        returned 1 in replay (Medium)
+```
+
+The return arm routes by the origin code, not the stamp (`SHOP-099`): code 1 calls the equip arm
+with the origin slot, 2, 4 and 5..8 call the origin container's drop slot `vt+0xa4(origin index)`;
+codes 1, 2, 4 and 5..8 set a dirty bit on `shop+0x14c` (0x8 panel, 0x1 backpack, 0x4 tray only when
+`shop+0x84` is 0, 0x2 shelves), and every code clears the cursor slot. The routine's own
+instructions contain no call to the move command; the drop and refresh bodies were not replayed, so
+what a shelf drop does to stock or coins is not stated. A tray object stamped 2 takes the equip arm
+with origin code 4 and issues command `0x22` with source code 4 (acceptance Unknown); one stamped 5
+takes the return arm back to the tray.
+
+For the shop's literal child rectangles, the shop view hands a release to the panel only when no
+capture child is set and the point is in `(480,238)-(640,480)`; the six children are tested in order, the first containing the point
+receives the message and the traversal stops. Focus does not affect a button-up (`SHOP-100`).
+
+The equip arm (`SHOP-101`) rejects and drops the object through the session backpack grid unless
+the panel host flag `+0x140` is 1, the member belongs to the host player, the usability test
+passes, a member-state test passes for the first two slots, and an item attribute `0x2a` test passes.
+On success it stores the element in the member slot, issues command `0x22` with the origin code and
+index as source and container `1` position `slot+1` as destination, recomposes the figure and posts
+`0x46d`. A stackable element equips one unit and returns the rest.
+
 ### Duplicates
 
 Two items are "the same thing" iff `FUN_00508671` says so: equal item code, then **both** stackable →
