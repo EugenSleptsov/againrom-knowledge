@@ -1,5 +1,12 @@
 # Overturn history
 
+## Nonlinear item-price helper arguments
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `SHOP-EFFPRICE-066` (both nonlinear formulas only) | Verbatim: `trunc((pow(N/70,1.5)+1)*N*50)` and `trunc(10*S*pow(log_1.2(p/30+1),2))` | High | [EXP-0425](../experiments/EXP-0425-staff-price/), SHOP-102, SHOP-103 | The reached helper loads its second stack double, then its first; FYL2X and the exponential helper form first^second. Non-cast price is `trunc((1.5^(N/70)+1)*N*50)`; cast price is `trunc(10*S*2^log_1.2(1+p/30))`. Aggregation, retained-cast additivity, upper clamp and subsequent budget reads stand. Native x87 and merchant presentation remain Unknown. | **REFUTED** |
+| `SHOP-ROUND-017` (non-cast operand order and complete site-count clauses only) | Verbatim: `pow(n/70.0, 1.5)` and "Four sites, no more" | High / Medium | [EXP-0425](../experiments/EXP-0425-staff-price/), SHOP-102 | Non-cast price uses first argument 1.5 and second n/70. The cast-price body reaches another truncating conversion at 00503b1e, outside the former named count. The original conversion rule, base half-up rounding and sell-stack rounding stand. This correction makes no image-wide site count. | **REFUTED** |
+
 ## Seed-cell substitute boundary
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

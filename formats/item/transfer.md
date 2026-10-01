@@ -4,9 +4,9 @@
 
 ## Move command `0x22`
 
-One command, five fields (`FUN_0041c98f`, `SHOP-TRAY-025`): `cmd+0x0c` source code,
+One command, five fields (`FUN_0041c98f`, partially retracted `SHOP-TRAY-025`): `cmd+0x0c` source code,
 `cmd+0x0e` source index, `cmd+0x0d` destination code, `cmd+0x10` destination position,
-`cmd+0x12` quantity.
+`cmd+0x12` quantity. The command layout stands; the universal take/split clause is withdrawn.
 
 | Code | Source | Destination |
 |------|--------|-------------|

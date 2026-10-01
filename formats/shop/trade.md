@@ -45,8 +45,10 @@ two customers at one shop pay the same (`SHOP-PRICE-011`).
 
 ### Where the price comes from, and every rounding
 
-`__ftol` (`0x0055458c`) rounds **toward zero**. Four rounding sites exist and no more
-(`SHOP-ROUND-017`):
+`__ftol` (`0x0055458c`) rounds **toward zero**. The named base, non-cast,
+cast and sell paths have these rounding boundaries. The former complete
+site-count clause of SHOP-ROUND-017 is retracted (`SHOP-102`,
+`SHOP-103`, `SHOP-ROUND-017`):
 
 ```
 Armor  FUN_0050c740 |
@@ -54,12 +56,31 @@ Shield FUN_0050d0ce  >  item+0x1c = ftol(base * material.+0x30 * tier.+0x30 + 0.
 Weapon FUN_0050dc4e |    base     = param slot 2 of the item's own Data.bin entry
                          material = Materials[item+0x46] (0x609b18), tier = [item+0x45] (0x609b2c)
 
-enchantment addend  FUN_00502a10(n) = ftol((pow(n/70.0, 1.5) + 1.0) * n * 50.0)      ; TRUNCATES
+enchantment addend  FUN_00502a10(n) = ftol((1.5^(n/70.0) + 1.0) * n * 50.0)          ; TRUNCATES
                     item+0x1c += that, then clamp to 9 999 999
+cast addend         FUN_00503a81   = ftol(10*S*2^log_1.2(1+power/30))               ; TRUNCATES
 
 sell payout         FUN_00506893 = ftol(0.5 * (qty * price) + 0.5)                    ; half up
 buy                 FUN_005069d0 — integer IMUL only, no floating point at all
 ```
+
+Weapon snapshots write stored `Item+0x1c` as dword tag 1. The selected quote
+accessor reads tag 1. For quantity 1 and stored price `1 <= P <= 9,999,999`, the
+selected quote and commit bodies calculate buy `P` and sell `ceil(P/2)`.
+Neither commit body has a staff-specific price branch. The wire-record to
+client-object ingestion and native displayed quote remain Unknown. The
+odd-price quantity-2 controls retain the per-unit display versus per-stack
+payout difference described above. Arbitrary loaded prices and overflowing
+intermediates are outside this agreement claim (`SHOP-104`).
+
+These consumers use the stored price. The named Token LOAD path restores it
+from the archived dword, and the direct Item/Weapon archive bodies do not
+reconcile it with the loaded effects. The reached Weapon price method
+recomputes unconditionally when called; text effect attachment explicitly
+calls it. The named paths establish no price-valid flag. A serialized price
+can remain authoritative at the direct snapshot/merchant consumers even
+when fresh recalculation would differ. Transitive archive callbacks and
+post-load gameplay remain Unknown (`SHOP-105`).
 
 ### Which shelf an item returns to
 
@@ -112,7 +133,8 @@ The shelf grid carries two 72x32 arrow rects, `(46,0,118,32)` and `(46,271,118,3
 scrolling by one row of two cells (`SHOP-SCREEN-033`). The four shelves are chosen by clicking the
 room picture. **The merchant panel holds two four-rect arrays and they are different**: the hit
 loop reads `panel+0x60 + 0x10*i` and the draw loop reads `panel+0xa0 + 0x10*i`, and the art loader
-names the folder as `4 - i` (`SHOP-SHELF-047`, correcting `SHOP-SCREEN-034`):
+names the folder as `4 - i` (`SHOP-SHELF-047`, correcting partially retracted `SHOP-SCREEN-034`;
+its loop bound and rect stride stand):
 
 ```
 i   hit rect                draw rect               size     folder
@@ -124,7 +146,7 @@ i   hit rect                draw rect               size     folder
 
 Each draw rect is exactly the size of its own eleven loaded frame files. Opening a shelf resets the rack
 to its first item and stores the shelf index in `view+0x132`, which is `0x64` while none is open
-(`SHOP-SCREEN-034`).
+(partially retracted `SHOP-SCREEN-034`; its scroll reset, shelf-index store and initial value stand).
 
 The merchant himself is drawn at `(277,112)`, 76x176, from
 `movies\shopanim\Pose2-3\1.bmp` — two immediate offsets
@@ -251,7 +273,9 @@ view+0x14c   |= 9                       invalidate
 ```
 
 So one step changes the figure and the strip together, and **the strip at `(0,390,480,480)` is the
-shown member's own container rather than a party-wide backpack** (`SHOP-PICKER-043`).
+shown member's own container rather than a party-wide backpack** (partially retracted
+`SHOP-PICKER-043`; rectangles, messages and rebinding mechanics stand, while the sound-id clause
+is withdrawn).
 
 **The table is one strip of five places, shared by both sides of the deal.** It does not scroll;
 its display-list add refuses to append a sixth element; and the server-side container
@@ -269,7 +293,8 @@ codes in `4..8`. The shelf helper `FUN_00506552` retains its published split rul
 Otherwise `0050ec52` branches to whole removal at `0050ec86`, bypassing the split virtual
 and returning the same Item pointer; count one/request one follows that whole-item branch.
 This correction does not remeasure the shelf helper or city-sale lifecycle. The destination-4
-arm stamps `item+0x14 = Player` (`SHOP-TRAY-025`).
+arm stamps `item+0x14 = Player` (partially retracted `SHOP-TRAY-025`; command layout,
+shelf-specific split and ownership stamp stand, while its universal-split clause is withdrawn).
 
 The screen keeps three running numbers over the table (`FUN_004a95ec`) and gates three commands on
 them (`SHOP-TRAY-026`):
@@ -301,4 +326,6 @@ The 100/100/20/`rand(1..8)` random draws use plain `CObArray::Add`, so equal dra
 The six literal Potions and items *returned* to a shelf instead use the merging insert
 `FUN_005062e8`; the family's other merge routine, `FUN_00506434`, has 0 callers. A fresh shelf can
 therefore hold duplicate random draws as separate objects — 200 draws from at most 367 admitted
-triples — while literal-Potion additions and returned equal items merge (`SHOP-DUP-028`).
+triples — while literal-Potion additions and returned equal items merge (partially retracted
+`SHOP-DUP-028`; random append, return-path merge and caller counts stand, while universal
+enchantment separation is withdrawn).

@@ -246,7 +246,9 @@ triples, values `[0 … 768 000]`; six entries are masked out at every tier (`Ba
 `Sonic Beam`, `Flame Thrower`, `Boulder Thrower`, `Plasma Sword`). Admitted per campaign
 ceiling: `0 → 4`, `1000 → 142`, `3000 → 172`, `7000 → 214`, `10 000 → 236`, `30 000 → 286`,
 `70 000 → 318`, `100 000 → 330`, `300 000 → 354`, `700 000 → 365`, **`≥ 1 000 000 → 367`** —
-i.e. the ceiling stops discriminating from `Mission120` on (`SHOP-MISSION-020`). **The `0 -> 4`
+i.e. the ceiling stops discriminating from `Mission120` on (`SHOP-MISSION-020`, partially retracted).
+The equipment-window census stands; its consumable stack law and ceiling-0 campaign picture are
+withdrawn. **The `0 -> 4`
 row is arithmetic about a state no player reaches** (`SHOP-TOWN-023`): the campaign never opens
 the town while the ceiling is 0, and until the first homecoming the static town shop has been
 neither capped nor generated, so it is empty rather than four-item.
@@ -318,10 +320,27 @@ weapon triples take the forced-cast arm with
 `B=min(2*ceiling-currentPrice,currentPrice*100)` (`SHOP-EFFCAST-065`).
 
 For summed non-cast points `N`, the price addition is
-`trunc((pow(N/70,1.5)+1)*N*50)`. Each retained cast adds
-`trunc(10*S*pow(log base 1.2(power/30+1),2))`. After every append the stored price is clamped to
+`trunc((1.5^(N/70)+1)*N*50)`. Each retained cast adds
+`trunc(10*S*2^log_1.2(1+power/30))`. The nonlinear helper receives the
+constant base first and the computed exponent second. After every append the stored price is clamped to
 9,999,999, and the next call recalculates `2*ceiling-currentStoredPrice`. The final ordinary path
-debits MagCap by `N` (`SHOP-EFFPRICE-066`, `SHOP-EFFCAP-069`).
+debits MagCap by `N` (`SHOP-102`, `SHOP-EFFPRICE-066`, `SHOP-EFFCAP-069`). The former nonlinear
+formulas in `SHOP-EFFPRICE-066` are partially retracted; aggregation, retained-cast additivity,
+upper clamp and subsequent budget reads stand.
+
+For a text-authored cast, the suffix's leading plus/digit run supplies a
+decimal i32 that narrows to the power word, then pricing sign-extends it.
+Valid powers 0..100 are preserved; missing suffix yields zero. This parser
+has no 1..100 clamp. The generator's random power bound above is a separate
+route. Malformed conversion and out-of-i32 input remain Unknown (`SHOP-102`).
+
+The installed Staff and Shaman Staff masks admit ten tier/material triples.
+Recomputation rounds the base before effects, adds each cast integer and one
+aggregate non-cast addition, then applies the upper clamp. Common Wood Staff
+has a pool admission value of 166 and an effect-free stored base of 167;
+the admission calculation omits the base round-up term. A particular price
+window can exclude a mask-admitted variant. Exact native x87 results remain
+Unknown (`SHOP-103`).
 
 One effect is required. The second gate is `rand(0..100)<50`, exactly `50/101`; the third is an
 independent `rand(0..100)<25`, exactly `25/101`, and is drawn even when the second gate is false

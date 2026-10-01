@@ -39,7 +39,7 @@ Only the fields this specification pins. `+0x00..+0x3b` is the `Token` base, who
 |-----|------|---------|
 | +0x08 | u32 | flag word; ORed together when two stacks merge |
 | +0x0c | u8 | index of this item's row in its class's `Data.bin` collection |
-| +0x14 | ptr | owning `Player` — stamped by the shop tray's destination-4 arm (`SHOP-TRAY-025`) |
+| +0x14 | ptr | owning `Player` — stamped by the shop tray's destination-4 arm (`SHOP-TRAY-025`, partially retracted for universal splitting; the ownership stamp stands) |
 | +0x1c | i32 | price (`SHOP-PRICE-011`); the `Token` "value" slot |
 | +0x20 | — | ordered `CObList` of 0x48-byte Effects (`ITEM-EFFOBJ-072`) |
 | +0x3c | ptr | the resolved definition row; re-derived on every load, never stored |
