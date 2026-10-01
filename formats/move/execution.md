@@ -2,6 +2,23 @@
 
 [Reference](format.md)
 
+## Seed endpoint and immediate caller
+
+The selected centred zero-radius FUN_00548f70 static-search tail uses route
+count, not the picker's nonzero answer. An admitted substitute equal to the
+seed and no substitute both yield zero count from an empty input list. The
+caller writes current cell to mover+76, sets+98=1, clears the dynamic list,
+then sets+90=1 and returns on current cell==+76. With nonzero static count,
+it takes node+8 from actor+164, the resolved end; that branch preserves+98.
+The local relation is High; topology replay under declared private services
+is Medium. Native actor/order continuation and notification effects remain
+Unknown. — MOVE-082
+
+A direct centred zero-radius request equal to current cell exits earlier,
+before search and these stores. It preserves prior routes, target/resolved
+fields and+90/+98. This local shortcut does not establish native invocation,
+later order cadence or final actor behaviour. — MOVE-083
+
 ## Coordination between units
 
 The **dynamic block plane is the only channel**, and it carries two things: where units *are* and

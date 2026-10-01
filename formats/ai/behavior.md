@@ -56,13 +56,16 @@ the wait is the walk arm's own periodic dynamic re-search (`FUN_00549a90`),
 which can raise the give-up flag, but only near a route's own end and only
 when its own inner search comes back empty against the goal — whether that
 happens for an isolated occupied-but-open cell is Unknown, not excluded. An
-impassable destination is a different mechanism, not a worse case of the same
-one: the static search's own substitution step tries a labelled cell near the
-goal first, and the member walks to and latches at that substitute; only when
-no such cell exists does the search's own resolved endpoint collapse onto the
-actor's current cell, and only then does the arm's tail treat the very next
-tick as an arrival, against the collapsed cell, not the requested one. —
-AI-335, MOVE-072
+impassable destination reaches the static search's substitution step, which
+tries a labelled cell near the goal. AI-335's universal nonempty-substitute
+and only-picker-miss-collapse clauses are partially retracted. A substitute
+equal to the seed leaves an empty route from an empty input list. The
+selected zero-radius immediate walk caller then takes the same zero-count
+branch as no substitute: resolved=current cell,+90=1,+98=1. A nonempty route
+instead supplies its resolved end. Native later order continuation is
+Unknown; these local flags do not establish next-tick arrival. A requested
+seed can also exit the caller before search and preserve prior fields.
+— AI-335, MOVE-072, MOVE-082, MOVE-083
 
 The **actor state** (`actor+0x50`) is a 27-arm switch. **Its value at construction is `0xb`, guard.**
 The arms a consumer needs:

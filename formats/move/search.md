@@ -112,6 +112,8 @@ The diagonal is 3/2 of the straight step **truncated**, and the cost byte is the
 cell's. There is no heuristic and no distance term in any label.
 
 **Budget** (`MOVE-TERM-003`), with `D = max(|Δx|, |Δy|)`:
+the caller-substitution clause is partially retracted; these budget relations
+stand.
 
 | search | footprint 1 | footprint > 1 |
 |---|---|---|
@@ -203,8 +205,23 @@ Two routes per unit, one per plane:
 | | static (unit-blind) | dynamic (unit-aware) |
 |---|---|---|
 | plane read | `world+0x10000` | `world+0x20000` |
-| tail / head / count | `actor+0x160` / `+0x164` / `+0x168` | `actor+0x17c` / `+0x180` / `+0x184` |
+| first / last / count | `actor+0x160` / `+0x164` / `+0x168` | `actor+0x17c` / `+0x180` / `+0x184` |
 | free list / pool | `actor+0x16c` / `+0x170` | `actor+0x188` / `+0x18c` |
+
+First/last here follow node+0 from the near-seed end to the resolved end.
+Older movement prose calls those ends tail/head. For an initially empty list,
+extraction with endpoint=seed allocates and removes one node, leaving both
+end pointers and count zero. Ordinary one-, two- and three-transition
+controls retain their non-seed cells. Extraction prepends to an existing
+list; it does not clear that list. — MOVE-080
+
+Static search clears its old list before its requested-seed shortcut.
+Dynamic search alone preserves an old list on that shortcut and on a picker
+miss. A nonzero picker answer equal to the seed reaches extraction and can
+leave an empty route. The empty-input premise matters for interpreting
+dynamic count. Private topology replay uses declared actor/heap/ownership
+services; native caller list invariants and picker B remain Unknown.
+— MOVE-081
 
 
 ## Parameters — `data/map.reg` `[Path Finding]`

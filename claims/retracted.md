@@ -1,5 +1,11 @@
 # Overturn history
 
+## Seed-cell substitute boundary
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `AI-335` (nonempty-substitute and only-picker-miss-collapse clauses) | Verbatim: "the static list is non-empty" and "only a picker-A miss (a zero answer) frees the static list and lets `mover+0x76` collapse onto the actor's own current cell" | High / Medium / Unknown | [EXP-0422](../experiments/EXP-0422-seed-route/), MOVE-080, MOVE-081, MOVE-082, MOVE-083 | An admitted substitute equal to the seed is allocated and unlinked by real extraction, leaving zero nodes from empty input. The selected centred zero-radius walk caller uses count and takes the same local resolved-current-cell,+90=1,+98=1 branch as no substitute. A direct requested-seed caller entry exits before search and preserves prior fields. Ordinary non-seed substitution and the previous occupied-goal Unknowns stand. Native order continuation remains Unknown. | **NARROWED** |
+
 ## Dialogue frame order, wrapping markers and pressed shadow
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
