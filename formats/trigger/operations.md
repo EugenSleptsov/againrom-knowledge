@@ -93,7 +93,7 @@ first/second flag and all three store to that one field. So `rec+0x3c` holds a u
 the node declares two `Target_Unit` parameters, which is what the editor's own declaration
 for the opcode does.
 
-### The campaign-reachable closure arms (`TRIG-CLOSURE-037`)
+### The campaign-reachable closure arms (`TRIG-CLOSURE-037`, amended)
 
 The last campaign-reachable helpers are exact enough to implement directly. Parameters below
 are the builder-packed `p` sequence, not the authored `Par` positions.
@@ -151,7 +151,8 @@ Actor attachment accepts `tail[0] != 0 && tail[0] != 26`. It uses `tail[0]` as t
 current cell is the target, selected through the spell table. A separate arrival reader accepts
 `tail[0] == 26` and treats `tail[4:6]` as relocation x/y. The installed nodes write spell IDs 3 and 9, selecting actor-entry
 casting. Entry into either restored cell and completion of its effect remain
-Unknown at runtime. — TRIG-CELLTAIL-035, SAV-CELLLOAD-111
+Unknown at runtime. `TRIG-CELLTAIL-035` is amended: its sole-reader and shipped no-effect clauses are
+retracted. — TRIG-CELLTAIL-035, SAV-CELLLOAD-111
 
 Check 4's shipped selector 6 reads signed current health; check 21 reads signed current building
 health. Their field identities are supplied by `HERO-HEALTH-032`, `ALM-CLS-053` and
@@ -162,7 +163,8 @@ health. Their field identities are supplied by `HERO-HEALTH-032`, `ALM-CLS-053` 
 Every successfully built check is evaluated. Actions and action-6 subcommands
 require a surviving trigger reference to their node ID. Dormant and unreferenced
 arms remain separate from campaign-reachable operations. EN/RU use the same
-operation classes; their authored node counts can differ. — TRIG-CLOSURE-037,
+operation classes; their authored node counts can differ. `TRIG-CLOSURE-037` is amended: `TRIG-TAKEITEM-038`
+supersedes its completeness clause. — TRIG-CLOSURE-037,
 TRIG-INSTCENSUS-046
 
 The **editor's** names for these arms live in `Description Checks.ini` / `Description

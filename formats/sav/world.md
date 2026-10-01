@@ -131,7 +131,8 @@ After Sacks/triggers exist, `0054d4f0 -> 0054d6a0` repairs all ten object dwords
 in every node of that union. A hit replaces the key; zero/miss retains the
 saved word. Other payload bytes remain unchanged. Entry operation/power/source
 feed the temporary unit/cell caster; operation 26 reads relocation coordinates.
-Residue meanings and aliased/computed consumers remain Unknown.
+Residue meanings and aliased/computed consumers remain Unknown. `TRIG-CELLTAIL-035` is amended: its
+sole-reader and shipped no-effect clauses are retracted.
 — SAV-CELLLOAD-111, SAV-CELLLOAD-112,
 SAV-CELLLOAD-113, TRIG-CELLTAIL-035
 

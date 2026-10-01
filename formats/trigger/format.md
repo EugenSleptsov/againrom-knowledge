@@ -5,7 +5,8 @@
 The runtime compiles ALM nodes into checks, actions, trigger conditions and a
 shared register file. Every check is evaluated; an action runs only when a
 surviving trigger names it. The one-second pass, fire-once state and reference
-binder define script progression. — TRIG-COND-003, TRIG-ACT-004,
+binder define script progression (`TRIG-CLOSURE-037` is amended; `TRIG-TAKEITEM-038` supersedes its
+completeness clause). — TRIG-COND-003, TRIG-ACT-004,
 TRIG-CMP-006, TRIG-FIRE-007, TRIG-CLOSURE-037
 
 The reference covers the installed campaign's reachable operation vocabulary.

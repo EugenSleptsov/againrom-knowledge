@@ -140,8 +140,9 @@ defect       so their two messages fire together. The group-5 check node the sec
 ```
 
 Check 6 is the Chebyshev metric of `TRIG-DIST-014` and answers `0xff` when either unit is dead.
-Unit 10001 and 10002 are the first and second hero ordinals (`TRIG-REC-011`); the second exists
-because `[Mission30] AddHero=22` inserts a companion before the mission starts. Unit 56 is a
+Unit 10001 is the primary character and 10002 selects a mage of the other sex by the typeID and class-bit tests
+(`TRIG-HEROTPL-076`); `[Mission30] AddHero=22` inserts such a companion before the mission starts, and whether its
+typeID and class bit satisfy those tests is not established. Unit 56 is a
 placed NPC at cell (65,15).
 
 **Nothing tests the created item.** The vocabulary has check 17, `Item in inventory`, and the

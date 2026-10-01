@@ -75,8 +75,8 @@ variable does not hold 1.
 
 ### The cell record instant 29 reaches
 
-Instant 29's lookup is the same 52-byte dynamic cell record `TRIG-CELLTAIL-035`'s writer
-creates and `SAV-CELLREC-017` serializes.
+Instant 29's lookup is the same 52-byte dynamic cell record `TRIG-CELLTAIL-035`'s writer (amended;
+its sole-reader clause is retracted) creates and `SAV-CELLREC-017` serializes.
 
 ```
 FUN_0054ec40(map, key):                     // key is 16 bits: (y << 8) + x

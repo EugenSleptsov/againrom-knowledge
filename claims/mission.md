@@ -1056,9 +1056,9 @@ prove sign, recipient or that the callee reaches `Player+0x38`.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| MISSION-M30-024 | `30.alm` decodes end to end, byte-identical on both roots, and its win is one distance test with no precondition. | High | ● active | [EXP-0161](../experiments/EXP-0161-mission-30/) |
+| MISSION-M30-024 | `30.alm` decodes end to end, byte-identical on both roots, and its win is one distance test with no precondition. | High | ● active (amended) | [EXP-0161](../experiments/EXP-0161-mission-30/) |
 | MISSION-LOSE-025 | `30.alm` has no script-authored way to lose, and eleven of the 28 campaign maps, the same set on both roots, are in the same position. | High / Medium | ● active | [EXP-0161](../experiments/EXP-0161-mission-30/) |
-| MISSION-CURE-026 | `30.alm` hands the hero a quest item and consumes it at the destination, but nothing in the map ever tests for it. | High / Medium | ● active | [EXP-0161](../experiments/EXP-0161-mission-30/) |
+| MISSION-CURE-026 | `30.alm` hands the hero a quest item and consumes it at the destination, but nothing in the map ever tests for it. | High / Medium | ● active (amended) | [EXP-0161](../experiments/EXP-0161-mission-30/) |
 | MISSION-PAIR-027 | `31.alm` is a standalone side mission attached to mission 30's town phase, not a stage of mission 30, and the `N`/`N+1` pairing does not cover the campaign. | Medium | ● active | [EXP-0161](../experiments/EXP-0161-mission-30/) |
 | MISSION-TYP-028 | `30.alm` is structurally typical of the campaign and exceptional in being unlosable; `MISSION-TYP-010`'s instant-5 map count is 15, not 14. | High / Medium | ● active | [EXP-0161](../experiments/EXP-0161-mission-30/) |
 
@@ -1100,6 +1100,8 @@ roots, every node and every trigger renders against the install's own
 parameter resolves. The same walk reproduces `MISSION-M10-009`'s reading of
 `10.alm` and ten separately published corpus counts before it is pointed at this
 map.
+
+**Amended.** `10001` is the primary character, not a roster position, and an ordinal above it names a role (`TRIG-HEROORD-075`, `TRIG-HEROTPL-076`); the wording "the first hero ordinal" in this card is positional.
 
 ### MISSION-LOSE-025
 
@@ -1157,6 +1159,8 @@ the object is: `ITEM-CODE-029` records the three constructor arguments as
 Unknown, so beyond class 14 index 30 the only evidence for the object's identity
 is the map author's own label text, and `evidence/label-audit.txt` shows author
 label text is unreliable in this corpus.
+
+**Amended.** `10002` is a mage of the sex opposite the primary's, not a second roster position, and `10001` is the primary character (`TRIG-HEROORD-075`, `TRIG-HEROTPL-076`); "the second hero ordinal" and "the first hero" in this card are positional wording.
 
 ### MISSION-PAIR-027
 

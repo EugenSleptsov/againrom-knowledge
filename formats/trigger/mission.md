@@ -9,10 +9,49 @@ fifths of the shipped references:
 
 ```
 value <  10001    a unit id from the map's own type-6 records
-10001..11000      a hero ordinal, resolved against the live player list at run time
-                  (and unconditionally unresolvable when the multiplayer flag is set)
+10001..11000      a hero ordinal, resolved when the script is bound (next section)
+                  (and unresolvable while the world flag at `+0xc` is set: map player capacity above 1)
 value >  11000    an index into a static name table in the executable
 ```
+
+## Hero ordinals
+
+A hero ordinal names a role, not a roster position. With `k = value - 10001`, the resolver returns
+the first **named** actor, scanning the first player's flat actor list and then the actor registry,
+whose typeID test, class bit and face satisfy the predicate of `k`. Health, corpse stage, placement, owner,
+the `Hero` flag, hire or join origin and `AddHero` are not inputs. A set world flag `[0x005cd758]+0xc` (map player
+capacity above 1), a null primary character (`Player+0x34`) and a scan with no match all give 0. — TRIG-HEROORD-075
+
+The typeID test (called sex here) is the actor type in `{0x22, 0x24}`, class is `actor+0x4c & 4`, a bit a positive
+mana column sets, and face is `actor+0x4b & 0x3f`. Whether a shipped companion's typeID and class bit satisfy
+the tests that follow is not established.
+`k = 0` requires the primary character's own three values. `k >= 1` applies the `Flags` tokens of
+registry section `npc(21+k)`:
+
+```
+10001  the primary's own sex, class and face
+10002  npc22  Hero,Mage,!MySex,Start      a mage of the other sex, default face
+10003  npc23  Hero,!Mage,!MySex,Start     a non-mage of the other sex, default face
+10004  npc24  Hero,!MyClass,MySex,Start   the other class, the same sex, default face
+10005  npc25  Hero,Face,!Female,!Mage     a male non-mage whose face is 1
+10006  npc26  Hero,Face,Mage,!Female      a male mage whose face is 4
+```
+
+`Mage`, `Female`, `MySex` and `MyClass` require the property (the last two relative to the
+primary), the `!` forms require its absence, and `Face` requires the template's face. A template
+with no `Face` token requires the actor's face to equal the default face of its own class and sex
+(`Face` of `[MaleFighter]` 5, `[FemaleFighter]` 1, `[MaleMage]` 3, `[FemaleMage]` 1). The tokens
+`Hero`, `Human`, `Me`, `Start` and `Platoon` are never tested here. A token matches as a case-sensitive
+substring of `Flags`. Two ordinals can resolve to one actor. The published node table of the 38 EN maps
+uses 10001 to 10006 and nothing above. — TRIG-HEROTPL-076
+
+The resolution happens while a script is bound, once per node reference: at map load, and again when a
+saved game is restored, after the players and the actor registry are loaded. No check or instant arm
+calls the resolver, and no other routine in the swept image compares against the hero band. — TRIG-HEROBIND-077
+
+No match logs `Can't resolve hero %d.` and the node is not built; the load continues. Values above
+10235 index past the 256-entry template table, and an `npc` section with empty `Flags` has no
+template record; neither is guarded. — TRIG-HEROFAIL-078
 
 ## The drop table — where the player lands
 
