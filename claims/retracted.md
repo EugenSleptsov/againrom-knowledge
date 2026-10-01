@@ -1,5 +1,12 @@
 # Overturn history
 
+## Dialogue backdrop reduced-table arithmetic
+
+| Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |
+|---|---|---|---|---|---|
+| `DLG-DIM-013` (unqualified arithmetic and unchanged-black consequence only) | Verbatim: "to 13/16 brightness" and "65 535 of 65 536 pixels get strictly darker, 1 (black) is unchanged, and none is brightened" | High | [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/), DIALOGUE-055 | Those results describe the full-table RGB565 path. Original reduced-table construction uses low-channel representatives 4, 12, 20 and 28, selected by pixel >> 3. Level 3 maps black to pixel 3. Over 65536 RGB565 values the reduced path gives 65529 lower, 3 equal and 4 higher packed values. The level-3 show call and arguments stand; RGB555 measurements cover its 32768 valid values. | **NARROWED** |
+| `DLG-DIM-013` (categorical non-per-frame and native persistence clauses only) | Verbatim: "not per-frame" and "It survives only because `DLG-STOP-012`'s gate stops everything that would repaint." | High | [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/), DIALOGUE-057 | The selected show performs one direct remap per invocation. Selected advance/close handlers perform no direct remap or saved-surface restore. Transition replay stubs child/parent painters and OS presentation; unchanged private buffers do not establish native output. DLG-STOP-012 suppresses the named idle pacer arm, not every repaint route. Native backdrop retention, painter side effects, event order and cadence remain Unknown. | **NARROWED** |
+
 ## Missing first dialogue part and continuation
 
 | Claim | Former wording | Confidence when believed | Evidence | Correction | Kind |

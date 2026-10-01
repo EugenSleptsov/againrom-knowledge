@@ -66,6 +66,40 @@ other value loads the map named by the CString at `campaign+0x6b4`.
 
 ## Panel state
 
+### Backdrop show, clipping and close
+
+The reached mission-event and five town entry bodies call the same dialogue
+builder. Its tail calls `00476810`, which sets state mask 0x8 for the ordinary
+dialogue pointer, attaches the panel and invokes slots `+0x78` and `+0x80`.
+The first part's return does not select the backdrop operation. Show then
+requests one in-place level-3 lookup remap, unlocks, presents and calls the
+panel's paint slot. Town and mission state do not select separate arithmetic.
+— DIALOGUE-054
+
+The requested rectangle is `[0, screenRight) x [0, screenBottom)`, intersected
+with the incoming clip. The pixel address is `surface + y * bytePitch + 2*x`.
+Neither the request nor the remap establishes that the native clip covers the
+whole screen. — DIALOGUE-056
+
+For full-table RGB565 and RGB555, each packed channel becomes
+`floor(channel * 13 / 16)`. The reduced path indexes by `pixel >> 3`; for these
+layouts it replaces the blue channel with `(blue & ~7) + 4` before that law.
+Black therefore maps to pixel 3 in the reduced path. RGB555's bit 15 lies
+outside the tested valid population. DLG-DIM-013's unqualified arithmetic and
+unchanged-black consequence are partially retracted. — DIALOGUE-055
+
+A second explicit show invocation repeats the remap even if state mask 0x8 is
+already set. Command `0x46f` repaints children on continuation or reaches the
+base close-message path. The default close clears mask 0x8 and requests parent
+paint, except when the remaining state is 1 and `map+0x80` is zero. These
+selected handlers have no direct backdrop remap or saved-surface restore.
+— DIALOGUE-057
+
+Native pixels, configured table mode, incoming clip, repaint completion and
+presentation cadence remain Unknown. Child and parent painters were stubbed
+in transition replay; their native output is not established by that replay.
+— DIALOGUE-054, DIALOGUE-055, DIALOGUE-056, DIALOGUE-057
+
 The failure panel is **not** the following dialogue class. Its constructor `00446de2` installs
 vtable `00598b78`; slot `+0x48` is `00447063`, forwarding the base result/close mechanism.
 It offers Exit to Main Menu (`0x445`) and Load Game (`0x446`). Base close posts `0x44c`; the

@@ -425,7 +425,7 @@ output rather than `open: … bad registry offset`.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | DLG-STOP-012 | The world stops while a dialogue panel is displayed, and one instruction in the whole image decides it. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
-| DLG-DIM-013 | When a panel is shown the whole screen behind it is darkened once, destructively, to 13/16 brightness, through the shroud table `TERR-FOG-084` pinned. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
+| DLG-DIM-013 | Panel show requests one destructive level-3 shroud remap of the screen rectangle; per-source-channel 13/16 arithmetic and strict darkening apply to the full table path, not the reduced path. | High | ● active (amended, partially retracted) | [EXP-0108](../experiments/EXP-0108-panel-modality/), [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/) |
 | DLG-CLOCK-014 | The time a dialogue panel stops is discarded, not caught up, and the close's guard names the only state the engine expects the panel to interrupt. | High | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-DRAW-015 | Nothing else is drawn differently while a panel is up: seven instructions in six routines read the panel bit, and none of them is in a draw path. | High / Medium | ● active (amended) | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
 | DLG-ENTRY-016 | All six entry points and both mission-outcome panels take the identical mechanism; they differ in the state each runs from, plus one close arm. | High / Medium | ● active | [EXP-0108](../experiments/EXP-0108-panel-modality/) |
@@ -500,9 +500,10 @@ rival.
   (`tools/panelmodal -mode shade`): 65 535 of 65 536 pixels get strictly
   darker, 1 (black) is unchanged, and none is brightened. Mean channel level
   0.5000 → 0.3937 in RGB565 and → 0.3911 in RGB555.
-- It is not a render state and not per-frame: one call, straight into the
-  locked framebuffer, before the panel's own `vt+0x34` draw. It survives only
-  because `DLG-STOP-012`'s gate stops everything that would repaint.
+  - The selected show body performs one direct remap into the locked
+    framebuffer before the panel's own `vt+0x34` draw. This establishes one
+    direct call per show invocation, not native backdrop persistence or
+    cadence. Painter side effects and other native repaint routes are Unknown.
 - `callto:44fad0` = 11 hits / 11 owners / 0 in orphan. The other ten are in
   the `0x43xxxx`, `0x459xxx`, `0x4abxxx` and `0x4bexxx`–`0x4c3xxx` control
   families. Five also push level 3 (`004beea2`, `004c0a48`, `004c0ffb`,
@@ -521,6 +522,20 @@ nothing smaller was seen. The numeric result is no stronger than
 law. It first reproduces that experiment's own two anchors (L = 16 all-zero,
 L = 8 `== (px>>1) & mask`, 65536/65536 in both layouts), so the law applied is
 visibly the one pinned.
+
+**Amended.** DIALOGUE-055 narrows the arithmetic and strict-darkening clauses
+to the full table path. Original reduced-table construction samples the low
+channel at 4, 12, 20 and 28 before the gain; input black maps to pixel 3 at
+level 3. DIALOGUE-056 distinguishes the requested screen rectangle from the
+incoming clip. DIALOGUE-057 distinguishes one remap per show invocation from
+  idempotence: a second explicit show compounds it. The prior formula-only
+  probe did not execute either original routine. The call and arguments stand;
+  the universal arithmetic and unchanged-black consequence are partially
+  retracted in `retracted.md`. DIALOGUE-057 also narrows the former non-per-frame
+  and persistence wording to the direct selected handlers. DLG-STOP-012's idle
+  pacer gate does not establish painter outputs or every repaint route.
+  Native backdrop retention, event order and cadence remain Unknown; the
+  former categorical persistence clause is partially retracted there.
 
 ### DLG-CLOCK-014
 
@@ -1643,6 +1658,113 @@ the panel holds the capture (the panel's mouse slots were not read); senders of
 **Amended.** DIALOGUE-044 and DIALOGUE-045 establish the named captured mouse
 slots and outside-button release path. Native event ordering remains Unknown.
 
+
+## Original backdrop operation and transitions
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| DIALOGUE-054 | The reached mission and five town dialogue entry bodies share show 00476810, which requests one level-3 in-place backdrop remap after setup, regardless of first-part return or existing dialogue state bit. | High | ✔ promoted | [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/) |
+| DIALOGUE-055 | Original level-3 full-table RGB565/RGB555 replay applies floor(channel*13/16); reduced lookup samples blue at 4,12,20,28 first, so black maps to pixel 3 rather than remaining black. | High | ✔ promoted | [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/) |
+| DIALOGUE-056 | Backdrop remap 0044fad0 intersects its half-open requested rectangle with the incoming signed clip and addresses 16-bit pixels by y*bytePitch+2*x; show requests the screen right/bottom extent. | High | ✔ promoted | [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/) |
+| DIALOGUE-057 | The selected dialogue advance and default-close handlers repaint children or request parent paint; neither directly repeats the backdrop remap nor restores a saved surface, while a second explicit show compounds the remap. | High | ✔ promoted | [EXP-0418](../experiments/EXP-0418-dialogue-backdrop/) |
+
+### DIALOGUE-054
+
+Seven builder calls in six reached bodies share `00421a3f -> 00476810`:
+mission `004739ac`; mercenary `0047e51a`, `004a90fe`; inn `00481060`,
+`004810a5`; shop `004b4d2a`; training `004b8383`. This is the selected
+population, not a whole-image reachability claim.
+
+Show stores state at `00476837` after OR 8 for an ordinary pointer. Equality
+with `campaign+0x3a8` selects OR 0x8000 instead; that special pointer is not
+the dialogue route. It attaches, calls slots `+0x78` and `+0x80`, locks and
+calls `0044fad0(0,0,screenRight,screenBottom,3)` at `00476869`. Unlock and
+presentation precede slot `+0x34` paint. Original table `0059b798` supplies
+the slots; `+0x80` calls the first-part routine and capture setup, with no
+return test in show before the remap.
+
+**Confidence.** High for this source sequence. Fresh repaired Ghidra 12.1.2
+bytes match the owned image's initialized .text and .rdata sections. Direct
+transfers and instruction starts are bound to installed bytes. Original show
+replay with private surfaces distinguishes states 0,1,8,9 and parser returns
+0/1; no branch suppresses its remap. Setup, OS and paint calls are explicit
+stubs. Flag state alone therefore does not select a separate shading mode.
+
+**Unknown.** Native reachability beyond the selected bodies, actual first
+part contents, OS lock validity and presented output. EN/RU code identity is
+one observation, not two independent confirmations.
+
+### DIALOGUE-055
+
+The instrument executes original `0044ba10` and `0044fad0`, with only memory
+information and allocation stubbed for table construction. Returned memory
+information field `+8` at 23999999 selects reduced stride 8192; 24000000
+selects full stride 65536 (`0044ba2c..0044ba78`). The later pixel split reads
+`005eb570` and chooses `pixel >> 3` or `pixel`.
+
+Full RGB565 has 65536 valid inputs; RGB555 has 32768 with bit 15 clear. Level
+3 replay agrees with per-channel truncation on every full-table input. The
+reduced builder starts the low channel at 4 and increments by 8
+(`0044baac..0044baba`, `0044bc5d`); lookup groups eight source values. It
+differs from exact gain on the source channels at 57344/65536 RGB565 and
+28672/32768 RGB555 values. In either reduced layout inputs 0..3 become 3,
+3 stays 3, and 4..7 also become 3. The pixel table gives the full counts.
+
+**Confidence.** High for these packed layouts and parameterized modes. The
+entire valid input populations execute original loops; a full-table-only
+model fails the reduced-mode controls. Truncation, nearest rounding, a 13/17
+gain and multiplying the packed word are distinct models. Channel 7 maps to
+5, channel 31 to 25; black maps to 0 in full mode and 3 in reduced mode.
+
+**Unknown.** The native memory-information return and active mode, other
+channel layouts, RGB555 inputs with bit 15 set, malformed geometries and
+perceived brightness after display conversion. Packed-value comparisons do
+not measure display luminance. DLG-DIM-013's universal arithmetic is narrowed.
+
+### DIALOGUE-056
+
+Show reads right/bottom from `005ea208/005ea20c` and passes left/top zero.
+`0044fad0` clamps x to `005e4408/005e4410`. The y loop starts at requested
+top, skips rows below `005e440c` or at/above `005e4414`, and stops before
+requested bottom. Nonpositive x width or reversed/empty y produces no write.
+Rows advance by `005e43a8` bytes; pixels use two bytes.
+
+**Confidence.** High for the named instruction body. Twenty-four original
+replays cover six rectangle controls in four layout/mode pairs. A 9x6
+surface has eight padding bytes per row and a 64-byte trailing guard. Full,
+interior, crossing, empty-x, reversed-y and outside requests all match the
+half-open intersection. Every untouched pixel, padding byte and guard byte
+is compared. A 9x6 show replay with incoming clip `(2,1)-(7,5)` changes
+exactly 20 pixels despite requesting `(0,0)-(9,6)`. This excludes panel-only,
+inclusive-end and width-based pitch alternatives in the tested geometry.
+
+**Unknown.** Incoming clips on native town/mission routes and surface-loss
+behavior. The primitive does not reset its clip. No claim covers arbitrary
+coordinates, pitches or unsupported pixel indices.
+
+### DIALOGUE-057
+
+Original show replay calls the remap a second time for an explicit second
+show while mask 0x8 is set. This is a control, not evidence that normal page
+advance invokes show twice. At command `0x46f`, `004c5797` calls `004c5886`.
+Nonzero selects paints for children 10 and 12; zero reaches `004c52f3`, whose
+presence-flag arm invokes slot `+0x84` and posts `0x44c`.
+
+Default close `004761ec..00476292` clears mask 0x8, conditionally resets the
+clock, destroys the panel, sends `0x408` and calls parent slot `+0x34` unless
+remaining state is 1 with `map+0x80 == 0`. No direct remap or saved-surface
+restore occurs in these selected bodies. The replay covers both parser
+branches and both parent-paint conditions with explicit painter, parser,
+message, clock and destructor stubs.
+
+**Confidence.** High for the selected source handlers and replay controls.
+The no-direct-remap clause is confined to their complete listings. It is not
+a transitive or image-wide absence claim. The source and replay exclude
+automatic remapping inside this command branch and idempotence inside show.
+
+**Unknown.** Child/parent painter side effects beyond these handlers, native
+event ordering, first visible frame, persistence between frames and final
+closed-screen pixels. Repaint dispatch does not prove repaint completion.
 
 ## Open questions
 
