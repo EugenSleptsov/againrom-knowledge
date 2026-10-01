@@ -365,6 +365,34 @@ retracted; the counts stand)
 Two different `npc` tests decide the face: the constructor's `Find("npc")` over the **whole
 lowercased file** picks the layout once, and the per-part `Find("npc=")` refreshes the portrait.
 
+### Resource bytes delivered to the text control
+
+The selected accepted-part parser starts the body after the first LF
+following the accepted header. It scans forward to the next `<` or NUL.
+At `<` it scans backward until CR and uses that CR as the exclusive end;
+at payload end it uses NUL. The backward scan has no body-start bound.
+The reached pager saves that end byte, writes NUL there, passes the body
+pointer to the text control and restores the byte. The text control passes
+the same raw bytes to wrapping. Leading, trailing and interior bytes are
+not trimmed at this resource boundary. — DIALOGUE-068
+
+Paragraph splitting and wrapping are later operations. CRLF pieces and
+their remaining suffix receive TrimLeft. Each wrapping piece receives
+TrimLeft then TrimRight before fitting; later slices receive TrimLeft.
+Original trim instructions preserve interior bytes in the finite controls
+under supplied SPACE/TAB/CR/LF/VT/FF classification and single-byte stepping.
+Native locale, multibyte stepping and copy-on-write behavior remain Unknown.
+— DIALOGUE-069
+
+The explicitly supplied installed-body projection truncates payload at NUL,
+selects every part-bearing tag without testing acceptance and rejects missing
+header LF or a missing CR within the body before a next tag. It matches
+the original accepted-tail intervals and original-trim line arrays on all
+688 EN and 732 RU candidate bodies under declared services. Rejected or
+unselected tags and malformed backward ranges distinguish that projection
+from a reached original caller. Native accepted-tag population and string
+configuration remain Unknown. — DIALOGUE-070, DIALOGUE-062 (amended)
+
 ### The eight sex-and-class conditionals
 
 Each **abandons the tag and resumes the scan** when the tag and the bit disagree; the scan is
@@ -420,6 +448,8 @@ string/array services process the selected five families' 688 EN blocks into
 2542 lines and 732 RU blocks into 2650 lines. Each maximum is 7. The installed
 candidate population includes conditional parts; it does not establish native
 reachability or a universal maximum. — DIALOGUE-062
+The extraction and low-level string services are explicitly supplied;
+their bounded original accepted-tail and trim comparison is DIALOGUE-070.
 
 The control has a scroll setter (`vt+0x80`, notify `0x46d`), and this window builds it no
 scrollbar and answers no `0x46d`. The control's own key handler moves the top line on PageUp,

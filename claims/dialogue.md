@@ -2022,7 +2022,7 @@ missing/rejected-part mechanism separately.
 |---|---|---|---|---|
 | DIALOGUE-060 | Selected original wrapping uses strict fitting, keeps an over-wide first word whole and splits paragraphs on CRLF; exact-width and bare-CR controls can repeat an unchanged remainder under declared services. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
 | DIALOGUE-061 | Selected justification stores the gap and accumulator as doubles, adds integer width to the accumulator then gap before each spill, and truncates draw x with a restored control word; native FPU state is Unknown. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
-| DIALOGUE-062 | Over 688 EN and 732 RU selected blocks, original-hooked wrapping yields at most 7 lines; nearest-even PC53/PC64 spilled models agree with per-add double at 20965 justified word coordinates. | Medium | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
+| DIALOGUE-062 | Over 688 EN and 732 RU selected blocks, original-hooked wrapping yields at most 7 lines; nearest-even PC53/PC64 spilled models agree with per-add double at 20965 justified word coordinates. | Medium | ✔ promoted (amended) | [EXP-0419](../experiments/EXP-0419-dialogue-render/), [EXP-0421](../experiments/EXP-0421-dialogue-input/) |
 | DIALOGUE-063 | At each supplied panel geometry, the selected painter requests 9 shadows before 24 body sprites; forward mode 6 remaps destination pixels through its mask, without adding a sprite-record origin. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
 | DIALOGUE-064 | The selected portrait suffix places its 72x92 default or 72x96 metadata window at (8,7); original copy controls descend physical source rows, copying nonzero words unchanged and skipping zero on the keyed path. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
 | DIALOGUE-065 | With supplied RGB565/RGB555 and cursor state, the selected OK painter keeps anchor (316,308), selects hover ink independently, and swaps bevel colors and shadow 2 to 4 only when pressed and inside. | High | ✔ promoted | [EXP-0419](../experiments/EXP-0419-dialogue-render/) |
@@ -2089,9 +2089,13 @@ integer overflow, visual word coordinates and native invocation cadence.
 ### DIALOGUE-062
 
 The selected MAIN.RES families are mission event stems, inn NPC, mercenary
-NPC, shop npc31m and training npc34m. Each tag containing part= contributes
-its body through the next tag or payload end. Conditional bodies are included
-as installed candidates. Font-1 advances come from each original graphics
+NPC, shop npc31m and training npc34m. The supplied extractor truncates at
+the first NUL, selects each tag containing part= without an acceptance test,
+starts after its following LF, and ends before the last CR preceding the next
+tag or at payload end. Missing LF or a bounded CR raises an instrument error.
+Conditional bodies are included as installed candidates. CString, array and
+six-byte ASCII trimming services are supplied; the native parser/show/page
+caller is not executed by this projection. Font-1 advances come from each original graphics
 archive; first-record geometry is 16x15 and the advance table has 224 entries.
 The font conversion selector is supplied as 0 for EN and 1 for RU, and the
 font-height service is supplied as 15. Native configuration is not observed.
@@ -2114,6 +2118,12 @@ native precision or prove the population's conditional reachability.
 
 **Unknown.** Loose overrides, other installs, native reachability, native FPU
 state and visible line/word positions. No universal maximum is claimed.
+
+**Amended.** DIALOGUE-070 binds the candidate-body extraction to the original
+accepted tail under explicit acceptance and string services. DIALOGUE-068
+distinguishes the reached original caller from that projection. The former
+"through the next tag" range shorthand is narrowed; all counts and arithmetic
+model results stand.
 
 ### DIALOGUE-063
 
@@ -2210,3 +2220,115 @@ cover unchanged pixels as well as the bevel.
 **Unknown.** Native format, hover/capture delivery, label glyph pixels, parent
 frame repaint, disabled-remap pixels and cadence. DIALOGUE-055 separately
 defines full/reduced level-3 arithmetic; this painter only captures its request.
+
+## Resource input boundary and supplied projection
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| DIALOGUE-068 | The selected accepted-part parser starts after header LF and ends at NUL or before the CR found backward from the next tag; the reached pager temporarily terminates that range and passes its bytes unchanged to the text and wrap entries. | High | ✔ promoted | [EXP-0421](../experiments/EXP-0421-dialogue-input/) |
+| DIALOGUE-069 | Selected paragraph and wrap instructions trim boundary whitespace after resource delivery; original TrimLeft/TrimRight agree with the supplied six-byte ASCII services in 30 finite controls and preserve interior control bytes. | High | ✔ promoted | [EXP-0421](../experiments/EXP-0421-dialogue-input/) |
+| DIALOGUE-070 | The explicitly supplied DIALOGUE-062 projection matches original accepted-tail ranges and original-trim wrapped lines on all 688 EN and 732 RU candidate bodies; native tag acceptance, locale and invocation remain unobserved. | Medium | ✔ promoted | [EXP-0421](../experiments/EXP-0421-dialogue-input/) |
+
+### DIALOGUE-068
+
+The selected parser is `004c607a`, reached from pager `004c5886` by show
+`004c584a`. Accepted header LF scanning is `004c6952..004c699c`.
+The body start is the byte after that LF. The forward body scan stops at
+`<` or NUL. At `<`, `004c69d8..004c69ee` scans backward until CR, without
+a body-start test. The end pointer names that CR; at payload end it names
+the terminating NUL. This is a pointer interval, not whitespace trimming.
+
+The pager saves the end byte, writes NUL there, passes the start pointer
+to text setter `004be229` at `004c59ca`, then restores the byte at
+`004c59d5`. The original text setter passes that same argument to wrapper
+entry `00456ab0` at `004be244`. The tag's lowercasing and CString services
+do not copy or transform this body on the selected path.
+
+Thirty-one finite controls enter full original show/parser/pager bodies with
+declared string, registry and actor services. Twenty-nine reach both text
+and wrap entries, preserve leading, trailing and interior supplied bytes,
+and restore the payload. Missing header LF reaches no text boundary. With
+no CR anywhere before the next tag, the instrument stops the backward scan
+when it leaves the supplied payload. Two malformed controls find the header
+CR before body start and pass data through the following tag; the bounded
+Python extraction rejects them. These are private controls, not native hangs.
+
+**Confidence.** High for these named pointer stores, transfers and finite
+controls. Complete selected source spans are decoded from the lawful image;
+internal branch targets bind to instruction starts. Header LF-only,
+payload-end, adjacent-tag, rejected-tag and whitespace controls discriminate
+delimiter, acceptance and preprocessing models. EN/RU images are identical
+and count as one code population.
+
+**Unknown.** Native acceptance and loose-resource loading, earlier caller
+state, allocation failures, arbitrary malformed buffers, other callers and
+visible pixels. A native memory/argument capture at these entries would
+test the supplied-state premises without inferring them from this replay.
+
+### DIALOGUE-069
+
+Paragraph splitter `00456900` copies its input and splits CRLF pieces.
+It calls TrimLeft on a CRLF piece and the remaining suffix at `004569dd`
+and `00456a1d`. Wrapper `004563e0` copies each piece, then calls TrimLeft
+at `0045647b` and TrimRight at `00456484` before fitting. Later prefix and
+remainder slices receive TrimLeft at `004565cb` and `0045661e`.
+These operations occur after the raw text boundary of DIALOGUE-068.
+
+Original TrimLeft `0056f548` scans the leading classified characters and
+moves the remaining bytes including NUL. TrimRight `0056f4ff` scans forward,
+remembers the current whitespace-run start, resets it after non-whitespace,
+and terminates the final run. Both call classification `00558270` and
+character stepping `00558250`; unique-buffer preparation is `00572965`.
+
+The probe executes both trim bodies with unique private buffers, successful
+memory movement, single-byte stepping and a supplied classifier for
+SPACE/TAB/CR/LF/VT/FF. Thirty left, right and combined controls over bytes
+1,9,10,11,12,13,28,32,127,160 agree byte-for-byte with the supplied services.
+Their interior byte between A and B is retained. These services do not
+establish the native classification or multibyte configuration.
+
+**Confidence.** High for selected operation order and the finite comparison
+under the named services. Separate leading, trailing and interior controls
+exclude treating TrimLeft/TrimRight as whole-string normalization. Raw caller
+delivery and later line/word construction are separate boundaries.
+
+**Unknown.** Native locale tables, high-byte classification, multibyte stepping,
+copy-on-write allocation, embedded-NUL CString behavior and arbitrary counts.
+Native classification and character-step arguments/results on those cases
+are the next discriminating observation.
+
+### DIALOGUE-070
+
+DIALOGUE-062 uses authored archive and body extraction, then original wrapping
+and width instructions with supplied CString and array services. It does not
+execute the resource parser, show or pager. Its body extractor selects every
+part-bearing tag; substring and conditional acceptance are separate facts.
+Its CString Left/Right counts are signed and clamped to the current length.
+Its trimming removes the six bytes listed in DIALOGUE-069.
+
+The complete independent MAIN.RES reader visits 494 EN and 504 RU nodes,
+yielding 452 and 462 distinct file paths. The five selected families give
+688 EN and 732 RU part-bearing candidate bodies. Each candidate enters
+original `004c6952` after a supplied accepted-header decision. All 1420
+raw intervals equal the explicit Python projection. Replacing only the
+supplied trim methods with original trim instructions under DIALOGUE-069's
+services gives zero line-array differences: EN 2542 lines, maximum 7, no
+multi-paragraph blocks; RU 2650 lines, maximum 7, 12 multi-paragraph blocks.
+The projection reproduces 1854/1906 justified lines and 11415/9550 words.
+
+Both runs use installed font-1 advances, spacing 2, width 300, height service
+15 and conversion selector EN=0/RU=1. This comparison does not repeat or
+extend DIALOGUE-062's arithmetic model results. Synthetic skipped and rejected
+tags demonstrate that the first projected candidate need not be the first
+body selected by a reached original call. Malformed backward-range controls
+demonstrate another extraction difference outside the admitted stock bodies.
+
+**Confidence.** Medium for the candidate projection and caller applicability.
+Installed range and line equality is complete over this named population;
+acceptance, font configuration and low-level string services remain supplied.
+Equality cannot select native reachability, locale or every caller.
+
+**Unknown.** Native accepted-tag population, overrides, other installed
+families, native glyph conversion/height and arbitrary string edge cases.
+Capture accepted header, body pointers and string-service configuration at a
+reached native caller to discriminate these remaining premises.
