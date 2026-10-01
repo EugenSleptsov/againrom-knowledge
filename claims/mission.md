@@ -1376,3 +1376,61 @@ serializer and explicit reset behaviour.
 or delayed permission. The direct-displacement census cannot establish that
 every original save lacks some other Continue or delayed-permission
 representation or a later restoration route.
+
+## Failure-panel exits and the LOAD entry
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MISSION-DEFEAT-059 | Cancelling the save-selection dialog opened from the failure panel behaves as Exit to Main Menu, because the failure arm leaves `frame+0x414 = 0xff` and the dialog's close arm posts `0x41e` for it. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| MISSION-LOAD-060 | The `0x419` LOAD arm tears the mission screen down first only when the mask equals 1; from a zero mask it skips the teardown and still sends `0x445` to `frame+0x100` and runs the load path. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| MISSION-LOAD-061 | When the load path's join call `0040fed4` returns zero, it posts `0x421`, which reaches the menu surface only for a zero mask; nothing in the load path itself stops the music on that exit. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+
+### MISSION-DEFEAT-059
+
+- The `0x433` arm at `004738bb` stores its wParam in `frame+0x414`; the failure message
+  carries `0xff` (`MISSION-DEFEAT-046`).
+- The close arm of the dialog at `frame+0x128` clears mask bit 8, then branches on the
+  dialog's result `+0x60`. Result `0x445` posts `0x419`. Any other result posts `0x421`
+  when the session pointer `0x005cd758` is zero, and `0x41e` when it is non-zero and
+  `frame+0x414 == 0xff`; a non-zero session with another `frame+0x414` posts nothing.
+- `0x41e` is the Exit arm: teardown, then `0x421` (`VIDEO-MUSIC-062`).
+
+**Confidence.** High for the close arm's three branches. Medium that nothing rewrites
+`frame+0x414` between the failure arm and the dialog's close, which was not swept.
+
+**Unknown.** Which input produces a result other than `0x445` in the dialog (Cancel, Escape
+or a window close).
+
+### MISSION-LOAD-060
+
+- Arm `004734cc` calls `00479dd0` when `frame+0x3dc == 1`. `00479dd0` calls session teardown
+  `004d05b2` when the phase is 1 or 2, the session exists and mask bit 0 is set, calls
+  `00420d38(1)` when `004e7779` is non-zero and the phase is not 3, and calls `00478a80` when
+  bit 0 is set. `00478a80` clears bit 0.
+- The arm then calls `00476340`. For mask zero, which a taken teardown leaves, it calls
+  `00420d38(1)` and sends command `0x445` to the object at `frame+0x100`. It ends with
+  `00478af0`.
+- From the main menu the mask is expected to be zero, so the teardown is skipped. From the
+  mission screen or the failure flow it is expected to be 1 (`VIDEO-MUSIC-063`).
+- `SAV-972` states that selected LOAD completion requests `0x419 -> 00478af0`; this claim adds
+  the mask-dependent teardown in front of it.
+
+**Confidence.** High for the arm's branches and `00479dd0`'s guards. Medium for the mask
+values, which are inferred from `MISSION-STOP-016` and `VIDEO-MUSIC-062`, not read at runtime.
+
+**Unknown.** The mask at LOAD from the in-game Esc menu.
+
+### MISSION-LOAD-061
+
+- `00478af0` calls the join routine `0040fed4` at `00478b9a` after `004762a0(2)` and the
+  document call `004cf20e`. A zero result sets the message to
+  `0x421` and posts it at `00478c1c`; a non-zero result branches on `InBattle`
+  (`VIDEO-MUSIC-064`, `VIDEO-MUSIC-065`).
+- The `0x421` arm calls `004769c0` only when the mask is zero, so a failed join from the
+  main menu requests the menu list and a failed join with a non-zero mask requests nothing.
+- No stop or replace precedes the post inside `00478af0`.
+
+**Confidence.** High for the failure branch and its message. Medium for the mask clause.
+
+**Unknown.** What a zero return means for the session object left behind, and whether the
+original shows an error before the menu.

@@ -520,3 +520,161 @@ field is not excluded.
 **Unknown.** The runtime volume value: whether the registry holds
 `SoundSfxPos`, and any other write through the settings object's address.
 Mixing, device behaviour and audibility.
+
+## Music at mission loss and campaign LOAD
+
+Terms. The player is the object at `frame+0xc8`. The music gate is `0x005eb478`, the same gate
+`VIDEO-MUSIC-006` reads. The stop is `004530f3`, the replace is `00452c34` and the start is
+`00453089`. The mask is `frame+0x3dc`. Window messages are posted through one import slot,
+`[0x632f5c]`, so every hop below is queued, not nested.
+
+| ID | Public functional claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| VIDEO-MUSIC-061 | No arm read on the mission-lost panel's display path and no direct call from it reaches a music routine (126, 162 and 62 computed-call functions unread); its one sound call is a fixed SFX. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| VIDEO-MUSIC-062 | Exit to Main Menu stops the player through the teardown, then requests the one-entry menu list from the `0x421` arm; both happen after the choice, not at display. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| VIDEO-MUSIC-063 | In the arms read, Load Game from the failure panel makes no music call when chosen or when the save dialog opens; the stop comes at selection, and cancelling takes the Exit route. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| VIDEO-MUSIC-064 | LOAD of a mission save stops the player, then, if `00477c00` reaches `00478956` with the gate set, requests the twelve-entry `B00`..`B11` list and starts it. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| VIDEO-MUSIC-065 | LOAD of a town save makes no music request in the load routine; it posts `0x42e`, whose arm requests the one-entry Town list. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+| VIDEO-MUSIC-066 | The menu and Town owners skip the replace when the player's list already starts with their entry; the `B00`..`B11` owner never compares, so a mission LOAD that reaches it re-requests. | High / Medium | ● active | [EXP-0426](../experiments/EXP-0426-loss-load-music/) |
+
+### VIDEO-MUSIC-061
+
+- Order, EN and RU executables byte-identical: the client `0xb4` arm at `00410623`
+  posts `0x433` with wParam `0xff`; the `0x433` arm at `004738bb` stores
+  `frame+0x414 = 0xff` and posts `0x431`; the `0x431` arm at `00474140`, taken only while
+  latch `frame+0x3c0` is zero, sets the latch, constructs `00446de2`, stores the panel at
+  `frame+0x110`, shows it with `00476810` and then calls the SFX terminal `00453b08`.
+- `00476810` sets mask bit 8 (bit `0x8000` for a panel stored at `frame+0x3a8`), remaps
+  the screen and calls virtual slots of the panel. It calls no music routine.
+- The SFX call carries a fixed registry slot, 16, in `EXP-0230` (event `mission-failed`,
+  `VIDEO-SFX-013`, `VIDEO-SFX-014`). It does not call the stop, the replace or the start.
+- Direct-call closures from the reporter `004d8963` (686 functions), the client
+  dispatcher `004104e8` (574), the panel constructor (59), the show routine (94) and the
+  panel's vtable slots `+0x48`, `+0x78`, `+0x80`, `+0x84` reach none of the twenty-four
+  music routines marked in `evidence/closures.tsv`.
+- The stop, the replace, the start and fourteen owner or teardown entries have no stored
+  address in any section of either executable and no `E9` transfer; each has only direct
+  `E8` references (`evidence/scan-en.tsv`, `evidence/scan-ru.tsv`, identical).
+- Bound: no direct-call path from the reporter, the client dispatcher, the panel constructor, the show routine or the panel's vtable slots reaches a music routine, and none of the arms read calls one. The computed-call functions unread are 126 in the reporter closure, 162 in the `0xb4` handler closure and 62 in the SFX terminal closure.
+- The player keeps its previous list and state at display. Where a track ends during the
+  panel, `VIDEO-MUSIC-007`'s end-of-stream advance applies; it is not a loss request.
+
+**Confidence.** High for the arm-by-arm reads and the three `E8` posts. Medium that no
+request exists between the reporter and the panel: the closures hold 126 functions with
+a computed call that were not read, and the first `0xb4` hop through the session queue is
+inherited from `MISSION-DEFEAT-046`.
+
+**Unknown.** Whether the stream worker keeps running while the panel is up. Which sample
+SFX slot 16 plays and whether it is audible over the music.
+
+### VIDEO-MUSIC-062
+
+- The panel result `0x445` makes the `+0x110` close arm post `0x41e`. The `0x41e` arm at
+  `004745fe` calls teardown `00479dd0`, then posts `0x421` (`MISSION-DEFEAT-046`).
+- `00479dd0` calls `00478a80` only when mask bit 0 is set. `00478a80` calls the stop on
+  the player at `00478a9e` when the gate is non-zero, then clears mask bit 0.
+- The stop takes no argument. With a buffer at `player+0x9c` and a non-empty list at
+  `player+0x10`, ordinary mode (`player+0x18 == 0`)
+  stops the buffer through the DirectSound buffer's stop slot and sets `player+0xc = 1`;
+  fixed-source mode reloads the selected candidate instead (`VIDEO-MUSIC-007`).
+- The `0x421` arm at `00473a76` calls the menu owner `004769c0` only when the mask is zero.
+  The owner requests a one-entry list, `music\menu.wav`, with the replace at `00476bc3` and
+  starts at `00476bdb`, when the gate is non-zero.
+- The menu owner skips the replace when the player's list is non-empty and its first entry
+  equals `music\menu.wav` (`VIDEO-MUSIC-066`); the start still runs.
+
+**Confidence.** High for the call order and the gates, and for the read fact that the
+`+0x110` close arm clears mask bit 8 before it posts `0x41e` (`evidence/listing.txt`). Medium for the
+remaining mask bits: that `frame+0x3dc` is exactly bit 0 on the mission screen before the panel (and so is
+zero after teardown) rests on the mission-screen state in `MISSION-STOP-016`, not on a
+witnessed value.
+
+**Unknown.** Any other bit set in the mask at the failure, which would skip the menu request.
+The audible gap between the stop and the menu start.
+
+### VIDEO-MUSIC-063
+
+- Result `0x446` makes the `+0x110` close arm post `0x418`. The `0x418` arm at `00473468`
+  builds the save-selection dialog, stores it at `frame+0x128` and shows it with `00476810`.
+  It calls no music routine in the arm read (`evidence/listing.txt`).
+- A selected entry makes the `+0x128` close arm post `0x419`. The `0x419` arm at
+  `004734cc` calls `00479dd0` only when the mask equals 1, which stops the player as in
+  `VIDEO-MUSIC-062`, then calls `00476340`, and for mask zero sends command `0x445` to
+  `frame+0x100` and calls the load path `00478af0`. The mask is zero after a taken teardown.
+- A cancelled dialog (result other than `0x445`) posts `0x41e` when the session pointer
+  `0x005cd758` is non-zero and `frame+0x414 == 0xff`, which the failure arm stored. It then
+  follows `VIDEO-MUSIC-062` exactly.
+
+**Confidence.** High for the arm reads and the exclusive close chain. Medium that the mask
+equals 1 when the dialog closes (see `VIDEO-MUSIC-062`).
+
+**Unknown.** The result code of a dialog dismissed by other means than the two buttons.
+
+### VIDEO-MUSIC-064
+
+- The load routine `00478af0` reads `CurrentState`/`InBattle` with default 1 (`SAV-914`).
+  A non-zero value calls `00477c00` with argument 1 at `00478bba`.
+- `00477c00`, when the gate is non-zero, calls the stop on the player at `00477c4d`
+  before it rebuilds the session. Between the stop and `00478956` a wait loop
+  (`00477e84..00477f1c`) has three exits that return zero without a request: a pumped message
+  of id `0x12` (`00477ea2`), a 60,000 ms timeout (`00477edb`, to `00478a64`) and a zero
+  result of `004104e8(0x64)` (`00477f08`). Only if the routine reaches `00478956`, and the
+  phase is not 3, does it call the list owner `0047cc00`, which itself requires the gate.
+- `0047cc00`, when the gate is non-zero, builds one list of twelve strings,
+  `music\B00.wav` through `music\B11.wav` in that order, replaces the player's list at
+  `0047cd1d` and starts at `0047cd35`. Argument 1 suppresses the map load and the `0x442`
+  post (`SESS-START-036`).
+- Direct closure from `00478af0` reaches the stop, the replace and the start only through
+  `00477c00` and `0047cc00` (`evidence/closures.tsv`). Nothing posted by this branch
+  requests music.
+- The replace is the player's usual one: a random initial candidate and ordinary progression
+  (`VIDEO-MUSIC-007`).
+
+**Confidence.** High for the call order, the three exits and the arguments. A failed mission-start
+exit therefore leaves the player stopped with no replacement. Medium for the closure's absence
+clause: 400 functions of the load closure hold a computed call that was not read.
+
+**Unknown.** The document loader's own effect on a running player beyond its direct
+closure, which reached no music routine.
+
+### VIDEO-MUSIC-065
+
+- A zero `InBattle` value takes the town branch of `00478af0`: `0041db20`, `004d88f1`,
+  `004104e8(100)`, `00477650`, `0041da75`, `004d88f1`, then post `0x42e`
+  (`SHOP-TOWN-022`). Their direct closures reach no music routine.
+- The `0x42e` arm at `00474ce3` calls `00477130`, which is a surface transition (`TOWN-372`) and, when the
+  gate is non-zero, requests the one-entry list `music\Town.wav` with the replace at
+  `0047720f` and starts at `00477227`.
+- The `0x42e` arm runs from the message queue after the load routine returns. The difference
+  from `VIDEO-MUSIC-064` is therefore a post, not a synchronous call.
+- The Town owner skips the replace when the player's list is non-empty and starts with
+  `music\Town.wav` (`VIDEO-MUSIC-066`).
+- No stop is issued before the replace on this branch except the one the replace routine
+  itself runs first (`VIDEO-MUSIC-006`); with a skipped replace the running track continues.
+
+**Confidence.** High for the order and arguments. Medium for the absence of any other
+request: 234 functions of the `004d88f1` closure alone hold a computed call that was not read.
+
+**Unknown.** Whether a later message in a town session replaces the list again before the
+player hears the Town list.
+
+### VIDEO-MUSIC-066
+
+- The menu owner `004769c0` and the Town owner `00477130` call string comparison `00553d80`
+  on the first entry of the player's list against their own literal and request the replace
+  only when the list is empty or the strings differ.
+- Owner `0047cc00` does no comparison and replaces unconditionally whenever the gate is non-zero.
+- Consequences: a mission LOAD that reaches `00478956` with the gate set re-requests the list
+  even when the `B` list is already playing; a town LOAD while the Town list plays keeps the
+  running track, since that branch has no preceding stop. On Exit the teardown stop runs first
+  (`VIDEO-MUSIC-062`), so the skipped menu replace avoids a list rebuild, not the stop.
+- The comparison reads the first array element. Whether the random initial selection
+  (`VIDEO-MUSIC-007`) reorders that array is not read, which is immaterial for the two
+  one-entry lists these owners build.
+
+**Confidence.** High for the two comparisons and the unconditional `B` request. Medium for
+the equality semantics of `00553d80`, read as a zero-on-equal byte comparison with a locale branch
+when `[0x00630854]` is non-zero.
+
+**Unknown.** The comparison's case handling under that locale branch, and the other six
+list owners' behaviour, which this experiment did not read.
