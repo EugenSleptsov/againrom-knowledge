@@ -2548,6 +2548,29 @@ selector's complete score loop. The byte enumeration is finite and includes
 the 128 boundary. The source score data flow and private branch mutation
 exclude strict first-winner ties and a distance-weighted final score.
 
+**Controlled direction outputs.** The existing `direction.tsv` instruction
+replay supplies the 81 heading bytes below. Both synthetic actors have
+footprint size 1 and position fractions 128/128. The decider is at cell
+50/50; each target cell is 50 plus the named dx/dy. The equal-centre entry
+returns 224, rather than a no-direction sentinel. This table transcribes
+the accepted replay output; no new original-runtime observation is implied.
+
+| target dy \ target dx | -4 | -3 | -2 | -1 | 0 | 1 | 2 | 3 | 4 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| -4 | 224 | 224 | 224 | 0 | 0 | 0 | 32 | 32 | 32 |
+| -3 | 224 | 224 | 224 | 0 | 0 | 0 | 32 | 32 | 32 |
+| -2 | 224 | 224 | 224 | 224 | 0 | 32 | 32 | 32 | 32 |
+| -1 | 192 | 192 | 224 | 224 | 0 | 32 | 32 | 64 | 64 |
+| 0 | 192 | 192 | 192 | 192 | 224 | 64 | 64 | 64 | 64 |
+| 1 | 192 | 192 | 160 | 160 | 128 | 96 | 96 | 64 | 64 |
+| 2 | 160 | 160 | 160 | 160 | 128 | 96 | 96 | 96 | 96 |
+| 3 | 160 | 160 | 160 | 128 | 128 | 128 | 96 | 96 | 96 |
+| 4 | 160 | 160 | 160 | 128 | 128 | 128 | 96 | 96 | 96 |
+
+These outputs establish this finite centre-coordinate population. They do
+not establish the precise sector boundary for arbitrary fractions, different
+footprints, wrapping coordinates or floating-point states.
+
 **Unknown.** Native facing reachability, native actor arrangement, and other
 acquisition or group scorers, which are separate routines.
 

@@ -2,8 +2,8 @@
 
 ## Snapshot
 
-Snapshot k105, exported from the private research repository at commit
-`5cfc6b6ce7b2eebfe20da96518baa947aeb32fba`.
+Snapshot k106, exported from the private research repository at commit
+`4976014fba88b401df5df830ff8e7a1e1404afd0`.
 
 | Field | Count |
 |---|---:|
