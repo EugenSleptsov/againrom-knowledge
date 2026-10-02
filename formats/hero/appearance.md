@@ -138,18 +138,19 @@ identified callers are the info-window routines. In the world nothing is composi
 a held weapon is visible because the world body name changes.
 
 **The name list is a shipped file.** `main\text\heropicture.txt`, loaded into the object at
-`0x5ea220` at startup, 25 non-blank lines, identical on both roots, indexed by `D - 1`:
+`0x5ea220` at startup, 26 entries (the blank line is entry 22), identical on both roots, indexed by `D - 1` (`HERO-APPEAR-052`, `ANIM-108`):
 
 ```
  0 unarmed      5 swordsman2h  10 axeman      15 pikeman   20 archer
  1 swordsman    6 clubman      11 axeman2h    16 pikeman   21 xbowman
- 2 swordsman    7 clubman      12 mage_st     17 axeman    22 Sonic Beam
- 3 swordsman    8 clubman      13 mage_st     18 axeman2h  23 Flame Thrower
- 4 swordsman    9 clubman      14 pikeman     19 archer    24 swordsman
+ 2 swordsman    7 clubman      12 mage_st     17 axeman    22 (blank)
+ 3 swordsman    8 clubman      13 mage_st     18 axeman2h  23 Sonic Beam
+ 4 swordsman    9 clubman      14 pikeman     19 archer    24 Flame Thrower
+                                                              25 swordsman
 ```
 
-`bowman` never occurs, which is why the seventeenth world-appearance arm is dead. Two lines name no shipped body
-directory. The list is 25 long while D is five bits wide.
+`bowman` never occurs, which is why the seventeenth world-appearance arm is dead. Three entries name no shipped body
+directory. The list is 26 long while D is five bits wide.
 
 **The second sheet is drawn.** `FUN_0045bf00` blits `drawable+0x194` and then `drawable+0x198` at
 the same frame index behind one `+0x18c & 1` gate, the second centred from its own width and height
@@ -234,7 +235,7 @@ writes and decoration outside the compositor remain Unknown.
 
 **The list accessor has no bound.** `FUN_004687f0` is `[[0x005eb3d4] + ([list+0xc] + i)*4]`, six
 instructions, no test — and this caller runs only when slot 0 is **occupied**, so `D = 0` indexes at
-**−1**. A consumer must clamp at both ends; `D ≥ 26` runs off the other.
+**−1**. A consumer must clamp at both ends; `D ≥ 27` runs off the other, into the first line of `stats.txt` (`HERO-FIGURE-063`, `ANIM-108`).
 
 **And the same drawable field feeds sound.** `FUN_0045e890` picks one of eight 48-byte voice banks
 on the mage bit, the composed-figure bit, **whether slot 0 is occupied**, and the sex bit:
