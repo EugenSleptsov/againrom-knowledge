@@ -14267,6 +14267,101 @@ Medium: five saves; the money mechanism is a hypothesis.
 **Unknown.** The original runs that produced `game0009.sav`, `game0010.sav` and
 `game0014.sav`; the cause of the 289000 difference.
 
+## Stored physical shot and burst records
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-1141 | In three original EN mission-150 saves, the records of pictures 1, 2 and 5 carry ActionTarget 340, the runtime id of one Human whose saved position equals their ActionX and ActionY; no shooter is stored. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1142 | In those saves the rock's and the bolt's x, y equal the shooter's position plus 8 times (class ShootOffset pair minus Center); segments are the shooter-target distance divided by 200, a divisor taken from SAV-1130. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1143 | In those saves each shooter's simulation countdown expires on the tick its projectile is collected: damage tick minus creation tick equals the shot's total segments (6, 7, 7) for an archer, a catapult and a crossbowman. | Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1144 | The picture-13 record has the leaves client arm 0x86 writes: ActionTarget 0, x and y equal to ActionX and ActionY at a cell centre, actionphase starting at -1, and 22 calls in all, the constant `004e98e4` sends for spell 2. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1145 | The picture-13 Fire_Ball burst at the catapult's target cell is created 4 ticks after the catapult's damage tick; the rider path leads to it, but a cast by another actor is not excluded, so the siege rider stays Medium. | Medium / Unknown | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1146 | In the same three saves FreeIndex (28, 29, 31) equals max(IDs) + 1 and ids 27 and 28 were free when 29 and 30 were built, so one shared counter allocates and no id is reused; the pair 29, 30 is saved newest first. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1147 | A unit shot starts with actionphase 0, so its built segment count is actionphase plus actionsegments; a record built by client arm 0x86 or 0x8b starts at -1, so that count is actionphase plus actionsegments plus 1. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+
+### SAV-1141
+
+- Inputs: `game0022.sav` (head counter 3087), `game0023.sav` (3095) and `game0024.sav` (3109), one battle on mission 150, saved by the original EN game. Each holds 143 Unit and 47 Human actors.
+- Records: Prj27 picture 1 (`game0022`), Prj28 picture 5 (`game0023`), Prj30 picture 2 and Prj29 picture 13 (`game0024`). Prj27, Prj28 and Prj30 have ActionTarget 340. Prj29 has ActionTarget 0.
+- Runtime id 340 is a Human (type word 19) at x 6016, y 24448, which is cell (23, 95), sub-cell (128, 128). It is at the same position in all three saves. Its health is 152, 110 and 25.
+- ActionX and ActionY are 6016 and 24448 in all four records. Z and ActionZ are 0.
+- Exactly three actors target 340 in each save, with Unit and Human actors joined by the saved-address key at `+0x5c`: Human 327 (type word 14, class Human Archer, Projectile 1), Human 331 (type word 15, class Human CrossBowMan, Projectile 2) and Unit 47 (type word 26, class Catapult 1, Projectile 5).
+- Each record's picture equals the Projectile of exactly one of them. The record names its target; the shooter is the actor with that target and class Projectile (`SAV-1130` stores no shooter).
+
+**Confidence.** High for the target id, the position equality and the three-actor census over the 190 actors of each save. Medium for the shooter: it follows from uniqueness over those actors and from `SAV-1142`, not from a stored field. One battle, three saves, one target.
+
+**Unknown.** The weapon or item used: no leaf stores it.
+
+### SAV-1142
+
+- Class constants come from `units.reg` (`evidence/unit-classes.txt`): Human Archer Center (64, 78), ShootOffset pair 4 (65, 30); Human CrossBowMan Center (64, 78), pair 4 (68, 42); Catapult 1 Center (64, 64), pair 5 (82, 31).
+- The unit shot (`0045d680`, `SAV-1130`) writes the start from the shooter's x, y and the pair `ShootOffset[(dir-8)&0xe]` minus Center, times 8.
+- Prj28 (picture 5, 5 calls run, 2 segments left): over start offsets of -60..60 steps of 8 around Unit 47, one start reproduces the saved x, y under the flight rule of `ANIM-101`. That start is (+18, -33) steps, the pair (82, 31) minus (64, 64) (`evidence/start-search.txt`, `startsearch.py`). The projectile's saved dir 2 would select index 10; no shooter facing is stored, so the index is not tested.
+- Prj30 (picture 2): the one start is (+4, -36) steps, the pair (68, 42) minus (64, 78). The projectile's saved dir 0 would select index 8; not tested.
+- Prj27 (picture 1) ends on its target, so its start is not constrained. Its start is (5512, 25344) under pair index 8 taken from the saved dir; the model ends on the saved leaves for any start, so this shot does not test the start formula.
+- Segments: integer square root of the squared distance from the shooter's saved position to (6016, 24448), divided by 200: 1378 gives 6, 1448 gives 7, 1557 gives 7. Each equals actionphase plus actionsegments of its record. The data alone admit any divisor from 197 to 206; 200 comes from the instructions read in `SAV-1130`, which the data confirm.
+
+**Confidence.** High: the start formula is tested on two of three shots (rock and bolt), each a unique solution of the committed search that lands on a table entry; the three segment counts match the code-derived divisor.
+
+**Unknown.** ShootOffset pairs the saves do not select; classes other than 14, 15 and 26.
+
+### SAV-1143
+
+- Method: a record with phase 0 start has run `actionphase` driver calls; the first call is on its creation tick; the call that finds segments 0 collects it. A shooter in sub-phase 5 (`+0x58`) with countdown n (`+0x6c`) applies on counter + n (`MAGIC-CASTTICK-030`). The head counter dates each save.
+- Prj27: created 3082, collected 3088; Human 327 applies at 3087 + 1 = 3088.
+- Prj28: created 3091, collected 3098; Unit 47 applies at 3095 + 3 = 3098.
+- Prj30: created 3107, collected 3114; Human 331 applies at 3109 + 5 = 3114.
+- The three shooters have different charge, ShootDelay and distance; in each, creation-to-damage equals the record's total segments (`evidence/timeline.txt`). This is observation at one distance per class.
+
+**Confidence.** Medium: three exact matches, but the creation tick assumes the client driver runs once per head-counter tick, which `SAV-1132` records as an inference. One distance per class.
+
+**Unknown.** Whether the match holds at other distances and at d = 1, where `SAV-1132` finds the damage tick before the release tick.
+
+### SAV-1144
+
+- Prj29 (`game0024`): picture 13, x 6016, y 24448, ActionX 6016, ActionY 24448, ActionTarget 0, actionphase 7, actionsegments 14, phase 3, lastaction 1, action 1, dir and actiondir 0, actionspell 0.
+- Client arm 0x86 (`004173d8`, `evidence/disasm-client-arm-86.txt`) builds a record with picture `msg+0xc` (odd only), x and y as cell `msg+0xd`, `msg+0xe` times 256 plus 128, z 0, ActionX/Y/Z copied from x, y, z, ActionTarget 0, actionphase -1 and actionsegments `msg+0xf`. It takes its id from the counter at world +0xa0c.
+- Total life: 7 + 14 + 1 = 22 driver calls, which is 0x16.
+- `004e98e4` writes `msg+0xf = 0x16` with opcode 0x86 when the effect's `+0x0c` (spell id) is 2, and picture `effect+0x0e`; `MAGIC-PIC-026` gives `2*2+9 = 13` for spell 2. The other 0x86 sender `004e9863` passes a caller byte (16 or 18, `MAGIC-BURSTLIFE-034`), and `004e9515` writes even pictures.
+- Arm 0x8c builds picture 36 with 13 segments. Arm 0x8b is fed by the even-picture cast senders (`MAGIC-DELIVER-035`).
+- Picture 13 is projectiles.reg ID 13, `fireexpl`, 11 phases, no rotation, 128 by 128 (`evidence/projectiles-reg-rows.txt`).
+
+**Confidence.** High for the leaf agreement with arm 0x86 and the 22-call life. Medium that `004e98e4` sent it: 22 and picture 13 match no other sender read, but no message was observed.
+
+**Unknown.** Whether a sender not read writes 0x16.
+
+### SAV-1145
+
+- Timeline (`evidence/timeline.txt`): Prj28 (catapult rock) is collected and Unit 47 applies at tick 3098. Prj29 is created at 3102: 8 driver calls by 3109 from a start of -1. Prj30 is created at 3107.
+- Ids are consecutive: arrow 27, rock 28, burst 29, bolt 30 (`SAV-1146`). The burst sits at the cell centre of target 340, the cell the rock flew to.
+- Rider path (`evidence/disasm-sim-damage-and-rider-4fba0e.txt`): after damage, `004fba0e` copies the weapon spell reference (`actor+0x74`) and calls `004feaa2`, then `004feadb`. Spell 2 reaches the default arm `005001fc`, where Distribution (row parameter 8) other than 1 builds a 0x50-byte area effect with `+0x0c` the spell id and `+0x0e` `2*id+9`. Its tick `004fc9b2` reaches `004fccd8` and `004fd09c` when its stage byte is 0; `004fd09c` calls `004e98e4(effect, 1)`.
+- The Catapult row's weapon is `Boulder Thrower{castSpell=Fire_Ball:70}` (`EXP-0428` `shot-classes.csv`).
+
+**Confidence.** Medium for the rider as the source: path, adjacency and place agree, but the branch conditions at `00523bc0` and `00523ba0` were not read. Unknown for the 4-tick gap.
+
+**Unknown.** Why the burst follows the damage tick by 4. Whether `004fd28d` at `004fd348` sends a second 0x86 for spell 2 when the area effect ends (`004e98e4` branches on spell id, not on its flag). Whether a Fire_Ball cast by a mage at the same cell builds the same record. Next question: a save held between the damage tick and the burst, plus the area effect's first-tick delay and lifetime (`+0x4c`).
+
+### SAV-1146
+
+- Saves: `game0022` FreeIndex 28, IDs [27]; `game0023` FreeIndex 29, IDs [28]; `game0024` FreeIndex 31, IDs [30, 29].
+- Builders: Prj27, Prj28 and Prj30 are unit shots; Prj29 is an arm-0x86 build. All take the id from the same word at world +0xa0c and set FreeIndex to id + 1 (`SAV-1131`; `0045d7d8`, `004175cb`).
+- Ids 27 and 28 were collected (3088, 3098) before 29 (3102) and 30 (3107) were built. A lowest-free-id allocator would have reused them.
+- Ids 29 and 30 are both in bucket (id >> 4) mod 17 = 1. Insertion at the bucket head gives [30, 29], as saved. Ascending id order, or insertion order, would give [29, 30].
+- Every FreeIndex here equals max(IDs) + 1.
+
+**Confidence.** High for the shared counter and the exclusion of id reuse. Medium for FreeIndex as last-built id plus 1: it is observed only as equal to max(IDs) + 1, which all three saves satisfy. Head-first order rests on the serializer reading in `SAV-1131`; this data adds one same-bucket pair, which head insertion, newest-first and descending-id order all fit.
+
+**Unknown.** Order across buckets: all ids here share bucket 1.
+
+### SAV-1147
+
+- Unit shot `0045d680` sets `actionphase = 0` (`0045d7c9`). Arms 0x86 and 0x8b set `actionphase = 0xffffffff` (`00417564`, `00417de9`).
+- Each driver call adds 1 to actionphase and subtracts 1 from actionsegments (`ANIM-101`), so their sum is constant.
+- Prj27, Prj28 and Prj30 sum to 6, 7, 7, which equal the segments `SAV-1142` computes. Prj29 sums to 21, one less than its 22 calls (`SAV-1144`).
+- Prj266 of `SAV-1134` (phase 2, segments 3, picture 10) sums to 5. The cast spawner starts at actionphase 0 (`MAGIC-CASTSPAWN-033`), so it was built with 5 segments; an arm build would have built 6.
+
+**Confidence.** High: the initial stores are instructions. The three unit shots (Prj27, Prj28, Prj30) are the only independent agreeing observations; Prj29 is checked against its own 22-call constant and the Prj266 build count is inferred.
+
 ## Open questions
 
 - Whether a Building or Sack Position terrain key is used, replaced or

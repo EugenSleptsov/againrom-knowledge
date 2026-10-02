@@ -1911,6 +1911,48 @@ extents, and exercise null/count refusals. EN/RU images are byte-identical.
 open. Three classified whole-image absolute references to the shared pointer
 do not establish that aliases or bulk writes cannot change its object.
 
+## Physical shot flight, direction and the Fire_Ball burst arm
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| ANIM-101 | The projectile driver's default arm moves a record each call by the truncated quotient (action - position) / actionsegments per axis; stored arrow, bolt and rock records from three original saves reproduce exactly. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| ANIM-102 | `00459740` turns a vector into a 16-way direction (0 north, 4 east, 8 south, 12 west, y down) from slope bins 1/4, 3/4, 4/3 and 4 in each quadrant; the saved actiondir of three records agrees. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| ANIM-103 | Picture 13 (`fireexpl`) draws frame (actionphase / 2) mod 11 for 22 calls; its driver arm acts when actionphase is 4 (a 3x3 cell registration) and 8 (an OR of tile-word bit 0x2000 over the 3x3 block). | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+
+### ANIM-101
+
+- Each call of `004617b0` with segments non-zero and action 1 does the following (listing in `evidence/disasm-driver-entry-and-arm-0d.txt`). If ActionTarget is non-zero and found in the unit hash, ActionX, ActionY and ActionZ take the target's `+0x58`, `+0x5c` and `+0x10`, and actiondir takes `00459740`'s result. Three `IDIV` by actionsegments give the per-axis step `(action - position) / segments`, truncated toward zero.
+- `dir` takes actiondir, actionphase gains 1 and the default arm adds the three steps, sets `phase = (actionphase / 2) mod Phases` (`ANIM-PHASECLOCK-028`), sets lastaction to action and subtracts 1 from actionsegments.
+- The order is: direction from the position before the step, then the step, then the counters.
+- Check (`evidence/flight-model.txt`, `evidence/prj-leaf-values.txt`), target stationary in all three saves: starting at the `SAV-1142` positions with the target at (6016, 24448), 6 calls of Prj27, 5 of Prj28 and 3 of Prj30 reproduce the saved x, y, dir, phase and actionsegments exactly: (6016, 24448), (5764, 24666), (5888, 25162).
+- Pictures 1, 2 and 5 have Phases 1 in projectiles.reg (`evidence/projectiles-reg-rows.txt`), so phase stays 0, as saved.
+
+**Confidence.** High: the arithmetic is instructions and three records agree on every moving leaf. The target was stationary in all three saves, so the per-call re-read of its position is not exercised by them.
+
+**Unknown.** A shot at a moving target in a save.
+
+### ANIM-102
+
+- With a = |dx| and c = |dy|, where dx and dy are action minus position: bin b is 0 if a >= 4c; else 1 if 3a >= 4c; else 4 if c >= 4a; else 2 if 3c < 4a, 3 otherwise.
+- The result is (4 - b) & 15 for dx >= 0 and dy <= 0, (b + 4) & 15 for dx > 0 and dy > 0, (12 - b) & 15 for dx <= 0 and dy > 0, and (b + 12) & 15 for dx < 0 and dy <= 0. A zero vector gives 4.
+- The three saved records end on bins 3, 2 and 4 (Prj27, Prj28, Prj30), and the saved actiondir 1, 2 and 0 agree. Prj29 keeps its constructed 0 because ActionTarget 0 skips the call.
+
+**Confidence.** High for the function (a full listing, `evidence/disasm-direction-459740.txt`) and for the three agreements. Bins 0 and 1 are not exercised by a record.
+
+### ANIM-103
+
+- The driver's picture switch (`00461f50`, `00461f04`) gives picture 13 alone the arm `00461a75` (`evidence/driver-tables.txt`). Every other picture takes another arm or the default.
+- Arm 0x0d acts only on the call whose incremented actionphase is 4 or 8. Other calls fall to the shared phase store.
+- At 4, a cell of the 3x3 block around the record's cell (`+0x34`, `+0x38`) whose tile word has bit 0x2000 is skipped. Of the others, a cell whose second-plane byte is non-zero and whose terrain-type entry `+0x44` is not -1 is added to the hash at `+0xa7c` of the record's `+0xe0` object, key `(y << 8) | x`; a cell whose tile type field (bits 6 to 12) is 8 to 11 is added likewise.
+- At 8, each of the 9 tile words gets bit 0x2000, except where the type field is 8 to 11 and the plane byte is 0.
+- Frame: projectiles.reg ID 13 has Phases 11 and RotationPhases 1, so `frame = (actionphase / 2) mod 11` is one pass of 11 frames over 22 calls (`ANIM-PHASECLOCK-028`, `SAV-1144`). `MAGIC-BURSTLIFE-034` gives the sound.
+- The saved Prj29 has actionphase 7: the call-4 registration has run and the call-8 write has not. The frame law has one sample (actionphase 7, phase 3), which several rival laws fit; it rests on the code reading and `ANIM-PHASECLOCK-028`, not on the save.
+- The bit and the `+0xa7c` hash are the ones `MAGIC-WALLFIRE-058` records for `wall_of_fire`.
+
+**Confidence.** High for the tick numbers, the 3x3 extent, the bit and the frame law, read from the listing. Medium for the cell predicates, whose table at `0x005ef8c4` and plane meaning were not decoded.
+
+**Unknown.** Whether bit 0x2000 or the hash entries survive into a SAV: the terrain cells around (23, 95) in a later save were not compared. Next question: those cells in a save taken after tick 8 of a burst.
+
 ## Open questions
 
 1. **Opcodes `0x86` / `0x8a` / `0x8b` / `0x8c`** — *narrowed by `MAGIC-PIC-027`*: all four are
