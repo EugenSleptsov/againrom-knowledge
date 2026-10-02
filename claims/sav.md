@@ -13871,6 +13871,231 @@ A runtime trace reaching the 200 setter then the documented Human derive
 with unchanged modifiers, but retaining 200 afterward, refutes the proposed
 local overwrite. No original-runtime trace was run.
 
+## Projectile construction and lifetime
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-1129 | A physical ranged attack builds its CProjectile in unit virtual slot +0x58 (`0045d680`) at the action-7 ShootDelay tick; the 0x72 arm and melee build none, and a cast-diverted attacker's shot builds none through slot +0x58. | High / Medium | ● active | [EXP-0428](../experiments/EXP-0428-fresh-projectile/) |
+| SAV-1130 | At the unit shot, the 16 stored projectile leaves take values from shooter, target and class, or stay zero; no leaf records the shooter, the weapon or an item. | High / Medium | ● active | [EXP-0428](../experiments/EXP-0428-fresh-projectile/) |
+| SAV-1131 | The five live projectile creators take their id from one 16-bit counter at client world +0xa0c and insert into a 17-bucket id hash; the loader takes it from the document. Saved IDs follow bucket order, newest first within a bucket. | High / Medium | ● active | [EXP-0428](../experiments/EXP-0428-fresh-projectile/) |
+| SAV-1132 | A projectile of pictures 0..12 never applies damage (pictures 13+ are unread): the simulation actor applies it at its own countdown expiry against the then-current target and range, so a shot and its damage are independent events. | High / Medium | ● active | [EXP-0428](../experiments/EXP-0428-fresh-projectile/) |
+| SAV-1133 | A projectile in flight is removed only by its own countdown ending or by a collect-all clear; no removal path keys on shooter or target, and a missing target leaves it flying to its last aim point. | Medium / Unknown | ● active | [EXP-0428](../experiments/EXP-0428-fresh-projectile/) |
+| SAV-1134 | The sole corpus projectile Prj266 fits the construction rules for its leaves except picture 10, which is a mage or spell picture, so no physical-arrow record was found in the scanned documents. | Medium | ● active | [EXP-0428](../experiments/EXP-0428-fresh-projectile/) |
+
+### SAV-1129
+
+- The client class `CProjectile` (size `0x14c`, vtable `005994f8`) has one
+  constructor, `00461680`, which calls the drawable base `00458a50`.
+- Constructor calls: `0045d680` (unit slot +0x58, installed for CUnit at
+  `00599440` and CAirUnit at `005994c8`), `0045d910` (unit slot +0x5c, the
+  cast spawner), client dispatcher arms for opcodes 0x86, 0x8b and 0x8c
+  (`0041745d`, `00417c95`, `004180cc`), and the SAV loader (`00478470`).
+  The linear sweep of `CALL` targets finds these 6 sites; the raw dword scan
+  of the constructor address finds 0, because a `CALL rel32` carries no
+  absolute dword, so the census is one instrument.
+- Ranged attack message 0x72 (arm `00414ee2`) holds no constructor call. If
+  the drawable's run counter (+0xa0) is zero it sets action 7, actiondir,
+  actionphase 0 and actiontarget, and the run length to the class attack
+  timeline. If the counter is non-zero it logs "Overriding ... by 'Shoot'"
+  and writes nothing (the branch at `004150ea`, listed to `00415230`), so that
+  shot builds no projectile.
+- Unit action driver `0045cf00`, action 7 (arm `0045d4f6`), calls slot +0x58
+  when actionphase equals class ShootDelay (+0xfc) and class Projectile
+  (+0xd4) is non-zero.
+- The simulation sends 0x72 when actor reach (+0x12c) exceeds 1, else 0x71
+  (`004e9d3d`, builder `004e9457`). `tools/shotclass` over Data.bin Units and
+  Humans on EN finds 50 rows that satisfy reach above 1, no weapon-spell
+  divert and ShootDelay below charge plus relax: Units 18 (Catapult,
+  Ballista, 4 Goblin_Sling, 4 Orc_Bow, 4 Bat_Sonic, 4 Dragon), Humans 32.
+  The classes are Human Archer, Crossbowman, Orc Archer, Goblin slinger,
+  Catapult 1 and 2, Sonic Bat and Dragon (class Projectile 1..7 and 12).
+  Mage-staff Human rows (46) are cast-diverted (`MAGIC-AUTOCAST-020`): the
+  weapon-spell attack goes to the cast spawner `0045d910` (slot +0x5c), which
+  builds a record (picture 10 in Prj266, `SAV-1134`), not through slot +0x58.
+  132 Human rows have reach 1. RU `Data.bin` Units rows are byte-identical.
+- Catapult and Ballista have no mana, so they take the strike path with
+  pictures 5 and 6 plus their Fire_Ball weapon-spell rider.
+
+**Confidence.** High for the routine, the 6 constructor call sites, the 0x72
+arm and the row census, read end to end on EN. Medium for "only" at the
+action-7 tick: the `CALL [reg+0x58]` callers were not enumerated; the
+evidence is the one site `0045d512` and the two vtable slots (`00599440`,
+`005994c8`). Medium that the classes listed are the ones that reach it;
+which class a hero's bow maps to is inference, not read. RU `rom.exe` is byte-identical to EN
+(SHA-256 `942e9b72...7d03`). Medium for how often a 0x72 arrives while the
+drawable is running: charge plus relax plus 2 exceeds each attack timeline
+for the shipped rows, so an idle drawable is expected, but no run was counted.
+
+**Unknown.** A structure as shooter. The object the Fire_Ball rider of the
+siege rows constructs, which was not read. Whether the dropped-0x72 case
+occurs in play. What triggers client arms 0x86, 0x8b and 0x8c: the simulation
+stores those opcodes at `004e9528`, `004e955f`, `004e960c`, `004e962e`,
+`004e971a`, `004e9876`, `004e9904` and `004f0346`, and whether any of those
+senders runs for a ranged attack was not traced. The 0x72 path is answered;
+the arms' senders are open.
+
+### SAV-1130
+
+All offsets are CProjectile bytes. Constructor base `00458a50` zeroes x, y,
+z, dir, phase, lastaction, action, actiondir, actionx/y/z, actionphase,
+actionsegments and actionspell, and sets +0x80 to -1; it does not
+initialise +0x86. Derived-field refresh `004592a0` writes none of the 16.
+Unit shot `0045d680` then sets:
+
+| Leaf | Offset | Value at construction |
+|---|---|---|
+| x, y | +8, +0xc | shooter x (y) + (ShootOffset[(dir-8) & 0xe] - class Center) * 8 |
+| z, dir, phase, lastaction, actiondir, actionspell | +0x10, +0x6c, +0x70, +0x74, +0x85, +0xa4 | zero |
+| picture | +0x20 | class Projectile (+0xd4) |
+| action | +0x84 | 1 |
+| actiontarget | +0x86 | shooter's target id (+0x86); no target in the unit hash builds nothing |
+| actionx, actiony, actionz | +0x88..+0x90 | zero |
+| actionphase | +0x94 | 0 |
+| actionsegments | +0xa0 | truncated distance between shooter and target (+8, +0xc), divided by 200 |
+
+- The driver `004617b0` overwrites z, dir, phase, lastaction, actiondir and
+  actionx/y/z on its first call. The shot is built during the unit pass of
+  a tick, so that call is in the same tick.
+- ShootOffset is the CArray data pointer at class +0xec, indexed without a
+  bounds check. The cast spawner `0045d910` also sets dir and actiondir at
+  creation and takes picture from the shooter's actionspell. Neither spawner
+  sets actionspell.
+- Non-leaf fields: +4 id, +0x14 terrain pointer copied from the shooter,
+  +0x28 and +0x2c position snapshots.
+
+**Confidence.** High for the field writes and for the zero or unset fields,
+read from the constructor, base and shot listings. Medium for the scale: the
+256-per-cell fixed point and 8 per pixel are inferred from the saved leaf
+values (`SAV-1134`) and `UNIT-STRUCTDELIVERY-065`, not from a constant in
+the routine.
+
+**Unknown.** The registry rows' ShootOffset values per class, which this
+experiment did not decode.
+
+### SAV-1131
+
+- Live creators `0045d680`, `0045d910` and the dispatcher arms 0x86, 0x8b and
+  0x8c, and the loader (`00478470`), reach the store at client world +0x9d4. Buckets are at
+  +0x9d8, bucket count at +0x9dc (constructor `00402510` sets 17), count at
+  +0x9e0, node free list at +0x9e4.
+- Each live creator sets id = word at world +0xa0c, stores FreeIndex = id + 1 as
+  a 16-bit word, and inserts a node (+0 next, +4 bucket, +8 id, +0xc
+  object). Bucket is (id >> 4) mod 17; insertion is at the bucket head. An
+  existing node with the same id keeps its place and has its object pointer
+  replaced.
+- The serializer (`004790a1`) walks buckets in order and appends ids, so
+  IDs order is ascending bucket, head first. The loader (`00478470`)
+  recreates each record and sets FreeIndex from the document (the loader
+  does not take its id from the counter). Listings: `00402510` (bucket count
+  0x11) and the serializer range `004790a1` are in `evidence/`.
+- Corpus: 29 distinct world-state documents (`SAV-PROJCORP-430`) hold
+  FreeIndex values 0 (7), 1 (3), 8 (6), 31, 33, 40 (2), 171, 180, 239, 252,
+  258, 267, 288 (3); 28 of them have empty IDs. Instrument: EXP-0263
+  `state-census.tsv`.
+
+**Confidence.** High for the counter, the hash layout and the insertion
+order. Medium for the corpus reading that FreeIndex is a monotone
+construction counter rather than max(IDs) + 1: 28 empty-ID documents with a
+non-zero FreeIndex exclude the latter for those documents, but they do not
+show what a saved FreeIndex does after a load.
+
+**Unknown.** Whether a world reset restores the counter to 0 (the seven
+zero documents are consistent with it); the largest id a live world holds.
+
+### SAV-1132
+
+- The simulation swing start `004fb853` (one caller, `004f3a7d`, at phase
+  0) takes d, the footprint-aware cell distance (`004fb702`, minimum 1).
+  For d > 1 it adds extra = (d * 256 + 128) / 200 to the countdown at actor
+  +0x6c, which starts at charge. It then sends 0x72 or 0x71 through
+  `004e9d3d`; the 0x72 builder `004e9457` writes attacker id and target id.
+- At phase-5 expiry `004fb942` re-reads the actor's current target
+  (actor +0x5c). For a unit target it calls `004fba0e`, which returns with
+  no damage when the target or attacker is null or unbound, when attacker HP
+  is not above 0, or when reach is below `004fb702` at that moment. Else it
+  computes damage through target virtual +0x4c and subtracts it from HP,
+  including from a target already at or below 0, and sends the 0x73 message
+  only when HP was above 0 before or is above -10 after.
+- The projectile driver `004617b0`, for pictures 0..12, has no damage arm,
+  no message send and no unit write: those pictures take the default arm
+  (move, animation phase); pictures 10 and 12 also push smoke points. These
+  cover every physical shot (1..7, 12) and the mage picture 10. Pictures 13
+  and above dispatch through the jump table `00461f04`; its first arm
+  (`00461987`) writes the target unit and was not read as damage or
+  otherwise.
+- A target that moved beyond reach before expiry takes no damage, and a
+  projectile built earlier still flies to it. A target that died takes a
+  further HP subtraction and no message below -10.
+
+**Confidence.** High for the call chain, the countdown and the damage gates,
+and for the absence of any damage write in the driver for pictures 0..12.
+The swing-start and expiry callers (`004f3a7d`, `004f3bc2`) and the countdown
+are listed in `evidence/disasm-actor-tick-4f3a17.txt`. Medium for extra
+approximating flight time: it is the distance the shot divides by the same
+200 for segments (`SAV-1130`), and the shot and damage ticks align only if
+client and simulation tick counts are equal, which is an inference. For
+d = 1 an archer's damage tick (charge 20) precedes its release tick
+(ShootDelay 21).
+
+**Unknown.** Whether actor +0x5c is cleared when its target is removed, and
+the weapon-spell rider's own timing. What the driver's jump-table arms for
+pictures 13 and above do, including the unit write of the first arm.
+
+### SAV-1133
+
+- The world tick (`0040dcdd`..`0040e59a`) calls driver slot +0x3c on every
+  store node. A zero return is collected; a second loop looks each id up,
+  unlinks the node and calls the destructor (slot +4). The driver returns 0
+  when actionsegments is 0 and otherwise decrements it and returns 1. A shot
+  built with segments N therefore lives N + 1 ticks (`SAV-1130`).
+- While action is 1 and actiontarget is non-zero, the driver looks the
+  target up in the unit hash (`00427050`). If found it overwrites actionx/y/z
+  from the target and recomputes actiondir. If not found, or if actiontarget
+  is 0, it keeps the existing actionx/y/z.
+- A record stores no shooter reference (the 16 leaves, +4, +0x14, +0x28,
+  +0x2c). All 23 sites that name world +0x9d4 were classified. Removal
+  sites are the driver return, the unconditional collect-all-and-destroy
+  functions `004201c9` (caller `00473e75`) and `00420d38` (11 callers), the
+  destructor loop in `0040308c` (caller `0042318a`) and unwind code.
+
+**Confidence.** Medium: the census is a displacement and immediate sweep plus
+a raw dword scan and agrees at 23 and 23, but a pointer reached by
+arithmetic from another world field is invisible to both. High that the
+driver and tick read as stated.
+
+**Unknown.** What the 11 callers of `00420d38` are, whether any runs
+mid-mission, and what a shooter's death does to simulation damage already
+counting down (`SAV-1132`).
+
+### SAV-1134
+
+Prj266 in `game0018.sav` holds action 1, actiondir 5, actionphase 2,
+actionsegments 3, actionspell 0, actiontarget 157, actionx 19840, actiony
+28288, actionz 0, dir 5, lastaction 1, phase 1, picture 10, x 19278, y
+27985, z 0; FreeIndex is 267 and IDs is [266]. Instrument: a state dump by
+`tools/savauthor` `TestProjectileLeafDump`.
+
+- actionx and actiony equal 77 * 256 + 128 and 110 * 256 + 128, the centre
+  of cell (77, 110). actionphase plus actionsegments is 5: each driver call
+  adds 1 to the first and subtracts 1 from the second, so the record was
+  built with 5 segments and has run 2 driver calls. Action 1, lastaction 1
+  and actionspell 0 fit `SAV-1130`.
+- Picture 10 is not an archer or crossbow value (class Projectile 1, 2). It
+  is the Human Mage class 24 Projectile and the fire_arrow cast picture
+  (2 * 1 + 8). Its leaves fit either constructor, so Prj266 does not
+  witness a physical arrow shot. No stored record with picture 1..7 exists
+  in the scanned documents.
+- Population: `TestProjectileLeafDump` over 146 `.sav` files under
+  `gameversions` parsed 104; the only nonempty Projectiles store is Prj266,
+  in 3 byte-equal copies of `game0018.sav`. 42 files did not parse in this
+  instrument, so the result is bounded to the 104.
+
+**Confidence.** Medium: one record, two compatible constructors, 104 parsed
+documents.
+
+**Unknown.** A stored arrow record (picture 1..7) and its saved leaf values;
+a cast record's actionspell, which would separate the two spawners.
+
 ## Open questions
 
 - Whether a Building or Sack Position terrain key is used, replaced or
