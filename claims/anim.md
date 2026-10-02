@@ -1917,7 +1917,11 @@ do not establish that aliases or bulk writes cannot change its object.
 |---|---|---|---|---|
 | ANIM-101 | The projectile driver's default arm moves a record each call by the truncated quotient (action - position) / actionsegments per axis; stored arrow, bolt and rock records from three original saves reproduce exactly. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | ANIM-102 | `00459740` turns a vector into a 16-way direction (0 north, 4 east, 8 south, 12 west, y down) from slope bins 1/4, 3/4, 4/3 and 4 in each quadrant; the saved actiondir of three records agrees. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
-| ANIM-103 | Picture 13 (`fireexpl`) draws frame (actionphase / 2) mod 11 for 22 calls; its driver arm acts when actionphase is 4 (a 3x3 cell registration) and 8 (an OR of tile-word bit 0x2000 over the 3x3 block). | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| ANIM-103 | Picture 13 (`fireexpl`) draws frame (actionphase / 2) mod 11 for 22 calls; its driver arm acts when actionphase is 4 (a 3x3 cell registration) and 8 (an OR of tile-word bit 0x2000 over the 3x3 block). | High / Medium | ● active (amended) | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| ANIM-109 | Projectile records of picture 14 or more come only from the cast spawner (even picture 2*spell+8), client arm 0x86 (odd: 17, 27, 51), arm 0x8b, arm 0x8c (picture 36) and the loader; no shipped unit class has Projectile above 12. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| ANIM-110 | The only immediate stores of opcode 0x8b and 0x8c are in `004e9515`/`004e95f9` and `004e96d0` (spell 14, picture 36), reached via `004fe6d3` from the actor tick `004f37be`; two register-form writers stay unresolved. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| ANIM-111 | Every Fire_Ball area effect, from any actor or the siege rider, is built by `004feadb`, waits in a SpellTransport of distance/384 ticks and ends in one blast-arm 0x86 (picture 13, 22 calls); shipped data gives no second 0x86. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| ANIM-112 | An area effect stores spell id at +0x0c and picture 2*spell+9 at +0x0e; in shipped data only spells 2, 4, 9 and 21 send that picture in an 0x86 (13, 17, 27, 51), the other area-effect spells send 0x87 masks. | High | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 
 ### ANIM-101
 
@@ -1952,6 +1956,66 @@ do not establish that aliases or bulk writes cannot change its object.
 **Confidence.** High for the tick numbers, the 3x3 extent, the bit and the frame law, read from the listing. Medium for the cell predicates, whose table at `0x005ef8c4` and plane meaning were not decoded.
 
 **Unknown.** Whether bit 0x2000 or the hash entries survive into a SAV: the terrain cells around (23, 95) in a later save were not compared. Next question: those cells in a save taken after tick 8 of a burst.
+
+**Amended.** The persistence Unknown is answered in part by `SAV-1150` and `SAV-1151`: the Fog store writes bit 15 only, no other store of the tile plane into a SAV was found, and no SAV store or load routine addresses the `+0xa7c` hash. Whether a load clears the bit is Medium (`SAV-1150`), and a saved-cell comparison does not apply since a SAV carries no tile plane beyond the Fog runs.
+
+### ANIM-109
+
+- Constructor `00461680` has six direct call sites: client arms 0x86, 0x8b, 0x8c (`0041745d`, `00417c95`, `004180cc`), unit shot `0045d680` (`0045d6e4`), cast spawner `0045d910` (`0045d983`) and the loader (`00478470`). The copy constructor `00461740` has one, the spawner's second record for picture 60 (`0045dc78`). Seven `push 0x14c` allocations match (`evidence/xrefs.txt`, `evidence/imm-14c-record-size.txt`). Neither address appears in a table or as an immediate.
+- Unit shot: the picture is the class Projectile. The 266 unit rows of `EXP-0428` `shot-classes.csv` that carry a value hold 0 to 7, 10 and 12, so no shipped unit shot has picture 14 or more.
+- Cast spawner: the picture is `actionspell`, which the cast message sets to `2*spell+8` (`MAGIC-CASTSPAWN-033`). Pictures 14 to 64 take the arm `0045dbc6` (0 segments) except 20 and 30 (1), 34 and 36 (13) and 60 (21) (`evidence/spawner-driver-tables.txt`). The record starts at actionphase 0 (`SAV-1147`).
+- Client arm 0x86 builds a record only for an odd picture with a loaded registry slot (`004173ec`, `0041742e`); an even picture sets the caster's action (`00417a4c` to `00417b52`, `evidence/disasm-client-arm-86-even-path.txt`). The odd pictures of 14 or more that a sender writes are 17, 27 and 51 (`ANIM-112`); each has a registry row (`evidence/spell-pictures.txt`).
+- Client arm 0x8b builds a record of the picture in `msg+0xc` with no parity guard. Leaves: x and y are `msg+0xa` and `msg+0xb` times 256 plus 128; ActionTarget is the word at `msg+0xd` when the registry slot's `+0x2c` is non-zero, otherwise ActionX and ActionY come from `msg+0xd` and `msg+0xe` the same way; actionsegments is the word at `msg+0xf`; actionphase is -1 (`00417cdc` to `00417e20`). The senders write `2*spell+8` (`ANIM-110`).
+- Client arm 0x8c builds picture 36 only (`00418108`): x and y from the two bytes of `msg+0xe` (`00418117` to `00418151`), actionsegments 13 (`0041823e`), actionphase -1, ActionTarget the word at `msg+0x10`, and a list of the words from `msg+0x10` on, counted by the dword at `msg+0xa`.
+- The loader restores records and is not a picture source.
+
+**Confidence.** High for the site list: a raw `rel32` scan (`evidence/xrefs.txt`) and a linear sweep of `.text` (`evidence/sweep-constructor-calls.txt`) agree, and both constructors are referenced by direct calls only. High for the unit class bound over the 266 rows. Medium for the odd pictures 17, 27 and 51 as the only ones an 0x86 sender writes: they take the grade of `ANIM-110` and `ANIM-112`. The spawner is reached through its vtable slot only (`MAGIC-CASTSPAWN-033`).
+
+**Unknown.** Arm 0x8a has no constructor site and carries no picture; what it does for picture 36 was not read. Pictures above 64, or a registry with other rows (customised data), are outside the shipped population.
+
+### ANIM-110
+
+- Opcode stores: `mov byte [reg+9], imm` finds 0x8b at `004e955f` and `004e962e` and 0x8c at `004e971a`, each once (`evidence/opcode-stores.txt`, 59 stores in `.text`: 25 immediate, 34 register form). Their routines are `004e9515` and `004e95f9` (0x8b) and `004e96d0` (0x8c).
+- Callers by raw `rel32` scan (`evidence/xrefs.txt`): `004e9515` at `004fe901` and `004e95f9` at `004fe91d`, both inside the spell apply `004fe6d3`; `004e96d0` at `004fea46`, inside `004fe92e`, whose one call site is `004fe8d4` in `004fe6d3`. Spell id 14 takes that branch (`004fe8b8`). The other spells reach `004fe8e0`, where `004fe0f9` selects one of the two 0x8b senders.
+- `004fe6d3` has two call sites, `004f3ab5` and `004f3adf`, both in the actor tick `004f37be`, which is installed in three vtables (`0059c3d8`, `0059c460`, `0059c4e8`); those `.rdata` slots are its only references (`evidence/xrefs.txt`).
+- `004e9515` and `004e95f9` write opcode 0x86 first and rewrite it to 0x8b when the source's word at `+0xe` is zero. The source's cell goes to `msg+0xa` and `msg+0xb`; `msg+0xc` is `2*spell+8`; `msg+0xd` is the target's id word (`004e9515`) or its cell bytes (`004e95f9`); `msg+0xf` is the segment count. The count is distance/speed when spell parameter 5 is 2, 5 for spell ids 13 and 14, and 0 otherwise; `004fe8a0` returns without a send when `00523360` is non-zero (`004fe846` to `004fe8ae`).
+- `004e96d0` writes 0x8a, or 0x8c when the source's word at `+0xe` is zero. It writes no picture byte (`MAGIC-PIC-027`).
+- Register-form writers (`evidence/callargs.txt` lists every call site with the visible pushes):
+  - `004e93c6`: the opcode argument is a constant at each call site, 0x71 (`004e9d97`), 0x6d (`004f4548`) and 0 (`004f45f9`, written as 0x6b). None is 0x86, 0x8b or 0x8c.
+  - `004ea2a7`: constants 0xb7, 0xb8, 0xaf, 0x03, 0x83. `004ea2f6`: constants 0x0b, 0xaa, 0x84, 0xb4, 0xb5, 0x74, 0x92, 0x67, 0x97.
+  - `004fdf57` and `004fe25d` copy spell parameter 6 into `msg+9` (`004fe074`, `004fe27c`); the shipped spell rows hold 0, 1, 3, 5, 6, 7, 8 and 10 there.
+  - `004ea58e` is the receive-side decoder keyed on its opcode argument; `004f032b` sets 0x86 once in the shared buffer `005f2190` (`evidence/xrefs-message-buffer-5f2190.txt`).
+  - `004e8eb3` and `004e97f9` take the opcode as an argument whose callers pass variables (13 and 3 call sites); `004e97d7` passes 0x89 to the second.
+
+**Confidence.** High for the immediate stores and the call chain: instructions in listings and scans over all of `.text`. Medium for "no other routine sends 0x8b or 0x8c": the register-form writers above are resolved except the last two, and the scan does not see a block copy or an encoding it does not decode. This answers the open item of `MAGIC-PIC-027`.
+
+**Unknown.** Whether any call of `004e8eb3` or `004e97f9` carries 0x8b or 0x8c. A customised Data.bin could put 0x8b or 0x8c into spell parameter 6 and reach `004fdf57` or `004fe25d`. The condition on the source's `+0xe` word was not decoded.
+
+### ANIM-111
+
+- `004feadb` has three call sites: `004f3c1b` in the actor tick `004f37be`, `004fea7c` in `004fe92e` (spell 14) and `004fead0` in `004feaa2`. `004feaa2` has two callers, `004f3bfa` in the actor tick and `004fbb4e` in the rider `004fba0e`; it skips spell id 14 (`evidence/xrefs.txt`, `evidence/disasm-effect-create-4feaa2.txt`).
+- Default arm `005001fc`: when spell parameter 8 is not 1 it builds an AreaEffect (`005003c7`) with `+0x0c` the spell id and `+0x0e` `2*id+9` (`00500252` to `00500273`, `00500455` to `0050045f`). When parameter 5 is 2 it then builds a SpellTransport around it (`005005d6`) and adds the transport to the effect list (`00500645`), not the inner effect. Its tests read spell parameters 5, 8, 11 and the spell id.
+- Fire_Ball is spell 2: parameter 5 is 2, parameter 7 is 384, parameter 8 is 3, parameter 11 is 0 (`evidence/databin-spell-rows-en-ru.txt`). The effect's mode word `+8` stays 0, so the tick `004fc9b2` takes the blast arm `004fd515` (`00523bc0`, `00523ba0`; `MAGIC-AREADRAW-049`).
+- Transport: countdown `distance/speed` at `+0x4c` (`004fda47`); each tick subtracts 1; at 0 it adds the inner effect to the list and sets its own reap flag (`004fdc26`).
+- Blast arm: one call `004e98e4(effect, 1)` at `004fd529`. For spell id 2 it writes opcode 0x86, picture `+0x0e` (13) and 22 calls (`004e9904` to `004e992d`). The arm then sets the reap flag (`004fd68f`).
+- The cell loop calls `004fd697`, which dispatches on spell id minus 2 (`evidence/layer-erase-table.txt`). Its sends pass an object found in the cell's layer slots, not the blast; such a send is an 0x86 only if that object's spell id is 2. The blast arm registers nothing in the layers, so shipped Fire_Ball sends no second 0x86. The cloud end arm `004fd28d` is reached only with mode bit 1 set (`004fc9d7`, `004fcb10`).
+- The one other caller of `004e98e4` for live effects is the player-join routine `004d303e` (`004d3517`), which walks the effect list.
+
+**Confidence.** High that every Fire_Ball effect takes this creation path and single send: all three call sites enter one creator whose default arm tests spell parameters only. Medium for the shipped-data limit on the second send, which rests on layer registration being cloud-only (`MAGIC-AREADRAW-049`), not on a run. A Data.bin that gives Fire_Ball a duration changes `+8` and the mode.
+
+**Unknown.** The branch tests in the actor tick that choose `004f3c1b` or `004f3bfa`. A Fire_Ball cast by a caster outside the classes that use `004f37be`. Whether a SAV restores a live effect (the loader was not read for effects), which would be a creation path outside `004feadb`.
+
+### ANIM-112
+
+- `004feadb` stores `+0x0c = [spell+8]` (the spell id) and `+0x0e = 2*id + 9` (`00500252` to `00500273`, `00500455` to `0050045f`).
+- Senders: `004e9863` (staged arm `004fcd1f`, one send per accepted cell, `004fcf0c`) writes opcode 0x86 with `msg+0xc = [effect+0xe]`; `004e98e4` writes 0x86 with `msg+0xc = [effect+0xe]` only when `[effect+0xc]` is 2 and writes 0x87 otherwise.
+- The staged mode is `+8 = 2`, set when parameter 8 is 5 (`005004da`); the shipped spells with parameter 8 equal to 5 are 4, 9 and 21. Spell 2 is the one blast. So the odd pictures sent in an 0x86 are 13, 17, 27 and 51, and each has a projectiles.reg row, so the client builds the record (`evidence/spell-pictures.txt`).
+- The other area-effect spells (3, 7, 8, 12, 17, 19: pictures 15, 23, 25, 33, 43, 47) send 0x87; pictures 33 and 43 have no registry row.
+- Data.bin has 28 spell rows; the EN and RU parameter lists are compared in `evidence/databin-spell-rows-en-ru.txt`.
+
+**Confidence.** High: the formula and both senders are instructions; the spell sets come from the parameter columns of the shipped rows (28 rows).
+
+**Unknown.** Customised Data.bin rows move spells between the modes (G2).
 
 ## Human class record and swing sound
 

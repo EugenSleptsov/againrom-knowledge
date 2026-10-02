@@ -14275,9 +14275,13 @@ Medium: five saves; the money mechanism is a hypothesis.
 | SAV-1142 | In those saves the rock's and the bolt's x, y equal the shooter's position plus 8 times (class ShootOffset pair minus Center); segments are the shooter-target distance divided by 200, a divisor taken from SAV-1130. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1143 | In those saves each shooter's simulation countdown expires on the tick its projectile is collected: damage tick minus creation tick equals the shot's total segments (6, 7, 7) for an archer, a catapult and a crossbowman. | Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1144 | The picture-13 record has the leaves client arm 0x86 writes: ActionTarget 0, x and y equal to ActionX and ActionY at a cell centre, actionphase starting at -1, and 22 calls in all, the constant `004e98e4` sends for spell 2. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
-| SAV-1145 | The picture-13 Fire_Ball burst at the catapult's target cell is created 4 ticks after the catapult's damage tick; the rider path leads to it, but a cast by another actor is not excluded, so the siege rider stays Medium. | Medium / Unknown | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1145 | The picture-13 Fire_Ball burst at the catapult's target cell is created 4 ticks after the catapult's damage tick; the rider path leads to it, but a cast by another actor is not excluded, so the siege rider stays Medium. | Medium / Unknown | ● active (amended) | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1146 | In the same three saves FreeIndex (28, 29, 31) equals max(IDs) + 1 and ids 27 and 28 were free when 29 and 30 were built, so one shared counter allocates and no id is reused; the pair 29, 30 is saved newest first. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1147 | A unit shot starts with actionphase 0, so its built segment count is actionphase plus actionsegments; a record built by client arm 0x86 or 0x8b starts at -1, so that count is actionphase plus actionsegments plus 1. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1149 | In `game0024` the catapult shot starts a SpellTransport countdown of 1448/384 = 3 ticks before the Fire_Ball blast; the observed 4-tick gap to the burst record is that countdown plus one tick whose cause was not read. | Medium / Unknown | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| SAV-1150 | A SAV does not carry tile-word bit 0x2000: the Fog store writes bit 15 only and no other tile-plane store was found; the clear at `00484e6c` is the view-plane parser's loop, so that a load starts unmarked is Medium. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| SAV-1151 | No instruction of the SAV store or load routines addresses the view hash at +0xa7c; 13 instructions in 8 other routines do (the driver and view code), so the hash is not saved. | Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| SAV-1152 | Of the 121 `.sav` files under the saves root, 80 have a Projectiles store and 5 of those hold a record (6 records, pictures 1, 2, 5, 10, 13); none holds picture 14 or more. | Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 
 ### SAV-1141
 
@@ -14341,6 +14345,8 @@ Medium: five saves; the money mechanism is a hypothesis.
 
 **Unknown.** Why the burst follows the damage tick by 4. Whether `004fd28d` at `004fd348` sends a second 0x86 for spell 2 when the area effect ends (`004e98e4` branches on spell id, not on its flag). Whether a Fire_Ball cast by a mage at the same cell builds the same record. Next question: a save held between the damage tick and the burst, plus the area effect's first-tick delay and lifetime (`+0x4c`).
 
+**Amended.** The third bullet names the cloud arm (`004fccd8`, `004fd09c`) for Fire_Ball; the effect's mode word is 0 and its tick takes the blast arm `004fd515` (`ANIM-111`). The rider is not the only source: one creator serves every actor (`ANIM-111`). The gap is decomposed in `SAV-1149`. `004fd28d` is a cloud-only arm and sends no second 0x86.
+
 ### SAV-1146
 
 - Saves: `game0022` FreeIndex 28, IDs [27]; `game0023` FreeIndex 29, IDs [28]; `game0024` FreeIndex 31, IDs [30, 29].
@@ -14361,6 +14367,52 @@ Medium: five saves; the money mechanism is a hypothesis.
 - Prj266 of `SAV-1134` (phase 2, segments 3, picture 10) sums to 5. The cast spawner starts at actionphase 0 (`MAGIC-CASTSPAWN-033`), so it was built with 5 segments; an arm build would have built 6.
 
 **Confidence.** High: the initial stores are instructions. The three unit shots (Prj27, Prj28, Prj30) are the only independent agreeing observations; Prj29 is checked against its own 22-call constant and the Prj266 build count is inferred.
+
+### SAV-1149
+
+- Shot: Unit 47 (catapult) at (4992, 25472), target Human 340 at (6016, 24448), both from the saved `game0022` actor records (`evidence/transport-countdown.txt`). `004fb7d2` returns the truncated square root of the summed squared word differences: 1448. Fire_Ball speed is 384 (`ANIM-111`). The transport's countdown is the quotient, 3 (`004fda47`, IDIV at `004fdaad`).
+- The countdown is 3 after construction and the transport's third tick fires it (`004fdc26`); the inner effect is then added to the effect list and its blast follows.
+- Order inside one simulation sub-tick: message drain `004d88bf`, then `004d1d86`, which makes a virtual call (vtable +0x18) for each element of one list and then runs the effect walk `00510247`, then the queue flush `004e9e7c` (`evidence/disasm-sim-subtick-4d891a.txt`). Whether that list holds the actors of `004f37be`, and whether a node appended during the effect walk is visited in the same walk, were not shown.
+- Observed (`SAV-1145`): damage tick 3098, burst record created at 3102. If the transport's first tick is the tick after creation and the blast is sent on the tick the transport fires, the blast is sent on 3101 and a drain on the next tick creates the record at 3102.
+
+**Confidence.** Medium: the countdown value is arithmetic on saved positions and instruction constants, and it fills three of the four ticks. Unknown for the fourth: the walk order and the client's delivery latency were not read.
+
+**Unknown.** Whether the inner effect first ticks the tick after the transport fires: if so, the observed gap needs no leftover tick. A save held at ticks 3098 to 3101 of the mission-150 catapult battle would show the transport's `+0x4c` and decide which order holds.
+
+### SAV-1150
+
+- Bit 0x2000 of the tile word is set by the client mask arm for wall_of_fire (`0041f8b8`, `MAGIC-WALLFIRE-058`) and by the Fire_Ball burst's driver arm (`ANIM-103`); it is tested at `0041f701`.
+- The SAV Fog store writes `tile & 0x8000` only and the load ORs the state back (`SAV-FOG-061`). So the Fog section cannot carry bit 0x2000. No other store of the tile plane into a SAV was found.
+- Clears of the bit (`evidence/imm-clear-mask-dfff-e000.txt`, immediates 0xdfff, 0xe000 and 0xffffdfff over `.text`): `00484e6c AND word [edi+ecx*2], 0xdfff` in the loop that ends the light landscape parser (`00484e4f` to `00484e99`, `evidence/disasm-alm-tile-clear-484e4f.txt`), once per cell over width times height; and `0041f36c` in the client 0x9b arm, which clears and rewrites the bit from the server's static plane bit 0x10 (`0054e140`, `0041f2b7`; `evidence/disasm-resync-54e140.txt`). The other two hits (`0047a251`, `push 0xe000` at `00585c66`) are not tile words.
+- `ALM-TILEVIEW-122` scopes the parser's loop to the view plane and leaves later ownership and ordering Unknown. Whether that plane is the one the Fog store reads (`00479343`), and whether the clear runs before a SAV's state is applied, was not shown.
+- Bit 13 is also ALM-authored on 7 464 cells over 38 maps (`TERR-TILE-044`), so the clear is not by itself evidence about a burst mark.
+- `evidence/imm-2000-tile-bit.txt` lists the 23 `.text` hits of the immediate 0x2000. The setters and tests read here are `0041f2b7`, `0041f3d4` and the driver arm; `0047a126` and `00472fcb` act on window flag words. The other hits were not classified.
+- The player-join routine `004d303e` sends the 0x9b resync (`004d355e`).
+- Method step 3 (compare saved terrain words around the burst cell) did not apply: a SAV carries no tile plane except the Fog runs.
+
+**Confidence.** High that the Fog runs hold bit 15 only. Medium that no other producer writes the plane into a SAV, the scope `SAV-FOG-061` already states, and Medium that a load starts without the mark: that rests on the view-plane clear and the 0x9b resync, whose ownership against the Fog plane is open.
+
+**Unknown.** Whether a SAV taken between the burst's call 4 and call 8 resumes with the cells unmarked: no corpus save was taken in that window. A save held after the 0x86 burst's call 8 (tick 3103 or later in the mission-150 battle) would test it directly.
+
+### SAV-1151
+
+- Instructions that address displacement 0xa7c: `lea` at `00461b9b` and `00461c89` in the projectile driver `00455320`; `add reg, 0xa7c` at `004025dc`, `00403480`, `0040485a`, `0040a2cf`, `0040b10e`, `0040e6c7`, `0040e78b`, `0040e8db`, `0041f776`, `00586625` and `005866fd` (`evidence/disp-a7c-hash.txt`, `evidence/imm-a7c-hash.txt`).
+- Their routines start at `004023c6`, `0040308c`, `00404135`, `00407b1a`, `0040e6a1`, `0041f3d4`, `00455320` and `00585eb5` by prologue. None of the 13 addresses lies between `00470000` and `004d1000`, the range of the SAV store `00478c40`, the load `00477c00` and `004d0cb7` (`SAV-FOG-061`, `SAV-DOC-053`).
+- The hash holds keys `(y << 8) | x`. The driver arm 0x0d writes it at the burst's call 4 (`ANIM-103`) and `0041f776` writes it for wall_of_fire (`MAGIC-WALLFIRE-058`).
+
+**Confidence.** Medium: absence of a serializer reference by displacement. The scan sees memory operands and `add reg, imm`; a block copy of a containing object, or a displacement formed from two additions, is not seen.
+
+**Unknown.** The hash's consumer and what a loaded game does with it. A save held after the burst's call 4 and before call 8 would hold its content if it were serialized.
+
+### SAV-1152
+
+- `corpusscan.py` walks every `.sav` under the saves root with the `&YA1` reader of `EXP-0430`: 121 files, 80 with a Projectiles store, 40 loaded as `&YA1` documents without a Projectiles section (1 527 to 5 674 bytes, no world section) and 1 reader failure; 75 of the 80 have an empty store and 5 have a record (`evidence/save-corpus-scan.txt`).
+- The 5 files hold 6 records with pictures 1, 2, 5, 10, 10 and 13; two of the files are byte duplicates. The three `game0022` to `game0024` saves hold pictures 1, 5, 2 and 13.
+- No record has picture 14 or more.
+
+**Confidence.** Medium: a bounded negative over the 80 files that have a Projectiles store, from one corpus; the 40 files without the section hold no world, and the one reader failure is not counted.
+
+**Unknown.** A mission-150 save held while a cast of Wall of Fire, Fire Sacrifice, Acid Stream or Meteor Storm is in flight, or while its burst runs, would hold a picture of 14 or more.
 
 ## Open questions
 
