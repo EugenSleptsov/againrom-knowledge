@@ -2094,6 +2094,10 @@ writer was located.
 | ITEM-EFFDISP-075 | All 49 accepted effect keys, their operand widths and their state-0 equip/remove consumers are enumerated. | High | ● active | [EXP-0225](../experiments/EXP-0225-item-effect-grammar/) |
 | ITEM-CASTLINK-076 | `castSpell` is both an ordered general-list Effect and the source of a separate Weapon-owned Spell. | High / Medium | ● active | [EXP-0225](../experiments/EXP-0225-item-effect-grammar/) |
 | ITEM-EFFSAVE-077 | Effect persistence preserves ordered values but omits transient `+0x44`. | High / Medium | ● active | [EXP-0225](../experiments/EXP-0225-item-effect-grammar/) |
+| ITEM-EFFARM-146 | No instruction in the 46 arm bodies of `FUN_00501a22` stores into or points at actor `+0x10e..+0x113`; each arm tail then recomputes live `+0xce..+0xd3` through `vt+0x50`. | High / Medium | ● active | [EXP-0433](../experiments/EXP-0433-effect-arms/) |
+| ITEM-EFFKEY-147 | Each of the 49 accepted effect keys adds to one named live or modifier field; the complete key-to-field-and-offset table is published, including the word that kinds 16, 19 and 21..24 add to. | High | ● active | [EXP-0433](../experiments/EXP-0433-effect-arms/) |
+| ITEM-EFFSYM-148 | Apply and remove are one add of the signed operand times +1 or -1; the exceptions are caps, floors, the singleuse skip, elemental assignment and `teachSpell`, listed per key. | High | ● active | [EXP-0433](../experiments/EXP-0433-effect-arms/) |
+| ITEM-EFFSHIP-149 | The shipped equipment cells carry 266 accepted effects over 16 keys per root, identical in EN and RU; none belongs to an arm body that stores into the damage-kind block. | Medium | ● active | [EXP-0433](../experiments/EXP-0433-effect-arms/) |
 
 ### ITEM-CASTSTATE-056
 
@@ -2298,6 +2302,158 @@ two Unit shipped cells per root, which are identical corpus observations.
 **Confidence.** High for static writer/reader order and the omitted `+0x44`.
 Medium for the bounded eight-witness save population, whose EN/RU files are
 byte-identical.
+
+### ITEM-EFFARM-146
+
+- `FUN_00501a22` is the Effect `vt+0x48` dispatcher: `this` = Effect,
+  argument 1 = actor, argument 2 = multiplier. `FUN_0050177e` (`vt+0x40`,
+  +1) and `FUN_00501938` (`vt+0x44`, -1) reach it. Its only references are
+  the `.rdata` slots `0059c6d0` and `0059c728`, one in each Effect vtable
+  (`0059c688`, `0059c6e0`); there is no direct caller.
+- The jump table at `0x00502846` has 50 dwords and 46 distinct targets. The
+  bound `CMP 0x31` sends a larger index to a diagnostic arm that stores no
+  actor field.
+- Every arm was disassembled to its `JMP 0x0050282b` tail. The extraction
+  lists 43 distinct stored displacements: actor `+0x1c`, the live fields
+  `+0x84..+0x8c`, `+0x94`, `+0x9a`, `+0xa4`, `+0xbe`, `+0xc0`, the modifier
+  fields `+0xd4..+0x10c`, the dirty word `+0x150`, and mover `+0x0a`. None
+  lies in `+0xce..+0xd3` or `+0x10e..+0x113`; these are arm-body stores. Kind 25 stores the u16 at
+  `+0x10c..+0x10d`, which ends one byte before the damage-kind block.
+- Calls from an arm: the class predicates `FUN_0051cb70` and `FUN_00523ab0`
+  (actor as `this`, a test), `vt+0x30` (humanoid test), and for kind 42 the
+  spellbook routines `FUN_00500a4a`, `FUN_00500957`, `FUN_004fdd96` and the
+  allocator. Kind 42 passes the spellbook at `actor+0x140` or a new object,
+  never the actor.
+- No arm body contains `LEA`, `REP`, `MOVS`, `STOS`, `memcpy` or `memset`, so
+  the arm bodies, read instruction by instruction, have no bulk or pointer
+  form of such a store.
+- Every arm tail is `CALL [actor+0x50]`. For a Human that is the derive
+  `FUN_004f7dfc` (`HERO-ORDER-014`, `HERO-CLASS-020`): it clears live `actor+0xbe`
+  (0x16 bytes) and folds the modifier back in (`FUN_004f54f8`, `FUN_005233a0`,
+  `FUN_004fa4eb`). So an apply or remove rewrites live `+0xce..+0xd3` from the
+  modifier bytes, which no arm body changes.
+- The prelude stores one value, `word [actor+0xd8] = 0` when that signed
+  word exceeds `0x18`. The common tail is a `vt+0x50` call and the return.
+- Table `effect-arm-table.tsv` column `stores_in_0x10e_0x113` reads `none`
+  for all 50 kinds; `armtable.py` stops with exit 1 if an extraction differs
+  from its per-arm model.
+
+**Confidence.** High for the arm bodies, the prelude and the tail, read as
+instructions on `rom.exe`, which is byte-identical in both roots: the live
+alternative A2 (an arm adds an 8-bit value into the block) is excluded for
+every arm body. Medium for the effect-level statement that no effect apply or
+remove changes `+0x10e..+0x113`, callees included; it rests on the whole-image
+sweep of `HERO-MODDK-161`.
+
+**Unknown.** Token states 8, 12 and 17 divert in `FUN_0050177e` and
+`FUN_00501938` before this dispatcher. The equipment grammar does not
+produce them (`ITEM-EFFDISP-075`); the whole-image sweep of
+`HERO-MODDK-161` found no store into the block in those routines either.
+The `vt+0x50` callees (the derive and its sub-routines) were not read whole for this claim, and the Unit-family callee was not read.
+
+### ITEM-EFFKEY-147
+
+- Operand `S` is defined in `ITEM-EFFSYM-148`. "Modifier" means the 0x40-byte
+  object at `actor+0xd4`; "live" means the actor's own field. Complete table
+  with key names, jump arms, gates and `+0x150` flag bits:
+  `effect-arm-table.tsv`.
+- 1 price: `actor+0x1c` i32. 2 body, 4 reaction, 3 mind, 5 spirit: live
+  `+0x84`, `+0x86`, `+0x88`, `+0x8a` u16, and modifier byte `+0xd4`, `+0xd5`,
+  `+0xd6`, `+0xd7`.
+- 6 health: live `+0x94`. 9 mana: live `+0x9a`. 7 healthMax: live `+0x94` and
+  modifier `+0xdc`. 10 manaMax: live `+0x9a` and modifier `+0xe0`, mage only.
+  8 healthRegeneration: modifier `+0xde`. 11 manaRegeneration: modifier
+  `+0xe2`, mage only. 12 toHit: modifier `+0xe6`.
+- 13 damageMin, 43 damage and 49 damageBonus: modifier u8 `+0xf4` (damage
+  base). 14 damageMax: modifier u8 `+0xf5` (spread). 44..48 damageFire,
+  Water, Air, Earth, Astral: assign modifier `+0xf9` and `+0xfa` from
+  operand bytes `effect+0x40`, `+0x41` and `+0xfb` = 1..5.
+- Four keys choose by `vt+0x30` (humanoid, true on the `0x59c448` and
+  `0x59c4d0` families). 15 defence: modifier u16 `+0xfe`, else live `+0xbe`.
+  16 absorbtion: modifier `+0x100`, else live `+0xc0`. 17 speed: modifier
+  `+0xd8`, else live `+0x8c`. 19 scanRange: modifier `+0xe4`, else live
+  `+0xa4`, both with `S` shifted left 8 first.
+- 20..25 protection0, Fire, Water, Air, Earth, Astral: modifier u16 `+0x102`,
+  `+0x104`, `+0x106`, `+0x108`, `+0x10a`, `+0x10c`; no live store.
+- 26 fighterSkill0 and 32 mageSkill0 write modifier `+0xe8`; 27..31 (Blade,
+  Axe, Bludgeon, Pike, Shooting) and 33..37 (Fire, Water, Air, Earth,
+  Astral) write `+0xea`, `+0xec`, `+0xee`, `+0xf0`, `+0xf2`. Kinds 26..31
+  need the fighter gate (`FUN_00523ab0`), kinds 32..37 the mage gate
+  (`FUN_0051cb70`). 18 rotationSpeed: mover (`actor+0x154`) `+0x0a` u8.
+- 0, 38..41 change no actor state. 42 teachSpell adds a missing Spell to the
+  spellbook.
+- Answer to the DIV-1659 question: absorption (16) adds to modifier `+0x100`
+  on a humanoid; sight (19) to modifier `+0xe4`; protections 21..24 to
+  `+0x104`, `+0x106`, `+0x108`, `+0x10a`. The folds of `HERO-MOD-016` and
+  `HERO-FOLD-033` add these modifier words into live `+0xc0`, `+0xa4` and
+  `+0xc4..+0xca`.
+
+**Confidence.** High. All 50 table slots were byte-asserted against the
+extraction in `armtable.py`; each field offset is an instruction operand.
+
+**Unknown.** What `vt+0x50` does for the `0x59c3c0` Unit family: kinds 20..25
+write only the modifier on every class, and whether a non-humanoid actor
+folds it into the live protections was not read.
+
+### ITEM-EFFSYM-148
+
+- `S = multiplier * operand`. The operand is the signed low word at
+  `effect+0x40` when the mode byte `+0x3d` has bit 1, 2 or 4 (duration,
+  continuous, charges; masks at `0059bc08`, `0059bc0c`, `0059bc10`), else
+  the signed dword (modes 0 and 8; singleuse mask `0059bc14`).
+- Every add arm computes `field + S` at the field's own width, so a modifier
+  byte or word wraps modulo 256 or 65536 and remove is the exact inverse
+  except where this card lists it. Kind 19 shifts `S`
+  left 8 first (still an exact inverse). Kind 43 drops the spread byte of the
+  operand range, so the stored base byte is not the inverse of the range.
+- Caps, no floor: kinds 2..5 cap the live word at 100 after the add; kind 6
+  caps health at `+0x96`; kind 9 caps mana at `+0x9c`. A remove after a cap
+  does not restore the capped amount.
+- Floors at 0 (signed below 0 becomes 0): kinds 20..25 on the modifier word;
+  kind 15 on the live word (non-humanoid path only); kind 16 on the modifier
+  word (humanoid path only). The other path of kinds 15 and 16 has no floor.
+- Kinds 2..5 skip the modifier byte when the Effect mode has bit 8
+  (singleuse); the live word always changes.
+- Prelude: a signed modifier speed `+0xd8` above `0x18` is zeroed before
+  every dispatch of any kind.
+- Kinds 44..48 assign `+0xf9`, `+0xfa`, `+0xfb`; the multiplier is ignored,
+  so remove writes the same bytes and restores nothing.
+- Kind 42: apply adds a missing Spell; remove passes the negated id to the
+  same lookup and is not an inverse.
+- An arm with flag bits ORs them into `actor+0x150` (table column
+  `dirty_flags_or_actor_0x150`). Every arm ends in the `vt+0x50` recompute.
+
+**Confidence.** High for the arithmetic structure, read from the
+instructions. No arm was executed.
+
+**Unknown.** Whether any shipped operand reaches a cap or floor (the
+population is `ITEM-EFFSHIP-149`; no operand was run through the caps).
+
+### ITEM-EFFSHIP-149
+
+- Input: the committed equipment-cell population of `ITEM-EFFPOP-071`
+  (`tools/itemeffect`), 260 braced cells per root, joined to the arm table of
+  `ITEM-EFFKEY-147`. Rows carry collection, runtime row, slot, position,
+  key, mode and raw dword; the signed operand is the low word for modes 1, 2
+  and 4 and the dword otherwise.
+- 266 accepted effects per root, 16 keys; EN and RU rows are equal on
+  (collection, row, slot, position, kind, key, mode, raw), 266 of 266.
+- Per key (EN = RU): castSpell 48, defence 66, protectionAir 37,
+  protectionFire 35, protectionWater 22, protectionEarth 20, toHit 9,
+  absorbtion 7, scanRange 7, speed 5, damageBonus 3, healthMax 2,
+  protectionAstral 2, mind 1, reaction 1, skillPike 1.
+- 189 effects per root (defence, absorption, protections) target the defence
+  half of the modifier, `+0xfe..+0x10d`. 0 per root belong to an arm whose
+  body stores into `+0x10e..+0x113` (no arm body does, `ITEM-EFFARM-146`).
+- Per-item keys, operands and modes: `effect-rows.tsv`.
+
+**Confidence.** Medium: the join is exact, but the population inherits the
+grade of `ITEM-EFFPOP-071`, including that claim's one malformed nested
+brace, and the absence result inherits the arm-body scope of
+`ITEM-EFFARM-146` (the effect-level statement is Medium).
+
+**Unknown.** Items produced at run time (enchantments, drops, magic items)
+are outside the committed cells.
 
 ## Authored enchantments, death drops and item producers
 

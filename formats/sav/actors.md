@@ -101,9 +101,13 @@ modifier is not in general the base.
 The live/base/modifier naming is carried from the actor-layout rows, not
 established on the wire; what the wire shows is one helper serving two spans of
 one width. What the individual bytes of the 22-byte and 64-byte spans mean
-beyond those field lists is Unknown.
+beyond those field lists is Unknown. In the permitted save corpus (90 files, 1,360 actor
+records) 14 records in 7 files carry a nonzero modifier damage-kind byte; the 7 files are 4
+distinct files (three are byte copies), so these are 8 records from one dated series. All are Humans whose six
+damage-kind bytes and six protection words are 100, the output pattern of the one routine that
+stores there. Which path produced them is Unknown (`HERO-MODDK-161`).
 — SAV-1031, SAV-UNITPROG-156, SAV-CITYSTORE-516, SAV-HUMLOAD-445, HERO-MOD-016,
-UNIT-CTOR-004, UNIT-GATE-013
+HERO-MODDK-161, UNIT-CTOR-004, UNIT-GATE-013
 
 A city-shape save's roster is measured end to end in decoded-stream
 coordinates. One preserved 6,110-byte stream: head `0..75`, Player list

@@ -40,9 +40,15 @@ result = max(sum, 0) ; the melee strike subtracts it from target+0x94
 side effect: target+0x40 = the attacker, target+0x48 = A.elemKind when the attacker is a mage
 ```
 
-The six bytes at `+0xce … +0xd3` are therefore **resistance by weapon class**, indexed by the
-attacker's own active skill slot (0 = General, 1..5 = blade/axe/bludgeon/pike/shooting), and they
-are never re-derived for a human — an equipped item is their only source. A protection is a
+The six bytes at `+0xce … +0xd3` are therefore **resistance by weapon class**, read from the
+target and indexed by the attacker's own active byte (`attacker+0xb6` for a melee strike; 0 =
+General, 1..5 = blade/axe/bludgeon/pike/shooting; `HERO-DKIDX-162`), and they are never
+re-derived for a human. No shipped Armor or Shield block and no effect-arm body writes the modifier bytes (the live
+bytes are recomputed from the modifier; a block loaded from a SAV is Unknown). The writers found
+are the `#modify … +god` order and two spawn paths (all six bytes
+and six protections set to 100), the archive and the constructor zero fill (`HERO-MODDK-161`). The
+active byte is the `Weapons` attackType for types below 10 and 0 otherwise; the other callers of
+the resolver were not read. A protection is a
 percentage, clamped to `[0,100]` by step 16, so 100 is immunity.
 
 ## Regeneration (`FUN_004f4204`, the actor's `vt+0x14`)

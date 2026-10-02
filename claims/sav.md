@@ -14414,6 +14414,130 @@ Medium: five saves; the money mechanism is a hypothesis.
 
 **Unknown.** A mission-150 save held while a cast of Wall of Fire, Fire Sacrifice, Acid Stream or Meteor Storm is in flight, or while its burst runs, would hold a picture of 14 or more.
 
+## Actor damage-kind bytes and their writers
+
+The two `HERO-` cards in this topic belong to the Heroes ledger and move to `hero.md` when that ledger is rewritten as cards.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| HERO-MODDK-161 | `FUN_004fc2e8` is the only routine storing a constant into actor `+0x10e..+0x113` (all six bytes and six protections to 100); the other writers zero, copy through the archive, or add zero from shipped Armor and Shield. | Medium | ● active | [EXP-0433](../experiments/EXP-0433-effect-arms/) |
+| HERO-DKIDX-162 | A unit-resolver strike reduces damage by the target's byte at `+0xce` plus the attacker's own active slot (attacker `+0xb6`), so slots 1..5 read `+0xcf..+0xd3`. | High / Unknown | ● active | [EXP-0433](../experiments/EXP-0433-effect-arms/) |
+
+### HERO-MODDK-161
+
+- Sweep: every byte, word and dword store with a register-based
+  displacement in `0x10b..0x113` over the whole `.text` of `rom.exe` (capstone
+  linear sweep with data resynchronisation, 47 hits; EN and RU images are
+  byte-identical). One hit lies in a routine of the actor families
+  (`0x59c3c0`, `0x59c448`, `0x59c4d0` constructors): `004fc339 MOV byte ptr
+  [ecx+0x10e],0x64` in `FUN_004fc2e8`. Of the other 46, two are the
+  dispatcher's word stores at `+0x10c` (`ITEM-EFFKEY-147` kind 25) and 44 are
+  dword stores at `+0x10c` or `+0x110` in 32 functions, none of which stores
+  an actor-family vtable constant (the functions, their callers and vtable
+  references are in `ghidra-owner-classes.txt`).
+- `FUN_004fc2e8` loops `i = 0..5` writing the u16 `100` at `actor+0x102+2i`
+  and the byte `100` at `actor+0x10e+i`, then calls `vt+0x50`. Its callers
+  are 4 sites in 3 owners. `FUN_004d4e18` (sole caller `FUN_004d5dd8`) calls
+  it at `004d520f` for the `self` target and at `004d527b` for each `army`
+  actor, in the arm taken when the order text matches the string `+god`
+  (`push 0x5c6280` at `004d51ee`, beside the strings `#modify `, `self`,
+  `army`, `+spell `). `FUN_004d3755` (`004d3dd1`) and `FUN_004d403c`
+  (`004d4871`) call it on a new actor when a `+0x12c` or `+0x134` dword of
+  their source record is nonzero (`+0x134` only for `FUN_004d403c`).
+- Zero fill: five actor constructors call `FUN_004f5438`, which clears the
+  whole 0x40-byte modifier object.
+- Archive: `FUN_004f55cd` copies the 0x40-byte modifier object through the
+  archive, so a nonzero value can also arrive from a loaded SAV in the direction chosen by a test on `FUN_00449630`; its one direct
+  caller is `FUN_00510518`.
+- Folds: `FUN_004fa4eb` and `FUN_004fa593` add or subtract a 0x16-byte block
+  into the modifier (`this = actor+0xfe`) and the live block (`actor+0xbe`).
+  Their callers are Armor and Shield equip and remove (`FUN_0050c8d0`,
+  `FUN_0050c9de`, `FUN_0050d2de`, `FUN_0050d3f3`), whose shipped blocks carry
+  zero in the damage-kind bytes (`ITEM-ARMFOLD-033`; a block loaded from a SAV
+  is Unknown), and `FUN_005233a0`, reached
+  from the fold `FUN_004f54f8` (modifier into live).
+- Weapon equip `FUN_0050def2` stores modifier `+0xe6`, `+0xf4`, `+0xf5`,
+  `+0xf9..+0xfb`, `+0xfe` and the active byte `+0xb6`; neither it nor unequip
+  `FUN_0050e1b5` has a store in the block. No effect arm does
+  (`ITEM-EFFARM-146`).
+- Corpus: of 1,360 walked actor records in 90 save files (the two install
+  save directories and 15 dated directories), 14 carry a nonzero modifier
+  damage-kind byte, in 7 files. Three of those files (`game0018..0020`) in
+  the install directory are byte-identical copies of dated-directory files, so
+  the 14 records are 8 records in 4 distinct files, all from one dated series.
+  All 14 are Humans with all six modifier damage-kind bytes
+  and all six modifier protection words equal to 100 and live damage-kind
+  bytes equal to 100, the output pattern of `FUN_004fc2e8`. A further 9 Unit records carry nonzero live damage-kind bytes with a
+  zero modifier.
+
+**Confidence.** Medium. The direct-store sweep and every named routine are
+exact, but the sweep cannot see bulk copies with a register-held size,
+`REP MOVS`, or pointer arithmetic that never encodes the displacement. The
+`memcpy` size sweep covers `0x4f0000..0x530000` only, and 35 of its 44 sites
+print a register as the size operand, which the file does not resolve. The
+address-form sweep (`sweep-addr.txt`) lists 80 pointer-forming
+instructions, of which the actor-class ones are the constructors, the spawn
+routine `FUN_004f59de`, the derive `FUN_004f7dfc`, the archive routine and
+the Armor and Shield routines above.
+
+**Unknown.** Which routine wrote the 14 saved records: the `#modify` order is
+consistent with them and no other path found here produces that pattern, but
+no save records its origin. What sets the placed-object dwords `+0x12c` and
+`+0x134`. The writer of the 9 Unit records' live bytes (the Unit definition
+load path was not read). Spell and potion writers beyond the Effect
+dispatcher, taken from `MAGIC-ATTACH-016` and not re-read here.
+
+### HERO-DKIDX-162
+
+- `FUN_004fbc92` is the actor `vt+0x4c` strike resolver: `this` = target,
+  argument 1 `A` = a 0x16-byte attack block, argument 2 = attacker. After the
+  absorption clamp it reads `A+0x10` (`004fbe75 MOV AL,[EDX+0x10]`) and the
+  target byte `[this+A+0x10+0xce]` (`004fbe7d MOV DL,[ECX+EAX+0xce]`), both
+  zero-extended. A nonzero byte `v` gives `damage = ftol(damage * (100 - v) /
+  100 + 0.75)` (`004fbe8d`..`004fbea7`); zero skips the step.
+- The melee strike `FUN_004fba0e` passes `A = attacker+0xa6` (`004fba9a`,
+  `004fbab2`), so `A+0x10` is `attacker+0xb6`, the live attack block's active
+  byte. The index is the attacker's active slot; the byte read is the
+  target's.
+- Active byte writers (sweep `store 0xb6`, 3 hits): Weapon equip
+  `FUN_0050def2` stores the `Weapons` attackType when it is below 10
+  (`0050e0dc`) and `0` when it is 10 or more (`0050e037`); unequip
+  `FUN_0050e1b5` stores `0` (`0050e2f4`). The attack-block fold
+  `FUN_004fa818` skips the byte (`HERO-MOD-016`).
+- The `Weapons` attackType column, 27 rows per root, equal in EN and RU:
+  1 for Dagger, the four swords and Plasma Sword; 2 for Axe and Two Handed
+  Axe; 3 for BareHands, the clubs, Mace, Morning Star, Pick Hammer, War
+  Hammer and both staves; 4 for Pike, Halberd and Lance; 5 for the bows,
+  Crossbow, Sonic Beam and Boulder Thrower; 11 for Flame Thrower; -1 for the
+  row named `rem`.
+
+| active byte | target byte read | modifier byte |
+|---|---|---|
+| 0 (nothing wielded, or an elemental weapon) | `+0xce` | `+0x10e` |
+| 1 blade | `+0xcf` | `+0x10f` |
+| 2 axe | `+0xd0` | `+0x110` |
+| 3 bludgeon | `+0xd1` | `+0x111` |
+| 4 pike | `+0xd2` | `+0x112` |
+| 5 shooting | `+0xd3` | `+0x113` |
+
+- A value of 100 gives damage 0 after the `0.75` term truncates. Above 100
+  the factor is negative (`HERO-FOLD-033` states the unclamped 8-bit adder);
+  the resolver's own clamp at 0 is stated in `HERO-DAMAGE-022`.
+- Live `+0xce..+0xd3` hold the fold of the modifier bytes (`HERO-FOLD-033`);
+  only `FUN_004fc2e8` and the archive set a modifier damage-kind byte
+  (`HERO-MODDK-161`), so for a Human target these six bytes are zero unless
+  one of those wrote them.
+
+**Confidence.** High for the resolver's two reads and the melee caller's
+argument, and for the active-byte writers. Unknown for the callers noted below.
+
+**Unknown.** The other `vt+0x4c` call sites that can reach an actor (the
+effect-damage path passes `effect+0x48`, `00502c89`) were not read, so their
+`A+0x10` is not established. Active byte 0 is a target of elemental
+weapons (attackType 11); whether such an attack reaches this resolver was
+not read. Active byte `0xff` (attackType -1) would index `target+0x1cd`;
+that row's reachability is not shown.
+
 ## Open questions
 
 - Whether a Building or Sack Position terrain key is used, replaced or

@@ -144,6 +144,13 @@ six bytes) and one byte assignment. It also skips active-index mirror `+0xf6`
 and final bytes `+0xfc/+0xfd`; the active live index is written separately.
 — HERO-FOLD-035, SAV-HUMFOLD-446
 
+No shipped Armor or Shield block and no effect-arm body writes the modifier's six damage-kind
+bytes `+0x10e..+0x113`: the shipped blocks add zero and no arm body stores there. A sweep of the
+image for displaced stores finds one routine that stores a constant, `FUN_004fc2e8`, which sets the six protection words and
+six damage-kind bytes to 100 and then recomputes. Its callers are the `#modify … +god` order and
+two spawn paths; the constructors clear the object and the archive copies it whole
+(`HERO-MODDK-161`).
+
 The fold is not a universal loaded-state boundary. Before its later clears,
 derive reads `word[a8+2*b6]` for any nonzero byte `b6`; the selected indexing
 step has no upper bound. Malformed synthetic indices 10,13,32,39,42 make

@@ -59,6 +59,40 @@ fields; 38..40 diagnose not implemented; 41 is a general no-op; 42 teaches a mis
 49 share damage-base; 44..48 install elemental base/spread. The per-kind target, clamp and class gates are specified by `ITEM-EFFDISP-075`.
 Token-state values 8, 12 and 17 select special lifecycle paths and are not grammar kinds.
 
+### Effect keys and the fields they add to (`ITEM-EFFARM-146`, `ITEM-EFFKEY-147`, `ITEM-EFFSYM-148`, `ITEM-EFFSHIP-149`)
+
+With operand `S = multiplier × operand` (the signed low word when the mode byte has bit 1, 2 or 4,
+else the signed dword), an arm adds `S` to its field at the field's own width. "Modifier" is the
+0x40-byte object at `actor+0xd4`; "live" is the actor's own field. Humanoid-gated keys write the
+modifier on the Human families and the live field on the Unit family.
+
+| kinds | field |
+|---|---|
+| 1 price | `actor+0x1c` i32 |
+| 2 body, 4 reaction, 3 mind, 5 spirit | live `+0x84`, `+0x86`, `+0x88`, `+0x8a` (cap 100), modifier byte `+0xd4`, `+0xd5`, `+0xd6`, `+0xd7` (skipped for mode bit 8) |
+| 6 health, 9 mana | live `+0x94`, `+0x9a`, capped at `+0x96`, `+0x9c` |
+| 7 healthMax, 10 manaMax (mage only) | live `+0x94`, `+0x9a` and modifier `+0xdc`, `+0xe0` |
+| 8 healthRegeneration, 11 manaRegeneration (mage only) | modifier `+0xde`, `+0xe2` |
+| 12 toHit | modifier `+0xe6` |
+| 13 damageMin, 43 damage, 49 damageBonus; 14 damageMax | modifier byte `+0xf4` (base); `+0xf5` (spread) |
+| 15 defence, 16 absorbtion, 17 speed, 19 scanRange | modifier `+0xfe`, `+0x100`, `+0xd8`, `+0xe4` (humanoid), else live `+0xbe`, `+0xc0`, `+0x8c`, `+0xa4`; scanRange shifts `S` left 8 |
+| 20..25 protection0, Fire, Water, Air, Earth, Astral | modifier word `+0x102`, `+0x104`, `+0x106`, `+0x108`, `+0x10a`, `+0x10c`, floor 0 |
+| 26 fighterSkill0, 27..31 Blade..Shooting (fighter only) | modifier `+0xe8`, `+0xea`..`+0xf2` |
+| 32 mageSkill0, 33..37 Fire..Astral (mage only) | modifier `+0xe8`, `+0xea`..`+0xf2` |
+| 18 rotationSpeed | mover `+0x0a` byte |
+| 44..48 damageFire..damageAstral | assign modifier `+0xf9`, `+0xfa` from the operand bytes and `+0xfb` = 1..5 |
+| 0, 38..41; 42 | no state change; teachSpell adds a missing Spell |
+
+No instruction in an arm body stores into or points at the modifier damage-kind bytes
+`+0x10e..+0x113`; each arm tail calls `vt+0x50`, which recomputes the live bytes `+0xce..+0xd3`
+from the modifier. That no effect apply or remove changes the modifier bytes, callees included,
+is Medium (`HERO-MODDK-161`). Remove is the exact inverse of apply except at the caps and floors above, for kinds
+2..5 with mode bit 8, for kinds 44..48 (the multiplier is ignored, so remove restores nothing) and
+for kind 42 (remove passes the negated id). A signed modifier speed above `0x18` is zeroed before
+every dispatch. The shipped equipment cells carry 266 accepted effects per root over 16 keys, equal
+in EN and RU, none of them belonging to an arm body that stores into the damage-kind block. Whether a
+non-humanoid actor folds the modifier protections into its live block is Unknown.
+
 
 ### A weapon's numbers — `FUN_0050dadc`
 
