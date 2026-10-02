@@ -14096,6 +14096,177 @@ documents.
 **Unknown.** A stored arrow record (picture 1..7) and its saved leaf values;
 a cast record's actionspell, which would separate the two spawners.
 
+## Hired siege Unit creation and reuse
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SAV-1135 | In EN `rom.exe` 942e9b72, the tavern spawn `005056f1`, run by server command 0x38 from the hire vector, creates a fresh siege Unit (types 1, 2) as a party actor; a direct-call sweep finds one caller. | High / Medium | ● active | [EXP-0429](../experiments/EXP-0429-siege-entry/) |
+| SAV-1136 | In EN `rom.exe` 942e9b72, `005056f1` never reads existing party actors, so it never reuses a Unit; the only removal of prior hires read is command 0x37's `005053ce`, which removes party actors whose type byte `+0x14c` is nonzero. | High / Medium | ● active | [EXP-0429](../experiments/EXP-0429-siege-entry/) |
+| SAV-1137 | In EN `rom.exe` 942e9b72, a siege Unit's type is stored (dword `+0x148`) but its load arm zeroes it, so a loaded Unit is exempt from `005053ce` and a fresh Unit is created beside it; a loaded NPC-named Human keeps its type and is replaced. | High / Medium | ● active | [EXP-0429](../experiments/EXP-0429-siege-entry/) |
+| SAV-1138 | In EN `rom.exe` 942e9b72, opcode 0x38 has one literal store (in `0041d4ad`, called from inn handler `00480ad0`) and 0x37 one (in town roster refresh `0041ce98`); no city-load routine read calls either. | Medium / Unknown | ● active | [EXP-0429](../experiments/EXP-0429-siege-entry/) |
+| SAV-1139 | In EN `rom.exe` 942e9b72, a saved party siege Unit carries no per-actor link to a hire record in two compared saves: its type dword, one-actor Player group and class are the party-side fields, beside the campaign hire flag and pool arrays. | Medium | ● active | [EXP-0429](../experiments/EXP-0429-siege-entry/) |
+| SAV-1140 | In five saves (EN `rom.exe` 942e9b72), a kit city save with one siege Unit, entered into mission 120, saved two Units and the same money; the original city resaves with the same party hold one Unit with type dword 2. | Medium | ● active | [EXP-0429](../experiments/EXP-0429-siege-entry/) |
+
+### SAV-1135
+
+- `005056f1` is the body of the server command 0x38 handler (`004d70fc`), its
+  only call site (linear sweep and raw dword scan). It takes a `CWordArray`
+  `working[t] x hired[t]` and, for each type `t` with a nonzero entry, builds
+  that many fresh actors. Types 1 and 2 are `Unit` (size `0x198`) named from the
+  table at `005c3318` ("Catapult", "Ballista") through `004f2cb8`; types 3 and up
+  are `Human` through `004f8e78`.
+- Each actor gets a fresh id at `+4`, the type byte at `+0x14c`
+  (`005059a5`), the player at `+0x14`, an entry in the player flat list
+  (`[player+0x20]`, `0050fbee`) and a new one-actor group (`new 0x48`,
+  `0050f81b`) appended to `[player+0x24]`.
+- The vector is built on the client by `00488500` (one caller, `0041d944`) in
+  `0041d4ad`.
+- `005053ce` (command 0x37) also builds 15 prototype objects (types 1..2
+  `Unit`, 3..15 `Human`) in `[tavern+0x6c]`. They are registered in the world
+  registry `00603c28`; no prototype is in a Player group of the five decoded
+  saves.
+- No call to `0041d4ad`, `0041ce98` or `005056f1` appears in the read range
+  `00477c00..00477e60` of the mission starter (the function runs past
+  `00478a72`). The whole-image direct-call sweep finds exactly one caller of
+  each (`004d70fc`, `00476f2c`, `00480b32`); it excludes direct calls only, not
+  calls through a virtual slot. The placement walk `004d403c` reads the party
+  from `[player+0x20]`.
+- In `game0000.sav` (mission 120) the hero Player holds a Unit with run id 145
+  and type dword 2 that is absent from `game9607.sav`.
+
+**Confidence.** Reading is EN `rom.exe` 942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03; the RU image was not compared.
+High that `005056f1` builds a party siege Unit from the vector.
+Medium that it is the only such creator in the binary: `004f2cb8` has 8 call
+sites, two in the tavern routines (`00505537`, `005058c0`); six others were not
+read. Medium that command 0x38 produced run id 145, which is inferred from the
+saved state, not traced.
+
+**Unknown.** The six other `004f2cb8` callers (`004d47b2`, `004d900c`,
+`004e2b03`, `004f181d`, `004ff655`, `00504e6e`). Whether the original sent
+command 0x38 during the run that wrote `game0000.sav`.
+
+### SAV-1136
+
+- `005056f1` walks the hire vector and constructs; its range contains no read
+  of the player flat list or group list before the constructor calls and no id
+  comparison against an existing actor.
+- `005053ce` first credits `[tavern+0x9c]` to the player (`004faff7`), then walks
+  the player flat list and removes each actor whose byte `+0x14c` is nonzero
+  (frees the id `004d9fac`, unlinks from the group `0050f996`, removes from the
+  list `00519470`), then zeroes `[tavern+0x9c]`.
+- Nothing else in the read range removes or matches a party actor.
+
+**Confidence.** Reading is EN `rom.exe` 942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03; the RU image was not compared.
+High that neither routine reads a link between an actor and a
+hire record. Medium that the pair `005053ce` then `005056f1` is the whole path;
+the senders are `SAV-1138`.
+
+**Unknown.** A reconcile step outside these routines was not searched for.
+
+### SAV-1137
+
+- `Unit::Serialize` (`00510518`) stores dword `+0x148` from the type byte
+  `+0x14c` (`005108a5`). Its load arm reads the dword into `+0x14c`
+  (`00510d6c`) and then calls virtual slot `+0x30`.
+- The Unit vtable `0059c3c0` slot `+0x30` is `005232d0`, which returns 0. The
+  load arm then sets `+0x3c` from the Units table and writes 0 to `+0x14c`
+  (`00510d9d`).
+- The Human vtable `0059c4d0` slot `+0x30` is `00523530`, which returns 1, so
+  the type is kept. `Human::Serialize` (`00511839`) zeroes `+0x14c` after the
+  load (`005118cb`, `005118d7`) when the template class name does not contain
+  "NPC" (string `005c863c`).
+- In `Unit.scalar-run-2` the dword is bytes 47..50. `game9607.sav` object 189
+  (Unit run id 14) holds 2. In `game0000.sav` the Unit with run id 14 holds 0,
+  and the added Unit with run id 145 holds 2; the typed Humans of the kit save
+  (run ids 3..13) are gone and replaced by Humans with run ids 147..168.
+- The escape explanation is read from `game0000.sav` only. The three original
+  saves `game0009.sav`, `game0010.sav` and `game0014.sav` hold a Human named
+  "Ballista" (run id 14, type dword 0) and no Unit with run id 14; the
+  difference from `game0000.sav` is unexplained.
+- Census bound only: 2590 Units in 58 parsed corpus saves have type dword 0
+  (`evidence/save-unit-type-census.txt`; one file with another header magic
+  skipped). The population is not shown to hold a loaded siege Unit and the five
+  case saves are outside it, so it does not test the load arm.
+
+**Confidence.** Reading is EN `rom.exe` 942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03; the RU image was not compared.
+High for the code reading. Medium for the explanation of the
+two Units in `game0000.sav`: it fits every field read, but the order of
+commands 0x37 and 0x38 was not traced. By the same load arm an original-written
+Unit would load with type 0; that reload has not been read.
+
+**Unknown.** A Unit saved with type 2 and then resaved by the original (no such
+pair was found); why the three original saves hold a Human "Ballista".
+
+### SAV-1138
+
+- A literal store of opcode 0x37 (immediate to byte `[reg+9]`, linear sweep of
+  `.text`) is found only at `0041d40b`, in `0041ce98` (the town roster
+  refresh, called at `00476f2c` from `00476ed0`, which the campaign state
+  machine calls at `004749a4`). The only such store of 0x38 is at `0041d907`, in
+  `0041d4ad`, whose sole caller is `00480b32` in `00480ad0`.
+- `00480ad0` is slot `0x84` of the inn view vtable (`0059a068`); commands
+  0x445 and 0x446 reach it through `004c52f3`, which calls vtable `+0x84`.
+- The sweep finds no call to `0041d4ad` or `0041ce98` other than those; the
+  SAV loader is not a caller. `SAV-615` records hired Humans keeping the same
+  idents from a city save into a mid-mission save.
+- Immediates 0x37 and 0x38 are also pushed at 21 other sites
+  (`evidence/imm-store-37-38.txt`); 5 sampled in review are string ids, sizes or call arguments, and 16 were not cleared.
+
+**Confidence.** Reading is EN `rom.exe` 942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03; the RU image was not compared.
+Medium: the sweep is static and covers immediate stores only: register-sourced stores and messages prefilled in a data object were not searched; the inn close handler is reached
+by a virtual slot whose callers were not enumerated, and the 21 pushes were not
+read.
+
+**Unknown.** Whether entering a mission without opening the tavern sends 0x38;
+all callers of vtable slot `+0x84`.
+
+### SAV-1139
+
+- Party Unit fields in `game9607.sav` object 189 and `game0014.sav` object 26:
+  type dword 2 (bytes 47..50), companion dword `+0x144` 0 (bytes 51..54), class
+  key row 27, type word 0x1b, one-actor Player group, owner reference to the
+  hero Player.
+- The campaign record is identical in all five saves: hire flags
+  `[0,1,0,0,0,1,0,0,0,0,0,0,1,1,0]` (types 2, 6, 13, 14), pool arrays
+  `[1,1,1,1,1,4,4,3,3,3,0,3,4,3,0]`. The siege type has flag 1 and pool 1.
+- Between the two saves the Unit records differ in: position bytes, run id
+  (14 and 97), identity key, owner pointers, the last 2 bytes of `raw-a6` and
+  `raw-114`, bytes 0..1 of `raw-pointed-154`, bytes 113 and 144..147 of
+  `raw-pointed-158`, and byte 18 of `scalar-run-1`. The type dword, the
+  companion dword, class key and type word are equal
+  (`evidence/save-unit-diffs.txt`).
+
+**Confidence.** Reading is EN `rom.exe` 942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03; the RU image was not compared.
+Medium: an absence of a link over two Unit records and one
+campaign record; the meaning of the differing raw bytes is unread.
+
+**Unknown.** What the differing `raw-pointed-154` and `raw-pointed-158` bytes
+are; whether any is a runtime pointer.
+
+### SAV-1140
+
+- `game9607.sav` (a kit-written city save): one siege Unit, Humans typed 6, 13
+  and 14 in counts 4, 4 and 3, money 2711000.
+- `game0000.sav` (original mission 120, after loading it): hero Player holds two
+  Units, run ids 14 and 145, type dwords 0 and 2, in separate one-actor groups;
+  money 2711000. Fresh Humans have run ids 147..168.
+- `game0014.sav` (original city resave): one Unit, run id 97, type dword 2,
+  money 2711000. `game0009.sav`: one Unit, run id 97, money 2422000, 289000
+  lower. `game0010.sav` (original mission save): one Unit, run id 144, type
+  dword 2, money 2422000 (`evidence/save-player-money.txt`).
+- Hypothesis for equal money in the kit save and `game0000.sav`: a refund by
+  command 0x37 followed by an equal charge by command 0x38 (`SAV-1136`). It
+  needs `[tavern+0x9c]` populated when 0x37 runs; `005056f1` zeroes it at entry
+  and `005053ce` at exit, and no save holds a Tavern object, so the precondition
+  is unread. The alternative is that no charge ran. The cause of the 289000
+  difference in `game0009.sav` was not read.
+
+**Confidence.** Reading is EN `rom.exe` 942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03; the RU image was not compared.
+Medium: five saves; the money mechanism is a hypothesis.
+
+**Unknown.** The original runs that produced `game0009.sav`, `game0010.sav` and
+`game0014.sav`; the cause of the 289000 difference.
+
 ## Open questions
 
 - Whether a Building or Sack Position terrain key is used, replaced or
