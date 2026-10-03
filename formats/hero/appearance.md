@@ -72,7 +72,14 @@ twelve visible-equipment slots, recompute the name whenever they change, load th
 take the geometry from the resulting `units.reg` record. For a unit a map places it must do none of
 this: that actor's drawn class is its `typeID` and nothing derives it.
 
-Claims: `HERO-APPEAR-040`…`HERO-APPEAR-046`, `UNIT-APPEAR-030`. The name list's order and the
+**Which `typeID` a placed human holds.** The `typeID` of the Humans row the placement resolves to,
+not the placement record's own class key (`ANIM-116`). No store reachable from the client unit dispatcher selects it again, because the
+derivation above returns unless drawable `+0x18c` bit 0 is set, and creation leaves that bit clear
+for every class below `0x1a` (`ANIM-117`). The swing sound is `Sound[0]` of the class held at the
+call (`ANIM-105`). A placed mage whose record names class 23 (`Unarmed Mage`, silent) and whose row
+names class 24 (`Human Mage`) holds 24 and the swing hook is passed slot 510 (`ANIM-118`).
+
+Claims: `HERO-APPEAR-040`…`HERO-APPEAR-046`, `UNIT-APPEAR-030`, `ANIM-116`…`ANIM-118`. The name list's order and the
 second sheet's consumer follow the figure-equipment rules below.
 
 ## Figure equipment slots (`HERO-APPEAR-047`…`HERO-APPEAR-055`, `HERO-FIGURE-062`)
