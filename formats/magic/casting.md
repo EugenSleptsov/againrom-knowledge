@@ -336,3 +336,13 @@ gated by one**.
 
 The blind spot this enumeration cannot close: a wholesale `REP MOVSD` copy of an actor would carry
 no displacement and no `disp:` sweep can see it.
+
+## Prismatic Spray heading and facing
+
+The heading the selector uses is one of eight bytes, multiples of 0x20, from the signs and a 2:1 magnitude test of
+the fine centres of caster and candidate; each centre is the fine point plus 128 per extra footprint cell, so
+the sub-cell offset is included. The score is the edge gap shifted left 8 plus the folded facing difference, masked
+to 16 bits: a ranking term (`MAGIC-242`). No facing test is found in the three routines read: the cast routine, its Prismatic Spray
+helper and the selector. Book and scroll casts are gated before the cast by the executor's unit-target
+and point-target rows, a weapon cast by the attack rows but not by the plain row that installs action 3
+(`MAGIC-243`, the arm-to-row map Medium). Which code issues that plain row is Unknown.

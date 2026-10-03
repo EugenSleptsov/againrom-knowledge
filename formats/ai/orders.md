@@ -237,3 +237,9 @@ every other order that has a "walk there, then do a thing" shape.
   select a re-search against the `[Path Finding]` values, and the flag `mover+0x98` is set at three empty-list
   sites (`AI-384`).
 - The AI pass that contains the group tail runs once per 16 ticks on both of its callers (`AI-385`).
+
+### Transit into a held cell
+
+A mid-transit walk call reaches the step with no destination check. A crossing into a cell a live unit holds releases
+blind at the old footprint, rewrites the position into the held cell and has the occupy refused with no slot store;
+the step does not test the refusal or roll back (`AI-387`).

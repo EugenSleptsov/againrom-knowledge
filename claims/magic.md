@@ -1648,7 +1648,7 @@ cards. The next free `magic.md` id is `MAGIC-237`.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| MAGIC-235 | A temporary caster built by FUN_004d1f42 has owner (+0x14) and group (+0x70) zero from its constructors, no call site of its two wrappers assigns either, and the Prismatic Spray selector reads both without a null test. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
+| MAGIC-235 | A temporary caster built by FUN_004d1f42 has owner (+0x14) and group (+0x70) zero from its constructors, no call site of its two wrappers assigns either, and the Prismatic Spray selector reads both without a null test. | High / Medium / Unknown | ● active (amended) | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
 
 ### MAGIC-235
 
@@ -1708,6 +1708,8 @@ the sweeps are not covered.
 the state values `0x0d` and `0x0e` link them. The runtime result of spell 14 cast by a temporary caster. Whether
 a state routine of the new object assigns an owner on a later tick. Where the returned pointer goes beyond the
 one-instruction reads at the callers named above.
+
+**Amended.** The selector's unguarded reads are located by `MAGIC-241`: the owner read at `0053d9b8` in `FUN_0053d9b0`, called at selector entry, comes before the group read named above. The rest of the claim stands.
 
 ## Slot-drawn creature casts: aim, execution and retention
 
@@ -1819,3 +1821,57 @@ The stores of the literal 1 at displacement `0x60` over the whole image (`eviden
 **Confidence.** High for the EN data: table rows of the EN `Data.bin`. Medium for the RU rows, which these files do not list.
 
 **Unknown.** The RU weapon spells; none were read here.
+
+## Prismatic Spray caster pointers, heading and facing
+
+Evidence is a static read of `rom.exe` (one image on both lawful installs, sha256 `942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03`); no process was run. Every quoted instruction is asserted on both editions (`evidence/listings/asserts-en.txt`, `evidence/listings/asserts-ru.txt`, 0 differences). `EXP-0452` was allocated ids `241`..`244` of `claims/magic.md` and spent `MAGIC-241`..`MAGIC-243`; `MAGIC-244` is unused.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MAGIC-241 | A spell 14 cast by a FUN_004d1f42-built caster reads the null owner +0x14 unguarded in FUN_0053d9b0, called at selector entry before the group read and the empty-list test; a null primary faults earlier. | Medium / Unknown | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+| MAGIC-242 | The Prismatic Spray heading is an 8-way multiple of 0x20 from the signs and a 2:1 magnitude test of the fine centres, each P + (n-1)*128 including the sub-cell; the selector ranks by edge gap and turn cost. | High / Medium | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+| MAGIC-243 | No facing test is found in the three routines read (FUN_004fe6d3, FUN_004fe92e, the selector); book and scroll casts are gated upstream by executor row 8 or 9 and a weapon cast by rows 5 and 6, not row 2 (Medium). | High / Medium / Unknown | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+
+### MAGIC-241
+
+Actor states `0x0d` and `0x0e` call `FUN_004fe6d3`. For id 14 (`004fe8b8 CMP ECX,0xe`) the code calls `FUN_004fe13b`, which reads no pointer, then `FUN_004fe92e`, which selects the item arm (`caster+0x68` non-zero) or the book arm (`FUN_004f5998`) and calls the selector `FUN_0053ddd0` (`004fea2e`) with the cap. The delivery test of `MAGIC-DELIVERY-170` takes the branch for id 14, so the early return at `004fe8a9` for a caster with `+0x3c == 0` is not reached.
+
+A caster built by `FUN_004d1f42` has `+0x14 = 0` (`004f2466`), `+0x70 = 0` (`004f31d9`), `+0x3c = 0` (`004f30c3`) and health `+0x94 = 0x1e` (`004f33c3`); `MAGIC-235` records that no site assigns owner or group. The selector reads in this order:
+
+1. `[primary+0x158]` at `0053de17`: a null primary (state `0x0e`) faults here, address `0x158`;
+2. `FUN_0053d9b0(caster, primary)` at `0053de48`, which reads `[caster+0x14]` at `0053d9b8` and then `[owner+4]` at `0053d9c1`: with a null owner it faults at address `4`, with no test;
+3. `[caster+0x70]` passed to `FUN_005365e0` at `0053de4d`, whose first read is `[group+0xc]` at `00536602`: a second fault site, not reached after the first;
+4. the empty-list return at `0053de58`, after all of these.
+
+The three frames read (`FUN_004fe92e`, the actor tick `FUN_004f37be`, the teardown `FUN_004f4f5d`) have FuncInfo with nTryBlocks 0 (`evidence/listings/tryblocks.txt`).
+
+**Confidence.** Medium: the stores of zero and the read order are asserted instructions on both roots; the fault is a static prediction, since no cast was run and shipped scripts contain no spell-14 instant (`MAGIC-SPRAY-135`). Unknown for a caster created any other way, and for any exception filter outside the three frames.
+
+**Unknown.** Whether a script cast of spell 14 is ever built in play. What the process does on that fault.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-selector.txt`, `evidence/listings/rom-spray.txt`, `evidence/listings/rom-caster.txt`, `evidence/listings/tryblocks.txt`
+
+### MAGIC-242
+
+`FUN_0054a680(caster, candidate)` calls `FUN_004f280d` and `FUN_004f2849` for each object (`0054a689`..`0054a6bb`). Each returns the fine point P from the position record (`FUN_005449e0`, `FUN_005449f0`) plus `(n-1) << 7` for the footprint size n (`004f283c`, `004f283f`), so a multi-cell footprint is measured from its centre and the sub-cell bytes are included (`MOVE-087`). The two differences feed a sign test and a 2:1 magnitude test (`CMP DX,CX`, `SHL ECX,1`, `0054a6df`..`0054a7b8`), giving a raw index 0..15; the tail (`0054a7bb`..`0054a7c6`) adds 1 when non-zero, clears bit 0 and shifts left 4. The heading is therefore one of eight bytes, multiples of 0x20; a fractional offset moves it only through the sign and the 2:1 comparison.
+
+`FUN_0054f090(facing, heading)` returns the absolute byte difference folded to at most 0x80. The selector score is `((edgeDistance << 8) + turnCost) & 0xffff`, with the edge gap from `FUN_0054a960` and the facing byte `[caster+0x154][0]`. Edge distance dominates; turn cost breaks ties. It is a ranking term, not a gate (`MAGIC-243`).
+
+**Confidence.** High for the heading formula, the fold and the score form: asserted instructions. Medium for the edge-gap routine's footprint handling, read only through its call.
+
+**Unknown.** The body of `FUN_0054a960` is listed (`rom-heading.txt`, `0054a960`..`0054aa5a`) but its footprint handling was not decoded. Whether the 16-bit mask wraps in play.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-heading.txt`, `evidence/listings/rom-fine.txt`
+
+### MAGIC-243
+
+`FUN_004fe6d3`, `FUN_004fe92e` and the selector `FUN_0053ddd0` contain no compare of the facing byte against a heading with a branch to a refusal on any arm; the only use is the turn cost of `MAGIC-242`. The gates are upstream:
+
+- book and scroll casts: executor row 8 (`005312f3`, unit target; `FUN_00548ea0` is skipped when the caster is the target) or row 9 (`00531377`, point target; `FUN_00548ef0`), installed by the setters at `00533d00` and `00533ed0` (opcodes `0x1e`, `0x1f`, `0x25`, `0x26`). `FUN_00548ea0(world, actor, target, range)` requires the facing byte `[actor+0x154][0]` to equal the bearing from `FUN_0054a680` and an edge gap within range;
+- weapon and caster-item casts (state 3 to `0x0d` at `004f3a17`, `004f3b60`): attack rows 5 (`005313ee`) and 6 (`00531450`) call `FUN_00548ea0` and install action 3; row 2 (`005312cd`) installs action 3 with no `FUN_00548ea0` call.
+
+**Confidence.** High for the absence in the three routines, read over the listed bodies (`rom-spray.txt`, `rom-selector.txt` through `0053e19b`, the only facing-byte reads being the two turn-cost sites) and for the gates of rows 5, 6, 8 and 9: asserted instructions. Medium for any facing test outside those three routines. Medium for the arm-to-row mapping, composed from the setters and the actor slot.
+
+**Unknown.** Which code issues pending order 2. Callers of the setters other than those read.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-cast-states.txt`, `evidence/listings/rom-setters.txt`, `evidence/listings/rom-death.txt`, `evidence/listings/rom-heading.txt`

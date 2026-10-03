@@ -188,3 +188,14 @@ the byte at that read and native resume timing remain Unknown. — SAV-FIRSTMOVE
 
 A fresh call of the walk routine writes a sub-cell step in that call only when the facing byte already equals
 the direction to the first path node; otherwise it turns and the step follows at the next call (`MOVE-090`).
+
+## Step routines, transit ticks and teardown
+
+The second release, claim and occupy sequence is in a run of code at `00548900`..`00548c4f` with no direct relative transfer or literal dword reference found (Medium).
+It releases, claims at the old cell, rewrites the position and occupies in the live step's order and does not test
+the occupy return (`MOVE-093`). In the live step a transit from the cell centre with an axis step s crosses on
+tick ceil(128/s) on a positive axis and floor(128/s)+1 on a negative one, the start tick counting as 1; release and
+occupy are called by the step on that tick only (`MOVE-094`). A removal whose release ends early on an empty slot returns before
+the claim clear, so the claim bits the transit set stay in the plane unless a store outside the teardown body and `FUN_00548e10` rewrites them
+(`MOVE-095`, Medium). A unit at or below 0 health is not stepped; its slot and claim stay frozen through the death
+countdown, and the teardown releases at the stored cell and clears the claim when `+0xa6` is not the current packed cell (`MOVE-096`).

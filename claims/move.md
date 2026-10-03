@@ -903,7 +903,7 @@ The next free `move.md` id is `MOVE-090`.
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | MOVE-087 | A mover of footprint side n stores the footprint's top-left cell and a sub-cell offset; the fine point P = cell*256 + sub is that corner, and the centre read for range, edge gap and bearing is P + (n-1)*128 per axis. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
-| MOVE-088 | A cell crossing releases the old footprint, claims, rewrites the position and occupies the new one in one FUN_00548c60 call; an empty release slot or a taken occupy slot skips that cell's recompute, and no deferral exists in those bodies. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
+| MOVE-088 | A cell crossing releases the old footprint, claims, rewrites the position and occupies the new one in one FUN_00548c60 call; an empty release slot or a taken occupy slot skips that cell's recompute, and no deferral exists in those bodies. | High / Medium / Unknown | ● active (amended) | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
 | MOVE-089 | Actor removal through FUN_005476d0 releases the footprint at the stored position, recomputing each held cell, and clears the claim bits only after every release succeeds; release is blind to which actor holds the slot. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
 
 ### MOVE-087
@@ -1012,6 +1012,8 @@ them, the consumers of the trigger caster list, indirect callers, and any routin
 **Unknown.** An observed tick. Which tick of a transit holds the crossing, which depends on speed
 (`MOVE-084`). Whether `FUN_00548720` follows the same order.
 
+**Amended.** The unread `FUN_00548720` clause is closed by `MOVE-093`: Ghidra's `FUN_00548720` is an unrelated cost helper, and the second release, claim and occupy call sites (`00548b0b`, `00548b35`, `00548b77`) belong to an unreferenced run at `00548900`..`00548c4f` that follows the same order. `MOVE-094` gives the crossing tick for the Unknown above. The rest of the claim stands.
+
 ### MOVE-089
 
 `FUN_005476d0` is the removal of an actor from the cell records. It reads n through vtable `+0x1c`
@@ -1068,3 +1070,74 @@ was run. `EXP-0451` was allocated ids `90`..`92` of `claims/move.md` and spent `
 **Unknown.** The facing byte's usual value when a recovered actor was last stopped; whether the turn path has a second step in the same call under any condition not shown in the listed routines.
 
 **Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-walk.txt`, `evidence/listings/rom-row-callees.txt`
+
+## Second step routine, transit ticks and teardown claim state
+
+Evidence is a static read of `rom.exe` (one image on both lawful installs) with a capstone sweep; no process was run. `EXP-0452` was allocated ids `93`..`96` of `claims/move.md` and spent all four.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MOVE-093 | The step routine at 00548900..00548c4f, with no direct reference found, releases the old footprint, sets the claim at the old cell, rewrites the position, then occupies, with no arrival compare and no test of the occupy return. | High / Medium / Unknown | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+| MOVE-094 | In the live step a transit from the centre crosses on tick ceil(128/s) on a positive axis and floor(128/s)+1 on a negative one, start tick 1; the step calls release and occupy on that tick only, whatever the slots hold. | High / Medium | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+| MOVE-095 | A removal whose release ends early on an empty slot returns before the claim clear: the transit's claim bits and the later cells' slots stay as they were; no store of the claim bits follows in the teardown body or FUN_00548e10. | Medium / Unknown | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+| MOVE-096 | A unit with health at or below 0 is not stepped; its slot, claim bits and +0xa6 stay frozen through the death countdown, and the teardown releases at the stored cell and clears the claim when +0xa6 is not the current packed cell. | High / Medium / Unknown | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+
+### MOVE-093
+
+`MOVE-088` left `FUN_00548720` unread. Ghidra's `FUN_00548720` ends at `005488cb` and is an unrelated cost helper; the second step routine is the code after it, `00548900`..`00548c4f`, which has no function entry. Its order, from `evidence/listings/rom-step.txt`:
+
+1. the move computation, reading record `+0x72` (`005489e4`, `00548a0a`); a crossing is a flip of bit 0x80 of the moving axis's sub byte together with a cell change (`00548a6c`..`00548a9c`);
+2. on a crossing, a release loop over the n by n footprint, one `FUN_00545230` call per cell (`00548b0b`, row-major), stopping at the first return of 0 (`00548b10`, `00548b12`);
+3. `FUN_0054abb0` with the old packed cell (`00548b35`);
+4. the position rewrite: cell bytes, sub bytes, packed word (`00548b3d`..`00548b73`);
+5. `FUN_00544d00`, the occupy (`00548b77`), then `RET 4`. The return is not tested.
+
+The stride `+0x72` is recomputed at the crossing (`00548bd0`..`00548c49`). A branch with no crossing writes the position only (`00548b86`); a same-cell half-flip from an off-centre start sets both sub bytes to 0x80 (`00548bb9`..`00548bc2`). The routine has no `+0xaa` arrival compare.
+
+The order matches the live step of `MOVE-088` (release `00548d7e`, claim `00548da8`, position, occupy `00548de0`). References: `evidence/listings/orphanrefs.txt` finds no `E8`, `E9` or `0F 8x` rel32 into the range from outside it and one dword in the whole file with a value in the range (file offset `0x174d83`, inside a `CALL` operand). `xref.txt` and the displacement scan `scan.txt` (value 0x72) find no other reader of record `+0x72` in `0x4d0000..0x54ffff`; stores to it are at `00544d66`, `00548c49`, `00549641`, `00549651`, `0054968c`.
+
+**Confidence.** High for the order and the untested occupy return, each asserted instruction on both roots (`asserts-en.txt`, `asserts-ru.txt`). Medium for "unreferenced": the population is direct relative transfers and literal dwords over the file; a computed jump into the range was not excluded.
+
+**Unknown.** Whether the range is ever executed. Whether a pre-release build called it.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-step.txt`, `evidence/listings/orphanrefs.txt`, `evidence/listings/xref.txt`
+
+### MOVE-094
+
+The live step `FUN_00548c60` runs once per tick: `FUN_00549990` on the start tick (`+0xac` reset to 0, then the step) and `FUN_00548f70` then `FUN_005495f0` on later ticks while the sub bytes are not both 0x80 (`00548fda`, `00549605`). It calls release, claim and occupy only on the call whose cell bytes differ after the step is added (`00548cf3`); otherwise it writes the position and jumps to `00548de5`.
+
+Starting from sub 0x80 with signed axis step s (`FUN_0054d210`, clamp 1..63, `TERR-MOVE-056` gives the shipped range 4..32), the crossing tick counted with the start tick as 1 is ceil(128/s) for a positive axis and floor(128/s)+1 for a negative one; the transit length is N = ceil(256/s), where the `+0xaa` compare recentres to 0x80 (`evidence/listings/crossing.txt`, v = 1..63). At v = 16: N = 16, positive tick 8, negative tick 9. Anti-diagonal directions 1 and 5 add 0xffff to the fine X when both sub bytes are 0 (`00548cd3`..`00548ce8`); diagonal steps are `FUN_0054d210`'s truncated v*0.707, so the table is exact for the four axis directions only.
+
+The slot outcomes are those of `MOVE-088`: an empty release slot returns 0 and skips that cell's recompute; a taken occupy slot returns 0 with no slot store and no recompute. Neither defers: the step calls them on no other tick (`MOVE-088`). The scope is the step `FUN_00548c60`, not every caller of the occupy or the claim clear.
+
+**Confidence.** High for the tick rule given the start state and the step bytes: the compare and the add are asserted instructions and the table is arithmetic over them. Medium for the diagonal and tie-break paths, read but not tabulated.
+
+**Unknown.** The arrival path of `FUN_005495f0`, which the walk calls on later ticks: it calls the claim clear `FUN_0054af40` at `005496e0` and `0054980b` and the occupy `FUN_00544d00` at `00549853` (the occupy when the cell byte is `0x1a`, `00549788`, `0054984b`). These sites are in `rom-transit.txt` and `xref.txt`, were read but not traced, and are not reached through a crossing.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-step.txt`, `evidence/listings/rom-transit.txt`, `evidence/listings/crossing.txt`
+
+### MOVE-095
+
+`FUN_005476d0` (the removal) runs the release loop over the footprint and returns 0 at the first release that returns 0 (`0054772d JE 0x54779a`), before the claim clear. The clear (`FUN_0054af40`, `00547760`) is reached only after the whole loop and only when `+0xa6` is non-zero and not the current packed cell. `FUN_00548e10`, which follows the removal in the teardown, sets both sub bytes to 0x80 and writes no plane byte.
+
+The plane byte at `world+0x20000 + packed cell` carries the claim bits 0x40 and 0x80 (`MOVE-084`). It is rewritten whole by `FUN_005456d0` (callers `00545043`, `005450a2`, `00545118`, `00545174`, `005452ce`, `00545e00`, `00545f59`, `00547984`, `00547a98`, `0054d994`) or cleared by `FUN_0054af40` and `FUN_0054ac70`. None of these is called in the teardown body or in `FUN_00548e10` after the early return. The claim bits at the `+0xa6` footprint therefore read as set. Slots of the cells after the empty one keep what they held: zero, or a pointer to another unit, or a stale pointer to the removed unit.
+
+Plane readers found by displacement sweeps (`scan.txt`, values 0x20000 and 0x200): `541dd0`, `54bf10`, `54c100`, `54c2f0`, `54c6f0`, `54e220`, `548f70` (`005491df`), `549880`, `549a90`, `54a060`, `54e070`, `54ed30`, `54eec0`, `546fa0`, `5470a0`.
+
+**Confidence.** Medium: the stores and the early return are asserted; the claim bits reading composes them without a run, and no reader of the stale bits was traced to an effect.
+
+**Unknown.** Four teardown callees after `004f4f9a` were not read: the two virtual calls through `[edx+0x40]` (`004f4fc2`, `004f5001`), `FUN_0050e8e2` (called twice) and `FUN_0051ab50`. What each plane reader does with a stale claim bit. Slot-pointer dereferencers were not enumerated. Observed play.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-removal.txt`, `evidence/listings/rom-claim.txt`, `evidence/listings/rom-slots.txt`, `evidence/listings/scan.txt`
+
+### MOVE-096
+
+The actor tick `FUN_004f37be` does nothing when action `+0x54` is 0x10. When health `+0x94` is at or below 0 it takes the dying branch, which does not call the executor `FUN_005310e0` (its direct rel32 and dword references are `004f398c`, in the health above 0 branch, and `0053109b` in `FUN_00530c90`; `xref.txt`), so no walk and no step runs. The first dying tick sets `+0x13c` to 1, calls `FUN_004f4c97`, halves `+0xbe` and sets `+0x6c`; later ticks count `+0x6c` down. At zero, if `+0x4a` is above 1 health is set to 0xfc18; when health is at or below -10 the actor sets `+0x54` to 0x10 and calls the teardown `FUN_004f4f5d`.
+
+Through the countdown the occupancy slot, the claim bits, `+0xa6`, `+0x80` and `+0xac` are unchanged. The teardown calls `FUN_005476d0` (`004f4f9a`, return not tested): it releases at the stored position (the new cell if the transit had crossed), then clears the claim at `+0xa6` (the target cell before the crossing, the old cell after it) unless it equals the current packed cell (`00547756 CMP AX,[EDX+2]`; for a footprint wider than 1 a `+0xa6` cell inside the footprint but not the packed cell is cleared), zeroes `+0xa6`, `+0x80` and `+0x76`, and `FUN_00548e10` recentres. When the release ends early, `MOVE-095` applies. Other callers of `FUN_005476d0` (`004e3c9b`, `004f4808`, `004fb183`) were not covered.
+
+**Confidence.** High for the dying branch's exclusion of the executor and the teardown order, asserted instructions. Medium for the stored position at death: it composes the step's store order with the freeze and no run was observed.
+
+**Unknown.** Other writers of `+0x54`. Observed play. Whether a unit dies in the tick it crosses.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-death.txt`, `evidence/listings/rom-removal.txt`

@@ -3142,3 +3142,28 @@ allocated ids `381`..`386` of `claims/ai.md` and spent `AI-381`..`AI-385`.
 **Unknown.** Whether the launcher `FUN_004d0c3b` is reachable: it has no direct call, no reference and no raw dword hit in the PE (`rom-enum-cadence.txt`, `rom-tables.txt`; the one hit for `0x4d0c2e` is the launcher's own push at `004d0c70`); whether both routes run in one session; and which route a given session mode uses.
 
 **Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-cadence.txt`, `evidence/listings/rom-enum-cadence.txt`, `evidence/listings/rom-tables.txt`
+
+## Step into a held cell
+
+Evidence is a static read of `rom.exe` (one image on both lawful installs) with a capstone sweep; no process was run. `EXP-0452` was allocated ids `387`..`389` of `claims/ai.md` and spent `AI-387`; `AI-388` and `AI-389` are unused.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-387 | A mid-transit walk call has no destination check: stepping into a cell a live unit holds releases blind, rewrites the position and refuses the occupy with no slot store and no rollback. | High / Medium | ● active | [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md) |
+
+### AI-387
+
+`FUN_00548f70`, when the sub bytes are not both 0x80, calls `FUN_005495f0` at `00548fda` with no read of the destination cell; `FUN_005495f0` calls `FUN_00548c60` (`00549605`) and recomputes the stride `+0x72` after a cell change. A transit loaded from a save therefore reaches the step with whatever the cell holds. On a crossing into a cell held by a live unit the step (`MOVE-088`, `MOVE-094`) does, in one call:
+
+1. the release at the old footprint: a non-zero slot test at the old footprint that does not compare the holder;
+2. the claim at the old cell (`00548da8`);
+3. the position rewrite into the held cell (`00548db9`..`00548dda`);
+4. the occupy: `FUN_00544ec0` finds the slot taken (`00545001`, `005450d6`), calls the one-instruction stub `FUN_0054a200` and returns 0, with no slot store and no recompute; the occupy returns 0 and the step ignores it (`00548de0`, `00548de5`).
+
+No code in the step restores the old position (`SAV-CELLFAIL-583`). Later, the mover's departure release at that cell is blind and clears the other unit's slot (`MOVE-088`); the recompute then runs for that cell.
+
+**Confidence.** High for the missing destination check on the path from the walk to the step, and for the occupy refusal and untested return, asserted instructions. Medium for the consequence at the departure release: a composition of read branches with no run.
+
+**Unknown.** Whether an executable path loads a transit into a held cell other than a save. What the other unit's code does with its cleared slot. Observed play.
+
+**Evidence.** [EXP-0452](../experiments/EXP-0452-area-cost/EXP-0452.md), `evidence/listings/rom-transit.txt`, `evidence/listings/rom-step.txt`, `evidence/listings/rom-slots.txt`

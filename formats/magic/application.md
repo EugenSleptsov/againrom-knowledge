@@ -452,7 +452,9 @@ a custom spell-14 record is predicted to fault at the selector's immediate prima
 That prediction was not run. A temporary caster built for states `0x0d` and `0x0e` has owner `+0x14` and group
 `+0x70` zero from its constructors, and no call site of its builder assigns either (`MAGIC-235`); the selector
 reads the caster's owner byte and its group list with no null test, so the same prediction covers a spell-14
-cast by that caster. Whether a later tick assigns an owner is Unknown.
+cast by that caster. The first unguarded read is the owner read inside the helper called at selector entry,
+before the group read and the empty-list test; no try block is in the frames read (`MAGIC-241`). Whether a later tick
+assigns an owner is Unknown.
 
 ## Effect duration
 
