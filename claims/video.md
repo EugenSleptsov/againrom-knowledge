@@ -678,3 +678,73 @@ when `[0x00630854]` is non-zero.
 
 **Unknown.** The comparison's case handling under that locale branch, and the other six
 list owners' behaviour, which this experiment did not read.
+
+## Map command voices
+
+| ID | Public functional claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| VIDEO-067 | Ten builder tails and the selection tail call the speaker chooser, then one voice reader: move, attack, swarm, patrol, town `vt+0x6c`; guard, stand ground, defend `+0x70`; retreat `+0x74`; pickup `+0x7c`; selection `+0x78`; cast none. | High / Medium / Unknown | ● active | [EXP-0445](../experiments/EXP-0445-command-voices/) |
+| VIDEO-068 | The speaker is one random member of the highest non-empty tier: hero-shaped (`+0x18c` bit 0x1), else armed human, else unarmed human; a member needs `+0x7c` set and health `+0xfc` above 0; no owner, distance or visibility field is read. | High / Medium / Unknown | ● active | [EXP-0445](../experiments/EXP-0445-command-voices/) |
+| VIDEO-069 | The selection reply is `vt+0x78` (`select1` or `select2`, 2000 ms), played by the chooser speaker when Shift is up and the summary bits allow it; it shares the stamp `+0x190` with every other voice. | High / Medium / Unknown | ● active | [EXP-0445](../experiments/EXP-0445-command-voices/) |
+| VIDEO-070 | Guard, Stand Ground and the defend order play the speaker bank's `defend` slot (`+0x1c`), Retreat plays `retreat` (`+0x18`) and a pickup order plays `idle` (`+0x20`), each behind the shared 3000 ms stamp. | High / Medium | ● active | [EXP-0445](../experiments/EXP-0445-command-voices/) |
+
+### VIDEO-067
+
+```
+gesture (builder)            order  chooser call  reader   bank slot
+move       (FUN_0041b620)    0x16   0041b789      +0x6c    command1..3 / defend
+attack     (FUN_0041b7b1)    0x19   0041b8f7      +0x6c    command1..3 / defend
+swarm      (FUN_0041b916)    0x1a   0041ba67      +0x6c    command1..3 / defend
+patrol     (FUN_0041bf6c)    0x1d   0041c0bd      +0x6c    command1..3 / defend
+town       (FUN_0041c796)    0x24   0041c8db      +0x6c    command1..3 / defend
+guard      (FUN_0041ba8f)    0x17   0041bbc9      +0x70    defend
+stand grd  (FUN_0041bbe6)    0x18   0041bd20      +0x70    defend
+defend     (FUN_0041bd3d)    0x1b   0041bf4d      +0x70    defend
+retreat    (FUN_0041c63f)    0x14   0041c779      +0x74    retreat
+pickup     (FUN_0041c4be)    0x21   0041c620      +0x7c    idle
+selection  (FUN_0041a2d5)    -      0041a9da      +0x78    select1 / select2
+cast       (FUN_0041c0dc, FUN_0041c2d6)  0x1f 0x26 0x25 0x1e   none
+```
+
+- **Chooser callers.** `FUN_00422b5e` has exactly eleven direct callers, the eleven rows above with a call (a byte scan for `E8` and the decoded sweep agree, 0 other sites; `evidence/xref-voice.txt`). Each builder stores its order byte at `[edx+9]` (`evidence/opcode-stores.txt`), sends the order (`FUN_004e74fe`) and then calls the chooser, so a refused reply never holds back the order. The reader of each tail is the `CALL [reg+slot]` after the chooser's null test.
+- **Cast.** The two cast builders hold no chooser call; their only indirect calls are `vt+0x7c` of the object `FUN_00573196` returns (`evidence/calls-cast-builders.txt`).
+- **Input surfaces.** The map click `FUN_00419ec1` reaches the builders by cursor (`AI-CLICK-050`); the minimap handler `FUN_0048fdb0` reaches move, attack, swarm, defend and patrol (`AI-MINIMAP-062`); the command panel `FUN_0041b439`, which has 14 direct callers, reaches guard, stand ground and retreat through the jump table `0x0041b608` for buttons 3, 7 and 8 (`AI-PANEL-123`). The three panel builders have no other caller.
+- **Draw-state gate.** Move and swarm, and only these, skip the reader when the chosen unit's `+0x74` equals 1 (`0041b79a`, `0041ba78`); `ANIM-STATE-002` reads draw state 1 as the move action. The chooser has already picked the unit, so a moving speaker silences the reply and no second unit is tried.
+- **Executed.** Each tail, started at its order push and stopped before its epilogue, with one selected unit in each of the hero, hero-shaped mage, mercenary and peasant banks: one command-service call, then the slot of the table. Acknowledgement 0 removes every reply and keeps the command; a clock of 2500 ms (stamp 0) removes every reply; `+0x74 = 1` removes move and swarm only.
+- **Reader census.** `evidence/vcalls-census.txt` lists the 340 indirect calls whose displacement is `0x6c`, `0x70`, `0x74`, `0x78` or `0x7c`. 224 follow a call to `FUN_00573196` (222 of them `vt+0x7c` of the object it returns). 11 are the tails above. 94 have a `PUSH` within the six preceding instructions; the five routines take no stack argument (`RET` without a count). The remaining 11 (`evidence/vcalls-classification.txt`) include four user-interface routines that compare or store the returned value (`004abeb8`, `004abecb`, `004ad7f7`, `004ad80a`), the routine `004f38b3` that stores the result, and `00446d2c`, whose receiver is a child-control lookup.
+
+**Confidence.** **High** for the eleven chooser callers, their orders, readers and slots: decoded whole and executed on both roots with a sentinel per slot. **Medium** that no other path reaches the five slots on a unit: the census sorts the other sites by window and by use of the result, not by receiver proof. **Unknown** the receivers of `00444305` and of the four sites in `0x00573..0x00583` (`0057315d`, `0057b4f9`, `005801db`, `0058309b`), which were not read.
+
+### VIDEO-068
+
+- **Gates.** `FUN_00422b5e` returns 0 unless the session's `+0x6bc` is 2 (`00422bc5`, the campaign; `DLG-ENTRY-016`) and the Acknowledgement cell is non-zero (`00422bd5`; `VIDEO-SFX-054`).
+- **Population.** It walks the selection map `view+0x9b8` (`AI-SELECT-065`) from the first bucket in bucket-chain order. For each member `unit = value`:
+  - `[unit+0x7c]` must be non-zero (`00422d46`);
+  - `MOVSX word [unit+0xfc]` must be above 0 (`00422d65`, `00422d6e`), so health 0 and every negative value are excluded;
+  - `+0x18c & 1` appends the unit to list A (`00422d77`..`00422d9b`);
+  - otherwise, while A is empty, `+0x18c & 0x10` appends it to list B when `+0x15c` is non-zero (`00422dc7`..`00422de7`), else to list C while B is empty (`00422dee`..`00422e17`);
+  - a member with neither bit is dropped.
+- **Pick.** After the walk: list A if non-empty (`00422e2a`), else list B (`00422fe7`), else list C (`004230ca`), else 0. The index is `rand() * n / 0x7fff` (`00422e45`..`00422e52`, repeated at `00423002` and `004230e1`), near-uniform (counts differ by at most two of the 32768 draws; draw 32767 selects the slot one past the last member). Without a hero-shaped unit the order is armed humans, then unarmed humans. A and B or C members speak from the bank `HERO-APPEAR-055` gives them: the hero or mage bank for A, the mercenary bank for B, the peasant bank for C, the mage bank for a B or C drawable with bit 0x2.
+- **Fields read.** The only unit displacements the chooser reads, over all 20 executed cases and in the listing, are `+0x7c`, `+0xfc`, `+0x15c` and `+0x18c`; it reads no owner, player, position, distance or visibility field and writes nothing (`evidence/probe.json`, `access`). The stamp is not read, so a unit on cooldown can be picked and then stay silent; no second candidate is chosen.
+- **Executed.** Hero before or after an armed and an unarmed human: the hero for every draw. Armed before or after unarmed: the armed one. A monster alone (neither bit): no speaker and no `rand()` call. A mage bit with bit 0x10 and no hero bit: tier B or C by `+0x15c`. Three heroes: draws 0, 10922 | 10923, 21845 | 21846 and 32766 give members 0, 0 | 1, 1 | 2 and 2. Health 0 and -10 excluded, 1 included. `+0x7c = 0` excluded. Empty map, Acknowledgement 0 and session mode 1: no speaker.
+- **Ownership.** The chooser does not test it. Upstream, the command panel is disabled for a selection whose primary object another player owns (summary bit `0x4`, `AI-PANEL-061`) and the hover cursor gives select or default when that bit is set (`AI-CURSOR-226`); a click selection can hold a foreign unit (`AI-SELECT-122`).
+
+**Confidence.** **High** for the gates, per-member tests, tier order and index formula: the routine is read whole and executed on both roots over 20 discriminating cases, including both list orders. **Medium** for the meaning of the bits and the flag: `+0x18c` bit 0x1 is the hero-shaped drawable (`HERO-APPEAR-041`), bit 0x10 follows a wire class below 0x1a (`ANIM-096`), and `+0x7c` as "selected" is inferred (`AI-SELECT-065`). **Unknown** the content of the list slot one past the last element, which a draw of 32767 (1 in 32768) selects; the executed stub returns 0 there. **Unknown** whether any order can be issued from a foreign selection, and whether a structure can be a member that reaches the chooser.
+
+### VIDEO-069
+
+- **Caller.** The only call of `vt+0x78` on a unit is `0041a9f0`, after the chooser call `0041a9da`, at the end of `FUN_0041a2d5`. Its three callers (`00419f88`, `0041a0f6`, `0041a2ca`) are in the map-click handler `FUN_00419ec1`: the click with an empty selection, the select cursor arm and the drag-rectangle branch (`AI-CLICK-050`). The key and digit group selections are not callers.
+- **Gates.** After the selection summary is rebuilt (`0041a8f0`), the tail tests: the Shift latch `[0x005eb55c]` clear (`0041a996`, `AI-KEYMOD-059`), the selection count `view+0x140` non-zero (`0041a9a5`), `view+0x144 & 1` (`0041a9ba`) and `view+0x144 & 4` clear (`0041a9cd`). The chooser's own gates of `VIDEO-068` follow.
+- **Executed.** All 16 combinations of Shift 0 or 1, count 0 or 1 and flags 0, 1, 4 and 5: only Shift 0, count 1, flags 1 plays (`select1` for a hero at draw 0).
+- **Sharing.** The reader is `FUN_0045e9c0` (`ANIM-119`): it uses the chooser's speaker and the stamp `unit+0x190` of every other voice, and its threshold is 2000 ms. Executed on one unit: a move reply at 5000 ms then a selection reply at 6999 ms is silent, and at 7000 ms plays; a selection reply at 5000 ms then a move reply at 7999 ms is silent, and at 8000 ms plays; a move reply then a retreat reply is silent at 2999 ms and plays at 3000 ms.
+
+**Confidence.** **High** for the gate matrix and the shared stamp: the original tail and readers executed on both roots. **Medium** for the bit meanings (`+0x144` bit 0x1 follows the class-name test "CUnit", bit 0x4 is ownership of the primary object; `AI-PANEL-061`, which does not establish the other bits) and for the absence of other callers (the eleven-caller census of `VIDEO-067`). **Unknown** which input branches of the routine reach the tail: it was executed from its first gate.
+
+### VIDEO-070
+
+- **Slots.** Guard (`0x17`) and Stand Ground (`0x18`) are panel builders; the defend order (`0x1b`) is a map and minimap builder. All three call `vt+0x70`, `FUN_0045ea70`, which reads `[bank+0x1c]`, `defend.wav` (`ANIM-094`). Retreat (`0x14`, panel) calls `vt+0x74`, `[bank+0x18]`, `retreat.wav`. A pickup order (`0x21`, map click) calls `vt+0x7c`, `[bank+0x20]`, `idle.wav`. None draws from `rand()`.
+- **Banks.** The bank is the speaker's (`HERO-APPEAR-055`): `mf_hero` or `ff_hero`, `m_mage` or `f_mage`, `mf_merc` or `ff_merc`, `m_peasant` or `f_peasant`. Executed with one selected unit in a hero, hero-shaped mage, mercenary and peasant bank: guard, stand ground and defend decode to `defend` of that bank, retreat to `retreat`, pickup to `idle`.
+- **Stamp.** The three share the 3000 ms stamp with every other voice, so after a reply of any gesture that unit's next command, defend, retreat or idle reply is refused for 3000 ms and its next selection reply for 2000 ms.
+- **Other stance changes.** A stance or retreat set by anything other than these builders reaches none of the five slots on a unit within the census of `VIDEO-067`.
+
+**Confidence.** **High** for the slot of each gesture and the bank rule: decoded and executed on both roots. **Medium** for the last bullet, which depends on the census.

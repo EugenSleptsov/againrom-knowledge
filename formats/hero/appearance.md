@@ -281,6 +281,33 @@ also set; `k = 3` neither tests nor sets it. With bit `0x1` set, the sex bit and
 choose the bank, and equipment and the drawn class choose neither the bank nor the field of `k` 1
 to 3 (`ANIM-096`).
 
-Claims: `HERO-FIGURE-057`…`HERO-FIGURE-064`, `UNIT-FIGURE-032`, `ITEM-APPEAR-025`.
+**Five readers play the other bank fields.** `CUnit` and `CAirUnit` `vt+0x6c`, `+0x70`, `+0x74`,
+`+0x78` and `+0x7c` read the fields `+0x04`..`+0x20`, each behind the unit's voice stamp `+0x190`
+(`ANIM-119`):
+
+```
+vt     ms    field read                                      reached by (VIDEO-067)
++0x6c  3000  command1, command2, command3 or defend, by       move, attack, swarm, patrol, town
+             r = rand() >> 13 (defend only when r = 3 and
+             the bank is not a peasant bank)
++0x70  3000  defend    +0x1c                                  guard, stand ground, defend (VIDEO-070)
++0x74  3000  retreat   +0x18                                  retreat (VIDEO-070)
++0x78  2000  select1 or select2, by r = rand() >> 14          selection (VIDEO-069)
++0x7c  3000  idle      +0x20                                  pickup (VIDEO-070)
+```
+
+A reply stores the stamp before it picks a field, so a null field still starts the cooldown. No
+other state is stored: the pick is a function of bank, draw, clock and stamp (`ANIM-119`). The
+stamp starts at 0, so the first reply is admitted once the clock reaches the threshold (`ANIM-120`).
+
+The speaker is one member of the selection, chosen by `FUN_00422b5e` before the reader runs: a
+hero-shaped drawable if any is selected (`+0x18c` bit 0x1), else an armed human (bit 0x10 and slot 0
+occupied), else an unarmed human, at random inside that tier, among members with `+0x7c` set and
+health above 0. The chooser reads no owner, position or visibility field and picks one member
+only, so a speaker on cooldown leaves the reply silent (`VIDEO-068`). The cast orders call no
+reader (`VIDEO-067`).
+
+Claims: `HERO-FIGURE-057`…`HERO-FIGURE-064`, `UNIT-FIGURE-032`, `ITEM-APPEAR-025`, `ANIM-119`, `ANIM-120`,
+`VIDEO-067`…`VIDEO-070`.
 Not established: what the effect-list keys `0x26`/`0x30` name; which garment
 each of indices 2..6 and 8..11 is.

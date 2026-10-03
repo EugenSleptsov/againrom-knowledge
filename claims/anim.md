@@ -647,6 +647,8 @@ attributed)
 | ANIM-094 | The hurt hook's voice-bank field is fixed by the event index alone — k=1 `+0x24` easy.wav, k=2 `+0x28` hard.wav, k=3 `+0x2c` die.wav — whenever `unit+0x18c & 0x11` is non-zero, and k=0 always plays class `Sound[1]`. | High | ✔ promoted | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/) |
 | ANIM-095 | Five `vt+0x68` calls in the client dispatcher emit the hurt event: the `0x73` arm passes 0, 1 or 2 from the drawable's health before the message, and the state-sync stage switch passes 3 on stage 0→1 and 2 on 1→1. | High / Medium / Unknown | ✔ promoted | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/) |
 | ANIM-096 | For a hero-shaped drawable each hurt branch has one source: the bank follows `+0x18c` bits 0x2 (mage) and 0x4 (sex), the field follows k, and equipment and the drawn class change only the no-damage cue. | High / Medium / Unknown | ✔ promoted | [EXP-0405](../experiments/EXP-0405-hurt-voice-bank/) |
+| ANIM-119 | The five voice readers `vt+0x6c`..`+0x7c` each read one bank slot, except `+0x6c` (`command1..3` or `defend`) and `+0x78` (`select1` or `select2`), which draw once from `rand()`; they write only the stamp `unit+0x190`. | High / Medium / Unknown | ● active | [EXP-0445](../experiments/EXP-0445-command-voices/) |
+| ANIM-120 | The default drawable constructor sets the voice stamp `+0x190` to 0, so a first command or selection reply is admitted once `timeGetTime` reaches 3000 ms (2000 ms for the selection reply); the copy constructor carries the source's stamp. | High / Medium / Unknown | ● active | [EXP-0445](../experiments/EXP-0445-command-voices/) |
 
 ### ANIM-BLOW-019
 
@@ -1079,6 +1081,29 @@ counts 68 stores to displacement `0x18c` in 39 functions; 13 are the three
 writers above and 6 are the dispatcher's, which set or clear only bits `0x8`,
 `0x20` and `0x80`; the other 49, in 35 functions, were not classified by object
 type.
+
+### ANIM-119
+
+- **Slots.** `CUnit` (`0x005993e8`) and `CAirUnit` (`0x00599470`) hold the same five routines: `+0x6c` `FUN_0045e8f0`, `+0x70` `FUN_0045ea70`, `+0x74` `FUN_0045eb10`, `+0x78` `FUN_0045e9c0`, `+0x7c` `FUN_0045ebb0`. Ten dwords name them (`0x00599454..0x00599464`, `0x005994dc..0x005994ec`) and no direct call does (`evidence/xref-voice.txt`).
+- **Common shape.** Each routine calls `timeGetTime` (`[0x00632fa4]`), subtracts `unit+0x190` and leaves when the unsigned difference is below its threshold; otherwise it stores the time to `+0x190` before it chooses a source. The bank comes from `FUN_0045e890` (`HERO-APPEAR-055`), the source is a bank field, `FUN_0041e174` turns the drawable's position into pan and volume without a branch on its result, and a null field skips the play. A refused call stores nothing; a call whose field is null stores the stamp and plays nothing.
+- **Fixed readers.** `+0x70` reads `[bank+0x1c]` (`defend`), `+0x74` `[bank+0x18]` (`retreat`), `+0x7c` `[bank+0x20]` (`idle`), each at 3000 ms (`0x0bb8`), with no `rand()` call.
+- **`+0x6c`, 3000 ms.** `r = rand() >> 13` (`0045e922`, `0045e930`), 0..3. For `r < 3`, or when the bank is `m_peasant` or `f_peasant` (`0x005f1b98`, `0x005f1bc8`; `0045e938`, `0045e940`), it reads `[bank + 0xc + (r mod 3) * 4]` (`0045e955`): `command1..3`. Otherwise (`r = 3`, any other bank) it reads `[bank+0x1c]`, `defend`. Over the 32768 values of `rand()`, a non-peasant bank gives `command1`, `command2`, `command3` and `defend` 8192 each; a peasant bank gives `command1` 16384, `command2` 8192, `command3` 8192.
+- **`+0x78`, 2000 ms.** `r = rand() >> 14` (`0045e9f2`..`0045ea07`), 0 or 1, reads `[bank + 4 + 4r]` (`0045ea0e`): `select1` or `select2`, 16384 values each.
+- **State.** The CRT generator (`FUN_00554a60`, result masked to `0x7fff` at `00554a87`, seed in the per-thread block `+0x14`) is the only other state a reply touches; the chooser and `+0x6c` and `+0x78` draw from it (5 of 88 direct call sites). No bank field, index or cycle position is stored. Executed on the original instructions with a sentinel in each of the eleven fields of all eight banks, 192 bank and draw combinations and 40 clock and stamp combinations, the reply is a function of bank, draw, clock and stamp alone: the writes the five routines make are the stamp and nothing else, and the drawable displacements read are `+0x08`, `+0x0c`, `+0xe0`, `+0x15c`, `+0x18c` and `+0x190`.
+- **Boundary.** At stamp 0, `+0x6c`, `+0x70`, `+0x74` and `+0x7c` play at clock 3000 and not at 2999, `+0x78` at 2000 and not at 1999. A stamp later than the clock (difference wraps) plays.
+
+**Confidence.** **High** for the five routines' arithmetic, thresholds, fields and stores: each read whole and executed on both roots (EN = RU, one executable), which excludes a fixed slot per gesture, a cycle and a stored index; the only drawable store in them is the stamp. **Medium** for the rand-share count (a direct-call census) and for the unit-wide state claim: a store through a computed pointer to a drawable or a bank, or a bulk copy of a drawable, is outside the sweep. **Unknown** whether the sample service `FUN_00453b08`, reached at the end of each routine, refuses or queues the request (channel availability, its global at `0x005e8430`); the executed boundary is the call, not a sound.
+
+### ANIM-120
+
+- **Constructor.** `FUN_0045ae30` stores `EDX = 0` to `[esi+0x190]` (`0045ae5c`) beside `+0x18c` and the other `0x15c` block fields; executed on a block filled with `0xa5`, it leaves `+0x190 = 0` and `+0x18c = 0`. `CAirUnit`'s constructor `FUN_00461560` calls it and then sets its vtable (`00461563`, `00461568`).
+- **Copy.** `FUN_0045aed0` copies `[ebx+0x190]` to `[ebp+0x190]` (`0045b072`, `0045b078`). Its only caller is `FUN_004615b0` (`004615b8`), which no direct call or table dword names.
+- **Creation.** Direct calls to the default constructor: `00402397`, `004115c0`, `00421fb5`, `0047af6a`, `0047b67b`, and `0041155f` for `CAirUnit` (`evidence/xref-voice.txt`). `004115c0` is the client dispatcher's unit creation block (`ANIM-117`). The drawable is not among the classes the save stream carries (`SAV-STREAM-013`), so no stamp is loaded from a save.
+- **Other stores.** The sweep for displacement `0x190` finds 22 register-based stores: 8 on this object (constructor, copy, the hurt hook and the five voice routines) and 14 in 11 other owner routines (nearest-entry owners `0x00433390`, `0x00434770`, `0x00434d40`, `0x0047e6a0`, `0x0047e850`, `0x004b4180`, `0x004b42e0`, `0x004eaf51`, `0x004edfd7`, `0x004ee39e`, `0x004eefc8`), classed as other objects by their neighbouring fields, not by a receiver proof (`evidence/store-0x190.txt`).
+- **Hurt hook.** The hurt hook `FUN_0045e700` tests the same stamp against 1500 ms (`0045e724`, `ANIM-094`), so a hurt reply is admitted at clock 1500, not 3000.
+- **First reply.** Executed: after the constructor, `+0x6c` plays no recording at clock 2999 and plays one at 3000. The comparison is unsigned and the clock is `timeGetTime` (WINMM), so a first reply of the five voice readers is refused only while `timeGetTime` is below the threshold.
+
+**Confidence.** **High** for the constructor's value, the copy, and the first-reply boundary. **Medium** that every drawable starts from the constructor: five direct constructor callers and no vtable or clone path were found, and the load path to them was not traced. **Unknown** the stamp of a drawable made by a bulk copy, and the first-reply result in the first 3000 ms after the operating system's clock starts or after the 32-bit clock wraps.
 
 ## Projectile driver and draw
 
