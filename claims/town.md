@@ -2595,3 +2595,115 @@ world-map focus was not observed. Its own null focus and empty child array are
 supplied replay conditions; a native focusable child could receive the key before its
 own input slot. An authorized native message/focus trace is the next
 discriminator.
+
+## Exterior wildlife presentation
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TOWN-489 | The town painter draws horse, baba and dervish last and in that order, above the main picture, the bird layer, the door labels and nine static sprite fields; its direct blit census in the town range is 18 sites. | High | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-490 | Horse, baba and dervish are drawn at a view-relative table position with no per-frame offset: one frame size per sheet, all 27 canvases inside 640x480 from the view origin, 14 ending at 480; the view origin was not read. | High / Medium | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-491 | A horse or baba episode starts when time since the family clock strictly exceeds its delay, and every step refreshes that clock; delays are rolled 2000..3999 ms at entry and 2000..6999 ms at each arm, and the wait exceeds the delay. | High | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-492 | Horse, baba and dervish change frame at most once per admitted hub, at least 68 ms apart: horse frames 1..14 span at least 14 hub intervals, baba 30 or 31, one dervish revolution 30; delivered cadence is Unknown. | High / Unknown | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-493 | Horse1, Horse2, Horse3 and Crowd are 22050 Hz mono 16-bit samples of 538.8, 44.7, 29.2 and 3664.6 ms on both roots; horse requests pass repeat 0 and priority 128, the crowd request repeat 1. | High / Medium | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-494 | Horse sound requests are re-tested on every eligible paint while the frame gate holds and pass only when no buffer of the sample plays, so Horse2 (44.7 ms) can start again inside one frame dwell of at least 68 ms. | High / Medium | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-495 | No town code stops a horse sample before its end; the looping crowd buffer and the horse buffers are stopped, rewound, released and zeroed only by sound cleanup, called from entry reload, leave and destruction. | High / Medium | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-496 | In the 12 EN and 11 RU archives `crowd` names one node per root, sfx.res town/crowd.wav; no graphics node path contains `crowd`, and the TownBirds directory holds 41 nodes in nine groups on both roots. | High | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+| TOWN-497 | Every direct call through slots `0x18` and `0x38` in the town range is one of 18 sites; no other painter-route routine in range calls them; the hook's child walk paints the tip popup child (`TOWN-208`), not examined for a crowd. | High / Medium | ● active (branch candidate) | [EXP-0436](../experiments/EXP-0436-town-families/) |
+
+### TOWN-489
+
+Painter `004b50a0` is reached only through town class slot `+0x2c` (table `0059b000`, the single reference `0059b02c`). In address order it calls the begin-paint helper `0044c3b0`, blits `view+68` (the main picture) through slot `0x18`, calls the bird and `Town_add` routine `004b4fe0`, blits the three door labels (`TOWN-161`), blits nine static sprite fields in the order `+160`, `+180`, `+19c`, `+1bc`, `+1c8`, `+1d0`, `+1d8`, `+1f8`, `+e4` (`TOWN-162`), then draws horse `+120` (`004b5560`), baba `+f4` (`004b559b`) and dervish `+150` (`004b55cd`), each through slot `0x18`. The end-paint helper `0044c410` and the generic hook `004c4d63` follow. The horse sound gates sit between the static fields and the horse draw (`TOWN-445`).
+
+The town range `004b4290..004b76d1` holds 18 direct calls through slot `0x18` or `0x38`: 16 in the painter (one main picture, three labels, nine static fields, three wildlife) and two in `004b4fe0` (bird sprites through `0x18`, `Town_add` through `0x38`). The hook `004c4d63` calls virtual slot `+0x30` of the view, whose town-class target `004b4fd0` is a single `RET imm16`. The helpers `0044c3b0` and `0044c410` bracket a surface-lock counter and contain no blit.
+
+**Confidence.** High: the order is the address order of read call sites, the census enumerates the instruction population, and the slot table was read from the EN executable; the RU executable is byte-identical.
+
+**Unknown.** Which pixels of overlapping layers survive the keyed or opaque semantics of each slot, and any draw outside slots `0x18` and `0x38`.
+
+### TOWN-490
+
+The painter's wildlife blits pass `table x + view+8` and `table y + view+0xc` as first and second arguments, with the table values bound by `TOWN-439`. All 27 sheets per root have one width and height for every frame: horse position 1 is 132x76, position 2 136x76, position 3 96x80, position 4 136x80, position 5 148x80; baba positions 1..4 are 44x44, 48x52, 56x56 and 48x48; dervish positions 1..4 are 28x48, 36x52, 32x56 and 28x48. A `.16a` frame header holds width, height and data size only (`SPR16A-STRUCT-001`), so a sheet occupies one rectangle at every frame and its motion lies inside that canvas.
+
+Position tables give view-relative (x, y) top-left rectangles. Horse 1 (104,404), 2 (104,404), 3 (256,344), 4 (448,400), 5 (140,400); baba 1 (216,364), 2 (308,424), 3 (384,424), 4 (580,384); dervish 1 (224,364), 2 (324,424), 3 (392,420), 4 (592,388). All 27 canvases end inside 640x480 measured from the view origin, and 14 end at y=480: horse positions 1, 2, 4 and 5 and baba position 3. Read as (y, x), baba 4 and dervish 4 would start at y=580 and 592.
+
+Bounding boxes of horse overlap baba in 5 of 20 position pairs (80..352 px²) and dervish in 3 of 20 (96..336 px²). Baba and dervish overlap only at equal position index (1232..1664 px²), which the dervish re-roll excludes (`TOWN-004`), so their relative order has no bounding-box effect.
+
+The rectangles are relative to the town view: each blit adds `view+8` and `view+0xc`, and this experiment did not read those fields for the town view. `TOWN-222` shows the origin addend is zero only under the default 640x480 configuration, for the tavern.
+
+**Confidence.** High for the table values, frame sizes and rectangle arithmetic, identical on both roots. Medium for the x-then-y, top-left reading of the blit arguments: it rests on the fit above and on `TOWN-474`'s figure overlaps, not on a rendered frame.
+
+**Unknown.** The town view's `+8/+0xc` origin and so the absolute position under any display configuration; opaque pixel extents inside the canvases; rendered composition.
+
+### TOWN-491
+
+Entry (`004b4880`) writes the baba clock `+118` and horse clock `+148` from `timeGetTime`, rolls the baba delay at `+11c` and the horse delay at `+14c` as `(r*2000)/0x7fff mod 2000 + 2000`, sets current `-1`, selects element 0 of the sheet array, and arms the dervish with current 0 and bit `400h`. Helper `004b6f10` runs on every eligible paint after the hub block: it arms a family when `now - clock` is unsigned-greater than its delay. An arm writes clock = now, current = 0, a new delay `(r*5000)/0x7fff mod 5000 + 2000` and a sheet index `(r*n)/0x7fff mod n` with n = 2 for baba and 3 for horse, then sets the bit (`004b6f2d..004b7071`).
+
+The step helpers `004b6d00` and `004b6d70` write the family clock from `timeGetTime` at every step (`004b6d36`, `004b6da6`). After the terminal step the clock holds that step's time, and the delay rolled at the arm applies from there. The idle gap from the last step of one episode to the start of the next is therefore the delay plus the interval to the next eligible paint, and the wait from entry to the first episode is the entry delay plus that interval. The same test runs while a bit is active: a pause between two steps above the delay restarts that family at frame 0 on a freshly drawn sheet. The three horse sheets and two baba sheets are drawn independently of the previous sheet. The delay bounds assume the generator returns 0..0x7fff (`AI-RAND-058`).
+
+No chapter, mission or save input reaches these paths (`TOWN-004`). Eligibility is the view-active word `+204`, stored 1 near the end of entry (`004b4ac1`) and cleared on leave (`TOWN-446`).
+
+**Confidence.** High: every write, comparison and formula operand was read at instruction level (`evidence/anchors.tsv`).
+
+**Unknown.** The random generator's output distribution and the longest realised pause between paints.
+
+### TOWN-492
+
+The hub block runs when unsigned elapsed time since `[005f20bc]` is above `0x43` (`004b512e`, `004b5131`). Elapsed time is in `timeGetTime` milliseconds, so consecutive hub runs are at least 68 ms apart. All three families step in the same hub run, in the order dervish, baba, horse (`004b6c20`). The image-wide call sites of `004b6c20`, `004b6d00`, `004b6d70` and `004b6de0` and the three direct references of `005f20bc` are those of `TOWN-446` and `TOWN-447`, which bound the once-per-hub reach. Each step advances one frame, so one frame lasts at least 68 ms.
+
+Horse and baba episodes show frame 0 from the arm to the first step, frames 1..count-1 at one step each, then return to frame 0 at the terminal step. Horse: 15 frames, frames 1..14, at least 14 intervals (952 ms) from the first step to the terminal step. Baba A1: 31 frames, at least 30 intervals (2040 ms); A2: 32 frames, at least 31 intervals (2108 ms). Dervish: 30 steps per revolution, at least 2040 ms. The first step follows the arm by at least one later paint, because the hub block precedes the arm inside one paint.
+
+The executable imports `timeGetTime` and none of `timeBeginPeriod`, `timeEndPeriod`, `timeSetEvent` or `SetTimer` (`evidence/timer-imports.tsv`, both roots). Clock granularity is the operating system's current timer resolution unless another module changes it; this experiment did not observe it.
+
+**Confidence.** High for the gate, the step order and the interval arithmetic. Unknown for the delivered paint cadence: `TOWN-481` shows entry paints synchronously and the hub waits for a paint, but no source of repeated paints was traced.
+
+**Unknown.** Actual step intervals, stalls and repeated frames.
+
+### TOWN-493
+
+Header fields read from `sfx.res` on both roots: `town/horse1.wav` 23762 data bytes (538.8 ms), `town/horse2.wav` 1972 (44.7 ms), `town/horse3.wav` 1288 (29.2 ms), `town/crowd.wav` 161608 (3664.6 ms); format tag 1, one channel, 22050 Hz, 16 bits, 44100 bytes per second (`evidence/wav-headers.tsv`). Duration is data bytes over bytes per second.
+
+Horse requests pass volume `[005eb468]`, pan 0, repeat 0, priority `0x80` (`004b5454`). The crowd request passes repeat 1 and priority `0x80` (`004b737c`, `004b7377`). The request routine `00453b08` hands repeat to `00453e3f`, which calls buffer slot `0x30` with flag 0 for repeat 0 and flag 1 otherwise. Read against the published `IDirectSoundBuffer` method order, slot `0x30` is `Play` and flag 1 is looping, slot `0x24` is `GetStatus`, `0x3c` `SetVolume`, `0x40` `SetPan`, `0x48` `Stop`.
+
+**Confidence.** High for header values and request arguments. Medium for the looping reading, which rests on the interface layout and not on an audio observation.
+
+**Unknown.** Resampling, mixing and audibility.
+
+### TOWN-494
+
+The painter reaches the horse sound block on every eligible paint while `+120` is non-null. The block compares the current frame with its gate (`TOWN-445`), tests that the sample object exists, then calls status helper `00453a3d` and requests only on a zero result. The helper returns zero when the sound subsystem word `005e8430` is zero, when the object's loaded flag at `+0xc` is zero (`+0x10` is the buffer table), or when no buffer reports playing through slot `0x24` bit 0. It returns nonzero only when a buffer reports playing and a channel-table entry whose buffer field equals that buffer exists; a playing buffer with no table entry reads as not playing. The request routine selects the first non-playing buffer, returns silently when every buffer plays or the subsystem word is zero, and otherwise applies volume and pan and plays (`VIDEO-SFX-060`).
+
+The frame changes only at a hub step, so a gate frame is current for every paint inside one dwell of at least 68 ms. Horse1 (538.8 ms) outlasts that minimum. Horse2 (44.7 ms) ends inside it: a paint that arrives after the sample has ended and before the next hub step requests it again.
+
+**Confidence.** High for the gate, status helper and request selection. Medium for the repeat inside one dwell: it needs a paint in the window between sample end and the next step, and paint cadence is Unknown (`TOWN-492`).
+
+**Unknown.** Whether a repeated Horse2 start occurs in a play session, and its audibility.
+
+### TOWN-495
+
+Sound cleanup `004b7490` handles the twelve town sound fields. For `+74` (crowd) and `+78` it calls status helper `00453a3d` and, when a buffer plays, calls buffer slot `0x48` and then slot `0x34` with position 0 (`004b74b3`, `004b74bd`), releases the object and zeroes the field. Fields `+98`..`+a8`, which include the three horse samples, go through `00436eb0`, which does the same status, stop, rewind, release and zero sequence. Fields `+7c`..`+94` use `00436dc0`.
+
+The cleanup is called from the sound loader, town leave and the destructor (`TOWN-420`). The only crowd request site is the entry tail, so a crowd buffer that stopped by another route is not restarted until the next entry. Horse samples play once (`TOWN-493`). No town-range code other than sound cleanup stops these buffers. The shared channel allocator stops a playing sound of lower priority than a new request when all 16 channels are busy (`VIDEO-SFX-060`), so a request of higher priority than 128, if one exists, can end a horse or crowd buffer.
+
+**Confidence.** High for the cleanup bodies and callers. Medium that no other stop route exists: the search is the call and reference populations of `TOWN-420` and `TOWN-445`.
+
+**Unknown.** Device-side stops and buffer loss.
+
+### TOWN-496
+
+A case-insensitive substring sweep over every node path of all 12 EN archives (`MUSIC.RES`, `VIDEO4.RES`, `VIDEO8.RES`, `KIDS.LM`, `graphics.res`, `main.res`, `movies.res`, `patch.res`, `scenario.res`, `sfx.res`, `speech.res`, `world.res`) and all 11 RU archives (the same without `KIDS.LM`) finds the stem `crowd` in one node per root, `sfx.res` `town/crowd.wav`; no other node path contains it. It finds `baba` in 8 and `dervish` in 4 `graphics.res` nodes per root and no sound node for either. `horse` appears in 16 `graphics.res` nodes (15 `TownBirds` sheets and `infowindow/horse.bmp`) and 5 `sfx.res` nodes (`TOWN-445`).
+
+The `graphics.res` directory `interface/TownBirds` holds 41 nodes per root: baba 8, birds 9, dervish 4, fighter 1, guards 1, horse 15, mage 1, shopie 1, tavern 1 (`evidence/townbirds-population.tsv`). Both roots agree.
+
+**Confidence.** High for the enumerated population. The sweep covers names, not picture content.
+
+**Unknown.** A crowd under another name (people, citizens, townsfolk, npc); a crowd drawn inside a named picture; a crowd loaded by a computed path; the map `.alm` files, which the sweep does not cover. `KIDS.LM` is 24 bytes and has no nodes.
+
+### TOWN-497
+
+The census of `TOWN-489` accounts for every direct call through slots `0x18` and `0x38` in the town range: 16 painter sites (`evidence/painter-sequence.tsv`, `evidence/blit-census.tsv`) and 2 bird-layer sites. The painter also calls `004b4ea0` (in range) and, outside the range, the begin and end helpers and hook `004c4d63`. The hook's virtual slot `+0x30` is empty in the town class (`evidence/town-class-slots.tsv`); it also calls `00447d70`, `004bccb3` and `004bd65c`, the child-paint walk (`TOWN-208`), which paints the tip popup child that draws a tiled panel (`TOWN-209`). Of the 34 slots from `0059b000` to the next table, 11 lie in the town range and 23 are shared routines outside it. Entry creates one child, the tip popup at `+200` (`TOWN-165`), only when the tips flag is set.
+
+No sprite sheet, picture field or draw site is named for a crowd, and the crowd sound is requested once at entry (`TOWN-420`). Together with `TOWN-496` no crowd owner was found through slots `0x18` and `0x38` on the painter route.
+
+**Confidence.** High for the census and slot table. Medium for the negative: it covers the painter route through two slots, not other windows or the 462 undisassembled bytes of the town range.
+
+**Unknown.** Draw calls through other object slots; the body of `004b4ea0`; the hook helper bodies `00447d70`, `004bccb3` and `004bd65c`; the tip popup child's content; crowd imagery inside `townmain.bmp`, `Town_add.bmp` or another named picture; owners reached by computed or indirect targets outside the town class.

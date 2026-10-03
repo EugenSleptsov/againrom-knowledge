@@ -256,6 +256,34 @@ process-static admitted-hub clock. Exhaustive mask-selector outputs are
 `100h/200h/400h`; horse/baba delay arms and dervish entry arm remain separate.
 (`TOWN-446`, `TOWN-447`)
 
+The painter draws horse, baba and dervish last, in that order, after the main
+picture, the bird layer, the door labels and nine static sprite fields. The
+direct blit census of the town range is 16 painter sites and 2 bird-layer
+sites. (`TOWN-489`) Every frame of a sheet has one size, and a sheet is drawn
+at a view-relative table position with no per-frame offset. The reading of the
+position as x then y, top-left, is Medium. All 27 canvases lie inside 640x480
+from the view origin; the town view's `+8/+0xc` origin was not read. Horse bounding boxes overlap baba in 5 and dervish
+in 3 of 20 position pairs; baba and dervish never overlap at a reachable pair.
+(`TOWN-490`)
+
+A horse or baba episode arms when strict elapsed time since its clock exceeds
+its delay. Every hub step refreshes the clock, so the wait runs from the
+previous episode's last step. The entry delay is 2000..3999 ms and later delays
+are 2000..6999 ms; a pause longer than the delay restarts a running episode.
+(`TOWN-491`) A family changes frame at most once per admitted hub, at least 68
+ms apart. Horse frames 1..14 take at least 14 hub intervals, baba A1 and A2 at
+least 30 and 31, and one dervish revolution at least 30. Delivered paint
+cadence is Unknown. (`TOWN-492`)
+
+Horse1, Horse2, Horse3 and Crowd are 22050 Hz mono 16-bit samples of 538.8,
+44.7, 29.2 and 3664.6 ms. Horse requests use repeat 0 and priority 128; the
+crowd request uses repeat 1. (`TOWN-493`) A horse request is tested on every
+eligible paint while its frame gate holds and passes only when no buffer of the
+sample plays, so Horse2 can start again inside one frame dwell. (`TOWN-494`)
+No town-range code other than sound cleanup (called from entry reload, leave
+and destruction) stops these buffers; the shared channel allocator can stop a
+lower-priority playing sound. (`TOWN-495`)
+
 ### Statue star and crowd
 
 The star loader binds nine 64×44 `Town/stars/S00..S08.bmp` pictures at `+1ac`,
@@ -278,7 +306,14 @@ range. Entry loads `Crowd.wav` at `+74` and conditionally requests repeat1;
 reload, leave and destruction reach detach/release/zero cleanup. This is a
 bounded sound-route result, not a whole-image absence of a visual crowd.
 Bird and star share only the admitted hub after separate activation; crowd
-bypasses it on the measured route. (`TOWN-420`)
+bypasses it on the measured route. (`TOWN-420`) No node path of either root
+contains the stem `crowd` except the sound, and the `TownBirds` directory holds
+41 nodes in nine groups; a crowd under another name is not excluded.
+(`TOWN-496`) Every direct call through slots `0x18` and `0x38` in the town
+range is one of 18 sites, and no other town-range routine on the painter route
+calls those slots; the hook's child walk paints the tip popup child
+(`TOWN-208`), which was not examined for a crowd. A crowd drawn inside a named
+picture or through another slot is not excluded. (`TOWN-497`)
 
 For mouse-family routing, a non-null `control+34` handler bypasses the child
 broadcast, including after a zero return. Zero still permits the final vtable
