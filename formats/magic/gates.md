@@ -8,7 +8,7 @@
 
 ### The gate
 
-`actor+0x144` is a bitmask of the spell ids currently attached to the actor (`MAGIC-ATTACH-016`).
+`actor+0x144` is a bitmask of the effect ids currently attached to the actor; authored Potion effects carry id 0, so it is not a set of spell ids alone (`MAGIC-ATTACH-016` (amended, partially retracted and superseded in part in the ledger)).
 `FUN_005310e0`, the per-actor order machine, reads it before it reads anything about the order:
 
 ```

@@ -17,8 +17,8 @@ but DirectDamage `0059c6e0+3c` is `FUN_00502c51` itself. The read fire-sacrifice
 meteor-storm producers carry DirectDamage. They therefore do not gain duplicate suppression from
 the base-effect non-stacking rule. Fireball alone takes the explicit copy/divide branch of the
 local dispatcher; it is not the only direct-damage area route (`UNIT-AREADIRECT-072`). This narrows
-the old base-class-only and universal-idempotence clauses in `MAGIC-AREAAPPLY-038` and
-`MAGIC-FIREDIV-047`; the unit n² storage and spell-2 normalization remain valid for that unit path.
+the old base-class-only and universal-idempotence clauses in `MAGIC-AREAAPPLY-038` (amended and partially retracted in the ledger) and
+`MAGIC-FIREDIV-047` (amended and partially retracted in the ledger); the unit n² storage and spell-2 normalization remain valid for that unit path.
 
 For Building `0059c738`, the size getter is 1 regardless of rectangle size. Every reached direct
 call uses the separate Building damage core, subtracts a word at `+42`, clamps a negative signed
@@ -26,7 +26,7 @@ result to zero, and notifies for positive damage. With aliases held present, rep
 continue at HP zero. Actual HP-to-destruction timing is Unknown; do not infer either immediate
 detachment or an immortal target (`UNIT-AREAHP-073`, `UNIT-STRUCTDETACH-074`).
 
-Settled by `MAGIC-AREAPULSE-037` and corrected/completed by `MAGIC-RING-048`.
+Settled by `MAGIC-AREAPULSE-037` (amended and partially retracted in the ledger) and corrected/completed by `MAGIC-RING-048`.
 `Distribution system == 5` builds an `AreaEffect` with mode 2, stage byte `+0x4b = 0`,
 timer word `+0x4c = 0` and orientation byte
 

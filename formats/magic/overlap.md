@@ -6,7 +6,7 @@
 
 An area object's clock, its cell-layer ownership and a target's Poison attachment
 have separate lifetimes. `MAGIC-CLOUDCLOCK-154` corrects the cloud clause of
-`MAGIC-AREAPULSE-037`: the registration call paints without pulsing. Subsequent
+`MAGIC-AREAPULSE-037` (amended and partially retracted in the ledger): the registration call paints without pulsing. Subsequent
 calls first test the old counter; if positive, they decrement and pulse when the
 new value is divisible by 16, including zero. Cleanup occurs on the next call.
 With unmodified positive initial counter `V`, pulse entries occur at
@@ -31,7 +31,7 @@ damage separately per reached occupied cell; the same actor pointer in several
 cells can receive several applications. Neither Fire Wall nor Poison Cloud
 takes the division by target footprint reserved for Fireball id 2. The number
 of reached cells still depends on placement and painted layers
-(`MAGIC-CLOUDVISIT-156`, `MAGIC-FIREDIV-047`, `MAGIC-AREAAPPLY-038`). Fire's
+(`MAGIC-CLOUDVISIT-156`, `MAGIC-FIREDIV-047` (amended and partially retracted in the ledger), `MAGIC-AREAAPPLY-038` (amended and partially retracted in the ledger)). Fire's
 per-application payload and resolver remain `MAGIC-DMG-005` and
 `MAGIC-RESIST-006`; overlap does not define one fixed damage total.
 
@@ -54,7 +54,7 @@ or refreshed counter of 128 is eligible in the later actor phase of the same
 world tick. First attachment can therefore cause an immediate area-phase HP
 event followed by an actor-phase HP event. Staggered area refreshes can change
 that phase; unrefreshed application has eight-tick spacing
-(`MAGIC-ATTACH-016`, `MAGIC-POISONPHASE-159`). Poison's nonzero HP branch uses
+(`MAGIC-ATTACH-016` (amended, partially retracted and superseded in part in the ledger), `MAGIC-POISONPHASE-159`). Poison's nonzero HP branch uses
 the separate resistance arithmetic and notification gate in `ANIM-074`.
 
 Fire Wall removes the Poison layer when it paints a conflicting cell. Poison
@@ -71,10 +71,10 @@ producer into target `+0x40` and inner Token id into `+0x48`, even when that
 application merely refreshed a Poison whose source `+0x44` remains the first
 producer. Later Poison HP application still consults that retained source
 (`MAGIC-AREASOURCE-161`). Eventual training and kill attribution retain the
-gates and limits of `MAGIC-ITEMTRAIN-116`, `MAGIC-ITEMKILL-117` and
+gates and limits of `MAGIC-ITEMTRAIN-116`, `MAGIC-ITEMKILL-117` (amended and partially retracted in the ledger) and
 `MAGIC-ATTRGATE-118`.
 
-`MAGIC-CLOUDEND-163` qualifies `MAGIC-AREAEND-041`: identity-gated cell removal
+`MAGIC-CLOUDEND-163` qualifies `MAGIC-AREAEND-041` (amended and partially retracted in the ledger): identity-gated cell removal
 recounts and recomputes layers. If the cell record becomes empty, the complete
 helper restores its stored terrain and flag bytes before removing the record.
 This restoration does not reinstate prior area ownership or revoke a target's

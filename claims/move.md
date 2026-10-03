@@ -890,3 +890,160 @@ Whether a decayed byte, 0 after read 3 or 4, reaches an inline reader; that need
 `MOVE-085` and a mover starting or crossing in that cell. Whether a
 shipped or generated save holds a layered cell. Whether two or three layers meet on a cost-8 or
 cost-16 cell in play; `MAGIC-MAPLAYER-040`'s conflict rules do not forbid it.
+
+## Footprint position and cell transit
+
+Addresses are hexadecimal. Every quoted instruction is asserted byte for byte on both editions' `rom.exe`,
+which are identical (162 rows, 0 mismatches). The instrument is capstone disassembly of address ranges plus
+direct `CALL rel32` cross-references and a linear byte-store sweep; indirect calls are not followed.
+
+`EXP-0443` was allocated ids `87`..`89` of `claims/move.md` (3 ids) and spent all three, `MOVE-087`..`MOVE-089`.
+The next free `move.md` id is `MOVE-090`.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MOVE-087 | A mover of footprint side n stores the footprint's top-left cell and a sub-cell offset; the fine point P = cell*256 + sub is that corner, and the centre read for range, edge gap and bearing is P + (n-1)*128 per axis. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
+| MOVE-088 | A cell crossing releases the old footprint, claims, rewrites the position and occupies the new one in one FUN_00548c60 call; an empty release slot or a taken occupy slot skips that cell's recompute, and no deferral exists in those bodies. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
+| MOVE-089 | Actor removal through FUN_005476d0 releases the footprint at the stored position, recomputing each held cell, and clears the claim bits only after every release succeeds; release is blind to which actor holds the slot. | High / Medium / Unknown | ● active | [EXP-0443](../experiments/EXP-0443-footprint-slot/EXP-0443.md) |
+
+### MOVE-087
+
+The position record at `actor+0x10` holds byte `+0` cell x, `+1` cell y, word `+2` the packed cell, and bytes `+4`
+and `+5` the sub-cell x and y. `FUN_005449e0` returns `(cell x << 8) + sub x` and `FUN_005449f0` the same for y
+(`005449e4`..`005449ec`). Call that 16-bit value P. The footprint side n is actor byte `+0x49`, read through
+vtable `+0x1c` (`MOVE-084`).
+
+The stored cell is the origin of the occupied cells. The occupy routine `FUN_00544d00` reads n once
+(`00544d12`), then calls `FUN_00544ec0` for every offset pair 0..n-1 added to the cell bytes from
+`FUN_00544a10` and `FUN_00544a20` (`00544e57 ADD EDX,[EBP-0x10]`, `00544e63 ADD EAX,[EBP-0x14]`). The step
+release loop in `FUN_00548c60` adds the same offsets to the stored cell bytes (`00548d67`, `00548d78`), and the
+claim loops of `FUN_0054abb0` run 0..n-1 from the packed cell (`0054abf6`..`0054ac5c`). The footprint is
+therefore the n by n block whose top-left cell is the stored cell. A centre-cell anchor and a stored footprint
+centre are both excluded in these bodies: the step, occupy, release and claim loops read here add offsets 0..n-1 to
+the stored cell and none subtracts one.
+
+`FUN_004f280d` returns the x centre and `FUN_004f2849` the y centre: P, plus `(n-1) << 7`
+(`004f2831 CALL [EDX+0x1c]`, `004f2839 SUB EAX,1`, `004f283c SHL EAX,7`, `004f283f ADD ESI,EAX`), in 16 bits.
+Three consumers read it:
+
+- `FUN_004fb702`, the range test, takes the absolute difference of the two x centres and of the two y centres
+  (`005545c0` is `NEG` on a negative argument), keeps the larger, subtracts `((n1+n2) << 7) - 0x100`
+  (`004fb7a3`, `004fb7a6`), and returns 1 when the result is at most `0x180`, else `(v + 0x40) >> 8`
+  (`004fb7b4`, `004fb7c6`, `004fb7c9`).
+- `FUN_0054a960`, the edge gap, builds each centre as `(2*cell + n + 0x1ff) << 7` plus the sub-cell, masked to
+  16 bits (`0054a994`, `0054a9a9`, `0054a9ac`, `0054aa02`). Since `0x1ff*128 = 0x10000 - 128`, that value is
+  P + (n-1)*128 modulo 65536, the same centre. It subtracts the axes, takes the absolute value, subtracts
+  `(n1+n2) << 7` (`0054aa1e`), clamps at 0, keeps the larger axis, and returns `(v >> 8) + 1` (`0054aa4f`,
+  `0054aa53`).
+- `FUN_0054a680`, the bearing, subtracts the centres from the same two routines (`0054a689`..`0054a6bb`).
+
+The direct-call readers of these routines are `FUN_004fb702` at `004fb8af`, `004fba6f`, `004fbc16`;
+`FUN_0054a960` in `FUN_0052ab60`, `FUN_0052e110`, `FUN_0052e4d0`, `FUN_0053d9b0`, `FUN_0053ddd0`, `FUN_00548ea0`
+and `FUN_005492a0`; and `FUN_0054a680` in 11 owners (`xref-position.txt`).
+
+A step adds the signed step bytes to P itself (`00548cb4 ADD EAX,EBP`, `00548cc5 ADD EBX,EBP`) and stores the
+resulting cell bytes, sub-cell bytes and packed word back (`00548d12`..`00548d2c` when the cell is unchanged,
+`00548db9`..`00548dda` at a crossing). The same offset moves the corner and the centre whatever n is. At arrival
+both sub-cell bytes return to `0x80` (`00548dfe`..`00548e03`), as they do in the constructor and in the placement
+and portal writers (`005445ea`, `0054984b`, `0054984f`). A resting mover therefore has centre
+cell*256 + 0x80 + (n-1)*128: for n = 2 that is the grid line shared by its two cell columns, and for n = 3 the
+middle of its middle cell, which is the geometric centre of the block in both cases.
+
+Fourteen routines store the four position bytes within 24 instructions of one another (`posstores.txt`):
+`00543d30`, `00544530`, `00544550`, `005445d0`, `00544600`, `00544760`, `005447d0`, `00544810`, `00544980`,
+`005449b0`, `00548720`, `00548c60`, `005495f0` and `0054eec0`.
+
+**Confidence.** High for the centre formulas, the footprint origin and the step arithmetic, each an asserted
+instruction sequence read whole, and for excluding a centre-cell anchor and a stored centre in the step, occupy, release and claim loops read. Medium for the
+writer list and the reader lists: the instrument is a linear sweep with a 24-instruction window and direct
+calls only, and it misses stores split over longer windows, changed base registers, `REP MOVS` copies of the
+record, computed indices and indirect callers.
+
+**Unknown.** Which shipped or authored actors have n above 1; no census was run. Observed positions of a size
+above 1 in play. The full bodies of the 13 writers other than `FUN_00548c60`, which were located and only their quoted stores asserted.
+
+### MOVE-088
+
+`FUN_00548c60` (the step) runs, when the cell bytes differ after the step is added (`00548cf3 CMP DL,CL`):
+
+1. a release loop over the n by n footprint at the old position, one `FUN_00545230` call per cell
+   (`00548d7e`), which stops at the first call that returns 0 (`00548d83 TEST EAX,EAX`, then `JE 0x548d99`);
+2. `FUN_0054abb0` with the old packed cell (`00548da8`), which stores the claim cell at `mover+0xa6`
+   (`0054abcd`) and ORs the dynamic bits over the n by n footprint (`MOVE-084`);
+3. the new cell bytes, sub-cell bytes and packed word (`00548db9`..`00548dda`);
+4. `FUN_00544d00`, the occupy (`00548de0`). Its return value is not tested before the arrival recentre at
+   `00548de5`..`00548e03`.
+
+All four are in one call of the step, and the loop never yields. The two release outcomes decide the recompute
+of one cell. `FUN_00545230` selects the slot from the actor's movement domain (`0054527f CALL [EAX+0x20]`):
+domain 1 or 2 uses record `+0x04`, domain 3 uses `+0x08`. A missing cell record returns 0 at `00545267`, before any
+slot test. A domain of 0 or above 3 takes neither arm (`00545284`, `0054528c`): it skips the slot test and runs the
+recompute at `005452ce` unconditionally. A slot that is empty returns 0 at `00545293` or `005452a7`, before the
+clear and before the recompute. A slot that holds any
+non-zero value is cleared (`00545299`, `005452ad`) and `FUN_005456d0` runs at `005452ce`; the routine then returns
+1. The slot test is a non-zero test and does not compare the held pointer with the actor, so the release clears
+a slot another actor holds.
+
+The occupy `FUN_00544d00` calls `FUN_00544ec0` for each cell in row-major order and continues only on a
+return of 1 (`00544e73 TEST EAX,EAX`, `00544e75 JNE 0x544e9d`); the first return of 0 ends it with 0 and the
+later cells are not entered (`MOVE-087` gives the order). In the domain 1 and 2 arm of `FUN_00544ec0`, a cell record whose byte `+0x2c` is non-zero and not `0x1a`
+(`00544f4a`, `00544f5a`) first builds a temporary caster through `FUN_004d20c8` or `FUN_004d2105`
+(`00544fb1`, `00544ff9`; `MAGIC-235`); the builder appends a new object to the list at `this+0x2c` (`004d1fb5`).
+That happens before the slot test, whether or not the slot is taken. The domain 3 arm (`005450b8`..`0054511d`)
+contains no such call. A slot that is already taken (`00545001 CMP [EAX+4],0`, `005450d6 CMP [EDX+8],0`) calls
+`FUN_0054a200` and returns 0 with no slot store and no recompute. `FUN_0054a200` and `FUN_0054a1f0` are each one `RET 4` (`0054a1f0`, `0054a200`). An empty slot is
+written with the actor (`00545021`, `005450f6`) and `FUN_005456d0` runs at `00545043` or `00545118`.
+
+A deferred recompute needs a stored mark or a queue entry that a later routine reads. The release, the occupy,
+the per-cell routine, the stubs and the step contain no store of that kind. Their stores are the slot, the
+write-back of the record copy through `FUN_0054fc70`, the position, the claim cell, the cached bytes at
+`mover+0x86`..`+0x89` (`0054538a`..`005453c0`) and, in the per-cell occupy, the trigger caster's construction and
+list append. None is read here as a recompute mark; the consumers of that list were not read. The recompute therefore runs in the tick of the crossing, in the same call, for every
+cell whose release found a held slot and every cell whose occupy found an empty one. A cell whose release found
+an empty slot, or whose occupy found a taken one, gets no recompute from that call, and the first such
+release or occupy skips the cells after it in that footprint. The mover's `+0x76` word and `FUN_00548720`, which
+has its own release, claim and occupy call sites (`00548b0b`, `00548b35`, `00548b77`), were not read.
+
+**Confidence.** High for the order inside the step, the two slot branches of the release and of the per-cell
+occupy, the no-op stubs, the loop exits and the untested occupy return, each an asserted instruction. Medium
+for the absence of deferral: the population is the bodies named above and the two stubs; stores outside
+them, the consumers of the trigger caster list, indirect callers, and any routine that reads the bytes at `mover+0x86`..`+0x89` were not enumerated.
+
+**Unknown.** An observed tick. Which tick of a transit holds the crossing, which depends on speed
+(`MOVE-084`). Whether `FUN_00548720` follows the same order.
+
+### MOVE-089
+
+`FUN_005476d0` is the removal of an actor from the cell records. It reads n through vtable `+0x1c`
+(`005476e1`) and runs the same row-major release loop as the step, at the stored position, one
+`FUN_00545230` call per cell (`00547726`). A return of 0 ends the routine with 0 (`0054772d JE 0x54779a`), so
+the claim state below is skipped. After every release has returned 1 it reads the word at `mover+0xa6`
+(`00547747`). A zero word, or a word equal to the packed cell at position `+2` (`00547756`), ends the routine
+with 1. Any other word is passed to `FUN_0054af40` (`00547760`), which clears the dynamic bit (`0x80` for
+domain 3, `0x40` for domain 1 or 2) over the n by n cells at that claim cell except those inside the current
+footprint (`0054b021`, `0054b0e6`, `MOVE-084`); `+0xa6`, `+0x80` and `+0x76` are then zeroed
+(`0054776d`, `0054777a`, `00547787`).
+
+The four direct callers are `004e3c9b` in `FUN_004e3591`, `004f4808` in `FUN_004f47e6`, `004f4f9a` in the
+teardown `FUN_004f4f5d`, and `004fb183` in `FUN_004fb0b5`. The teardown then calls `FUN_00548e10` at `004f4fa5`,
+which sets both sub-cell bytes to `0x80`. When every footprint cell's release finds a held slot, each is cleared with its recompute, so a removed mover
+leaves no occupancy in those cells and no cost contribution: the alternative that the mover's contribution stays
+in the plane after removal is rejected for that all-cells-held case, and a mover removed after a completed
+crossing is fully released by this call. A release that finds an empty slot ends the routine early and leaves the
+later cells' slots and the claim bits `0x40` or `0x80` as they were. A crossing is not a state that can be cut short between ticks, since release, position rewrite and
+occupy are one call (`MOVE-088`).
+
+A footprint that was refused part-way keeps its row-major prefix (`SAV-CELLFAIL-583`). The release at removal
+walks the whole footprint at the new corner. Where a refused cell is held by another actor, the non-zero slot
+is cleared and recomputed, since the release tests no identity; the walk then reaches a never-entered cell,
+finds it empty, and returns 0, leaving the claim state in place. That consequence is read from the bytes and
+not run.
+
+**Confidence.** High for the loop, the exit on an empty slot, the claim clear and its conditions and the
+teardown recentre, each an asserted instruction. Medium for the consequences on a refused footprint, which
+combine these bytes with `SAV-CELLFAIL-583` and `MOVE-088` without a run, and for the four callers, a direct
+`CALL rel32` list that misses indirect callers.
+
+**Unknown.** Whether any caller tests the return of 0. Whether each caller removes the actor in the tick in which
+it leaves the world. Whether two actors reach one cell in play and one of
+them is then removed. Native behaviour of the claim bits after the early return.

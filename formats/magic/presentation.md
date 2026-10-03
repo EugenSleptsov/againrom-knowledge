@@ -4,7 +4,7 @@
 
 ## Spell icons
 
-Both are settled by `MAGIC-ICON-024`, `MAGIC-ICON-025`, `MAGIC-PIC-026`, `MAGIC-PIC-027`.
+Both are settled by `MAGIC-ICON-024`, `MAGIC-ICON-025`, `MAGIC-PIC-026`, `MAGIC-PIC-027` (amended and superseded in part in the ledger).
 They share a spell id and nothing else.
 
 **The icon is a position, not an index.** `graphics\interface\SpellBook.bmp` is 480x85, 24bpp,
@@ -122,13 +122,13 @@ Shipped `Data.bin`: **18 spells are `PointEffect` and 10 are `AreaEffect`** — 
 a cell pattern with its own arms for `fire_sacrifice`, `acid_stream` and `meteor_storm` and a
 default for the rest.
 
-**What a consumer must not do:** read `MAGIC-PIC-027`'s even-parity rule as licence to draw nothing
+**What a consumer must not do:** read `MAGIC-PIC-027` (amended and superseded in part in the ledger)'s even-parity rule as licence to draw nothing
 on a cast. Every cast of every spell animates its caster; only the map object is parity-gated.
 
 
 ## SpellEffect map objects
 
-Settled by `MAGIC-CASTSPAWN-033`, `MAGIC-BURSTLIFE-034`, `MAGIC-DELIVER-035`. Section 11
+Settled by `MAGIC-CASTSPAWN-033`, `MAGIC-BURSTLIFE-034` (amended and partially retracted in the ledger), `MAGIC-DELIVER-035`. Section 11
 describes the message; this section describes the object. The two are built by different code at
 different times.
 

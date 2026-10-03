@@ -4,7 +4,7 @@
 
 ## Projectile trajectories
 
-Settled by `MAGIC-BOLTGATE-069`, `MAGIC-BOLTSHAPE-070`, `MAGIC-BOLTLIST-071`,
+Settled by `MAGIC-BOLTGATE-069`, `MAGIC-BOLTSHAPE-070`, `MAGIC-BOLTLIST-071` (superseded in part in the ledger),
 `MAGIC-BOLTSTILL-072`, `MAGIC-TRAIL-073`, `MAGIC-BOLTEND-074`. Section 12 gives the
 object and its lifetime; this section gives what is drawn between the two ends of a flight, which
 is per-picture and is not the object's own sprite for two of the seven ids.

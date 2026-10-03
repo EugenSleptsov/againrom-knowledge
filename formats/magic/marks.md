@@ -160,7 +160,7 @@ by 45 changes outputs. For `T=3`, `E=56` at `p=15`, `27` at 30 and `28` at 60.
 At `p=0`, `F=-1` and `R=0`, so no invalid frame is emitted. It is the sole
 zero-output phase for installed `T={1,2,3}`. At `p=45`, `E=0` and `R=16T`.
 Every emitted B record uses frame 0..4. The builder reads neither RNG nor
-previous marks. — MAGIC-091, MAGIC-092
+previous marks. — MAGIC-091, MAGIC-092 (amended and partially retracted in the ledger)
 
 `bless` and `curse` each append 20 records: five trail steps of four records, on a circle of radius
 20.0 centred `T*32` above the anchor. Angles are in degrees. `bless` steps 89, 71, 53, 35, 17 and

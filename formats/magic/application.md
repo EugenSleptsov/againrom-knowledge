@@ -376,7 +376,7 @@ non-spell Potion id 0, and sets `actor+0x144 |= 1 << id` — the bitmask the
 damage resolver reads for Bless and Curse and the cast reads for Invisibility. **Ordinary timed
 attachments share one record per id**: an effect of the same id already present is un-applied,
 given the new magnitude and duration, and re-applied (an incoming `continuous` one has only its
-counter refreshed; `MAGIC-ATTACH-016`, `MAGIC-POISONREFRESH-158`). **Bless and Curse
+counter refreshed; `MAGIC-ATTACH-016` (amended, partially retracted and superseded in part in the ledger), `MAGIC-POISONREFRESH-158`). **Bless and Curse
 annihilate**: casting either on an actor carrying the other removes that one and applies nothing.
 `FUN_0050134f` ticks `+0x42` down, clears the id bit on expiry and ORs in a fifth `+0x3d` bit
 (`[0x0059bc18] = 128`) that is not one of the five duration words; a `+0x42` above 9600 never counts
@@ -449,7 +449,10 @@ cast approach/admission. It neither limits group sight nor enters `FUN_0053ddd0`
 structurally creates the unit-targeted state that can converge here, but neither preserved campaign
 root authors spell 14 in instant 24. Instant 21 makes the point-targeted state with a null target;
 a custom spell-14 record is predicted to fault at the selector's immediate primary dereference.
-That prediction was not run, and temporary-caster group ownership remains Unknown.
+That prediction was not run. A temporary caster built for states `0x0d` and `0x0e` has owner `+0x14` and group
+`+0x70` zero from its constructors, and no call site of its builder assigns either (`MAGIC-235`); the selector
+reads the caster's owner byte and its group list with no null test, so the same prediction covers a spell-14
+cast by that caster. Whether a later tick assigns an owner is Unknown.
 
 ## Effect duration
 

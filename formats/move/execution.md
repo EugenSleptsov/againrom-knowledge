@@ -93,6 +93,14 @@ calls `FUN_00544d00`; when `mover+0xac >= mover+0xaa` it snaps both fractions to
 takes `mover+0xaa = ceil(256 / |step|)` ticks. Speed never enters a label — two units of different
 speed pick the same route.
 
+**Footprint position** (`MOVE-087`). The stored cell is the top-left cell of the `n x n` footprint, with
+`n` = actor byte `+0x49`. The fine value `P = (cell << 8) + sub-cell` is that corner. The centre that the
+range test, the edge gap and the bearing read is `P + (n-1) * 128` per axis, 16 bits. A step moves `P` by the
+step bytes whatever `n` is. A resting mover has both sub-cell bytes `0x80`, so its centre is the geometric
+centre of its block. The range test returns 1 when the centre distance minus `((n1+n2) << 7) - 0x100` is at
+most `0x180`, else `(v + 0x40) >> 8`; the edge gap subtracts `(n1+n2) << 7`, clamps at 0 and returns
+`(v >> 8) + 1`. Which actors have `n` above 1 is not measured.
+
 ### What the cell-boundary calls do (`TERR-CELLREC-146`, `TERR-FOOTPRINT-147`)
 
 `FUN_00544d00(map, actor)` and `FUN_00545230(map, actor, x, y)` are the enter and the leave of the
@@ -127,9 +135,20 @@ Successful detach instead directly loads Position+00/+01/+04/+05 into
 actor+10 for each source. Neither sequence establishes callback purity or an
 atomic entry snapshot. — SAV-CELLFAIL-583, SAV-CELLLEAVE-584
 
+**Crossing order and removal** (`MOVE-088`, `MOVE-089`). The release loop, the claim, the position rewrite and
+the occupy are one call of the step, so the per-cell recompute runs in the tick of the crossing. A release whose
+slot is empty and an occupy whose slot is taken skip that cell's recompute and end their loop. A release that finds no
+cell record returns 0, and a domain outside 1..3 recomputes without a slot test. The domain 1 and 2 occupy
+builds the cell's trigger caster before its slot test; the taken branch then calls a routine that is one `RET 4`.
+No deferred recompute exists in these bodies. The release clears a
+non-zero slot whatever actor holds it. Removal (`FUN_005476d0`) runs the same release loop at the stored
+position at once, then clears the claim bits when every release succeeded and the claim cell differs from the
+current cell; an empty slot ends it early with 0 and the claim state is left. Whether a caller tests that
+result is Unknown.
+
 Two consequences a consumer must reproduce. A unit of footprint side `n` is present in `n²` cell
 records while it stands, so anything walking cells finds it `n²` times — that is what makes
-`fire_ball`'s footprint-squared divide a normalisation (`MAGIC-FIREDIV-047`). And `FUN_005456d0`
+`fire_ball`'s footprint-squared divide a normalisation (`MAGIC-FIREDIV-047` (amended and partially retracted in the ledger)). And `FUN_005456d0`
 assigns the dynamic byte from the static byte before rebuilding bits 6 and 7 from the record, so
 occupancy written straight onto the dynamic plane for a cell that holds a record does not survive
 the next recompute of that cell.
