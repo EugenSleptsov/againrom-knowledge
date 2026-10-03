@@ -3005,3 +3005,40 @@ assumes the pending walk is already installed.
 **Unknown.** That `ord+0x15 > 2` and `actor+0x136` hold at T0+1 was not shown. Whether the first row 1 invocation writes a position step or only turns when `mover+0x00`
 differs from `mover+0x01` (`FUN_0054a210` is reached from `FUN_00548f70` at `00549004` and `0054923d`),
 writers of `actor+0x50` outside the census population, and native reachability of the sequence.
+
+## Slot draw: entry, gate and edge cases
+
+Evidence is a static read of `rom.exe` (identical on both lawful installs; capstone disassembly, direct `CALL rel32` cross-references and displacement sweeps, indirect calls not followed). Every instruction quoted is asserted on both editions (`evidence/asserts-en.txt`, `evidence/asserts-ru.txt`: 170 rows, 0 mismatches). The next free `ai.md` id is `AI-378`.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-376 | The engage selector reads no cast-state field of its own actor, so a pending cast does not stop a draw; a miss writes order kind 5 over the retained cast order, while the in-flight cast runs from actor fields. | High / Medium | ✔ promoted | [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md) |
+| AI-377 | The slot draw skips a zero slot id before `rand()`, never matches a zero threshold, and has no owner test in its body; only a mage-bit actor with reach below 2 and `Player+0x28 == 0` is diverted. | High / Medium | ✔ promoted | [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md) |
+
+### AI-376
+
+Instrument: a displacement sweep (`evidence/fieldreads-engage.txt`) for `actor+0x54`, `+0x58`, `+0x5c`, `+0x64` and `+0x6c` over `FUN_0052e940`, `FUN_0052e6d0`, `FUN_0052eea0`, `FUN_0052e3c0`, `FUN_00533ae0`, `FUN_00536ef0` and `FUN_0052d2f0`, plus `FUN_0052ce50` (`0052ce50`..`0052d27c`). The only reads of `+0x54` are `0052ce71` and `0052ceed`, which compare another actor's word (the target's and the partner's) with `0x10` (`AI-374`). The only writes to the member's own `+0x54` are `0052cfd6`, `0052d259`, `0052d267` and, in `FUN_00536ef0`, `005375e6`. No instruction in `FUN_0052e940` tests the caster's cast state, the cast timer or the progress byte `ord+9`, so the selector is reached and draws whether or not the creature's own cast is in flight.
+
+`FUN_0052e940` has 14 direct call sites. Command state 3 reaches it at `0052d00c` with `ord+0xc` untested, state 4 at `0052d062` after a target search, and states 8, 10, 11 and 17 through `FUN_0052e4d0`, `FUN_0052e3c0` and `FUN_0052d500`; the group handlers reach it at `00533bd5`, `00537049`, `00537137`, `00537232` and `00537440`, and `FUN_0053e600` at `0053e679`. State 13 and state 14 re-arm kind 8 and kind 9 through `FUN_0052eea0` instead (`0052d08e`). The member executor path `FUN_005336a0` gates on `[this+0xb388]` or `[group+0x3c]+0x45`.
+
+A draw that matches no slot writes the default engage order, `ord+8 = 5`, `ord+0xc = target`, `ord+0x14 = actor+0x12c` (`0052ea60`, `0052ea6a`, `0052ea79`). The cast fields `ord+0x28`, `ord+0x30` and `ord+0x60` are not written on that path, so `ord+0x60` keeps the retention value of the earlier cast order (`MAGIC-240`). The cast in flight does not read the order block: the install copies the target and spell into `actor+0x5c` and `actor+0x64` (`MAGIC-239`), and the unit tick reads those fields (`004f3ab5`, `004f3adf`). A replaced order therefore does not cancel a cast that has already started.
+
+**Confidence.** High for the absence of a cast-state read in the selector and in the routines swept, and for the default engage writes (complete-body reads). Medium for "does not stop a draw" as a runtime statement: the entry gates of the 14 callers were read only partly, and a gate outside the swept routines could still keep a casting actor from reaching the selector.
+
+**Unknown.** The cadence of the AI-slot driver `FUN_004d214b` and the gate on its call to `FUN_005336a0` at `004d245c` were not established; `AI-371` places the slot before the executor passes. Whether the apply routine `FUN_004feadb` reads the order block was not read. The unguarded call site `0052d00c` was not traced to the writer of `ord+0xc`.
+
+**Evidence.** [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md), `evidence/fieldreads-engage.txt`, `evidence/xref-engage.txt`, `evidence/asserts-en.txt`
+
+### AI-377
+
+Gate (`0052e957`..`0052e980`): the selector tests the mage bit of the actor, `actor+0x4c & 4` (`FUN_0051cb70`). A non-mage actor goes straight to the slot loop. A mage-bit actor with weapon reach `actor+0x12c < 2` and `Player+0x28 == 0` skips the draw and calls `FUN_0052e110`, the standing acquisition, and returns. A mage-bit actor with reach 2 or more, or with `Player+0x28 != 0`, draws. No instruction in the gate reads a spell, a slot or a mana value, and none tests the owner of a non-mage actor, so the selector body has no owner test. Whether an owner-0 creature reaches the selector through its callers is not established.
+
+Loop (`0052e989`..`0052e9b1`): a slot id of 0 at `[esi+edi]` is skipped before `rand()` (`FUN_00554a60`). An order block whose three ids and thresholds are all zero therefore makes 0 `rand()` calls, leaves `EBX = 0` and falls to the default engage write (`AI-376`). A nonzero id with threshold 0 makes one `rand()` call and never matches, because the signed compare `JGE` skips a draw that is not below the threshold. `rand()` returns at most `0x7fff` (`AI-RAND-058`), so a threshold above `0x7fff` would match every draw. A match whose `Spellbook::Get` is null writes nothing, including no default engage order (`MAGIC-221`), so the order block is left as it was.
+
+Cast admission: `FUN_004fe6d3` refuses only a caster with the mage bit, no item in `caster+0x68`, and cost above `caster+0x9a` (`004fe6e0`..`004fe709`; `MAGIC-CAST-003`). A non-mage creature is never refused or charged on that test. The body of `FUN_004fe6d3` has no range, facing or ownership test (`MAGIC-239`, which lists the callees and callers not read). Within the selector, the predicate that admits a non-mage creature to cast from its slots is the draw: a nonzero slot id, a draw below its threshold and a non-null spell row.
+
+**Confidence.** High for the gate, the loop, the zero and threshold cases and the body of `FUN_004fe6d3` (complete-body reads, instruction assertions on both roots). Medium for the meaning of `Player+0x28 == 0`, which this ledger reads as a human participant: `UNIT-OWNER-009` is partly retracted and no reader of the field was enumerated here.
+
+**Unknown.** Whether an owner-0 creature reaches the selector through the callers: the gates in `FUN_005336a0` (`[this+0xb388]`, `[group+0x3c]+0x45`), the `FUN_004d214b` cadence and `0052d00c` were not resolved. The reach byte `actor+0x12c` of Dragon and Daemon classes was not read, so whether any shipped mage-bit creature meets the reach test is open. Whether a shipped creature class carries an all-zero slot block was not counted here.
+
+**Evidence.** [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md), `evidence/asserts-en.txt`, `evidence/listing.txt`

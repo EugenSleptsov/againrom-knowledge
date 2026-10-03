@@ -286,14 +286,25 @@ match reaches this table through `FUN_0052e6d0`; the Mind-gated walk's own match
 target-actor order — never the kind-9, target-cell order the slot path's own table arms can
 produce for the identical spell id (`MAGIC-221`).
 
-Parity with a player-issued cast is Medium at best, and execution past order-write was not traced.
-One difference is visible without tracing execution: every creature cast writes `ord+0x60 = 1`
-(`0052e8b0`, `0053e735`, `FUN_0052d600` per `AI-FOLLOWHEAL-118`), which the player command state
-arms at `0x52d08e`/`0x52d0ab` do not, and no published row names a reader of `ord+0x60`. The slot
-path also issues its order with no mana test at selection, unlike the Mind-gated walk and
-`FUN_0052d600`. Whether a creature's cast is otherwise charged, cooled down or range-checked the
-same way as a player's is Unknown; `ord+0x60` and the slot path's own missing mana test are named
-here as untraced differences, not confirmed absences (`MAGIC-AI-012`, `MAGIC-221`).
+Each table arm fixes the target of a slot-drawn cast (`MAGIC-237`). Fire Arrow, Drain Life,
+Lightning, Prismatic Spray, Stone Curse, Curse and Slow are aimed at the engage victim. The
+Protections, Heal, Invisibility, Shield, Bless and Haste are aimed at the caster itself. Fire Ball,
+Wall of Fire, Freezing Cloud, Poison Cloud, Light, Darkness, Wall of Earth and Meteor Storm are
+aimed at the cell the victim stands on. Acid Stream and Teleport are aimed at the cell one step
+from the caster toward the victim; Teleport's search for a free cell around the victim runs but
+its result is overwritten (`MAGIC-238`). Fire Sacrifice and Control Spirit write no order. No
+slot-drawn spell is aimed at an ally; none of the 28 arms is.
+
+A cast order that is out of range or not faced is neither dropped nor fired. The order machine
+walks toward the target or cell and tests again; the test is facing plus distance to the order's
+reach byte; the facing test and the kind-9 distance (larger absolute cell difference) are read, the kind-8 distance metric is not (`MAGIC-239`). `ord+0x60` is read by the two cast install arms: a zero value runs the
+stop-and-reset at install, a nonzero value keeps the order armed, and every creature cast selector
+found writes 1 (`MAGIC-240`). A selector pass that finds no slot match writes a kind-5 engage order and
+leaves `ord+0x60` alone; the cast already in flight runs from actor fields and is not cancelled by
+it (`AI-376`). The selector body does not read the creature's own cast state; its callers' gates were read only in part (`AI-376`). A zero slot id is
+skipped before `rand()`, a zero threshold never matches, and a non-mage creature is neither refused
+nor charged by `FUN_004fe6d3` (`AI-377`). The slot path also issues its order with no
+mana test at selection, unlike the Mind-gated walk and `FUN_0052d600`. Unknown: whether repeated path failure ends the walk, a dead target at the kind-8 arm, a null target at the cell arms from the unguarded call site `0052d00c`, the reach of Dragon and Daemon (`actor+0x12c < 2`), and whether the selector is reached during a cast. Whether the cast applies identically to a player's after the cast state begins was not traced.
 
 ## Mind and Spirit
 
