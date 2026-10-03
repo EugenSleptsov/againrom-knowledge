@@ -126,7 +126,12 @@ s = |mover[0xb0]| or |mover[0xb1]| if that is 0, or 1 ; mover[0xaa] = ceil(256 /
 
 `cost(cell)` = `FUN_0054e5e0` is **not a pure read**: with `block[cell] & 0x20` and a nonzero byte
 at `record+0xe` in the `world+0x540b8` table it shifts the stored cost right by 2 and writes it
-back. With installed maps, v0=16 and SpeedMultiplier=8, the resulting
+back. The read happens once per transit start for each of the two cells, before any recompute of
+them, and every actor tick precedes every area-effect tick (`MOVE-084`); two reads with no recompute
+between them divide twice, for every layer slot including Wall of Earth (`MOVE-085`). No cost plane
+is saved, the recompute restores the byte from `+0x00` or from `CostCracked` (the sweep of other
+stores is partial), and two inline readers divide by the byte with no zero guard, which decay can
+produce (`MOVE-086`). With installed maps, v0=16 and SpeedMultiplier=8, the resulting
 speed spans 4..32 (mode16); these are data-derived values within the clamp.
 
 ## Cell records

@@ -725,3 +725,168 @@ behaviour. No nonzero-range or mid-transit arm is generalized.
 final actor behaviour remain unobserved. A reachable original breakpoint
 trace of the same centred zero-radius entry that reaches search or rewrites
 these fields refutes this local prediction.
+
+`EXP-0434` was allocated ids `84`..`86` of `claims/move.md` (3 ids) and spent all three,
+`MOVE-084`..`MOVE-086`. Its `MAGIC-229`..`MAGIC-234` ids are returned unused because
+`claims/magic.md` is still in the table format. The next free `move.md` id is `MOVE-087`.
+
+## Area layers and the cost byte
+
+Addresses, offsets and cell values below are hexadecimal unless a count or a cost is named. Every
+quoted instruction is asserted byte for byte on both editions' `rom.exe`, which are identical.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MOVE-084 | A transit start reads the cell costs with FUN_0054d210 before any FUN_005456d0 recompute, and every actor tick runs before every area-effect tick; the recompute comes later, at the cell-crossing step. | High / Medium / Unknown | ● active | [EXP-0434](../experiments/EXP-0434-area-cost-order/) |
+| MOVE-085 | FUN_0054e5e0 divides a layered cell's cost byte by four once per read, whatever the layer count, Wall of Earth included; two reads with no recompute between them divide twice, and no call-graph edge forbids that. | High / Medium / Unknown | ● active | [EXP-0434](../experiments/EXP-0434-area-cost-order/) |
+| MOVE-086 | The cost byte is restored from payload+0 or the CostCracked constant and no cost plane is saved, so a loaded layered cell keeps its ingest value until a recompute; two inline readers divide by it with no zero guard, and decay can zero it. | High / Medium / Unknown | ● active | [EXP-0434](../experiments/EXP-0434-area-cost-order/) |
+
+### MOVE-084
+
+FUN_00549990 (transit start) runs in this order. When the word at movement-record `+0x80` differs from
+the target-cell word at `+6`, it calls FUN_0054af40 at `005499fb` (claim clear, skipped when `+0x80`
+is 0, `005499f2`) and FUN_0054ad20 at `00549a0e` (claim set), then FUN_00544300 at `00549a32` (heading
+for the target cell, stored at record `+1`). When record byte `+0` equals `+1` (`00549a4b`) it calls
+FUN_0054d210 at `00549a5b` and then FUN_00548c60 (the step) at `00549a72`. Otherwise it calls
+FUN_0054a210 at `00549a80` and reads no cost.
+
+The claim routines write the dynamic plane, not the cost plane: set `0054ae23 OR byte ptr [EAX],0x80`
+and `0054af04 OR byte ptr [EAX],0x40`; clear `0054b021 AND CL,0x7f` and `0054b0e6 AND CL,0xbf`. No
+direct-call chain from FUN_0054af40, FUN_0054ad20 or FUN_00544300 reaches FUN_005456d0, FUN_0054e5e0,
+FUN_0054d210, FUN_0054e730 or FUN_0054e9e0 (`callgraph.txt`). FUN_0054af40 and FUN_0054ad20 each make
+two indirect calls on the actor; vtable `+0x1c` and `+0x20` of the three actor vtables are
+FUN_00523210 and FUN_00523230, which return actor bytes `+0x49` and `+0x4a` (`0052321a`, `0052323a`).
+
+FUN_0054d210 divides by the mean of two FUN_0054e5e0 reads (`0054d323` source cell, `0054d32f`
+destination cell). The mean is `(a+b)>>1` in 8 bits and a result of 0 becomes 8 (`0054d338`..`0054d342`),
+so this divide cannot see a zero. The speed term is clamped to 63 (`0054d366`) and the per-tick step
+is that term times a table value, times the double `0.707` at `0059cd98` when both table values are
+non-zero (`TERR-MOVE-056`). FUN_00548c60 adds the step
+bytes (record `+0xb0`, `+0xb1`) to the position and compares the cell bytes (`00548cf3`). Equal cells
+jump past every recompute (`00548d30`); a changed cell runs FUN_00545230 (`00548d7e`, release),
+FUN_0054abb0 (`00548da8`) and FUN_00544d00 (`00548de0`, occupy); the release and the occupy reach
+FUN_005456d0 (`005452ce`, `00545043`, `00545118`). FUN_00549990 is called only by FUN_00548f70
+(`0054928d`) and FUN_005492a0 (`005495e1`), and FUN_005492a0 sends any position whose sub-cell bytes
+`+4` and `+5` are not both `0x80` to FUN_005495f0 instead (`005492cf`..`005492d7`); FUN_00548f70's
+equal test is `MOVE-083`'s. A transit start therefore begins at sub-cell `0x80/0x80`. A step is
+the speed term, at most 63, times a direction factor, so it is at most 63 units on an axis (44 on a
+diagonal with the `0.707` factor) and cannot change the cell from `0x80`. The crossing recompute follows the cost
+read by at least one tick.
+
+FUN_004d891a calls FUN_004d1d86 once per tick (`004d893e`). That routine calls vtable `+0x18` of
+each element of the list at `this+0x2c` (`004d1db7`), tests byte `+0x136` after each call
+(`004d1dbf`), and only after the list is exhausted calls FUN_00510247 (`004d1deb`), which calls
+vtable `+0x18` of each area effect (`005102ac`). The direct-caller closure of FUN_0054d210,
+FUN_0054e5e0 and FUN_00548c60 has one root, FUN_004f37be, in `+0x18` of the vtables at `0059c3c0`,
+`0059c448` and `0059c4d0` (`0059c3d8`, `0059c460`, `0059c4e8`). The closure of FUN_0054e730 and
+FUN_0054e9e0, the layer add and removal, has one root, FUN_004fc9b2, in `+0x18` of the vtable at
+`0059c5f0` (`0059c608`). Within it the layers are laid when effect byte `+0x48` is 0 (`004fc9e9`,
+`004fcb21 CALL FUN_004fccd8`; `+0x48` is set to 1 at `004fd093` and `004fd1b0`) and removed by
+FUN_004fd28d when the word at `+0x4c` reaches 0 (`004fc9ff`, `004fcb10`).
+
+**Confidence.** High for the call order inside FUN_00549990, the dynamic-plane stores of the claim
+routines, the getter bodies and the tick order, each a quoted instruction. Medium for the absence of
+a direct-call chain from the claim routines to FUN_005456d0, since each makes two indirect calls
+that are not followed, and for the closures
+and the cell-crossing bound: the instrument is direct `CALL rel32` plus aligned data dwords, so
+indirect calls, other `vtable+0x18` call sites, the identity of the `this+0x2c` list's elements with
+the actor vtables' objects and the direction tables at `world+0x58eb0` and `world+0x58eb8`, which `TERR-MOVE-056` records as
+immediates written by the world constructor, are not re-read here. The sub-cell bound assumes their
+entries have magnitude at most 1.
+
+**Unknown.** Observed ticks. An effect added to the area list during the actor walk of the same
+tick. On which tick of a transit the crossing falls, which depends on the speed.
+
+### MOVE-085
+
+FUN_0054e5e0 returns the plane byte unchanged unless static bit 5 (`0054e612 TEST AL,0x20`) is set.
+For a cell with a record it zero-fills 13 dwords at `ESP+0xc` (`0054e61d`), copies the 13 dwords of the
+record there (`0054e644`), reads the byte at `ESP+0xe` (`0054e64a`) and, when it is non-zero, runs
+`SHR AL,2` and stores the result to the cost plane (`0054e654`). Scratch `+2` is payload `+2` (the
+copy is the record itself). The divide runs once per read and does not use the count's value.
+
+Payload `+2` is written at six sites (`payload2.txt`): zeroed then incremented once per non-null
+slot of the six in FUN_0054e730 (`0054e7ae`, `0054e7ba`, second arm `0054e900`, `0054e90c`) and
+FUN_0054e9e0 (`0054ea84`, `0054ea90`); a seventh store, `00543e4d`, rewrites the byte read at
+`00543e48`. The one-byte displacement-2 operands over `0x540000..0x552000` also read it at `005452f4`,
+`00545c71`, `00547abe`, `0054dab5`, `0054ddbc` and `0054eb25`.
+
+Wall of Earth is spell 19, layer index 3 at payload `+0x20` (`MAGIC-MAPLAYER-040`, `TERR-CELLREC-146`).
+FUN_005456d0 walks the six slots from `+0x14` and runs `005457ea SHL byte ptr [EAX],2` once per
+non-null one (`005457dd`..`005457f1`), so the Wall of Earth slot takes the multiply like any other,
+and FUN_0054e5e0 reads only the count, so it takes the divide the same way. A separate test of that
+slot at `005457f3` ORs bits into the static and dynamic planes and does not touch the cost byte. The recompute first resets
+the byte from payload `+0` (`0054572c`), or from the `CostCracked` constant at `world+0x5417b` on the
+footprint-clearing arm (`005457d3`, `005457d9`; `TERR-STRUCT-071`), so a recompute gives that source
+`<< 2` per layer, in 8 bits, whatever was read before. The shipped `CostCracked` value is 6, inside
+the range of the table below.
+
+`costbyte.tsv` applies both routines to the shipped range 6..16 (`TERR-COST-052`). One layer: read 1
+returns the baseline, read 2 returns `c >> 2` (1..4 for 6..16), read 3 returns 0 except for 16 (1).
+Two layers: read 1 returns `c << 2` in 8 bits, so 16 gives 0. Three layers give 0 for 8, 12 and 16.
+
+FUN_0054d210 calls FUN_0054e5e0 for the two cells only on its domain-1 arm (`0054d254`). The
+recompute call sites are 16 direct calls in the map module (`xref-recompute.txt`): the crossing
+release and occupy (FUN_00545230, FUN_00544ec0), the area module (FUN_0054e730, FUN_0054e9e0), the
+building routines (FUN_0054d790, FUN_0054dc70), the sack routines (FUN_005477b0, FUN_005479b0,
+FUN_0054f680) and FUN_00545de0. FUN_00545230 skips the recompute when the actor's slot is empty (`00545291`,
+`005452a5`); FUN_00544ec0 skips it when the slot is taken (`00545001`, `005450d6`). From a transit
+start the call graph reaches a recompute of its two cells only through FUN_00548c60, at the crossing.
+No edge orders another actor's transit start between the read and that recompute, and none forbids
+it.
+
+**Confidence.** High for the scratch identity, the writers within the instrument, the one divide
+per read, the slot-blind divide and multiply, and the table, all quoted instructions and arithmetic.
+Medium for the absence of a forbidding edge: its population is the bodies of FUN_00549990,
+FUN_0054d210, FUN_00548c60 and the closures of `MOVE-084`; the guards in FUN_00548f70 and
+FUN_005492a0 on a destination another actor has claimed were not read. The writer sweep misses word
+and dword stores that overlap the byte and `REP MOVSD` record copies.
+
+**Unknown.** Whether two reads of one cell without a recompute happen in play. A runtime trace of
+FUN_0054e5e0 and FUN_005456d0 over one cloud confirms or refutes the decay.
+
+### MOVE-086
+
+The cost byte is written from payload `+0` by FUN_005456d0 (`0054572c`), from the `CostCracked`
+constant at `world+0x5417b` by the same routine's footprint-clearing arm (`005457d3 MOV DL,byte ptr
+[EBX+0x5417b]`, `005457d9 MOV byte ptr [EAX],DL`; `TERR-STRUCT-071`), and by `0054eb77` in
+FUN_0054e9e0 (from `MOV DL,byte ptr [EBP]` at `0054eb66`), and the sweep of byte operands of the
+form `[reg+reg]` over `0x540000..0x552000` (`byteidx-map-module.txt`) shows further stores at
+`00541d28`, `00541d3f`, `00541d46`, `0054555e`, `00547b16`, `00547d74`, `00547dac`, `00547df9`,
+`00547e8a`, `0054db06` and `0054de0e`, left unclassified here. The sweep does not match the write of
+the ingest FUN_00548720 (`TERR-COST-052`), which uses another operand form. Baselines are read from
+the plane when a record is made (`00545468`, `0054d8ad`, `0054e874`, `0054f7ca`). A cell whose static
+bit 5 is clear has no record and no divide (`0054e612`).
+
+No cost plane is saved. The sweep finds no displacement-0 byte operand between `00543ea9` and `00545468`, a span that holds
+FUN_00544a60, and `SAV-BLOCK-011` and `SAV-CELLREC-017` describe only the two flag planes and the
+52-byte records with baseline, count and slots. LOAD in FUN_004d0cb7 builds the terrain first
+(`004d130f CALL FUN_005417f0`, ingest), then runs FUN_00544a60 (`004d1345`). After it the direct-call
+chains to FUN_005456d0 are `004d13b4` FUN_00539310 > FUN_00539900 > FUN_00539be0 > FUN_0054f680
+and `004d143f` FUN_004e3591 > FUN_005476d0 > FUN_00545230 (`callgraph-load.txt`): the sack cells
+and an actor release. A tick lays layers only for an effect whose `+0x48` is 0 (`MOVE-084`). A saved
+layered cell therefore keeps the ingest byte, with a non-zero count, until a recompute; its first
+FUN_0054e5e0 read returns `c >> 2` and stores it.
+
+Two inline readers divide by the byte with no zero test. FUN_005495f0 runs after FUN_00548c60 and
+reads the cost of the cell word (`00549674 MOV CL,byte ptr [EDX+EAX]`, `00549682 IDIV ECX`; the arm is
+selected by `0054960d` and `00549628`). FUN_0054a620, called at `00544d58` before the occupy
+recompute, does the same (`0054a672`, `0054a677`). `IDIV` by 0 raises a divide error. The byte is 0
+after a recompute for two layers at cost 16 and three layers at 8, 12 and 16, and by decay with a
+non-zero count after read 3 of a one-layer cell at cost 6..15 and after read 4 of a two-layer cell
+at cost 6..15 (`costbyte.tsv`), so a layer count of one or two reaches the zero divisor if
+two or three reads of the cell occur with no recompute (`MOVE-085`).
+
+**Confidence.** High for the two divide sites and their missing guards and for the load sequence.
+Medium for the restore sources, the absence of a cost plane in the serializer and the population of
+readers and writers: the instrument is the `[reg+reg]` sweep over the map module, classified by
+hand, with no original run, no corpus read and whole-image writes outside `0x540000..0x552000`
+unclassified. The `[reg]` displacement-0 store form (about 85 byte stores and read-modify-writes in
+`0x540000..0x552000`, among them `0054572f`, `005457d9`, `0054e657` and `0054eb80`) was not swept or
+classified; only the sites quoted here are named. Other index forms are not seen.
+
+**Unknown.** Whether LOAD restores the area effects with `+0x48` set, so that no layer is laid again; the effect save routine was not read. What the process does on a zero divisor, since no exception handler was read.
+Whether a decayed byte, 0 after read 3 or 4, reaches an inline reader; that needs the double read of
+`MOVE-085` and a mover starting or crossing in that cell. Whether a
+shipped or generated save holds a layered cell. Whether two or three layers meet on a cost-8 or
+cost-16 cell in play; `MAGIC-MAPLAYER-040`'s conflict rules do not forbid it.

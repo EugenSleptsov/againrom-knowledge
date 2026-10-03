@@ -39,9 +39,17 @@ FUN_004e1924 (map load)  004e1c3f world ctor -> FUN_00547eb0 -> FUN_00548550 + F
              so through this arm rather than through anything in the area module. The
              registration is FUN_0054e730 (which then calls the recompute at 0054e829 or
              0054e97b) and the removal FUN_0054e9e0 (0054ea7c clears the slot, 0054eaff
-             recomputes). MAGIC-WALLBLOCK-045, MAGIC-AREACOST-046.
+             recomputes). MAGIC-WALLBLOCK-045, MAGIC-AREACOST-046, MOVE-085.
 +0x2c  u8
 ```
+
+**Cost byte order and persistence** (`MOVE-084`, `MOVE-085`, `MOVE-086`). `FUN_0054e5e0` divides a
+cell's cost byte by four once per read whenever the record's count at `+0x02` is non-zero, for every
+slot including Wall of Earth, and two reads with no recompute between them divide twice. A recompute
+resets the byte from `+0x00`, or from `CostCracked` on the footprint-clearing arm (`TERR-STRUCT-071`), and shifts it left by two per non-null slot in 8 bits. A transit start reads
+the cost before any recompute of its cells, and the crossing recompute follows by at least one tick.
+No cost plane is saved: a loaded layered cell keeps the ingest byte until the next recompute, and a byte decayed to 0 reaches the two unguarded dividers. Two
+inline readers, `FUN_005495f0` and `FUN_0054a620`, divide by the byte with no zero guard.
 
 **Who takes `+0x04` and who takes `+0x08`** (`TERR-CELLREC-146`). Not *ground* and *air*
 as such: the selector is the actor's movement-domain byte, read through `vt+0x20` in both directions
