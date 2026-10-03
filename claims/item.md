@@ -3107,6 +3107,39 @@ pickup. The text when an item code is missing from the name map, since the
 lookup result is not tested. Whether a message `0x67` for another player
 reaches this arm, which reads no player id.
 
+## Item attribute stream writer
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| ITEM-152 | The item-description writer `FUN_00509363` emits marker tag `0x33` first, then one `(kind, operand)` byte pair per effect, plus a second pair after kind 41 and the `+0x41` operand for kinds 44..48. | High / Medium | ● active | [EXP-0438](../experiments/EXP-0438-resolver-regen-card/) |
+
+### ITEM-152
+
+- `FUN_004f0930(tag, value, header)` appends the two bytes to the stream at
+  `this+0x13+len`, `len` being the word at `this+0x11`, then adds 1 to byte
+  `+0x05` and 2 to byte `+0x06` of `header` (`004f0930`..`004f09a0`). It has 15
+  call sites over 4 owners (`EnumRefs callto:4f0930`, 0 orphan hits);
+  `FUN_00509363` is one of the four.
+- `FUN_00509363` sets bit `0x20` of `header+0x04` (`00509386`) and writes the
+  pair `(0x33, 0)` (`00509393`..`0050939a`). For each effect record in the list
+  at `item+0x20` it writes `(rec+0x3c, rec+0x40)`, the effect kind and its
+  operand byte (`005093ca`..`005093da`). When the kind is `0x29` (41) it sets
+  bit `0x10` in `header+0x04` and adds `(0x32, rec+0x42)`
+  (`005093e7`..`0050940b`). When the kind is `0x2c`..`0x30` it adds
+  `(kind, rec+0x41)` (`00509412`..`0050946a`). Kind 42 takes only the first
+  pair, so its operand byte is the spell id (`ITEM-EFFKEY-147`,
+  `ITEM-EFFSYM-148`).
+- The formatter's byte table (`TEXT-090`) maps tags 1, 13, 38, 41, 42,
+  44..48, 50 and 51 to arms and every other tag to the `0x0048485b` default
+  arm. Tag 51 is `0x33`, the marker.
+
+**Confidence.** High for the pair layout and the tags `FUN_00509363` emits.
+Medium that these pairs are the whole description: only `FUN_00509363` was read
+among the four owners of `004f0930`.
+
+**Unknown.** What the other three owners of `004f0930` write, and what the
+consumer of the `header+0x04` bits `0x10` and `0x20` does with them.
+
 ## Open questions
 
 - Whether the interface ever emits the session-space source-3 form of the

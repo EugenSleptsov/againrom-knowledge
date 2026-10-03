@@ -2025,3 +2025,100 @@ wrappers or the text-out imports.
 - This extends the tilde census of `TEXT-079`, which covered the five dialogue families and one button label: it adds `help.txt` and the OK label for both roots.
 
 **Confidence.** High: a direct byte count over the file of each root. The glyph drawn follows `TEXT-079`'s High clause.
+
+## Spellbook item card
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TEXT-090 | For an item whose stream carries kind 42, the formatter appends a spell fragment to the name line, ` of <spell>` EN and ` с заклинанием <spell>` RU, and adds no prefix to the buffer it composes. | High / Medium | ● active | [EXP-0438](../experiments/EXP-0438-resolver-regen-card/) |
+| TEXT-091 | The spell name in that fragment is line `spell id - 1` of `main\text\spell.txt` (28 lines on both roots), inserted unchanged; EN and RU differ only in text-file content, since `rom.exe` is identical and holds the one format literal. | High / Medium | ● active | [EXP-0438](../experiments/EXP-0438-resolver-regen-card/) |
+| TEXT-092 | The same formatter gives a non-book item a new `#` line `casts <spell>` for effect kind 41 and a `#Magic:` header from marker `0x33`; a book (class `0xe00`) takes the ` of <spell>` form for kind 41 and no header. | High / Medium | ● active | [EXP-0438](../experiments/EXP-0438-resolver-regen-card/) |
+
+### TEXT-090
+
+- `FUN_00484160` sets the buffer at `0x005f0358` to the empty string
+  (`0048417e`). It looks the item's code word `item+0x06` up in the name map
+  `0x005eb410` (`00484189`..`00484198`, `ITEM-DISPNAME-036`), copies the found
+  name into the buffer (`004841bc`..`004841e9`), then loops over the attribute
+  stream once per entry, the count being the byte at `item+0x09`
+  (`004841eb`..`004841f3`, `004848f5`..`00484909`). Each pass reads a tag byte,
+  forms `tag - 1`, indexes the byte table `0x00484954` (limit `0x32`,
+  `00484210`) and jumps through the dword table `0x00484930` (`0048421e`).
+- Tag 42 (`teachSpell`, `ITEM-EFFKEY-147`) is table entry 4, `004842e4`. The
+  arm reads one stream byte, the spell id; loads `main[90]` and `main[91]`
+  from the shared string array `[0x005eb3d4]` at `+0x168` and `+0x16c`; takes
+  the spell name as line `id - 1` of the table object `0x005eb4b0` through
+  `FUN_004687f0` (`004842fc`..`00484304`); and calls the formatter
+  `FUN_005545d0` with the literal `0x005bef54`, ` %s %s%s`
+  (`0048430d`, `00484385`). The arguments are `main[90]`, the spell name,
+  `main[91]`. The result is appended to the end of the buffer
+  (`004848cd`..`004848f3`). The literal has a leading space and no `#`, and the
+  name line carries no text before the name from this arm, so the fragment
+  continues the name line.
+- Strings (`tools/spellcard`, both roots, 274 `main.txt` lines): EN `main[90]`
+  is `of` and RU `main[90]` is `с заклинанием`; `main[91]` is empty on both. The
+  five book codes `0xe13`..`0xe17` name `Book` in EN and `Книга` in RU. An
+  item named Book that carries kind 42 therefore reads `Book of <spell>` in EN
+  and `Книга с заклинанием <spell>` in RU.
+- The formatter has four call sites: `0047d9c0`, `00483a5e`, `00491043` and
+  `004a2cbd` (`EnumRefs callto:484160`, 0 orphan hits). The hover painter
+  splits the buffer at `#` (`TEXT-HOVERPAINT-053`). The other three painters
+  were not read.
+
+**Confidence.** High for the composition: the arm, its pushes, the literal and
+the append are cited instructions read whole, and the name copy precedes the
+loop. Medium for what a player sees, because only the hover painter's
+treatment of `#` is established and that painter was not traced for this card.
+
+**Unknown.** Whether a non-hover painter inserts a title or a break around the
+buffer; the three other callers were not read. Which shipped item rows carry
+kind 41 or kind 42: no evidence file lists the stream of any row, so which kind
+a shipped book uses, and so whether a shipped book card shows this fragment, is
+open.
+
+### TEXT-091
+
+- The spell id byte is one-based: the arm decrements it (`004842fc DEC EAX`)
+  before the table call. The table object `0x005eb4b0` is
+  `main\text\spell.txt` (`0x005be28c`; `0x005be2a0` is `spells.txt`,
+  `0x005be2b8` `stats.txt`, `0x005be2e8` `main.txt`; `TEXT-STRTAB-023`). The
+  accessor `FUN_004687f0(table, i)` returns that table's line `i`
+  (`UNIT-NAME-039`).
+- Both roots carry 28 `spell.txt` lines; row lengths are 4..21 characters EN
+  and 4..23 RU, one line per spell and no per-case column. The formatter has
+  no second index, so the RU row is shown in the form it is stored in, after
+  `с заклинанием`.
+- `rom.exe` has one SHA-256 on both roots (`inputs.tsv`), so the format
+  literals `0x005bef10`..`0x005bef64` are identical; the only EN/RU difference
+  in the card is the content of the text files.
+
+**Confidence.** High for the row selection and for the absence of a case-form
+choice. Medium for the grammatical form of any one RU row: the rows were
+counted and hashed, not read for inflection, and the card shows whatever form
+a row holds.
+
+### TEXT-092
+
+- Tag 41 (`castSpell`) is table entry 3, `00484314`. It reads the spell id and
+  tests the item class `item+0x06 & 0xf00` against `0xe00`
+  (`00484328`..`00484338`). For class `0xe00` it takes the ` of` form of
+  `TEXT-090` (`main[90]`, `main[91]`, literal `0x005bef54`;
+  `0048433a`..`0048435c`). For any other class it loads `main[92]` and
+  `main[93]` (`+0x170`, `+0x174`) and the literal `0x005bef48`, `#%s %s%s`
+  (`0048435e`..`0048437b`), which starts a new line with the verb word. EN
+  `main[92]` is `casts` and RU `main[92]` is `с заклинанием`; `main[93]` is
+  empty on both.
+- The marker tag `0x33` (51) is table entry 7, `004847c2`. For class `0xe00`
+  it skips to the loop tail (`004847d7 JZ 0x004848f5`). For any other class it
+  appends the literal `0x005bef18`, `#`, then `main[189]` (`+0x2f4`,
+  `0048480f`): EN `Magic:`, RU `магия:`. The writer emits the marker first in
+  every stream built by `FUN_00509363` (`ITEM-152`), so a non-book card
+  carries `#Magic:` before its spell lines.
+- The other literals the arms use are `0x005bef10` `#%s %+d`, `0x005bef40`
+  `#%s: %d` and `0x005bef64` `#%s %d`; they are not part of this question.
+
+**Confidence.** High for the arms and literals, read whole. Medium for the
+on-screen result, for the reason in `TEXT-090`.
+
+**Unknown.** Which other effects a Book row carries, and so whether a shipped
+book card has lines beyond the fragment.

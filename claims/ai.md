@@ -2281,9 +2281,11 @@ This narrows `AI-THREAT-044`'s open item 17 ("what fills the threat cache") to a
    exactly one, `00534f2d` with `EBP = 0x16` from `00534ea1`, inside `FUN_00534e20`, the player's
    order `0x14` (`AI-STATE-043`)*; and the entry point and reachability of the orphan routine at
    `005382ed..005384b2`, which writes `grpAI+0x20 = 2` (`AI-ORDER-031`).
-10. **`Target_Group` when one id has two owners.** `AI-GROUP-009` keys a runtime group on
-    (owner, groupId); the script names a group id alone. One shipped patrol node (`scn:100` group 25)
-    names an id carried by two owners, and which runtime group the resolver returns was not read.
+10. ~~**`Target_Group` when one id has two owners.**~~ — *closed by [EXP-0438]* (`AI-366`,
+    `AI-367`): the resolver is an id-only map in which the later owner's group replaces the earlier
+    one. ~~`AI-GROUP-009` keys a runtime group on (owner, groupId); the script names a group id alone.
+    One shipped patrol node (`scn:100` group 25) names an id carried by two owners.~~ Still open there:
+    whether a SAV restore rebuilds the player and group lists in the same order.
 11. **`order+0x00` for a group-guard member.** `AI-GUARD-012` reads the per-actor arm, which sets the
     post to the current cell when it is 0; the group arm `FUN_00536ef0` has no such initialisation and
     its walk-home writes `order+0x0a = order+0x00` (`005370a5`). Where that sends a member whose post
@@ -2700,3 +2702,109 @@ reachability of the route-failure prerequisite during a retained cycle.
 **Unknown.** Whether that prerequisite occurs during a native retained
 strike/cast, and its actual victim or application effect. A native trace of
 mover+0x98 and the actor's phase before the common tail would discriminate it.
+
+## Script group-id resolution
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-366 | A script `Target_Group` id resolves through an id-only map built over players and their groups head to tail; a repeated id keeps the last group inserted, so the later owner's group wins and the earlier one is unreachable by id. | High / Medium / Unknown | ● active | [EXP-0438](../experiments/EXP-0438-resolver-regen-card/) |
+| AI-367 | Opcode-6 sub-command 5 (`Swarm 2`) writes order and destination to the members of the one group its parameter resolved to and to no other group; in mission 70 that is owner 7's 10 records of group id 40, never owner 5's 5. | High / Medium | ● active | [EXP-0438](../experiments/EXP-0438-resolver-regen-card/) |
+
+### AI-366
+
+- The binder `FUN_004e3591` builds its lookup maps before it resolves any
+  script parameter. It loads the player list `[0x00609544]` (`004e373a`) and
+  walks it with the first/next iterators `00517400` and `00517450`
+  (`004e3747`, `004e3898`). For each player it stores `playerMap[Player+0x08]`
+  (`0051cbf0`, `004e376c`..`004e3777`), then walks the player's group list
+  `Player+0x24` with `00517490` and `005174e0` (`004e378a`..`004e3816`).
+  Both lists are appended at the tail: players by `FUN_00523910` through
+  `FUN_00523a90` (`004fb4c4`), groups by `FUN_0051a070` through `FUN_0051a050`
+  (`004e2fec`).
+- The group map is filled by `004e37b2 LEA ECX,[EBP-0x108]` /
+  `004e37b8 CALL 0x0051ce90` (`operator[]`) / `004e37c3 MOV [EAX],EDX`, with
+  key `group+0x1c`, the group id (`AI-GROUP-009`). `0051ce90` calls the lookup
+  `0051d070`; only when it finds nothing does it allocate and link an entry
+  (`0051ceb2`..`0051cf08`); in both cases it returns the entry's value slot
+  (`0051cf0b`..`0051cf11`). The store at `004e37c3` therefore overwrites an
+  existing entry. No test of an earlier value precedes it. The match test is
+  the id alone; the owner is not part of the key.
+- Resolution is `FUN_004e3508(map, id)`: `0051ce90` again, then the entry's
+  value (`004e3531`..`004e3538`); a null value formats the message literal
+  at `0x005c6f30` with the id and passes it to `004e0e8f` (`004e3541`..`004e3569`).
+  The node-binding arm `004e4219`..`004e4372` calls it with the group parameter
+  `[rec+0x48+4k]`, stores the result at node `+0x34` for the first group
+  parameter and `+0x3c` for the second (`004e42c0`, `004e4259`), and writes
+  `1` to `(group+0x3c)+0x48` of the result (`004e4326`, `004e4368`).
+- Order: the player list follows the type-5 array. `FUN_004e2327` loops index
+  1..n over the type-5 records (`004e2345`..`004e244d`) and appends one
+  Player per record (`004e2427 CALL 0x004fb312`); the Player's id at `+0x08`
+  is the record's `+0x04` (`004e241d`..`004e2423`). The type-6 spawner
+  resolves an owner byte to a Player with `FUN_004fb534` (`004e2619`,
+  `004e275a`), which compares `Player+0x08`, and appends the new group to that
+  Player's list when no group of the same id exists there (`004e2f55`..`004e3006`).
+  A group is therefore one (owner, id) pair, and the map holds one pair per id.
+- Mission 70 (`tools/groupresolve`, both roots): the type-5 records are
+  index 1 Self, 2 Beists, 3 Nocturnal, 4 Villagers, 5 Monsters, 6 Friends,
+  7 Enemis. Id 40 is carried by owner 5 (5 records) and owner 7 (10 records);
+  the replay returns owner 7. Id 7 is carried by owner 2 (1) and owner 3 (2),
+  and returns owner 3.
+- Corpus population (`tools/groupresolve`, per root): EN reads 38 maps, 10
+  standalone (`Beast`, `Cross`, `Forester`, `Horror`, `Islands`, `Kids`,
+  `Kids2`, `LuMoir`, `Tomb`, `Waters`) and 28 in `scenario.res`, all 38 with a
+  parsed type-7 record. RU reads 34 maps, 6 standalone (`Forester`, `Horror`,
+  `Islands`, `Kids`, `LuMoir`, `Waters`) and 28 in `scenario.res`; 33 parse and
+  `Horror.alm` is skipped because its type-7 record fails to parse. The four
+  EN-only standalone maps are `Beast`, `Cross`, `Kids2` and `Tomb`. Over those
+  populations 267 `Target_Group` parameters were scanned on EN and on RU (the
+  tool prints the same count and the same 8 hits for both); 8 name an id carried by more than one owner,
+  over four (map, id) pairs: `scn:70` id 40 and id 7, `scn:100` id 25 (owners
+  3 and 6, returns 6), `scn:140` id 6 (owners 2 and 3, returns 3). Four of the
+  eight are opcode-6 actions; the other four are condition nodes.
+
+- Resolver paths: `EnumRefs callto:4e3508` returns 4 hits over 1 owner, all in
+  the binder (`004e4237`, `004e429e`, `004e486d`, `004e48a8`; 0 orphan). The
+  two at `004e486d` and `004e48a8` are in a binder arm that was not read.
+
+**Confidence.** High for the mechanism: the build loop, the overwriting store,
+the id-only key and the single-pointer lookup are cited instructions, and they
+exclude first-match, all-match and (owner, id) matching. Medium that no second
+resolver path exists: it rests on the group map being local to the binder's
+stack frame and on the four call sites of `FUN_004e3508` all lying in the
+binder; two of them were not read. High for the tail
+appends. Medium for the corpus replay, which reads the type-5 and type-6
+records with `tools/groupresolve` and does not observe the binder. Medium that
+the condition nodes resolve through the same arm: they were counted, not read.
+
+**Unknown.** Whether a SAV restore re-creates the player list and each group
+list in the same order as the map load (the binder also runs from the restore
+arm at `004d143f`, whose list contents were not read). A save whose owners
+carry one shared id, restored and then commanded, would discriminate it.
+
+### AI-367
+
+- Sub-dispatch `FUN_0053c030` indexes the table at `0x0053c37c` by
+  `rec+0x08 - 1` (`0053c03c`..`0053c04a`). Parameter 5 is entry 4, `0053c172`:
+  it loads the byte at `rec+0x10`, the byte at `rec+0x0c` and the pointer at
+  `rec+0x34`, and calls `FUN_00534390(group, +0x0c, +0x10)` (`0053c180`). The
+  pointer is the group `FUN_004e3508` stored (`AI-366`).
+- `FUN_00534390` reads the member list of the group it was given (count at
+  `+0x0c`, head at `+0x04`, `005343bb`..`005343c1`) and visits each member
+  once through that list: it writes `member+0x158` fields (`005343cd`..`005343e0`)
+  and advances through `00519780` and `00521b00` (`005343e3`..`0053440c`). It
+  names no other group and reads no player list.
+- Mission 70: the two instants (start trigger node 25 and trigger 0 node 2)
+  carry sub-command 5 with group id 40 and resolve to owner 7's group of 10
+  records, uids 135..144. Owner 5's group, uids 89..92 and 96, is not
+  addressed by either instant.
+
+- `EnumRefs callto:534390` returns 2 hits over 2 owners: `0053c180` and
+  `00534aaf` in `FUN_00534aa0`, which was not read.
+
+**Confidence.** High for group-only writes through the sub-command 5 path: the
+routine takes one group and iterates only its list. The statement "to no other
+group" covers that path; the second caller `FUN_00534aa0` was not enumerated. Medium for the mission 70 outcome, which combines
+that with the `AI-366` replay.
+
+**Unknown.** What a later AI tick does to owner 5's group; this pass reads no
+AI tick.
