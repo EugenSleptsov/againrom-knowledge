@@ -231,6 +231,33 @@ claims: the whole screen is darkened once, destructively, at shade level 3
 (`MENU-STOP-015`, `DLG-STOP-012`); Esc also closes, and the panel is the root's capture
 object while it is up (`MENU-INPUT-016`, partially retracted).
 
+## F1 help and the Cast key (`MENU-051`…`MENU-056`)
+
+F1 is posted by the campaign frame's key handler whatever the state word (the F1 key identity
+is `AI-KEY-125`), and the frame builds help only when the state word `campaign+0x3dc` is
+exactly 1: a map session with no overlay bit set. It is ignored in the town and over panels
+that set an overlay bit: the Esc menus, Pause, dialogue panels and help itself. Whether the
+Drop Gold modal, the chat entry and the spellbook popup set the word is Unknown, so help may
+open over them (`MENU-051`).
+
+Help is the Pause panel's class and constructor call with `text/help.txt` as the text: a
+modal panel of constructor rectangle 576x384 snapped to 488x360 and centred, one OK button
+labelled from the first line of `dialogs.txt`, no title, and a font-1 text control that adds
+a 24-pixel scroll bar when the wrapped text is taller than the body (`MENU-052`; layout in
+`TEXT-088`). Both shipped files overflow, so help always scrolls. It stops the world through
+the Esc menus' idle gate and closes on OK, Esc or the same close messages `0x445` and
+`0x446` (`MENU-053`, `MENU-STOP-015`). Keyboard scrolling depends on a focus rule that is
+Unknown (`MENU-053`). The key reaches no other help channel in the searched population
+(`MENU-056`, bounded).
+
+The C key arms Cast only in a map session with no text entry open, a nonzero selection
+count and `view+0x144 & 0x24` clear; a second press while the spellbook popup exists is
+consumed (`MENU-054`). With no selection or `view+0x144 & 0x24` set, the key falls to a second
+dispatch that returns 0; what the caller does with that is Unknown (`MENU-054`). Cast mode is
+armed only when a selected object set capability bit `0x200`; for a nonempty selection with
+the bit clear the key is consumed with no message, sound call or state change, and an armed
+Cast posts `0x408` to the right column and chooses no spell (`MENU-055`, `AI-SPELLCAP-288`).
+
 <a id="open--not-established"></a>
 
 ## Unknowns
@@ -248,3 +275,7 @@ object while it is up (`MENU-INPUT-016`, partially retracted).
   `0x41e` and differ only in control id, and how the exit target is distinguished is unread.
 - Whether a click landing outside an Esc panel changes anything: the panel holds the root's mouse
   capture and the slots read drop the click (`MENU-INPUT-016`, partially retracted).
+- The help panel's text colour (the ramp `[0x005ba21c]` points to), the scroll bar's mouse handling,
+  whether the arrow and page keys scroll help from the keyboard, and the receiver of the Cast
+  key's `0x408` message, and the caller's handling of the C key's returned 0 (`MENU-052`,
+  `MENU-053`, `MENU-054`, `MENU-055`).

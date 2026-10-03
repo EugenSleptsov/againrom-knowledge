@@ -1975,3 +1975,53 @@ static-analysis-only boundary
 wrappers are not unreachable by construction. The GDI-wrapper leg of this elimination rests on
 `TEXT-SAVELABEL-058`'s traced-path negative alone: no traced SAVE/LOAD chooser path reaches the
 wrappers or the text-out imports.
+
+## Help text
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TEXT-086 | `main\text\help.txt` is read once at startup as one NUL-terminated string into the global string object at `0x005eb4d0`, outside the sixteen-file line table, with no code-page pass at load. | High | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
+| TEXT-087 | Both roots' `help.txt` are CRLF-terminated paragraph lines with no other control byte and no NUL; EN is 965 bytes of 7-bit text in 35 pieces, RU 1313 bytes with 837 high bytes of 34 values in 39 pieces. | High | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
+| TEXT-088 | Help is wrapped at 408 px by the dialogue splitter and wrapper, overflows the 12-line body on both roots, and is rewrapped at 382 px beside a scroll bar; it is not paged. | High / Medium / Unknown | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
+| TEXT-089 | Each root's `help.txt` holds exactly one doubled tilde and no lone tilde, so help draws one literal `~` glyph and never reaches the underline arm; the OK label holds no tilde. | High | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
+
+### TEXT-086
+
+- The startup routine `FUN_004709e0` pushes `0x005eb4d0` and the literal at `0x005be2fc` (`main\text\help.txt`, between the `main\text\heropicture.txt` and `main\text\main.txt` literals) at `0047118a`/`0047118f` and calls `FUN_004682d0` (`00471194`). The sixteen-file table loads that follow (`MOV ECX,table` / `PUSH path` / `CALL 00468550`, `TEXT-STRTAB-023`) do not include it.
+- `FUN_004682d0` opens the node (`FUN_004c9f10`), takes its size (`FUN_004ca130`), allocates size plus 1 (`FUN_00554390`), reads the whole payload (`FUN_004ca140`), stores a NUL at `buffer[size]` and copies the buffer into the string object (`FUN_00572b52`, `FUN_00572860`). Nothing splits the text into lines, and no `FUN_004562f0` call lies in the routine.
+- `0x005eb4d0` has four references image-wide (`EnumRefs refto:5eb4d0`, 4 hits, 4 owners, 1 in orphan code): the load push, two `MOV ECX,0x5eb4d0` stubs at `00468110` and `00468130` (the object's destructor call), and the single read at `00473a52`, the help case of `MENU-051`. Help is the only consumer.
+- The converter acts at draw time (`TEXT-CONV-001`), so the stored bytes are the file's bytes.
+- Each root's `main.res` holds exactly one entry named `text/help.txt` (`tools/helptxt`).
+
+**Confidence.** High: the load routine is read whole, the reference enumeration names its instrument and returns one reader, and the file population is a listing of both roots' archives.
+
+### TEXT-087
+
+- Instrument: `tools/helptxt` over each root's `main.res`, which prints counts, never text. Both files end with `CRLF`; bare CR 0, bare LF 0, NUL 0, other control bytes 0.
+- EN: 965 bytes, 34 `CRLF`, 35 pieces on splitting at `CRLF`, 131 space bytes, no byte at or above `0x80`. The two empty pieces are the last two (a blank line before the final `CRLF`). Longest piece 60 bytes.
+- RU: 1313 bytes, 38 `CRLF`, 39 pieces, 157 space bytes, 837 bytes at or above `0x80` taking 34 distinct values, and the first byte is above `0x80`. The two empty pieces are piece 1 (a blank line after the first line) and the last (the file ends after one `CRLF`). Longest piece 61 bytes.
+- The files therefore share terminator, container and markup, and differ in language bytes, blank-line placement (EN trailing, RU after the first line) and line counts. All 837 RU high bytes lie in the converter's source set for the Russian selector, `0x80..0xAF` and `0xE0..0xEF` (`TEXT-DOM-010`, `TEXT-FIT2-013`): 0 occurrences fall outside it.
+- `help.txt` carries no section, page or escape marker other than the doubled tilde of `TEXT-089`.
+
+**Confidence.** High for the census: each figure is a direct count over the archive entry of each root, with the output committed. The meaning of a byte (which glyph a high byte draws on the Russian selector) is `TEXT-CONV-001`'s, not re-derived.
+
+### TEXT-088
+
+- The body control of `MENU-052` gives the text to `FUN_00456ab0`: the splitter `FUN_00456900` cuts at `CRLF` and trims left, the wrapper `FUN_004563e0` fits words to the width with the measure `FUN_00456320` over font 1's `.dat` advances plus spacing 2 (`DLG-LINE-038`, `TEXT-079`).
+- Instrument: a transcription of that splitter, wrapper and measure in `tools/helptxt`, over each root's `font1.dat` and `help.txt`, no emulation. Wrap width 408 (body rectangle width). EN: 33 non-empty pieces wrap to 35 lines; RU: 37 pieces wrap to 47 lines. No wrapper stall on either.
+- `FUN_004be44e` compares the line count times the line height with the body height 211 (`MENU-052`): 35 lines against 211 EN, 47 against 211 RU, a scroll bar on both. The width then drops by `0x1a` to 382 and the text is rewrapped: EN 35 lines (widest 376 px), RU 48 lines (widest 365 px). The comparison does not change with the line height read (15 or 17): 35 lines times 15 is 525.
+- Arithmetic only: with 12 visible lines, lines minus visible would be 23 (EN) and 36 (RU). No routine read sets the scroll bar's range, so that formula is an assumption.
+- Each paragraph's first line is indented 10 px and every line except a paragraph's last and the final line is justified (`DLG-LINE-038`), with a 1 px shadow. No key or marker pages the text.
+
+**Confidence.** High for the pipeline and the scroll decision (routines read whole, the decision holds for any line height read). Medium for the exact line counts and the 12-line window: the wrapper is transcribed from its listing and checked against the dialogue rules, not emulated, and the body height is derived arithmetic (`MENU-052`).
+
+**Unknown.** The scroll bar's range and so the scroll extent (the 23 and 36 above are unread-formula arithmetic), the initial scroll position, and native floating-point justification (`DLG-LINE-038`'s Unknown applies).
+
+### TEXT-089
+
+- Instrument: `tools/helptxt` byte census. EN `help.txt` holds two `~` bytes at offsets 103 and 104; RU holds two at offsets 95 and 96. Each pair is adjacent, so the file holds one doubled tilde and no lone tilde.
+- By `TEXT-079` a doubled tilde draws one literal `~` glyph and the loop skips the partner, and the underline arm runs only for a lone tilde. Help never reaches the arm. The measurer counts a doubled tilde once, so the wrap widths of `TEXT-088` treat the pair as one glyph.
+- The first line of `dialogs.txt`, the OK label, holds no tilde in either root (length 2 EN, 7 RU).
+- This extends the tilde census of `TEXT-079`, which covered the five dialogue families and one button label: it adds `help.txt` and the OK label for both roots.
+
+**Confidence.** High: a direct byte count over the file of each root. The glyph drawn follows `TEXT-079`'s High clause.

@@ -90,8 +90,8 @@ The tilde byte has markup semantics in the font1-3 draw path:
 A text measurer must mirror the draw path's markup handling or widths can diverge. The font4
 draw has no tilde arm: it draws the byte as glyph 0x5e, so a font4 string that holds a tilde is
 measured narrower than it is drawn. A tilde in the last byte of a string reads the advance table
-one entry past its end. No shipped dialogue text or dialogue button label holds a tilde; other
-text was not searched. — `TEXT-TILDE-009` (underline extent partially retracted),
+one entry past its end. No shipped dialogue text or dialogue button label holds a tilde; each root's help text holds one
+doubled tilde and no lone tilde (`TEXT-089`); other text was not searched. — `TEXT-TILDE-009` (underline extent partially retracted),
 `TEXT-TILDE2-017`, `TEXT-079`
 
 ## Draw anchors
@@ -252,6 +252,16 @@ not as the rendered wording. — `TOWN-383`, `TOWN-384`, `TOWN-385`, `TOWN-391`,
 `TOWN-392`, `TOWN-393`
 
 <a id="corpus-observations-versus-rules"></a>
+
+## Help text
+
+`main\text\help.txt` is read once at startup as one NUL-terminated string, outside the
+sixteen-file line table, and no code-page pass runs at load (`TEXT-086`). Each root's file is
+CRLF-terminated paragraph lines with no other control byte; EN is 7-bit, RU carries Cyrillic
+high bytes, and the two differ in blank-line placement and line counts (`TEXT-087`). The
+panel wraps it with the dialogue splitter and wrapper at the body width, rewraps beside the
+scroll bar, and scrolls it; it is not paged (`TEXT-088`). Its one doubled tilde draws a
+literal tilde glyph (`TEXT-089`).
 
 ## Unknown / bounded areas
 
