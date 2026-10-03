@@ -3140,6 +3140,185 @@ among the four owners of `004f0930`.
 **Unknown.** What the other three owners of `004f0930` write, and what the
 consumer of the `header+0x04` bits `0x10` and `0x20` does with them.
 
+## Equal-kind effect lines
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| ITEM-154 | The item information formatter appends one line per stored stream pair into its output buffer and compares no pair with another; an Armor's base defence pair and a Defence Effect pair give two lines with one label. | High / Medium | ● active | [EXP-0439](../experiments/EXP-0439-equal-modifiers/) |
+| ITEM-155 | The Armor and Shield packers write base defence as tag 15 and base absorption as tag 16 before the Effect pairs; among the direct-CALL appends enumerated, only the shop generator's merges an equal kind, by overwriting the operand. | High / Medium | ● active | [EXP-0439](../experiments/EXP-0439-equal-modifiers/) |
+| ITEM-156 | Each Effect node adds its own operand to the modifier word, so two Defence Effects of +1 add +2 there; no campaign cell or linked map recipe repeats a kind, and the Magic Items route `FUN_0050ba63` cannot produce one. | High / Medium | ● active | [EXP-0439](../experiments/EXP-0439-equal-modifiers/) |
+
+### ITEM-154
+
+- `FUN_00484160` reads the pair count, the byte at `element+0x09`, at
+  `004841eb` and skips the loop when it is zero. The loop body
+  `004841f9`..`00484909` reads a tag byte, indexes the byte table `0x00484954`
+  with `tag - 1` (limit `0x32`) and jumps through the nine-entry table
+  `0x00484930`. The loop tail `004848f5`..`00484909` adds 1 to a counter held
+  at `[ESP+0x14]`, compares it with the byte at `element+0x09` and jumps back
+  while it is below. The state that crosses iterations is that counter, the
+  stream cursor `EBP` and the output buffer `0x005f0358`; no arm reads the
+  buffer, a previous tag or a previous operand.
+- Tags 1, 13, 38, 41, 42, 44..48, 50 and 51 take arms 0..7. Every other tag,
+  among them 15 (defence) and 16 (absorbtion), takes entry 8, the default arm
+  `0048485b`..`004848f3`. That arm loads one operand byte (`XOR ECX,ECX` then
+  `MOV CL,[EBP]`, so 0..255), takes line `tag` of the table at `0x005ea230`
+  through `FUN_004687f0` (`stats.txt`, `TEXT-UI-037`), skips the line when that
+  label is empty (`0048487c`), and otherwise formats `#%s %+d` (`0x005bef10`)
+  and appends the result to the buffer. For tags 8 and 11 it then appends the
+  literal at `0x005bef0c`, `%`.
+- Labels (`tools/equalkind`, `main.res` `text/stats.txt`, 50 lines on both
+  roots): line 15 is `Defense` EN and `Защита` RU, line 16 `Absorption` EN and
+  `Броня` RU. Lines 13, 14, 43 and 49 carry one label, `Damage` EN and `Урон`
+  RU.
+- Two Effect pairs of kind 15 therefore append two lines `#Защита +N` to the
+  buffer, and so do a base pair of tag 15 and an Effect pair of kind 15
+  (`ITEM-155`). The formatter sums, deduplicates and reorders nothing. Lines 13,
+  14, 43 and 49 share one label, so a Weapon's base tag 13 or 14 pair and an
+  Effect of kind 43 or 49 also give two lines with one label and different
+  kinds (`ITEM-155` census).
+- The other arms: tag 1 skips four operand bytes (`00484225`); tags 13 and
+  44..48 read two pairs (`0048422d`); tag 38 formats `#%s %d` (`0048481a`);
+  tags 41 and 42 and the marker 51 are `TEXT-090` and `TEXT-092`; tag 50, arm
+  6 at `00484396`, composes spell data and was not read for this claim.
+
+**Confidence.** High for the composition: the loop, the dispatch tables (raw
+bytes in `rom-tables.txt`), the default arm and the loop tail are read as
+instructions, and no arm touches another pair's data. Medium for what the
+player sees: only the hover painter's treatment of `#` is established
+(`TEXT-HOVERPAINT-053`), and the receiver that builds the element from the
+packed stream was not read; the element offsets `+0x08` and `+0x09` match the
+packer's header `+0x04` and `+0x05` by the fixed shift of `ITEM-WEAR-055`.
+
+**Unknown.** The receiver that builds the element from the packed stream: a
+merge there is not excluded. What the four formatter call sites (`0047d9c0`,
+`00483a5e`, `00491043`, `004a2cbd`) and the painters other than the hover
+painter do with the buffer `0x005f0358`. Where the `#Магия:` header of
+`TEXT-092` falls between the base lines and the Effect lines on screen.
+Listings: `FUN_00484160` in `rom-fns-card.txt` of `EXP-0438` and
+`d-formatter.txt` of `EXP-0408`.
+
+### ITEM-155
+
+- The four item classes each have a stream packer in virtual slot `+0x54`
+  (`.rdata` `0059c934`, `0059c9a4`, `0059c9fc`, `0059ca54`; `EnumRefs
+  callto:` on each returns that one slot): `FUN_005092c9` (the class that tests
+  `item+0x44` against 3 and 5; price pair and descriptor flags), `FUN_0050cb03` (Armor), `FUN_0050d467` (Shield) and
+  `FUN_0050e449` (Weapon). Each calls `FUN_00509363` last, which writes the
+  Effect pairs (`ITEM-152`). `FUN_00509229` is the common entry that writes a
+  seven-byte record head and calls the slot; it has 10 call sites over 4
+  owners.
+- `FUN_0050cb03` writes the price pair through `FUN_004f0a18`, then tag 15 with
+  the low byte of the word at `armor+0x52` with no test (`0050cb6e`..`0050cb7e`),
+  then tag 16 with the byte of the word at `armor+0x54` only when that word is
+  above zero (`0050cb83`..`0050cb9e`). `FUN_0050d467` does the same with
+  `shield+0x50` and `shield+0x52` (`0050d4d2`..`0050d502`). The two words are
+  defence and absorption (`ITEM-ARMFILL-032`). `FUN_0050e449` writes tags 13
+  and 14 from `+0x60` and `+0x61`, tag 12 from the word `+0x52`, tag 15 from
+  the word `+0x6a`, tag 38 from the byte `+0x50`, and an elemental pair from
+  `+0x65`..`+0x67`, each under its own test.
+- An Effect pair carries the Effect kind as its tag (`ITEM-152`). An Armor or
+  Shield with a Defence Effect (kind 15) holds two tag-15 pairs, the base pair
+  first; with an absorbtion Effect (kind 16) and a base absorption above zero
+  it holds two tag-16 pairs.
+- The shop generator `FUN_0050ba63` appends each drawn Effect through
+  `FUN_00508a60` (4 call sites, 1 owner). That routine reads the `UsableBy`
+  parameter `p[3]` of the `Magic` row of the new kind (`0x609b90`, `0051ab50`
+  index 3). When the new mask is not 3 it walks the item's list and discards the
+  new Effect at the first existing Effect whose mask shares no bit with it
+  (`00508ad5`..`00508af7`). It then walks the list again; at the first node of
+  an equal kind (`00508b35`..`00508b42`) it copies the new operand dword over
+  the node (`00508b4a`..`00508b4d`), destroys the new Effect and returns
+  (`00508b62`..`00508b6c`). Only when no node has the kind does it append
+  (`00508b94`, `0051f830`). The merge overwrites; it does not add.
+- The selector that picks the kind, `FUN_0050bdca` (7 `cdecl` arguments), takes
+  no item and no list, so a kind already present is not excluded before the
+  merge. The weighted draw is `SHOP-EFFWEIGHT-062`.
+- Appends that test nothing, from `EnumRefs callto:51f830` (11 hits, 8 owners,
+  0 orphan): the map loader `FUN_004e4f3e` at `004e56d1` (the damage-kind Effect
+  of kind `A + 43`), `004e578c` (the spell Effect) and `004e5874` (each element
+  in file order), the cell splitter `FUN_00502d82` (`ITEM-EFFGRAM-070`), the
+  item copy `FUN_00508340` (`ITEM-EFFSPLIT-074`), the book makers `FUN_00509d3f`
+  (two sites) and `FUN_0050b367`, which append one kind-42 Effect to an item with
+  an empty list, and `FUN_0050b6e3`, which has no direct caller (`SHOP-EFFALT-071`) and no
+  dword occurrence (Open questions below). `FUN_005014ae` appends to
+  an actor's timed-effect list (`MAGIC-ATTACH-016`), not an item.
+- Base-plus-Effect populations (`tools/equalkind`, EN = RU): the repeated
+  labels come from these, not from repeated Effect kinds. Armor or Shield with
+  an Effect of kind 15 or 16: 8 Armor and 1 Shield linked map elements per
+  root, and 73 authored cells per root (class not split). Weapon: a linked
+  Weapon element whose Effect kinds include one of 12, 13, 14, 15 or 44..48,
+  the kinds the Weapon packer also writes as base tags, 8 of 19 per root, of
+  which 2 carry kind 15 or 16. Labels 13, 14, 43 and 49 are one label
+  (`ITEM-154`), so kind 43 and 49 Effects are a further source of equal
+  labels that the 8 does not count.
+- Census (`tools/equalkind`, Data.bin of both roots, EN = RU): the Magic Items
+  shelf pool holds 193 Armors and 36 Shields triples; every one writes a tag-15
+  pair with a nonzero byte, 20 Armors triples with the value 1, and 45 Armors
+  and 20 Shields triples also write a tag-16 pair. Kinds 15 and 16 carry a
+  positive selector weight for the class and slot of all 229. The 20 triples
+  with base defence 1 are Ring, Amulet, Cap, Soft Helm, Soft Bracers, Soft
+  Gauntlets and Soft Boots rows (the Soft Boots row, Leather tier 0, is
+  `Кожаные Башмаки` in RU). The Plate Boots rows, `Полные Поножи` in RU,
+  have base defence 5 to 36.
+- Linked map elements, 74 per root (`ALM-EFFPOP-073`): 43 Armor, 2 Shield, 19
+  Weapon and 10 MagicItems; 8 Armor and 1 Shield elements carry an Effect of
+  kind 15 or 16.
+
+**Confidence.** High for the packer bodies, the merge routine and the selector
+signature, read as whole instructions on a `rom.exe` that is identical on both
+roots. Medium for the claim that these are all the producers: the bound is
+the direct-`CALL` population of `0051f830` and of `00508a60`, and
+`FUN_00509363` was the only effect-pair writer read. Medium for the pool
+counts: base defence is a `float64` evaluation of the `ITEM-ARMFILL-032` formula
+and one product lies within `2e-6` of a rounding boundary.
+
+**Unknown.** Other list insertion routines (head insert, insert-after), tail
+`JMP` or indirect calls to the append, list copy beyond `FUN_00508340`, and
+the save reader (`ITEM-SAVE-014`) were not enumerated for a kind test. The
+probability that a generated Armor ends with a Defence Effect:
+the per-draw weight is exact (kind 15 weighs 100 of 475 for fighter slot 12) but
+the payload feasibility and the two opportunity gates were not combined. What
+the weapon's tag 15 word `+0x6a` is. Whether another generator reaches an
+item's list through a pointer or an indirect call.
+
+### ITEM-156
+
+- The Defence arm of the Effect dispatcher (listing `effect-arm-listing.txt`
+  of `EXP-0433`), `00501f7c`..`00502004`, tests
+  `vt+0x30` (humanoid); on a humanoid it adds the signed operand to the word at
+  `actor+0xfe` (`00501f8e`..`00501f9c`), otherwise to live `actor+0xbe` with a
+  floor at zero, and sets bit `0x400` of `actor+0x150`. Equip walks the item's
+  list node by node (`ITEM-EFFDISP-075`), so each node adds once: two Defence
+  nodes of +1 add 2 to the modifier word. This stops at the word: the
+  `vt+0x50` recompute that folds it into displayed defence was not read. The base block of an Armor or Shield
+  is added to `actor+0xfe` and `actor+0xbe` separately (`ITEM-ARMFOLD-033`).
+- Authored equipment cells (`ITEM-EFFPOP-071` rows, `effect-rows.tsv` of
+  `EXP-0433`, 532 rows = 266 per root): 260 cells per root hold accepted
+  Effects, 0 repeat a kind, and the longest list has 3. 73 cells per root
+  carry a kind 15 or 16 Effect, in Humans slots 1..9.
+- Type-9 records (`type9-records.tsv` of `EXP-0227`): the 74 linked records
+  per root, the only records whose Effects reach items (`ALM-EFFREC-071`),
+  repeat no constructed kind. Of the 199 campaign records per root, 47 repeat a
+  kind in the constructed list, all among the 125 records that are not linked.
+  The loose-map rows of the input (593 EN, 135 RU) have no link.
+- The Magic Items route `FUN_0050ba63` cannot leave two nodes of one kind
+  (`ITEM-155`). Other stock builders and death drops were not enumerated.
+
+**Confidence.** High for the apply arithmetic of the Defence arm and the
+list walk (`ITEM-EFFSYM-148`, `ITEM-EFFDISP-075`; no arm was executed). Medium
+for the censuses: they are derived tables committed by earlier experiments,
+EN and RU rows are equal (parity, not independent variation), and the premise
+that only linked records reach items rests on `ALM-EFFREC-071` and
+`ALM-EFFPOP-073`, both Medium.
+
+**Unknown.** Links of the loose-map type-9 records, which the input does not
+evaluate: EN 593 records, 373 repeating a constructed kind; RU 135, 96. The
+`vt+0x50` recompute from the modifier word into displayed defence. Whether a
+save written by another producer carries a list with a
+repeated kind: the serialized list is stored and reloaded in order
+(`ITEM-SAVE-014`) and no save was read for this claim.
+
 ## Open questions
 
 - Whether the interface ever emits the session-space source-3 form of the

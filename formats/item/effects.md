@@ -268,3 +268,19 @@ byte table at `0x484954` into the jump table at `0x484930`. The `0x0d` arm at `0
 prints `base + spread`. So the item's line is `[base, base+spread]` — the same composition the
 character sheet uses (`HERO-SHEET-038`) — and tag `0x0e`'s own table entry is the default arm,
 which nothing reaches. The shipped `Iron Short Sword` draws `5-8`.
+
+### Equal effect kinds on one item (`ITEM-154`, `ITEM-155`, `ITEM-156`)
+
+The item information formatter appends one line per stored attribute pair into its output buffer
+and compares no pair with another (`ITEM-154`). An Armor or Shield packer writes its base defence
+as tag 15 and, when above zero, its base absorption as tag 16 before the Effect pairs, and an
+Effect pair carries its kind as its tag, so a Defence or absorbtion Effect repeats a tag
+(`ITEM-155`). Among the direct-call appends enumerated, only the Magic Items shop generator
+merges an equal kind: it overwrites the operand dword of the existing node and discards the new
+Effect. The map loader, the cell parser, the item copy and the book makers append with no kind
+test (`ITEM-155`).
+
+Each Effect node adds its own operand to the modifier word, so two Defence nodes of +1 add 2
+there; the recompute into displayed defence is not established (`ITEM-156`). The campaign
+equipment cells and the linked campaign map recipes repeat no kind; the loose-map records' item
+links are not established (`ITEM-156`).
