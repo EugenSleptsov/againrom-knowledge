@@ -1783,3 +1783,39 @@ The stores of the literal 1 at displacement `0x60` over the whole image (`eviden
 **Unknown.** Register-source stores to `ord+0x60` are outside the sweep: `0052d686 MOV dword ptr [eax+0x60], EBX` in `FUN_0052d600` is one that `AI-FOLLOWHEAL-118` cites, and its register value was not traced. Readers of `ord+0x60` outside the three sites named were not enumerated, so "the arms" is the population read, not a census. Stores of other nonzero values were not swept. Which value player-issued cast orders leave in `ord+0x60` was not traced.
 
 **Evidence.** [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md), `evidence/asserts-en.txt`, `evidence/listing.txt`, `evidence/spell-arms.tsv`
+
+## Fire_Ball burst remainder
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MAGIC-245 | Fire_Ball's transport target point is the footprint centre minus one sub-unit per axis for a target of size above 1 (`005447d0`), and the cell centre of the cast's x and y bytes for a null target (`005445d0`). | High / Medium | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+| MAGIC-246 | The area effect's size byte `+0x49` is spell parameter 9 (1 for Fire_Ball), so the blast arm `004fd515` applies the blast to cells -size to +size on both axes: a 3 x 3 area for Fire_Ball. | High / Medium | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+| MAGIC-247 | The Ballista's weapon spell in the EN data is Fire_Ball with value 40 (Catapult: 70), taking the weapon-spell path and not a cast divert. | High / Medium | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+
+### MAGIC-245
+
+- Branch on the target's size byte (target slot `+0x1c`, `004fecc9` to `004fecfb`; `evidence/disasm-rider-position-4fec60.txt`). Above 1: per axis, word = cell * 256 + fine + (size - 1) * 128 - 1 (`004f280d` for x, `004f2849` for y, `AND 0xffff`, `SUB 1`), unpacked by `005447d0` into cell (high byte) and fine (low byte); the packed word at `+2` is rewritten and the dword at `+8` stays from the earlier copy `00544980` (`evidence/disasm-centre-5447d0.txt`, `evidence/disasm-size-offset-4f280d.txt`). That is the centre of the size x size footprint minus one sub-unit.
+- Null target (`004fec86`): `005445d0(position, x byte, y byte, global 0x5f22c8)` gives cell (x, y), fine x and y 128 and the dword at `+8` = the global (`evidence/disasm-null-target-point-5445d0.txt`). A point cast takes the bytes from the actor's `+0x60` and `+0x61` (call `004f3c1b`, `evidence/disasm-point-cast-4f3be0.txt`).
+
+**Confidence.** High for the arithmetic of both branches (instructions); Medium that a shot reaches the null branch only through a point cast: callers of `004feadb` were read in `EXP-0441` and here only for the point cast.
+
+**Unknown.** A saved Fire_Ball with a multi-cell or null target; none was read.
+
+### MAGIC-246
+
+- The constructor call `004fc8ce` at `005003b9` receives spell parameter 9 (`push 9` at `005003a3`) and stores it as the size byte `+0x49`; duration `+0x4c` = parameter 11 shifted left by 4 (`evidence/disasm-area-effect-ctor-call-5002a0.txt`). Fire_Ball's row has parameter 9 = 1 (`EXP-0432` `evidence/spell-pictures.txt`).
+- The tick `004fc9b2` takes the blast arm `004fd515` when the stage tests `00523bc0` and `00523ba0` fail (`ANIM-114`). `004fd515` sends the burst message (`004fd529`, `evidence/disasm-effect-sender-4e98e4.txt`), applies `004fd37a` to the cells from -size to +size (calls at `004fd618`, `004fd638`, `004fd654`) and sets the reap flag (`004fd68f`) (`evidence/disasm-blast-arm-4fd515.txt`, `evidence/disasm-area-tick-4fc9b2.txt`).
+- The client's 3 x 3 registration is constant (`ANIM-123`), so a customised parameter 9 would change the simulated area and not the client's registration.
+
+**Confidence.** High for the parameter flow and loop bounds (instructions); Medium for the per-cell effect `004fd37a`, not re-read here.
+
+**Unknown.** Parameter 9 for spells other than Fire_Ball.
+
+### MAGIC-247
+
+- `EXP-0428` `shot-classes.csv`: Units row 27 (Ballista, class "Catapult 2", Projectile 6, charge 2, relax 50, ShootDelay 0) has weapon `Boulder Thrower{castSpell=Fire_Ball:40}`, `weapon_spell` true and `cast_divert` false; the Catapult (row 26, Projectile 5) has `Fire_Ball:70`. The EN weapon-spell table of `EXP-0191` lists the same two rows.
+- Both therefore reach the Fire_Ball rider path of `ANIM-115`.
+
+**Confidence.** High for the EN data: table rows of the EN `Data.bin`. Medium for the RU rows, which these files do not list.
+
+**Unknown.** The RU weapon spells; none were read here.

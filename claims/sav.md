@@ -14282,9 +14282,11 @@ Medium: five saves; the money mechanism is a hypothesis.
 | SAV-1150 | A SAV does not carry tile-word bit 0x2000: the Fog store writes bit 15 only and no other tile-plane store was found; the clear at `00484e6c` is the view-plane parser's loop, so that a load starts unmarked is Medium. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | SAV-1151 | No instruction of the SAV store or load routines addresses the view hash at +0xa7c; 13 instructions in 8 other routines do (the driver and view code), so the hash is not saved. | Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | SAV-1152 | Of the 121 `.sav` files under the saves root, 80 have a Projectiles store and 5 of those hold a record (6 records, pictures 1, 2, 5, 10, 13); none holds picture 14 or more. | Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
-| SAV-1153 | A unit shot's first driver call is on its creation tick, and the three saved shots fit creation = swing start (inferred) + ShootDelay if the swing message is delivered in the start tick's own timer step. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
-| SAV-1154 | The code chain puts the Fire_Ball burst record 3 ticks after the rider tick if the transport is last in the effect list at its fire tick, else 2; the saved catapult case shows 4, so one to two ticks stay unexplained. | Medium / Unknown | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
-| SAV-1155 | For a target whose size byte is 1 or less, the Fire_Ball transport's target point is the target's cell and fine bytes; its countdown is the truncated Euclidean distance of those words divided by spell parameter 7. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| SAV-1153 | A unit shot's first driver call is on its creation tick, and the three saved shots fit creation = swing start (inferred) + ShootDelay if the swing message is delivered in the start tick's own timer step. | High / Medium | ● active (amended) | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| SAV-1154 | The code chain puts the Fire_Ball burst record 3 ticks after the rider tick if the transport is last in the effect list at its fire tick, else 2; the saved catapult case shows 4, so one to two ticks stay unexplained. | Medium / Unknown | ● active (amended) | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| SAV-1155 | For a target whose size byte is 1 or less, the Fire_Ball transport's target point is the target's cell and fine bytes; its countdown is the truncated Euclidean distance of those words divided by spell parameter 7. | High / Medium | ● active (amended) | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| SAV-1156 | No saved SpellTransport exists at ticks 3098 to 3101 of the mission-150 battle, so the countdown and the effect list at the fire tick are not observed; whether the transport is last in the list stays Unknown. | Medium / Unknown | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+| SAV-1157 | A unit shot's offset (damage tick minus creation tick) is charge - ShootDelay + floor((d * 256 + 128) / 200) for d above 1, else charge - ShootDelay; archer, crossbowman and catapult fit saved shots, the other five classes are unobserved. | Medium / Unknown | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
 
 ### SAV-1141
 
@@ -14432,6 +14434,8 @@ Medium: five saves; the money mechanism is a hypothesis.
 
 **Unknown.** The offset at other distances, and for a swing whose message the dispatcher defers.
 
+**Amended.** `EXP-0453`: the offset at other distances and classes is tabulated (`SAV-1157`, where the catapult's distance is 4); same-step delivery is read (`ANIM-121`).
+
 ### SAV-1154
 
 - Chain (`ANIM-113`, `ANIM-114`, `ANIM-115`): the rider runs in the actor pass of tick R (`SAV-1145`: 3098). The transport is appended then and the effect walk of the same sub-tick visits it, so its third visit and its fire are on R + 2. The inner effect is appended during that walk. If the transport is the last list node at its fire tick, the inner effect first ticks on R + 3, sends 0x86 on R + 3, and the record exists on R + 3 (given same-step delivery). If another effect was appended after the transport before its fire tick, the walk reaches the inner effect in the fire tick and the record exists on R + 2.
@@ -14441,6 +14445,8 @@ Medium: five saves; the money mechanism is a hypothesis.
 **Confidence.** Medium: each link is an instruction. Unknown for the fourth tick: neither the transport's first visit, the rider's tick dating (damage tick = counter + countdown) nor the creation formula of arm 0x86 records (phase starts at -1, `SAV-1147`) was shown to hold it.
 
 **Unknown.** Candidates for the leftover tick: a one-tick delay on the untraced path from the flush `004e9e7c` to the queue `004104e8` drains; the transport's first visit on R + 1; the rider tick dating. The effect list's contents at the fire tick are not read. A save held at ticks 3098 to 3101 of the mission-150 catapult battle would show the transport's `+0x4c` and decide the second candidate.
+
+**Amended.** `EXP-0453`: the delivery delay from the flush to the dispatcher is 0 on the local path (`ANIM-121`), which excludes the first candidate on that path and leaves it open for a non-local path; the effect list at the fire tick is not read (`SAV-1156`); the extra tick is still unexplained.
 
 ### SAV-1155
 
@@ -14453,6 +14459,31 @@ Medium: five saves; the money mechanism is a hypothesis.
 **Confidence.** High for the metric, and for the copy of the fine bytes in the size-1-or-less branch (instructions). Medium for the divisor's source, which `ANIM-111` states. Unknown for the null-target branch.
 
 **Unknown.** The multi-cell target branch (`005447d0`) and the null-target branch (`005445d0`) in effect; a shot at a target between cell centres would show the countdown, and no such save was read.
+
+**Amended.** `EXP-0453`: the multi-cell and null-target branches are read (`MAGIC-245`).
+
+### SAV-1156
+
+- Corpus: 120 `.sav` files (the 121 of `SAV-1152` minus one engine-written save, excluded as not ROM1 evidence), 119 readable. The raw class name SpellTransport occurs in `game0018.sav` (head 3452, mission 40, a PointEffect transport) and its duplicate; AreaEffect in 2 files (heads 63, 1791). No effect class name occurs in `game0022`, `game0023` or `game0024` (heads 3087, 3095, 3109), the saves of the mission-150 battle (`evidence/corpus-effect-classes.txt`).
+- In `game0018` the transport's last word (`+0x4c`) is 4; its age is not saved, so it cannot date a transport.
+- Chain: the transport's countdown is distance divided by parameter 7 (`SAV-1155`). Each visit (`004fdc26`) decrements `+0x4c` and fires at 0 or below, appending the inner effect and setting the reap flag (`evidence/disasm-transport-fire-4fdc26.txt`, `evidence/vtables-59c630-59c5f0.txt`). With the rider at R = 3098 and a countdown of 3, the visits would read 2 at R, 1 at R + 1 and fire at R + 2, if the first visit is in the creation tick.
+- Effect list at the fire tick: the append goes to the tail (`ANIM-114`), so a node appended after the transport and before R + 2 = 3100 makes the inner effect tick in the fire tick. The saves nearest that span are at 3095 and 3109, none inside 3096 to 3100, so the effects appended in those ticks (by any caster or another siege shot) are not known and whether the transport is last stays Unknown.
+- The saved record is at 3102 (R + 4; `SAV-1145`). The delivery delay is 0 on the local path (`ANIM-121`), which excludes that candidate for the extra tick on that path. Remaining candidates: the transport's first visit, an unread element of the chain, and a non-local path.
+
+**Confidence.** Medium for the countdown arithmetic and the visit order (instructions). The countdown value at 3098 to 3101 and the list order at the fire tick are not observed.
+
+**Unknown.** The countdown at ticks 3098 to 3101; the effect list contents at the fire tick; the extra tick of `SAV-1154`. A save at one of those ticks would decide them.
+
+### SAV-1157
+
+- Swing start `004fb853` stores `(d * 256 + 128) / 200` as the countdown extra only when d (from `004fb702`) is above 1; `004fb702` returns max(|dx|, |dy|) over cell * 256 + fine words, minus (size1 + size2) * 128 - 256, as 1 when at most 0x180 and else (value + 0x40) >> 8 (`evidence/disasm-swing-start-4fb853.txt`).
+- Actor sub-phase 5 loads `+0x6c` = charge (`+0x134`) plus the extra and the damage applies when it reaches 0. In action arm 7 (`0045d4f6`) the phase compare against ShootDelay precedes the increment, so the shot is built at the start tick plus ShootDelay (`ANIM-113`, `SAV-1153`; `evidence/disasm-driver-arm7-45d4c8.txt`, `evidence/disasm-actor-tick-4f3b40.txt`).
+- Offset = charge - ShootDelay + term(d). `evidence/shot-offset-table.txt` lists d = 1 to 12 for the 8 distinct (Projectile, charge, ShootDelay) classes of the 50 shot rows in `EXP-0428` `shot-classes.csv`: for example Human Archer 2, 3, 4, 6 at d = 2 to 5, Catapult 2 at d = 1 and 9 at d = 5. The saved shots fit: archer d = 5 gives 6, crossbowman d = 6 gives 7, catapult d = 4 gives 7 (the term 5 of `SAV-1153` is term(4); the catapult's d is inferred from that term, no saved position was re-read). The other five classes of the table are the same code applied to rows no save shows.
+- For a class with ShootDelay above charge the offset at d = 1 is negative (Human Archer -1): the damage tick would precede the creation tick. That case was not observed.
+
+**Confidence.** Medium: code plus three saved distances, one per class; classes other than archer, crossbowman and catapult are not observed.
+
+**Unknown.** The offset of any other class in a save; the d = 1 case of a class with ShootDelay above charge; swings whose message the dispatcher defers.
 
 ## Actor damage-kind bytes and their writers
 

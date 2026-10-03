@@ -1944,12 +1944,16 @@ do not establish that aliases or bulk writes cannot change its object.
 | ANIM-102 | `00459740` turns a vector into a 16-way direction (0 north, 4 east, 8 south, 12 west, y down) from slope bins 1/4, 3/4, 4/3 and 4 in each quadrant; the saved actiondir of three records agrees. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | ANIM-103 | Picture 13 (`fireexpl`) draws frame (actionphase / 2) mod 11 for 22 calls; its driver arm acts when actionphase is 4 (a 3x3 cell registration) and 8 (an OR of tile-word bit 0x2000 over the 3x3 block). | High / Medium | ● active (amended) | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | ANIM-109 | Projectile records of picture 14 or more come only from the cast spawner (even picture 2*spell+8), client arm 0x86 (odd: 17, 27, 51), arm 0x8b, arm 0x8c (picture 36) and the loader; no shipped unit class has Projectile above 12. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
-| ANIM-110 | The only immediate stores of opcode 0x8b and 0x8c are in `004e9515`/`004e95f9` and `004e96d0` (spell 14, picture 36), reached via `004fe6d3` from the actor tick `004f37be`; two register-form writers stay unresolved. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| ANIM-110 | The only immediate stores of opcode 0x8b and 0x8c are in `004e9515`/`004e95f9` and `004e96d0` (spell 14, picture 36), reached via `004fe6d3` from the actor tick `004f37be`; two register-form writers stay unresolved. | High / Medium | ● active (amended) | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | ANIM-111 | Every Fire_Ball area effect, from any actor or the siege rider, is built by `004feadb`, waits in a SpellTransport of distance/384 ticks and ends in one blast-arm 0x86 (picture 13, 22 calls); shipped data gives no second 0x86. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | ANIM-112 | An area effect stores spell id at +0x0c and picture 2*spell+9 at +0x0e; in shipped data only spells 2, 4, 9 and 21 send that picture in an 0x86 (13, 17, 27, 51), the other area-effect spells send 0x87 masks. | High | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | ANIM-113 | In `00475280` and `004753c0` one timer step runs the simulation step, the client dispatcher, then the 0x401 pass, which sweeps the actor map (CUnit driver `0045cf00`) before the record map (CProjectile driver `004617b0`). | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
-| ANIM-114 | A Fire_Ball burst record is built by client arm 0x86 from a message the inner effect's first tick sends; an effect appended in the walk's last visit waits for the next walk, and same-step delivery is not traced. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
-| ANIM-115 | A catapult or ballista Fire_Ball rider builds one area effect and one SpellTransport and appends only the transport; the damage message 0x73 follows, and the burst 0x86 comes later from the inner effect. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| ANIM-114 | A Fire_Ball burst record is built by client arm 0x86 from a message the inner effect's first tick sends; an effect appended in the walk's last visit waits for the next walk, and same-step delivery is not traced. | High / Medium | ● active (amended) | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| ANIM-115 | A catapult or ballista Fire_Ball rider builds one area effect and one SpellTransport and appends only the transport; the damage message 0x73 follows, and the burst 0x86 comes later from the inner effect. | High / Medium | ● active (amended) | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| ANIM-121 | On the local peer path the flush `004e9e7c` appends the packets to the client endpoint's receive list in the same call, so the client dispatcher of the same timer step dequeues them: the flush-to-dequeue delay is 0 ticks. | High / Medium | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+| ANIM-122 | No routine read builds a world record for a projectile picture of 14 or above except the cast spawner, the loader and client arms 0x86, 0x8b and 0x8c; the writers `ANIM-110` left open write no projectile opcode. | Medium / Unknown | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+| ANIM-123 | The Fire_Ball burst message carries picture 13, the cell, and a segment word of 22, and the client builds a 0x14c-byte record from them with no size field: its footprint registration is a constant 3 x 3. | High / Medium | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
+| ANIM-124 | Client arm 0x73 applies the damage message when it is dispatched: it sets the target's hit points from the message and reads no burst or projectile state, so a pending burst does not delay or queue it. | High / Medium | ● active | [EXP-0453](../experiments/EXP-0453-shot-burst/) |
 
 ### ANIM-101
 
@@ -2019,6 +2023,8 @@ do not establish that aliases or bulk writes cannot change its object.
 
 **Unknown.** Whether any call of `004e8eb3` or `004e97f9` carries 0x8b or 0x8c. A customised Data.bin could put 0x8b or 0x8c into spell parameter 6 and reach `004fdf57` or `004fe25d`. The condition on the source's `+0xe` word was not decoded.
 
+**Amended.** `EXP-0453`: the two register-form writers are read and write no projectile opcode (`ANIM-122`).
+
 ### ANIM-111
 
 - `004feadb` has three call sites: `004f3c1b` in the actor tick `004f37be`, `004fea7c` in `004fe92e` (spell 14) and `004fead0` in `004feaa2`. `004feaa2` has two callers, `004f3bfa` in the actor tick and `004fbb4e` in the rider `004fba0e`; it skips spell id 14 (`evidence/xrefs.txt`, `evidence/disasm-effect-create-4feaa2.txt`).
@@ -2068,6 +2074,8 @@ do not establish that aliases or bulk writes cannot change its object.
 
 **Unknown.** Whether another effect can follow the transport in the list when it fires (it would make the inner effect run in the same walk).
 
+**Amended.** `EXP-0453`: the flush-to-dequeue path delivers in the sending timer step on the local path (`ANIM-121`).
+
 ### ANIM-115
 
 - Rider `004fba0e`: `004feaa2` (`004fbb4e`) builds the effect, then the damage message `004e9da2` (opcode 0x73, `004e9da9`) is sent when the target's hit points are above -10 (`004fbb70` to `004fbb89`).
@@ -2078,6 +2086,51 @@ do not establish that aliases or bulk writes cannot change its object.
 **Confidence.** High: the rider, the constructor arguments and the append are instructions. Medium that the Catapult and Ballista reach this path through Fire_Ball: `EXP-0428` `shot-classes.csv` gives the Catapult's weapon spell; the Ballista's was not read here.
 
 **Unknown.** The Ballista row's weapon spell. What the client does with the 0x73 message while the burst is pending.
+
+**Amended.** `EXP-0453`: the Ballista weapon spell is Fire_Ball (`MAGIC-247`); client arm 0x73 applies at dispatch and holds no burst state (`ANIM-124`).
+
+### ANIM-121
+
+- Sim sub-tick `004d891a` ends with the flush `004e9e7c` on manager `0x603c28`. For a local session the setup `0040ff2d` to `0040ff74` (when `+0x6bc` is 1 or 2) calls `004e6929`, which sets each manager's peer pointer (`+8`) to the other (`0x603c28` and `0x5f22d0`); `004e6b77` moves the pending endpoints into the active list (`evidence/disasm-session-link-40ff10.txt`, `evidence/disasm-peer-link-4e6929.txt`, `evidence/disasm-pending-to-active-4e6b77.txt`).
+- The pump `004e7625` calls `004e626a` per endpoint. For an endpoint whose local flag (`+0x104c`, set by `00521110`) is set, `004e626a` finds the peer's local endpoint (`005201f0`) and calls `004e613b`, which appends the packet to that endpoint's receive list (`+0x1014`) under a critical section, before returning (`evidence/disasm-endpoint-send-4e626a.txt`, `evidence/disasm-local-append-4e613b.txt`, `evidence/disasm-local-peer-endpoint-5201b0.txt`).
+- The client dispatcher `004104e8` loops `004e7670` (dequeue through `004e6527`, `004e604a`) until the queue is empty, in the same timer step that ran the simulation step (`ANIM-113`; `evidence/disasm-client-dispatcher-4104e8.txt`, `evidence/disasm-dequeue-4e7670.txt`). A packet flushed in the sub-tick is therefore dequeued in that timer step.
+- A TCP mode exists in the same code for multiplayer; it is not the local path and was not read for latency.
+
+**Confidence.** High for the append and the dequeue loop (instructions). Medium that the saved battles ran the local path: the runtime value of `+0x6bc` is not in a save.
+
+**Unknown.** Latency on the multiplayer socket path.
+
+### ANIM-122
+
+- The projectile-picture sources are the cast spawner (even pictures), client arm 0x86 (13, and the odd 17, 27 and 51), arm 0x8b, arm 0x8c (picture 36) and the loader (`ANIM-109`, `ANIM-110`).
+- `004e8eb3` stores only opcode 0x73 (when its argument is 0x73), 0x7a and 0x82; it has 13 direct call sites and no data-pointer reference. `004e97f9` stores 0x88 (argument 0) or its argument byte; its 3 call sites (`004e86c3`, `004e97ee`, `00501617`) push 0, 0x89 and 0 as the first-pushed argument and it has no data-pointer reference (`evidence/disasm-opcode-writer-4e8eb3.txt`, `evidence/disasm-opcode-writer-4e97f9.txt`, `evidence/disasm-callsite-4e97f9-from-4e86c3.txt`, `evidence/disasm-callsite-4e97f9-from-501617.txt`, `evidence/xrefs-q7.txt`). The 13 call sites of `004e8eb3` are listed in `evidence/xrefs-q7.txt`; their arguments were not read, and the stored opcodes above do not depend on them. This closes the two register-form writers `ANIM-110` left open: neither writes an opcode that arms 0x86, 0x8b or 0x8c handle.
+- Arm 0x8a (`00417f5a`) builds no record. It looks up an existing drawable by the id word in the `+0x9b8` map and sets its `+0xa0` from its class, `+0x84` = 8, `+0x94` = 0, a word list, `+0x86` and `+0xa4` = 0x24 (36): it starts the picture-36 channel on a drawable (`evidence/disasm-client-arm-0x8a-417f5a.txt`, `evidence/dispatch-arms.txt`).
+- Saves: the rescan of 120 `.sav` files finds 79 with a Projectiles store, 5 non-empty, pictures 1, 2, 5, 10 and 13, none of 14 or above (`evidence/corpus-projectiles.txt`). These are the counts of `SAV-1152` without the one engine-written save, which is excluded as not ROM1 evidence; the engine-written file is not counted.
+
+**Confidence.** Medium: the census is of direct calls and data pointers to the two writers and of the arms the dispatcher tables name. Calls through a register formed elsewhere are not enumerated.
+
+**Unknown.** A projectile record with picture 14 or above built from a message the tables do not route; no save holds one.
+
+### ANIM-123
+
+- Sim side: `004fd515` calls `004e98e4(effect, 1)` (`004fd529`, `evidence/disasm-blast-arm-4fd515.txt`). For spell id 2 it fills buffer `0x5f2190`: opcode byte `+9` = 0x86, effect id word `+0xa`, picture byte `+0xc` copied from effect `+0xe` (13 for Fire_Ball, `EXP-0432` `evidence/spell-pictures.txt`), cell x and y bytes at `+0xd` and `+0xe`, word `+0xf` = 0x16 (22) (`evidence/disasm-effect-sender-4e98e4.txt`).
+- Client arm 0x86 (`004173d8`) builds the record by constructor `00461680`: picture at `+0x20`, x and y = cell * 256 + 128, action phase `+0x94` = -1, action segments `+0xa0` = message word `+0xf`, `+0x84` = 1, `+0x14` = view `+0x9b4`; the id comes from the counter at view `+0xa0c` and the record is stored in the map `+0x9d4` (`evidence/disasm-client-arm-0x86-4173d8.txt`).
+- `004592a0` derives from the record through CProjectile slots `+0x20` and `+0x24` (`00462fa0`, `00462fb0`), both returning the constant 1 (`evidence/disasm-record-derived-4592a0.txt`, `evidence/disasm-projectile-size-slots-462fa0.txt`). Driver arm 0x0d (`00461a75`) registers cells -1 to +1 on both axes, a constant 3 x 3 (`evidence/disasm-driver-arm-0x0d-461a75.txt`).
+- The record has no size field; the size byte exists only on the simulation side (`MAGIC-246`).
+
+**Confidence.** High for the message layout and the record constructor (instructions); Medium that the word `+0xf` feeds only the segment count: the population searched is client arm 0x86 and `004592a0`, and the other readers of the record's `+0xa0` were not enumerated.
+
+**Unknown.** The readers of record `+0xa0` outside the two routines read.
+
+### ANIM-124
+
+- Dispatcher arm 0x73 (`00414148`; `evidence/dispatch-arms.txt`) reads the id word at message `+0xa` and the new hit points at `+0xc`, looks the id up in the `+0x9b8` map and, when absent, logs and ends (`evidence/disasm-client-arm-0x73-414148.txt`).
+- When the stored hit points (`+0xfc`) exceed the message value and view flag `+0xaa4` is set, it builds a `00455cf0` object and adds it by `00455fc0` to the list at view `+0x3f3c`; it then calls actor slot `+0x68` with 0 for equal values, else 2 or 1 depending on the new value against half the maximum (`+0x100`), stores the hit points, sends 0x408 to the two windows at `+0xe0` and `+0xe4` when the actor is the selection (view `+0x138`), and sets `+0x10c` = 1.
+- The arm touches the `+0x9b8` map and the `+0x3f3c` list only; it reads neither the `+0x9d4` record map nor any burst or projectile field.
+
+**Confidence.** High for the arm's reads and writes (instructions); Medium for the role of the `00455cf0` object, which is inferred as a damage figure from its arguments.
+
+**Unknown.** The role of the `+0x3f3c` list's object; how the hit reaction of slot `+0x68` looks.
 
 ## Human class record and swing sound
 
