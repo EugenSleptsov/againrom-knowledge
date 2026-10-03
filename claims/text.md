@@ -2122,3 +2122,30 @@ on-screen result, for the reason in `TEXT-090`.
 
 **Unknown.** Which other effects a Book row carries, and so whether a shipped
 book card has lines beyond the fragment.
+
+## Notice and pause lines
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TEXT-094 | `main.txt[119]` is the Pause panel's body text: one load of slot 119 exists among the 30 hits for displacement or immediate `0x1dc`, in the Pause arm; it is a modal panel, not a message-line line. | High / Medium | ● active | [EXP-0446](../experiments/EXP-0446-toggle-notice/) |
+| TEXT-095 | Slots 94..107 and 218..220 are read by the seven setting arms and slots 108..116 by the speed arms; two other routines have scaled-index loads at those displacements, not traced to their base. | Medium | ● active | [EXP-0446](../experiments/EXP-0446-toggle-notice/) |
+
+### TEXT-094
+
+- Population: `EnumRefs disp:1dc` (25 hits, 20 owners) and `imm:1dc` (5 hits, 5 owners) over the EN `rom.exe`, 0 hits in orphan or undisassembled code, and `refto:5eb3d4` (230 hits, 47 owners, `TEXT-STRTAB-023`). A function can read slot 119 from the shared array only if it is one of those 47 owners; three of the 30 hit owners are (`FUN_0042bca0`, `FUN_00472b80`, `FUN_0047eb20`).
+- `FUN_0042bca0` stores the constant `0x22` into `[ESI+0x1dc]` (`0042bd15`), a field write. `FUN_0047eb20` takes `LEA EBX,[ESI+0x1dc]` (`0047ec80`), the address of a field of its own object. `FUN_00472b80` loads `[[0x005eb3d4]+0x1dc]` at `00472c09`, inside the Pause arm: it allocates `0x78` bytes, calls `FUN_0043fbbf` with rectangle (0x20, 0x30, 0x260, 0x1b0) and shows the panel through `FUN_00476810`, the panel `MENU-052` describes. The arm requires `campaign+0x6bc == 2` and `campaign+0x3dc == 1` (`00472bd0`, `00472bdd`).
+- No toggle or speed arm loads slot 119, and none draws on the Pause panel: the two use unrelated surfaces (`MENU-059`).
+
+**Confidence.** High for the Pause load and for the surface (named instructions). Medium for "the only load": the owner rule excludes the other 27 hits but misses a pointer copied out of the array before use and a load through an index register with another displacement.
+
+**Unknown.** Loads of slot 119 through a copy of the array pointer or a computed index.
+
+### TEXT-095
+
+- Indexed loads at the notice displacements, from `EnumRefs disp:` at 0x178..0x1d0 step 4 and 0x368..0x370, in owners of `refto:5eb3d4`: `FUN_0040f38e` at `0040f9d4`, `0040fa58`, `0040fabd`, `0040fb25`, `0040fb8a`, `0040fbd5` and `0040fc27` (the seven setting arms), and `FUN_00472b80` at `00472dbe` and `00472e26` (the speed arms).
+- Four further `[base + index*4 + disp]` loads exist at those displacements: `004b044b` in `FUN_004b0350` (`0x1ac`) and `0042cd90`, `0042cdcc`, `0042cde5` in `FUN_0042ca00` (`0x1d0`). Those routines are the spellbook hover getter and the generator attribute getter, whose array loads `TEXT-080` and `TEXT-082` read at other displacements (`main[182..187,217]`, `main[155+i]`). The register that holds the base of these four loads was not traced.
+- The remaining owner hits at these displacements are stores or fixed-field accesses (for example in `FUN_00434d70`, `FUN_0047eb20`, `FUN_0042bca0`); they were classified by operand shape, not each traced.
+
+**Confidence.** Medium: the nine arm loads are named instructions; the exclusion of the other hits rests on the owner rule, operand shape and two earlier claims.
+
+**Unknown.** The base register of the four indexed loads in `FUN_004b0350` and `FUN_0042ca00`, and any array read with a computed index outside the swept displacements.

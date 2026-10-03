@@ -188,7 +188,7 @@ Other default mission keys:
 | F5..F8 | Ctrl assigns quick-spell slots 0..3; plain key selects the binding, with gated Cast-mode arming when the book is closed |
 | F12 | toggle an unidentified global |
 | Pause | modal pause text |
-| numpad `+/-` | speed index, clamped 0..8; Ctrl+plus selects the unpaced/max-speed idle loop, Ctrl+minus restores paced mode and resets its epoch |
+| numpad `+/-` | speed index, clamped 0..8, each step posting a speed line in a campaign session (`MENU-058`); Ctrl+plus selects the unpaced/max-speed idle loop, Ctrl+minus restores paced mode and resets its epoch |
 | digits/numpad digits | select group; Shift augments; Ctrl assigns; Alt selects and centres; Ctrl wins |
 | arrows | pan one cell per repeat |
 | E | select all owned exact-name `CUnit` objects |
@@ -196,7 +196,7 @@ Other default mission keys:
 | B or Q / I or backtick | spellbook / inventory |
 | Enter | open and focus text entry; subsequent map shortcuts are suppressed |
 | Tab with character panel focused | send panel custom message `0x412`; precise effect Unknown |
-| Ctrl+F/H/L/N/O/U/W | retreat mode, health, smoothing, day/night, flying damage, autoheal, formation |
+| Ctrl+W/F/H/U/L/N/O | retreat mode, formation, show health, autoheal, flying damage, day/night, smoothing; each posts its new state's line (`MENU-057`, `MENU-059`) |
 | Alt+S | screenshot |
 
 Modifier latches set on down, clear on up and all clear on focus loss. Keydown does not inspect the

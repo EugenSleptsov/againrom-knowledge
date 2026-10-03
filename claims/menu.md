@@ -246,3 +246,62 @@ unused**, none ever reissued. The next free `menu.md` id is therefore `MENU-CURS
 **Confidence.** Medium: absence over the named population only. The library's standard `ID_HELP` command (`0xE145`) has dword hits at file offsets `0x0019c650` and `0x0019c654` and in code immediates; its producers and the virtual `WinHelp` method's callers were not traced, so a help route through an MFC modal-dialog hook is not excluded.
 
 **Unknown.** Whether F1 inside a native modal dialog (the save and load chooser) reaches the library's `ID_HELP` handling, and what the `.hlp` literal at `0x0019d52c` is consumed by.
+
+## Settings shortcut and speed notices
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MENU-057 | In a map session Ctrl+W, F, H, U, L, N and O each change one setting and post its new state's line, slot = base + state value, bases 94, 97, 100, 218, 102, 104, 106; W is retreat, F formation, L flying damage, O smoothing. | High | ● active | [EXP-0446](../experiments/EXP-0446-toggle-notice/) |
+| MENU-058 | Numpad plus and minus without Ctrl, in a campaign session on the map screen, step the speed index by one, clamped to 0..8, and post slot 108 plus the clamped index through the duplicate-dropping post; Ctrl variants post nothing. | High | ● active | [EXP-0446](../experiments/EXP-0446-toggle-notice/) |
+| MENU-059 | These notices are grey lines of 2000 ms appended below the existing lines of the map message line, the oldest removed past the capacity. Toggles are gated by the map screen word, the text entry and the Ctrl latch; speed also needs phase 2. | High / Medium | ● active | [EXP-0446](../experiments/EXP-0446-toggle-notice/) |
+
+### MENU-057
+
+- Dispatch: `FUN_0040f38e` is the map view's key-down handler (vtable slot at `0x005970f4`). A key outside its first jump table reaches `0040f67e`. With a nonempty selection and `view+0x144 & 0x24` clear, letters `A..T` go through the letter table at `0x0040fd6d`, where `F`, `H`, `L`, `N` and `O` reach `0040f789`; `W` lies outside that table and also reaches `0040f789`. A zero selection or a set `0x24` bit jumps straight to `0040f789`. The second dispatch there (key minus `0x20`, byte table `0x0040fddd`, target table `0x0040fda5`, all read from the PE by `tools/togglenotice`) sends vkeys `0x57`, `0x46`, `0x48`, `0x55`, `0x4c`, `0x4e` and `0x4f` to seven distinct arms. Selection state does not change which arm runs.
+- Each arm opens with `CMP [0x005eb558],0` (the Ctrl latch, `AI-KEYMOD-059`) and skips everything when it is clear.
+
+  | vkey | arm | state | change | slot | other call |
+  |---|---|---|---|---|---|
+  | `0x57` W | `0040f96b` | `view+0xa9c` | +1 mod 3 | 94 + state | `FUN_0041ccd2(state)` before the post |
+  | `0x46` F | `0040f9ef` | `view+0xa98` | +1 mod 3 | 97 + state | `FUN_0041cd88(state)` before the post |
+  | `0x48` H | `0040fa73` | `view+0xaa0` | 0 or 1 | 100 + state | none |
+  | `0x55` U | `0040fad8` | `[0x005eb534]` | +1 mod 3 | 218 + state | `FUN_0041cd2d(state)` before the post |
+  | `0x4c` L | `0040fb40` | `view+0xaa4` | 0 or 1 | 102 + state | none |
+  | `0x4e` N | `0040fba5` | `[0x005eb528]` | new = (old == 0) | 104 + state | `FUN_00421a54(1)` after the post |
+  | `0x4f` O | `0040fbf7` | `[0x005eb520]` | new = (old == 0) | 106 + state | none |
+
+- Index: the post pushes `[[0x005eb3d4] + 4 * (base + state)]`, a line of the shared line array (`TEXT-STRTAB-023`), as `[array + state*4 + disp]` with `disp` `0x178`, `0x184`, `0x190`, `0x368`, `0x198`, `0x1a0` and `0x1a8`. The state read is the value just stored, so the line names the new state. Three-state settings run 0, 1, 2, 0. The arms hold no table of state names.
+- `FUN_0041ccd2`, `FUN_0041cd88` and `FUN_0041cd2d` build record type `0x46` with subtype 1, 2 or 3 and the state at `+0xe`, with the word at `[view+0x9b4]+4` as player, and hand it to `FUN_004e74fe` on object `0x005f22d0`. The post is issued whatever that call does.
+- The `keyboard.tsv` rows of `AI-KEY-125` for Ctrl+F, Ctrl+L, Ctrl+O and Ctrl+W name F retreat, W formation, L smoothing and O flying damage. The arms read the other way round. The arms agree with `ANIM-NUM-020`: `view+0xaa4` is flying damage and L toggles it. The H, N and U rows agree, and `MISSION-MSGPOST-058` and `ANIM-NUM-020` already carried the correct map; the cause of the `keyboard.tsv` error is not identified. `TERR-LIGHT-108` reads `[0x005eb528]` as the ShowTimeFlow option, which agrees with N as day/night.
+
+**Confidence.** High: the vkey-to-arm mapping is read from the PE's index and target bytes (`key-arms.tsv`, with a test), and every arm, state field, displacement and call is a named instruction in the complete listing of `FUN_0040f38e` (624 instructions, 0 not disassembled). The setting names come from the text each slot holds, not from the state fields' other readers, which were not traced.
+
+**Unknown.** What the receiver does with record `0x46` subtypes 1..3, and what `FUN_00421a54(1)` redraws.
+
+### MENU-058
+
+- Arms: the plus key (`0x6b`) at `00472d68` and the minus key (`0x6d`) at `00472dc8` of `FUN_00472b80`, the frame's key-down handler. With the Ctrl latch set the arm writes `campaign+0x40c` only (plus: 1; minus: 0 with a fresh stamp and cleared counters, `AI-KEY-125`) and posts nothing.
+- Without Ctrl, `campaign+0x6bc == 2` (`00472d7f`, `00472df0`) and `campaign+0x3dc == 1` (`00472d8c`, `00472df9`) are both required, else the key ends there. Then `FUN_00477370(campaign+0x3f4 ± 1)` runs.
+- `FUN_00477370` clamps its argument to 0..8 with a signed compare, stores it in `+0x3f4` and sets the rate from the ladder 8, 10, 12, 14, 16, 20, 24, 28, 32 (jump table `0x477424`).
+- The post reads `+0x3f4` again, so at either end of the range the index is the clamped one. It pushes `[[0x005eb3d4] + 4 * (108 + index)]` (displacement `0x1b0`), ramp `0x5e9720` and lifetime `0x7d0`, and calls `FUN_00401fe0` on `[campaign+0xd0] + 0xa10`, the map view's list (`SESS-VIEW-028`).
+- `FUN_00401fe0` drops a one-piece post equal to the newest line (`MISSION-MSGLINE-057`; compare re-read at `0040207a`..`00402089`). A second press at the end of the range, while the same line is still the newest, adds nothing; once the line has expired it is posted again.
+- Slots 108..116 are the nine speeds in index order.
+
+**Confidence.** High: both arms, the gates, the clamp and the index are named instructions in complete listings (`r-gates.txt`, `d-fns.txt`).
+
+- Text entry: `FUN_00472b80` from `00472b80` to `00472bc9` and the arms `00472d68`..`00472e3a` hold no `campaign+0xc0` test. `AI-KEY-125` states that an open text entry consumes map shortcuts; no test for it was found in these bounds.
+
+**Unknown.** Whether an earlier handler in the frame's message map consumes the key while a text entry is open.
+
+### MENU-059
+
+- Surface: the seven toggle arms call `FUN_00401e70` and the speed arms `FUN_00401fe0` on `view+0xa10`, the list `MISSION-MSGLINE-056` describes: in a campaign session drawn from (8, 8) in font 1 with a 1-pixel shadow, 17 pixels per line. The ramp `0x5e9720` is the grey one and the lifetime `0x7d0` is 2000 ms. The line is not a modal panel and has no rectangle of its own.
+- Several notices: a post appends below the existing lines, a post past the capacity (14, 16 or 22 lines at 640, 800 or 1024 wide) removes the oldest, and lines expire oldest first, one per tick message, each lifetime counted from the removal of the line above it (`MISSION-MSGLINE-057`). Two toggles in a row therefore show two lines at once. `FUN_00401e70` never drops a duplicate; only the speed post does.
+- Toggle gate: `campaign+0x3dc == 1` (`0040f3c8`, `0040f681`), the text entry `campaign+0xc0` closed (`0040f3d8`; an open one takes the key) and the Ctrl latch. On these arms `FUN_0040f38e` reads no `campaign+0x6bc`, player count, selection, ownership bit or option: the 624 instructions hold no `0x6bc` operand.
+- Speed gate: phase `campaign+0x6bc == 2`, word `+0x3dc == 1` and no Ctrl (`MENU-058`).
+- The frame arm `00472e41`..`00472e5a` forwards letter keys `A..Z` to `campaign+0xcc` with message `0x100`; where that route ends was not read, so the absence of other gates is bounded to `FUN_0040f38e` and the two speed arms.
+- In phase 3 the same list is drawn at (0, 220) in font 2 (`MISSION-MSGLINE-056`); the toggle arms add no phase test.
+
+**Confidence.** High for the surface, the lifetime, the ramp and the gates read from the listing. Medium for the dwell as wall-clock time and for the stacking timing: they inherit `MISSION-MSGLINE-057`'s Medium, since the interval of the `0x401` tick message was not measured.
+
+**Unknown.** The `0x401` interval. Whether a phase-3 or networked session delivers these keys to `FUN_0040f38e` at run time: no original was run.

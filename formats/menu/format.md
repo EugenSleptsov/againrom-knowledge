@@ -258,6 +258,28 @@ armed only when a selected object set capability bit `0x200`; for a nonempty sel
 the bit clear the key is consumed with no message, sound call or state change, and an armed
 Cast posts `0x408` to the right column and chooses no spell (`MENU-055`, `AI-SPELLCAP-288`).
 
+## Settings shortcut and speed notices (`MENU-057`…`MENU-059`)
+
+In a map session, Ctrl plus W, F, H, U, L, N or O changes one setting and appends one line
+to the map message line: retreat mode (W, three states), formation (F, three), show health
+(H, two), autoheal (U, three), flying damage (L, two), day/night changes (N, two) and
+smoothing (O, two). The line is slot `base + new state` of the shared text array, with bases
+94, 97, 100, 218, 102, 104 and 106; the arm reads no table of state names (`MENU-057`).
+Retreat, formation and autoheal also send a type `0x46` record before the post. The numpad
+speed keys without Ctrl, in a campaign session on the map screen, step the speed index by
+one within 0..8 and post slot 108 plus the clamped index through the post that drops a
+duplicate of the newest line; the Ctrl variants post nothing (`MENU-058`).
+
+All of these lines are grey and live 2000 ms on the message line of `MISSION-MSGLINE-056`:
+each is appended below the existing lines, the oldest is removed past the capacity of that
+list, and the toggle posts never drop a duplicate. A toggle needs the map screen word equal
+to 1, a closed text entry and the Ctrl latch, and the key handler tests no phase, player
+count, selection or option; the speed step also needs phase 2 (`MENU-059`,
+`MISSION-MSGLINE-057`). A frame route that forwards letter keys to another object is unread
+(`MENU-059`). The Pause panel's text is the separate modal-panel line, slot 119, and in the
+searched population no message-line line (`TEXT-094`, Medium). Slots 94..116 and
+218..220 have no other array reader in the searched population (`TEXT-095`, Medium).
+
 <a id="open--not-established"></a>
 
 ## Unknowns
@@ -279,3 +301,6 @@ Cast posts `0x408` to the right column and chooses no spell (`MENU-055`, `AI-SPE
   whether the arrow and page keys scroll help from the keyboard, and the receiver of the Cast
   key's `0x408` message, and the caller's handling of the C key's returned 0 (`MENU-052`,
   `MENU-053`, `MENU-054`, `MENU-055`).
+- Whether a phase-3 or networked session delivers the settings keys, the interval of the tick
+  message that expires message-line lines, and the receiver's use of the `0x46` records
+  (`MENU-057`, `MENU-059`).

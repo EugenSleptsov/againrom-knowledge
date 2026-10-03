@@ -347,7 +347,7 @@ Move `005340a0` finishes with group order 4, so group dispatch no longer uses th
 | AI-SELECT-122 | Mission selection has four exact forms, with a gate on both Shift forms. | High / Medium | ● active | [EXP-0190](../experiments/EXP-0190-combat-controls/) |
 | AI-PANEL-123 | The command-panel/key contract is: Attack mode 1 → target `0x19`, ground fallback move `0x16`; Move mode 2 → `0x16`; Guard immediate `0x17`; Defend mode 4 → target `0x1b`, ground no-op; Cast mode 5 → spell `0x1e/0x1f` or item `0x25/0x26`… | High | ● active | [EXP-0190](../experiments/EXP-0190-combat-controls/) |
 | AI-MINIMAP-124 | The 160x158 minimap acts on left DOWN, not up: default moves the camera `0x406`; move emits `0x16`; attack emits `0x19` on any non-zero cell object id and otherwise `0x1a`; defend emits `0x1b` only with an id… | High | ● active | [EXP-0190](../experiments/EXP-0190-combat-controls/) |
-| AI-KEY-125 | The complete decoded default mission key surface is committed in `keyboard.tsv`. | High / Unknown | ● active | [EXP-0190](../experiments/EXP-0190-combat-controls/) |
+| AI-KEY-125 | The complete decoded default mission key surface is committed in `keyboard.tsv`, except the four rows amended below. | High / Unknown | ● active (amended) | [EXP-0190](../experiments/EXP-0190-combat-controls/), [EXP-0446](../experiments/EXP-0446-toggle-notice/) |
 | AI-CURSOR-126 | ROM1 contains a Patrol cursor and order but no shipped default gesture that leaves Patrol armed. | High | ● active | [EXP-0190](../experiments/EXP-0190-combat-controls/) |
 | AI-INPUT-127 | The map's physical right contract is capture-to-pan, up-to-cancel. | High / Unknown | ● active | [EXP-0190](../experiments/EXP-0190-combat-controls/) |
 
@@ -382,6 +382,8 @@ The 160x158 minimap acts on left DOWN, not up: default moves the camera `0x406`;
 It includes Esc menus; F1 help; F2 save; F3 load or Diplomacy by phase; F5..F8 quick spells; Pause; arrows; A/M/G/D/C/S/T/R/E; Space, B/Q, I/backtick; digits and numpad digits with Shift/Ctrl/Alt; numpad speed; Ctrl+F/H/L/N/O/U/W settings; Enter text entry; focused-character-panel Tab message `0x412`; and Alt+S screenshot. F4 and F9 are explicit no-ops; no wheel route exists. Windows repeat is not filtered. Open text entry consumes map shortcuts; focused popup children take precedence; focus loss clears all three modifier latches. Ctrl+numpad plus sets `campaign+0x40c=1`, selecting the unpaced/max-speed owner loop with one sub-tick per idle callback and no deadline; minus clears it, resets phase/epoch and restores paced mode (`SESS-CLOCK-005`, `SESS-IDLE-007`). F12, Backspace's clear, character-panel `0x412` and Alt+B..Y except S's outbound `0x46` record have exact mechanisms but Unknown gameplay meaning
 
 **Confidence.** High for the event/key/action mapping and repeat/focus predicates (frame message map plus frame/map/character-panel handlers and existing clock provenance read); Unknown only for the four mechanisms explicitly named
+
+**Amended.** `keyboard.tsv` rows for Ctrl+F, Ctrl+L, Ctrl+O and Ctrl+W label the settings the wrong way round: W is retreat mode, F formation, L flying damage and O smoothing, with the line each posts in `MENU-057`. The H, N and U rows and the key set stand. `MISSION-MSGPOST-058` and `ANIM-NUM-020` already carried the correct map; the cause of the row error is not identified.
 
 ### AI-CURSOR-126
 
