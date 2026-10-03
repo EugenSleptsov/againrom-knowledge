@@ -67,6 +67,8 @@ in `claims/rom2-engine.md` have no standalone stored format page.
 | **Sprite / palette** | `*.16a, *.16, *.256, *.pal` | [Reference](rom2-spr/format.md) | Frame/trailer/palette shapes and named residues; full pixel/RLE/color semantics remain Unknown |
 | **TEXT** | `main.res text and patch.txt` | [Reference](rom2-text/format.md) | String-table structure and known byte ranges; a complete named encoding and decoder remain Unknown |
 | **Session frame** | `Socket and DirectPlay receive paths` | [Reference](rom2-net/format.md) | Eight-byte header and admission/decompression bounds; payload/opcode grammar and ROM1 equivalence remain Unknown (`R2-SESSION-003`) |
+| **SAV** | `game*.sav` | [Reference](rom2-sav/format.md) | `Bsg&` envelope and word codec as ROM1; world half, Player body and tail differ; field meanings Unknown (`R2-SESSION-017`) |
+| **Character** | `*.a2c` | [Reference](rom2-a2c/format.md) | Six scrambled sections, checksum and byte-run codec; section meanings Unknown (`R2-SESSION-022`) |
 
 <a id="explicitly-out-of-scope-not-rom1-native"></a>
 

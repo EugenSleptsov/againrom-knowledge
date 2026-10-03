@@ -2,14 +2,14 @@
 
 ## Snapshot
 
-Snapshot k115, exported from the private research repository at commit
-`9f5b36a1fb7c0e166174a76d34bc5734456e2ec3`.
+Snapshot k116, exported from the private research repository at commit
+`427836acd3166593160259e1c2795835b024b00d`.
 
 | Field | Count |
 |---|---:|
-| Claim ids | 2549 |
+| Claim ids | 2555 |
 | Retracted ids | 447 |
-| Format pages | 116 |
+| Format pages | 118 |
 
 Each count is recomputed from this snapshot's own exported ledgers, not carried
 forward from an earlier snapshot. A commit identity is not a licence, a proof of

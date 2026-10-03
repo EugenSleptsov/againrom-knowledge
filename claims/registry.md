@@ -51,7 +51,7 @@ searches every ledger. Corrections and narrowings are recorded in
 |---|---|
 | Asset layout and identity survey | [`rom2-asset.md`](rom2-asset.md) |
 | Engine-level observations | [`rom2-engine.md`](rom2-engine.md) |
-| Session/network observations | [`rom2-session.md`](rom2-session.md) |
+| Session/network observations, save and character files | [`rom2-session.md`](rom2-session.md) |
 
 `claims/rom2-asset.md` carries the functional authorities for the six asset-layout
 surfaces in the seven-row ROM2 survey; the session-header authority is in
