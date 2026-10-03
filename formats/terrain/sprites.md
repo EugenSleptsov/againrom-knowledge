@@ -52,6 +52,33 @@ subtracts — `dstX = col*32 + ftol(tan(theta)*((FullHeight-k)*32 - ShadowY))` �
 top. The two signs are both correct and neither may be copied onto the other path
 (`TERR-SHDW-131`).
 
+### Which silhouettes a unit's shadow draws, and through which arm (`TERR-191`, `TERR-192`, `TERR-193`)
+
+One routine, `FUN_0045bf00`, is `vt+0x2c` of both `CUnit` and `CAirUnit`. It draws one pair of
+sheets, each as a silhouette (`vt+0x3c` sheared, or `vt+0x1c` flat), at one frame index:
+
+```
+pair   = hero pair, +0x194 and +0x198        if drawable+0x18c bit 0 is set
+         main pair, class sheets +0x04, +0x08   otherwise                  (TERR-192)
+key    = the unit's effect list holds kind 0x26 (invisibility)
+first  : key absent                          -> shroud cell [0x005eb49c]
+         key present, owner row bit 3 clear  -> the routine draws nothing
+         key present, owner row bit 3 set    -> shroud cell [0x005eb4a0]
+second : only if key absent and the Smoothing option cell [0x005eb520] != 0,
+         shroud cell [0x005eb4a0]                                          (TERR-191)
+arm    = flat (vt+0x1c)    for an instance of CAirUnit, both main-pair silhouettes
+         sheared (vt+0x3c) for every other unit and for the hero pair      (TERR-193)
+```
+
+The levels of the two cells by day band are `TERR-LIGHT-126`'s (amended): the second silhouette and an
+invisible owner's shadow are drawn at half the level of an ordinary first silhouette. The owner row
+bit marks the local player's own entry, so an invisible unit's shadow appears on its owner's client
+only. The hero pair has no flat arm. Both silhouettes recolour the pixels already on screen and
+there is no coverage buffer, so a pixel stamped by both is recoloured twice; the shipped sheared
+pairs (hero pairs and the main pairs of non-air units) do not overlap at equal frame size, and overlap at
+unequal frame size once the shear is non-zero. The flat-arm pairs of the two air-unit sheets (`Sonic Bat`,
+`Dragon`) were not measured (`TERR-192`).
+
 **Two altitude models per frame.** The terrain raster uses `+0xb4` — one *corner*, `r*32 − h`
 (`TERR-GEOM-031`). Everything standing on it uses `+0xc0` — the *mean of four corners*. A port must
 implement both; using the terrain mesh to lift a unit puts it at a corner's height instead of the
@@ -68,10 +95,10 @@ The occlusion test `FUN_0040d027(classId, col, row, alt)` recomputes the same `d
 sprite's top and bottom back to terrain rows with the picker `FUN_0041a9f9`, and skips the draw iff
 every covered cell's shroud level is `0x10` (fully dark).
 
-### Which frame a static object draws (`TERR-SPR-042`, `TERR-SPR-043`, `TERR-TILE-044`)
+### Which frame a static object draws (`TERR-SPR-042` (amended, superseded), `TERR-SPR-043`, `TERR-TILE-044` (amended, partially retracted))
 
 The `frame` argument of the object draw call is not simply the class's `Index`. `FUN_00407b1a`'s
-type-3 pass writes it on three arms and then overrides it once (`TERR-SPR-042`):
+type-3 pass writes it on three arms and then overrides it once (`TERR-SPR-042` (amended, superseded)):
 
 ```
 c    = type3[row*W + col]                     0 -> nothing here
@@ -96,7 +123,7 @@ sprite = Files[k.File]                        # graphics.res!objects/<path>.256
 (`REG-OBJ-046`). `animCtr` is `CMapView+0xa70`, the same counter the water phase uses,
 unshifted here.
 
-**The two flag bits of the tile word** (`TERR-TILE-044`). Bit 13 is the one `TERR-DIRT-017`
+**The two flag bits of the tile word** (`TERR-TILE-044` (amended, partially retracted)). Bit 13 is the one `TERR-DIRT-017`
 already uses for the dirt composite; the object pass reads the same bit for the `DeadObject`
 swap, and `FUN_0041f3d4` reads it to decide whether a cell still holds a standing destructible.
 It is **rewritten at runtime** by an RLE decoder (`FUN_0041f2b7`) over the interior from `(8,8)`,
@@ -105,7 +132,7 @@ so the `.alm` field supplies only its initial state.
 See [fog and visibility](fog.md) for tile bits 14/15, and
 [sprite composition](composition.md) for frame passes and unit shadows.
 
-### Sprite lighting — how bright a unit or object is drawn (`TERR-LIGHT-059…TERR-LIGHT-064`)
+### Sprite lighting — how bright a unit or object is drawn (`TERR-LIGHT-059`…`TERR-LIGHT-064` (amended, partially retracted))
 
 A sprite **is** lit, per sprite rather than per pixel, through the same builder and the same kind of
 level-indexed LUT the terrain uses. The `.256` class dispatches on vtable `0x00597418` (stored by its
@@ -179,7 +206,7 @@ selected on the `units.reg` `Palette` key at `class+0x98`: `0` selects one of
 16 shared owner tables from `human.pal`; `1` selects `class+0x9c[0]`; `> 1`
 selects `class+0x9c[face-1]`, where face is the actor's Data.bin tier. The last
 arm is not owner-indexed (`PAL-KEY-002`, `PAL-OWN-007`, correcting that clause
-of `TERR-LIGHT-064`). The owner-index producer and first-message lifetime are
+of `TERR-LIGHT-064` (amended, partially retracted)). The owner-index producer and first-message lifetime are
 specified by `PAL-RULE-021` and `PAL-FIRST-022`; see [palette selection](../pal/format.md).
 `MAGIC-STONEDRAW-084` identifies both greyscale overrides as the stone-curse
 draw arm; its stated confidence and the `drawable+0x15a` Unknown remain.

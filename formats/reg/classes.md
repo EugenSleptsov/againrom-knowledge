@@ -192,7 +192,7 @@ The per-key values below use the `REG-FMT-031`/`REG-REC-032` framing and
   loader run-length expands the two kind-6 tracks, appending `AnimationFrame[i]` exactly
   `AnimationTime[i]` times, and `+0x3c` holds the result's length. That length is the
   modulus of the renderer's animation phase and the array is what it indexes
-  (`TERR-SPR-042`). Shipped lengths: 0 ×52, 24 ×2, 28 ×21, 105 ×7 — and 39 of the 82
+  (`TERR-SPR-042` (amended, superseded)). Shipped lengths: 0 ×52, 24 ×2, 28 ×21, 105 ×7 — and 39 of the 82
   classes get theirs only through the `Parent` array fallback.
 
   `DeadObject` and `FireObject` are **not the same kind of field** (`REG-OBJ-047`).

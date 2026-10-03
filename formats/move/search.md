@@ -180,7 +180,7 @@ actors' fine footprint centres crosses the box and proceeds in **both** directio
 ring; the strict minimum label wins. Returns the packed cell or 0.
 
 On the **static** branch only, the substitute's Chebyshev distance from the request is compared with
-1 — or 2 when the requested cell carries a cell record (`TERR-PASS-051` bit 5) with a non-zero
+1 — or 2 when the requested cell carries a cell record (`TERR-PASS-051` (amended, superseded) bit 5) with a non-zero
 `+0x0c` — and exceeding it queues a UI message. It does not cancel the move.
 
 

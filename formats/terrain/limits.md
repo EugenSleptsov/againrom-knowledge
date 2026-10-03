@@ -35,7 +35,10 @@ withdrawn save-absence clause in `TERR-FOG-087`.
   is specified by `TERR-LOAD-152`.
 - Bit3 of the block plane remains open beyond the border value 0x1f. Bit4's
   producer is specified; this does not restore a universal writer enumeration.
-- The object/unit shroud-level ratio's reason remains open (`TERR-LIGHT-126`).
+- The object/unit shroud-level ratio's reason remains open (`TERR-LIGHT-126` (amended)); whether
+  any consumer reads both cells in one frame is answered by `TERR-191`.
+  The unit shadow routine's caller gates and the hero pair's frame guard field (`[sheet+0x4]`)
+  remain open (`TERR-191`, `TERR-192`).
   Sprite rectangle construction, the second `CMapView+0x9d4` dispatch and
   complete collection insertion/type population remain wider presentation
   questions. Registration storage and conditional cell/phase composition are

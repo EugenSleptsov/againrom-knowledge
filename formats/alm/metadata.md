@@ -164,7 +164,7 @@ clear bit 14. Load-time words and post-event words must be distinguished.
 See [tile selection](../terrain/tiles.md) and [visibility](../terrain/fog.md).
 — ALM-TILEVIEW-122
 
-**Runtime passability** — corrected and completed by `TERR-PASS-049…TERR-PASS-051`.
+**Runtime passability** — corrected and completed by `TERR-PASS-049`, `TERR-PASS-050` (partially retracted), `TERR-PASS-051` (amended, superseded).
 The map load derives **three** 256×256 byte planes at fixed
 stride 256, addressed `(row<<8)|col` regardless of `W`,`H`:
 
@@ -197,7 +197,7 @@ not. So is the cell-record map the next paragraph names.
 the ingest, to a per-cell record, and one routine then recomputes that cell's cost byte and *both*
 block bytes from the record. Its footprint can **clear** bits 0 and 2 as well as set them, which is
 how a bridge crosses water. Specified in [TERRAIN](../terrain/format.md) → "Structures on the block plane"
-(`TERR-STRUCT-068`…`072`, `TERR-PASS-073`); the `kind`→class resolution is `ALM-CLS-036` above.
+(`TERR-STRUCT-068` (amended, superseded)…`072`, `TERR-PASS-073` (amended, partially retracted)); the `kind`→class resolution is `ALM-CLS-036` above.
 
 The record-header opaque word is separate from metadata payload+0x08.
 No numeric interpretation follows from its bit-pattern census. — ALM-HEADER-098

@@ -2,7 +2,7 @@
 
 [Reference](format.md)
 
-## Tile word → movement (`TERR-PASS-049…TERR-PASS-051`, `TERR-COST-052`, `TERR-PASS-053`)
+## Tile word → movement (`TERR-PASS-049`, `TERR-PASS-050` (partially retracted), `TERR-PASS-051` (amended, superseded), `TERR-COST-052`, `TERR-PASS-053`)
 
 The same word drives a second, wholly separate reading: whether a **ground unit** may stand on the
 cell. It is the sim side, not the render side, and it uses a different bit split — the whole
@@ -78,7 +78,7 @@ constructor-unwritten terrain pairs when the subcell is below 14. Their
 native allocation contents remain Unknown; synthetic residues produce
 different classes. — TERR-TILECONTROL-163, TERR-WATERBOUND-164
 
-### Who is asking — the mover (`TERR-MOVE-054…TERR-MOVE-057`)
+### Who is asking — the mover (`TERR-MOVE-054`…`TERR-MOVE-057` (amended, superseded), of which `TERR-MOVE-055` is amended)
 
 The `n×n` footprint and the mask are **not** properties of a `units.reg` class. Both come from the
 simulation actor instance the predicate is called on (base vtable `0x59c3c0`, derived `0x59c448`,

@@ -101,7 +101,7 @@ centre of its block. The range test returns 1 when the centre distance minus `((
 most `0x180`, else `(v + 0x40) >> 8`; the edge gap subtracts `(n1+n2) << 7`, clamps at 0 and returns
 `(v >> 8) + 1`. Which actors have `n` above 1 is not measured.
 
-### What the cell-boundary calls do (`TERR-CELLREC-146`, `TERR-FOOTPRINT-147`)
+### What the cell-boundary calls do (`TERR-CELLREC-146`, `TERR-FOOTPRINT-147` (amended, partially retracted))
 
 `FUN_00544d00(map, actor)` and `FUN_00545230(map, actor, x, y)` are the enter and the leave of the
 map's **cell record**, the per-cell structure [TERRAIN](../terrain/format.md) specifies. Both read the

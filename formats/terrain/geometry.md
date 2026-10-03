@@ -2,7 +2,7 @@
 
 [Reference](format.md)
 
-## Cell geometry — where the pixels land (`TERR-GEOM-031…TERR-GEOM-036`)
+## Cell geometry — where the pixels land (`TERR-GEOM-031` (amended)…`TERR-GEOM-036` (amended, superseded), of which `TERR-GEOM-034` is amended)
 
 The terrain raster is **not** flat. Each grid **vertex** is projected to a destination row and a
 cell is drawn as the quad between its four projected corners.
@@ -63,7 +63,7 @@ The convention is **inclusive at both ends** (`d+1` accumulator steps across 32 
 at pixel centres) — *not* `d` steps. For `d >= 63` the drawn edge does not reach the far vertex by
 column 31.
 
-**Tiling, seams and degeneracies** (`TERR-GEOM-036`):
+**Tiling, seams and degeneracies** (`TERR-GEOM-036` (amended, superseded)):
 
 - A cell's bottom edge and the next row's top edge use opposite
   quantizations. They agree except at `|Δy|=63` or 127, where the upper cell

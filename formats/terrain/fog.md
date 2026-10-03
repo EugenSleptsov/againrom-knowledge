@@ -8,7 +8,7 @@ Bits 15/14 carry explored/current visibility. They gate animated objects
 and partial terrain repaint. Installed ALM words leave these bits clear;
 the runtime modifies the light-parser tile plane at `[[view+0x80]+0x0c]`.
 That pointer belongs to the render object layout, distinct from the main
-reader's simulation input. — TERR-TILE-079, TERR-FOG-080, TERR-FOG-081,
+reader's simulation input. — TERR-TILE-079 (amended, superseded), TERR-FOG-080 (superseded), TERR-FOG-081,
 ALM-TILEVIEW-122
 
 The light parser clears bit 13 only, so an authored high pair `01` can
@@ -98,7 +98,7 @@ cells the local player can currently see, so a shipped map's fires and trees ani
 field of view and hold frame 0 outside it. A consumer that implements only the plain arm
 reproduces every shipped map at load time and never afterwards.
 
-**Shroud / fog** (`TERR-FOG-037`): after the terrain, the same cell quad is darkened in place by
+**Shroud / fog** (`TERR-FOG-037` (amended, superseded)): after the terrain, the same cell quad is darkened in place by
 `FUN_00451200` (Gouraud level ramp, `dst = LUT[level][dst]`), or by `FUN_00450cf0` (level `0x10`,
 degenerate quads filled with colour 0) or `FUN_00451710` (level `8`, degenerate quads halved as
 `(px>>1) & mask`). These reuse the terrain quad and the same step-table edge walk.
@@ -162,7 +162,7 @@ persist Bit15 is saved; bit14 is recomputed. The save tail's &YA1 registry
         — SAV-FOG-061, TERR-FOG-145
 
 edge    the map border is black because it is NEVER SEEN -- level 16, the same mechanism at
-        its maximum, and TERR-FOG-080's 7-cell stamp margin is why it is never lit. There is
+        its maximum, and TERR-FOG-080 (superseded)'s 7-cell stamp margin is why it is never lit. There is
         no separate edge treatment.
 
 reveal  permission to stamp is bit 3 of [[mapView+0x9b4]+0x38][player], and that array has

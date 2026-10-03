@@ -217,7 +217,7 @@ fresh; their 180/148 bytes come from SAV, and the order helper replaces its
 — SAV-ACTORCTOR-546
 
 Footprint/domain `+49/+4a`, face/class `+4b/+4c` and mover mask `+5` restore
-independently. That mask selects the passability plane. — TERR-PASS-051
+independently. That mask selects the passability plane. — TERR-PASS-051 (amended, superseded)
 
 The selected post-read hooks do not normalize their consistency.
 Stage zero admits key repair in the fresh order object for

@@ -81,7 +81,7 @@ local per-index check. — AI-QUICKSAVE-281, SAV-916
 
 The serialized bit is tile-plane bit 15, explored at least once. Bit 14 is
 not saved. The scan order is `index=col+row*W`; run lengths sum to `W*H`.
-— SAV-FOG-061, TERR-TILE-079, ANIM-TICK-011, TERR-EDGE-024
+— SAV-FOG-061, TERR-TILE-079 (amended, superseded), ANIM-TICK-011, TERR-EDGE-024
 
 Read sequence:
 
@@ -94,7 +94,7 @@ The simulation document contains no full tile plane; the application tail
 supplies explored state after terrain reconstruction. The renderer's OR of
 four corner words can draw a different extent from the set cells;
 that rendering extent is not established by SAV framing.
-— SAV-FOG-061, TERR-FOG-087, TERR-FOG-145, SAV-LOAD-057
+— SAV-FOG-061, TERR-FOG-087 (partially retracted), TERR-FOG-145, SAV-LOAD-057
 
 ## Projectiles
 

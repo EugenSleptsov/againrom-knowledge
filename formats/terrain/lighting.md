@@ -2,7 +2,7 @@
 
 [Reference](format.md)
 
-## Terrain lighting (`TERR-LIGHT-011…TERR-LIGHT-013`, `TERR-LIGHT-015`,
+## Terrain lighting (`TERR-LIGHT-011` (amended, superseded)…`TERR-LIGHT-013` (amended), `TERR-LIGHT-015`,
 `TERR-LIGHT-018…TERR-LIGHT-023`, `TERR-LIGHT-028`, `TERR-LIGHT-029`,
 `TERR-LIGHT-109`, `TERR-LIGHT-119…TERR-LIGHT-128`)
 

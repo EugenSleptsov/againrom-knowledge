@@ -2,7 +2,7 @@
 
 [Reference](format.md)
 
-## Structures on the block plane (`TERR-STRUCT-068`…`072`, `TERR-PASS-073`)
+## Structures on the block plane (`TERR-STRUCT-068` (amended, superseded)…`072`, `TERR-PASS-073` (amended, partially retracted))
 
 The three tile-word arms, the type-3 cell and the border above are the whole of what the **ingest**
 writes. A placed structure never goes through it. The sim class is the one the image names
@@ -62,7 +62,7 @@ the **sack** slot: `FUN_005477b0`'s one caller `FUN_0050f715` is the sack regist
 `FUN_005463d0` / `FUN_00546520` / `FUN_0054a180`; `+0x08` `FUN_00546590`; `+0x0c` `FUN_0054df10`;
 `+0x10` `FUN_00547be0` / `FUN_00547c60` / `FUN_00547cd0`.
 
-**An actor occupies every cell of its footprint** (`TERR-FOOTPRINT-147`), the same shape
+**An actor occupies every cell of its footprint** (`TERR-FOOTPRINT-147` (amended, partially retracted)), the same shape
 the building attach uses. `FUN_00544d00(map, actor)` reads the footprint side once
 (`00544d12 CALL dword ptr [EDX + 0x1c]`), runs two nested loops both bounded by it (`00544e2f`,
 `00544e49`) and calls `FUN_00544ec0` once per covered cell at `00544e6e`; a refusal from any covered
@@ -200,7 +200,7 @@ cell of the rectangle. **The arm is selected by `(w & 0xff) + (h & 0xff) > 0`** 
 `+0x14` → `obj+0x60` and `+0x18` → `obj+0x61` (`ALM-OBJ-062`), and the other two callers of
 `FUN_0050445d` push literal zeros, so this arm has exactly one reachable caller. The
 `Passability = 0` store happens on **both** sides of the arm's own `w·h > 32` test
-(`00504559`, `00504568`, same immediate): the branch is dead (`TERR-STRUCT-077`).
+(`00504559`, `00504568`, same immediate): the branch is dead (`TERR-STRUCT-077` (amended, superseded)).
 
 Registration is not transactional. A collision aborts immediately and leaves earlier accepted
 references in place; the constructor ignores the return value (`UNIT-STRUCTCELL-070`). Thus the
@@ -238,7 +238,7 @@ what to do about it. The recompute's callers are eleven routines, not two:
 `FUN_00544ec0` (×4), `FUN_00545230`, `FUN_005477b0`, `FUN_005479b0`, `FUN_0054d790`, `FUN_0054dc70`,
 `FUN_0054e730` (×2), `FUN_0054e9e0`, `FUN_0054f680`, `FUN_00545de0`, `FUN_00545f50`.
 
-**The position object** (`TERR-STRUCT-075`). `obj+0x10` is a pointer, allocated and stored by the
+**The position object** (`TERR-STRUCT-075` (superseded, contested)). `obj+0x10` is a pointer, allocated and stored by the
 base actor constructor (`004f2523 PUSH 0xc`, `004f2525 CALL 0x00572824`, `004f2562 MOV [ECX+0x10],
 EDX`) and written whole by `FUN_00544550`:
 

@@ -71,7 +71,7 @@ retracted; −1 law retained)
 - **Buildings** — index = `structures.reg` `ID` (1..66; `DAT-BLD-005`). Slots:
   `0 sizeX, 1 sizeY` (footprint in tiles — overridden by the ALM type-4 `kind==0x21`
   extension), `2 scanRange → obj+0x48`, `3 healthMax → obj+0x44`, `4 Passability`,
-  `5 BuildingPresent` (the two sub-cell masks, `TERR-STRUCT-070` and
+  `5 BuildingPresent` (the two sub-cell masks, `TERR-STRUCT-070` (amended, partially retracted) and
   `TERR-STRUCT-078`; a set Passability bit blocks). Resolved from an ALM type-4 `kind` by
   direct 1-based subscript (`ALM-CLS-036`/`ALM-CLS-053`), or by name
   (`FUN_005241d0`, backwards, `"Invalid building %s created"`).
