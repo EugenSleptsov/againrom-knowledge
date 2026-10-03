@@ -109,8 +109,10 @@ integer boundaries. — FAME-PRODUCER-014
 Campaign SAVE/LOAD preserves A and B as raw four-byte words. The named addition
 and increment have no local range clamp. A freshly constructed CUnit starts
 at stage0, so a first received hostile corpse at stage2/3/4 can satisfy the B
-increment; repeated2-to3 cannot. Actual LOAD reconstruction order and any
-resulting additional count remain Unknown. — FAME-021, FAME-022
+increment; repeated2-to3 cannot. Resume projects every on-map actor with
+no stage baseline, so a loaded hostile corpse at stage2 to 4 can add a count
+when the saved B already includes it; this is Medium and native behaviour
+remains Unknown. — FAME-021, FAME-022, FAME-028
 
 C's raw projection does not establish a Human-class prerequisite. For the
 Human/Humanoid source path, the copied field is the stored aggregate of six
@@ -141,9 +143,42 @@ to the last row. Both trailing words stay zero and all ten records pass
 through the same insertion routine. — FAME-DEFAULT-008,
 FAME-SEED-015
 
+The cached source is the drawable registered when the client map was empty,
+not a chosen hero. Experience reaches it only through mask4 state packets that
+the sender's owner filter passes. Mission entry projects the participant's own
+hero first, so the hero is the likely source (Medium). The actor-add announcer
+at `004e9312` also sends to human players, and whether it runs before that
+projection was not traced; that is the live alternative to the hero. — FAME-026
+
+No game-code instruction writes the x87 control word, but game code calls C
+runtime entries that reload `027f` (53-bit, nearest) and four merge-helper
+call sites request `0x133f` (64-bit, nearest) with unaudited restores. The
+persistent setter requests 53-bit precision. The control word at the score
+call is Unknown. On a grid of A 0..32, B 0..32 and 1199 values of C, 53-bit
+against 64-bit precision changes the stored score on 1471 of 1,305,711 grid
+points; the real domain is not established, so this is a grid count and not a
+frequency. — FAME-027
+
+The client packet pump runs right after the world step at five of the 11
+world-step call sites, so a corpse stage change there is counted in the same
+frame. Resume projects the participant's hero, the global actor list
+unfiltered and world-list actors only when their stage word is below 5, with
+no stage baseline. — FAME-028
+
+Credits end on a key press, a mouse press or the end of the scroll. The hall
+of fame ends on its button. The terminal route resets the campaign and clears
+the cached source. SAVE has two callers; message442 is the one not excluded
+by SAV-972's save route, and whether it is reachable during these screens is
+Unknown. — FAME-029, SAV-972
+
 <a id="sample-facts-and-remaining-boundaries"></a>
 
 ## Unknowns
+
+Which producer of message41d is the Victory acknowledgment, the credits
+duration (the text line count and line height were not read), and whether the
+local transport returns a packet to the pump of the step that sent it remain
+Unknown. — FAME-026, FAME-028, FAME-029
 
 Names are not restricted to ASCII and loaded scores need not be strictly
 descending. Those earlier clauses of FAME-NAME-003 and FAME-SCORE-004 are
