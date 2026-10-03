@@ -14273,15 +14273,18 @@ Medium: five saves; the money mechanism is a hypothesis.
 |---|---|---|---|---|
 | SAV-1141 | In three original EN mission-150 saves, the records of pictures 1, 2 and 5 carry ActionTarget 340, the runtime id of one Human whose saved position equals their ActionX and ActionY; no shooter is stored. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1142 | In those saves the rock's and the bolt's x, y equal the shooter's position plus 8 times (class ShootOffset pair minus Center); segments are the shooter-target distance divided by 200, a divisor taken from SAV-1130. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
-| SAV-1143 | In those saves each shooter's simulation countdown expires on the tick its projectile is collected: damage tick minus creation tick equals the shot's total segments (6, 7, 7) for an archer, a catapult and a crossbowman. | Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
+| SAV-1143 | In those saves each shooter's simulation countdown expires on the tick its projectile is collected: damage tick minus creation tick equals the shot's total segments (6, 7, 7) for an archer, a catapult and a crossbowman. | Medium | ● active (amended) | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1144 | The picture-13 record has the leaves client arm 0x86 writes: ActionTarget 0, x and y equal to ActionX and ActionY at a cell centre, actionphase starting at -1, and 22 calls in all, the constant `004e98e4` sends for spell 2. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1145 | The picture-13 Fire_Ball burst at the catapult's target cell is created 4 ticks after the catapult's damage tick; the rider path leads to it, but a cast by another actor is not excluded, so the siege rider stays Medium. | Medium / Unknown | ● active (amended) | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1146 | In the same three saves FreeIndex (28, 29, 31) equals max(IDs) + 1 and ids 27 and 28 were free when 29 and 30 were built, so one shared counter allocates and no id is reused; the pair 29, 30 is saved newest first. | High / Medium | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
 | SAV-1147 | A unit shot starts with actionphase 0, so its built segment count is actionphase plus actionsegments; a record built by client arm 0x86 or 0x8b starts at -1, so that count is actionphase plus actionsegments plus 1. | High | ● active | [EXP-0430](../experiments/EXP-0430-physical-projectiles/) |
-| SAV-1149 | In `game0024` the catapult shot starts a SpellTransport countdown of 1448/384 = 3 ticks before the Fire_Ball blast; the observed 4-tick gap to the burst record is that countdown plus one tick whose cause was not read. | Medium / Unknown | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| SAV-1149 | In `game0024` the catapult shot starts a SpellTransport countdown of 1448/384 = 3 ticks before the Fire_Ball blast; the observed 4-tick gap to the burst record is that countdown plus one tick whose cause was not read. | Medium / Unknown | ● active (amended) | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | SAV-1150 | A SAV does not carry tile-word bit 0x2000: the Fog store writes bit 15 only and no other tile-plane store was found; the clear at `00484e6c` is the view-plane parser's loop, so that a load starts unmarked is Medium. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | SAV-1151 | No instruction of the SAV store or load routines addresses the view hash at +0xa7c; 13 instructions in 8 other routines do (the driver and view code), so the hash is not saved. | Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | SAV-1152 | Of the 121 `.sav` files under the saves root, 80 have a Projectiles store and 5 of those hold a record (6 records, pictures 1, 2, 5, 10, 13); none holds picture 14 or more. | Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| SAV-1153 | A unit shot's first driver call is on its creation tick, and the three saved shots fit creation = swing start (inferred) + ShootDelay if the swing message is delivered in the start tick's own timer step. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| SAV-1154 | The code chain puts the Fire_Ball burst record 3 ticks after the rider tick if the transport is last in the effect list at its fire tick, else 2; the saved catapult case shows 4, so one to two ticks stay unexplained. | Medium / Unknown | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| SAV-1155 | For a target whose size byte is 1 or less, the Fire_Ball transport's target point is the target's cell and fine bytes; its countdown is the truncated Euclidean distance of those words divided by spell parameter 7. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
 
 ### SAV-1141
 
@@ -14320,6 +14323,8 @@ Medium: five saves; the money mechanism is a hypothesis.
 **Confidence.** Medium: three exact matches, but the creation tick assumes the client driver runs once per head-counter tick, which `SAV-1132` records as an inference. One distance per class.
 
 **Unknown.** Whether the match holds at other distances and at d = 1, where `SAV-1132` finds the damage tick before the release tick.
+
+**Amended.** The assumption that the client driver runs once per tick and that a record's first call is on its creation tick holds for unit shots and for dispatcher-built records (`ANIM-113`, `SAV-1153`); the grade stays Medium for the one distance per class.
 
 ### SAV-1144
 
@@ -14379,6 +14384,8 @@ Medium: five saves; the money mechanism is a hypothesis.
 
 **Unknown.** Whether the inner effect first ticks the tick after the transport fires: if so, the observed gap needs no leftover tick. A save held at ticks 3098 to 3101 of the mission-150 catapult battle would show the transport's `+0x4c` and decide which order holds.
 
+**Amended.** The third bullet's open points are read in `EXP-0441`: the list of `004d1d86` is the actor list and the actor pass precedes the effect walk (`ANIM-113`), a node appended during the last visit of a walk waits for the next walk (`ANIM-114`), and the dispatcher that builds the burst record runs in the sending tick's timer step, so the burst record is built in the sending tick's timer step if the flush-to-queue path is same-tick, which was not traced; the fourth bullet's "drain on the next tick" stays a candidate. The code chain gives the record 2 or 3 ticks after the rider tick (`SAV-1154`).
+
 ### SAV-1150
 
 - Bit 0x2000 of the tile word is set by the client mask arm for wall_of_fire (`0041f8b8`, `MAGIC-WALLFIRE-058`) and by the Fire_Ball burst's driver arm (`ANIM-103`); it is tested at `0041f701`.
@@ -14413,6 +14420,39 @@ Medium: five saves; the money mechanism is a hypothesis.
 **Confidence.** Medium: a bounded negative over the 80 files that have a Projectiles store, from one corpus; the 40 files without the section hold no world, and the one reader failure is not counted.
 
 **Unknown.** A mission-150 save held while a cast of Wall of Fire, Fire Sacrifice, Acid Stream or Meteor Storm is in flight, or while its burst runs, would hold a picture of 14 or more.
+
+### SAV-1153
+
+- Swing start `004fb853` calls `004e9d3d` (`004fb939`), which sends the swing message in the actor pass of the start tick S. The flush `004e9e7c` closes the sub-tick; the dispatcher of the same timer step delivers the message, and the sweep of `0040dcdd` in that step runs the action driver `0045cf00` with phase 0 (`ANIM-113`). Its action-7 arm builds the shot when the phase equals ShootDelay, so the shot is built on tick S + ShootDelay.
+- The shot is stored in `+0x9d4` during the actor sweep, and `+0x9d4` is swept later in the same pass, after its count is read (`0040e1b9`), so the shot's first driver call is on its creation tick (`ANIM-113`).
+- The start tick S is not read from a save; it is inferred from the countdown below. Premises read in code: the swing start `004fb853` stores `(d * 256 + 128) / 200` as an output only when `d` (from `004fb702`) is greater than 1 (`004fb90e` to `004fb927`); the actor tick calls it at `004f3a7d`, then sets sub-phase 5 with the countdown `+0x6c` = charge (`+0x134`) plus that output (`004f3b15` to `004f3b3a`, `evidence/disasm-swing-countdown-4f3a6e.txt`).
+- Damage: the shooter's countdown after the swing is charge plus that term. For the three saved shots (`SAV-1143`) damage tick minus creation tick equals charge - ShootDelay plus that term: archer 20 - 21 + 7 = 6 (d = 5), crossbowman 8 - 9 + 8 = 7 (d = 6), catapult 2 - 0 + 5 = 7 (`evidence/shot-class-columns.txt`, `EXP-0428` `shot-classes.csv`). The three fits compare the first driver call with the damage tick; a one-tick delivery delay would shift all three by one, so they support the offset only under same-step delivery (`ANIM-113`, Medium).
+
+**Confidence.** High for the sweep visiting the shot in its creation tick (instructions). Medium for the offset: S is inferred, the creation and damage ticks come from the promoted `SAV-1143` timeline (no save was re-read), one distance per class, and delivery in the start tick's own timer step is untraced.
+
+**Unknown.** The offset at other distances, and for a swing whose message the dispatcher defers.
+
+### SAV-1154
+
+- Chain (`ANIM-113`, `ANIM-114`, `ANIM-115`): the rider runs in the actor pass of tick R (`SAV-1145`: 3098). The transport is appended then and the effect walk of the same sub-tick visits it, so its third visit and its fire are on R + 2. The inner effect is appended during that walk. If the transport is the last list node at its fire tick, the inner effect first ticks on R + 3, sends 0x86 on R + 3, and the record exists on R + 3 (given same-step delivery). If another effect was appended after the transport before its fire tick, the walk reaches the inner effect in the fire tick and the record exists on R + 2.
+- Observed (`SAV-1145`, `game0024`): the burst record is created at 3102, R + 4: one tick off the first branch and two off the second.
+- The earlier reading (`SAV-1149`) put the blast on R + 3 and the record one drain later. Whether the flush-to-dispatcher path delivers in the sending timer step was not traced (`ANIM-113`), so a one-tick delivery delay stays a candidate for the leftover tick.
+
+**Confidence.** Medium: each link is an instruction. Unknown for the fourth tick: neither the transport's first visit, the rider's tick dating (damage tick = counter + countdown) nor the creation formula of arm 0x86 records (phase starts at -1, `SAV-1147`) was shown to hold it.
+
+**Unknown.** Candidates for the leftover tick: a one-tick delay on the untraced path from the flush `004e9e7c` to the queue `004104e8` drains; the transport's first visit on R + 1; the rider tick dating. The effect list's contents at the fire tick are not read. A save held at ticks 3098 to 3101 of the mission-150 catapult battle would show the transport's `+0x4c` and decide the second candidate.
+
+### SAV-1155
+
+- Transport constructor `004fda47`: inner effect at `+0x44`, countdown `+0x4c` = `004fb7d2(caster position, effect +0x10)` divided by the signed speed word (`IDIV` at `004fdaad`). A second constructor, `004fdad0`, keeps the inner effect at `+0x48` and does the same division.
+- `004fb7d2` reads the words of cell * 256 + fine for both positions (`005449e0`, `005449f0`) and returns the truncated square root of the summed squares (`evidence/disasm-distance-4fb7d2.txt`). The speed is spell parameter 7 (`ANIM-111`).
+- In `004feadb`, for a non-null target the local position is filled by the copy `00544980` (`004fecad`; it copies bytes 0 to 5 and 8 to 11 of the target's position structure, `evidence/disasm-position-copy-544980.txt`) and `005449b0`. When the target's virtual slot +0x1c byte is greater than 1 (`004fecc9` to `004fecd4`), `004fecd9` to `004fecfb` rewrite it through `005447d0` with the cell word plus `(size - 1) * 128`, minus 1, per axis (`004f2849`, `004f280d`). When the target is null (`004fec86`) the point comes from `005445d0`. The first two branches are read; the third is not characterised.
+- The local position reaches the inner effect through `004fc8ce` (`005003b9` to `005003c7`), `004fc445` and `004f24d4`, which copy it with `00544980` into the effect's `+0x10` (`004f2541`, `004f2562`); the transport constructor reads that field and the caster position (`004fda98`). `004fb7d2` reads cell * 256 + fine from both (`005449e0`, `005449f0`), so for a size-1 target the fine bytes enter the distance.
+- The saved case of `SAV-1149` has both endpoints at cell centres (fine 128), so it separates neither fine position nor cell centre, and says nothing about a target of size greater than 1.
+
+**Confidence.** High for the metric, and for the copy of the fine bytes in the size-1-or-less branch (instructions). Medium for the divisor's source, which `ANIM-111` states. Unknown for the null-target branch.
+
+**Unknown.** The multi-cell target branch (`005447d0`) and the null-target branch (`005445d0`) in effect; a shot at a target between cell centres would show the countdown, and no such save was read.
 
 ## Actor damage-kind bytes and their writers
 

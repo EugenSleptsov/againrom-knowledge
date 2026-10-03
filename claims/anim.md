@@ -1922,6 +1922,9 @@ do not establish that aliases or bulk writes cannot change its object.
 | ANIM-110 | The only immediate stores of opcode 0x8b and 0x8c are in `004e9515`/`004e95f9` and `004e96d0` (spell 14, picture 36), reached via `004fe6d3` from the actor tick `004f37be`; two register-form writers stay unresolved. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | ANIM-111 | Every Fire_Ball area effect, from any actor or the siege rider, is built by `004feadb`, waits in a SpellTransport of distance/384 ticks and ends in one blast-arm 0x86 (picture 13, 22 calls); shipped data gives no second 0x86. | High / Medium | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
 | ANIM-112 | An area effect stores spell id at +0x0c and picture 2*spell+9 at +0x0e; in shipped data only spells 2, 4, 9 and 21 send that picture in an 0x86 (13, 17, 27, 51), the other area-effect spells send 0x87 masks. | High | ● active | [EXP-0432](../experiments/EXP-0432-projectile-pictures/) |
+| ANIM-113 | In `00475280` and `004753c0` one timer step runs the simulation step, the client dispatcher, then the 0x401 pass, which sweeps the actor map (CUnit driver `0045cf00`) before the record map (CProjectile driver `004617b0`). | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| ANIM-114 | A Fire_Ball burst record is built by client arm 0x86 from a message the inner effect's first tick sends; an effect appended in the walk's last visit waits for the next walk, and same-step delivery is not traced. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
+| ANIM-115 | A catapult or ballista Fire_Ball rider builds one area effect and one SpellTransport and appends only the transport; the damage message 0x73 follows, and the burst 0x86 comes later from the inner effect. | High / Medium | ● active | [EXP-0441](../experiments/EXP-0441-shot-timing/) |
 
 ### ANIM-101
 
@@ -2016,6 +2019,40 @@ do not establish that aliases or bulk writes cannot change its object.
 **Confidence.** High: the formula and both senders are instructions; the spell sets come from the parameter columns of the shipped rows (28 rows).
 
 **Unknown.** Customised Data.bin rows move spells between the modes (G2).
+
+### ANIM-113
+
+- Timer handler `00475280` calls the simulation step `004d2551` (`00475293`), the client dispatcher `004104e8` (`004752a0`) and the window's virtual slot +0x48 (`004752b6`), which carries the 0x401 broadcast. `004d2551` calls the sub-tick `004d891a` at `004d25df`. `004753c0` makes the same three calls in the same order (`004d2551`, `004104e8`, slot +0x48). `00475550` calls `004d2551` but no `004104e8` and no slot +0x48; `00475610` calls `004e9e7c`, `004104e8` and slot +0x48 but not `004d2551` (`evidence/calls-q1.txt`).
+- Sub-tick `004d891a`: message drain `004d88bf`, `004d1d86`, `0050fca9`, queue flush `004e9e7c`. `004d1d86` calls virtual slot +0x18 of every element of the list at `[sim]+0x2c`, then the effect walk `00510247` on the list at `[sim]+4` (`004d1dab` to `004d1deb`).
+- Slot +0x48 of the class table at `00597088` is `0040ec30` (`evidence/vtable-00597088.txt`). `0040ec30` calls `004bd9dc` first (`0040ec76`; it forwards to the children through `004bd87e`) and, when that returns zero, switches on the message; the 0x401 case reaches `0040dcdd` at `0040ecbc` (`evidence/disasm-window-handler-40ec30.txt`). `0040dcdd` sweeps the map at view `+0x9b8` with virtual slot +0x3c (`0040de86`), the same map with slot +0x4c (`0040e192`), then the map at view `+0x9d4` with slot +0x3c (`0040e2ec`). Each sweep takes the next bucket entry before it calls.
+- Slot +0x3c of the CUnit and CAirUnit tables (`005993e8`, `00599470`) is `0045cf00` (`00599424`, `005994ac`); its action-7 arm calls slot +0x58 (`0045d512`) when the phase equals ShootDelay. Slot +0x3c of the CProjectile table (`005994f8`) is `004617b0` (`00599534`).
+- The client dispatcher stores records into `+0x9d4` at `004175fd`, `00417e91` and `004182b9`; the unit-shot constructor `0045d680` stores into it at `0045d7d8` to `0045d8f5`, chaining the new entry at the head of bucket `(id >> 4) mod count`.
+
+**Confidence.** High: the call order inside `00475280` and `004753c0` and the sweep order are instructions read from the EN image (the RU image is byte-identical, `evidence/image-hashes.txt`). Medium for the delivery path from the flush `004e9e7c` to the queue the dispatcher drains: the sender chain was read through `004e74fe` and `004e7625`; the queue's first dequeue in `004104e8` was not traced.
+
+**Unknown.** Which timer entry the saved battles ran through: `00475550` and `00475610` lack part of the order, and `004d891a` has a second caller (`004d24b2`), `004104e8` two others (`0041023e`, `0041ce98`). Whether `0040ec82` skips the 0x401 case when `004bd9dc` returns nonzero, and on what input. What the map at `+0x9b8` holds besides actors (`AI-SELECT-065` calls it the unit-id map). The conditions on which `004104e8` skips an arm.
+
+### ANIM-114
+
+- The inner effect's first tick `004fc9b2` reaches `004fd515` (`004fcb2b`) when neither stage test `00523bc0` nor `00523ba0` holds. `004fd515` calls `004e98e4(effect, 1)` (`004fd529`), which calls `004e9296` (`004e9964`); the client builds the record in arm 0x86 (`ANIM-112`).
+- The send happens inside the effect walk, which precedes the flush `004e9e7c` in the same sub-tick (`ANIM-113`). If the dispatcher of the same timer step drains that flush, it builds the record and the record sweep (`+0x9d4`) of that step runs after it, so the record's first driver call would be on the tick of the send. That drain was not traced.
+- The effect list is a linked list with head at `+4` and tail at `+8`; the append `00523ca0` passes the tail field as the previous node (`00523cae`). The iterator start `0051aa80` and the step `0051aad0` both return the current node and move the cursor to its successor before the caller visits it (`0051ab20`; the walk calls slot +0x18 at `005102ac`). A node appended while the last node is visited is therefore not reached in that walk, and a node appended while an earlier node is visited is (`evidence/disasm-effect-walk-510247.txt`, `evidence/calls-q2.txt`).
+- The transport's fire arm `004fdc26` appends the inner effect to the same list through `523c80` (`004fdc6b`, `004fdc87`).
+
+**Confidence.** High for the builder, its caller and the pass order (instructions). Medium for same-step delivery and the first driver call on the send tick (the dequeue was not traced). High for the iterator taking the successor before the visit (`0051aa80`, `0051aad0`, `0051ab20` read); Medium for the append rule, because the tail link of `00523d00` was not read.
+
+**Unknown.** Whether another effect can follow the transport in the list when it fires (it would make the inner effect run in the same walk).
+
+### ANIM-115
+
+- Rider `004fba0e`: `004feaa2` (`004fbb4e`) builds the effect, then the damage message `004e9da2` (opcode 0x73, `004e9da9`) is sent when the target's hit points are above -10 (`004fbb70` to `004fbb89`).
+- `004feadb` builds the area effect by `004fc8ce` and then the SpellTransport by `004fda47` with the effect as inner object (`005005d6`), the caster position and the spell's speed (`ANIM-111`). It sets the transport's countdown to 10 for spell ids 13 and 14 (`0050062c`) and appends the transport alone (`00500645`, `523c80`); the inner effect is appended when the transport fires (`ANIM-114`).
+- The messages are, in order: 0x73 at the rider tick, then 0x86 from the inner effect's first tick, one transport countdown later (`SAV-1154`). The rider calls `004feaa2` first, so the transport already exists when 0x73 is sent.
+- Catapult and Ballista Units rows: charge 2, relax 38 and 50, token size 2 (`evidence/shot-class-columns.txt`, EN root).
+
+**Confidence.** High: the rider, the constructor arguments and the append are instructions. Medium that the Catapult and Ballista reach this path through Fire_Ball: `EXP-0428` `shot-classes.csv` gives the Catapult's weapon spell; the Ballista's was not read here.
+
+**Unknown.** The Ballista row's weapon spell. What the client does with the 0x73 message while the burst is pending.
 
 ## Human class record and swing sound
 
