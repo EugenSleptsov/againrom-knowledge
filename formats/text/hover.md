@@ -44,16 +44,16 @@ TEXT-HOVERTEXT-052
 | Statistics card | Four attributes, health, mana, damage, attack, armour, defence, weight, sight, speed, skills, resistances and experience | `main.txt[155..180]`; monster weapon resistance `[188]`; stat-specific visibility/ownership gates |
 | Statistics card | Monster's assigned spell list | `main.txt[192]`, joined with names from `spell.txt` and runtime spell bits |
 | Precreation | Difficulty, four hero templates, continue/back and name field | `main.txt[247..256]` |
-| Final character generator | Four attributes, free points and ten class-specific skill pictures | `main.txt[155..158]`, `[273]`, `[171..180]`; numeric controls also compose their label and value |
+| Final character generator | Four attributes, free points and ten class-specific skill pictures | `main.txt[155..158]`, `[273]`, `[171..180]`; each attribute row also has a label-and-value and two cost rectangles (below) |
 | Town | Shop, school, tavern, mission exit and menu hotspots | `main.txt[233..237]`, in hotspot order rather than index order |
 | School | Current five weapon or magic skill icons | `main.txt[171..180]`, with class and visual-slot permutation `1,2,4,3,5` |
 | Tavern | Candidate statistics and equipped items | Shared statistics getter and item formatter |
 | Shop | Shopkeeper and four stock groups | `main.txt[61..65]` |
 | Shop and inventory | Scroll arrows; backpack, transaction table and shelf backgrounds | `main.txt[54..60]` |
 | Shop, backpack and equipment | Item under the pointer, or gold | Item formatter; `main.txt[74]` for the inventory gold sentinel |
-| Spellbook | Available spell cell | `spells.txt` name plus `main.txt` field labels and live costs/strength/range/duration/other present values |
+| Spellbook | Available spell cell | `spells.txt` name plus `main.txt` field labels and the live values of the selected actors (below) |
 | World map | Available site marker | `sites.txt[marker index]`, subject to discovery/mission availability |
-| Map-selection list | Map row and three metadata columns | Row-owned text; `dialogs.txt[134..136]` |
+| Map-selection list | Map row and three metadata columns | The row's description text, then `dialogs.txt[134]`, `[135]`, `[136]` by cursor column (below) |
 
 Character and generator mappings are established by TEXT-HOVERCHAR-050.
 Room, navigation and item-area mappings are established by TEXT-HOVERROOM-051.
@@ -65,10 +65,55 @@ three base methods: 28 distinct `+0x14` getters, of which 21 contain specialized
 text-return paths, six return zero, and one reads the widget's owned hint
 string at `+0x3c` for 69 tables. That inherited getter suppresses its string
 when widget flag `0x20` is set; the setter at `+0x18` copies its argument.
-All assignments to these inherited hint fields, computed replacement tables
-and control families with different base methods remain outside the inventory.
-The six null getters do not prove that their entire screens lack help.
-— TEXT-HOVERSET-049
+Computed replacement tables and control families with different base methods
+remain outside the inventory. The six null getters do not prove that their
+entire screens lack help. — TEXT-HOVERSET-049
+
+## Spellbook caption
+
+The getter reads the spell cell under the pointer and answers only when that cell's bit is set in
+the selected-population spell mask. The text is up to five parts joined as `#`-separated lines:
+the spell name from `spells.txt` with the mana line (`main.txt[117]`), then damage `[118]`,
+range `[123]` and duration `[124]` lines, then one caption. A value line is omitted when its
+maximum is zero, shows one number when the minimum equals the maximum and a range otherwise; the
+duration is a stored value times 0.0625 with one decimal. The seven caption blocks `[182..187]`
+and `[217]` are tried in the order 182, 183, 184, 185, 187, 186, 217 and share one destination, so
+the last block with a value is the only caption shown. Captions 185 and 187 carry a percent sign,
+183, 185 and 187 a leading plus. — TEXT-080
+
+The values come from a fold over the selected actors that are `CUnit` instances with a spell mask:
+damage is summed over actors, range and duration are minima and maxima, mana is the last actor's.
+Each caption is a function of an actor level (skill plus stat minus 30, clamped to 0..100) and of
+the spell id, defined for ten ids; ids 17, 27 and 28 are not in the book's 24-cell id table, so
+the spellbook getter and its fold never fill caption 187; the item formatter also
+formats `main.txt[182..187]` and was not read for it. — TEXT-081
+
+## Attribute rows in character generation
+
+Each of the four attribute rows has five hit rectangles. The first returns `main.txt[155+i]`,
+the second `[273]`, the third the attribute label and value as `label = value`, the fourth a
+signed cost of the next point as a negative number and the fifth a signed refund of the current
+point as a positive number. The two signed numbers use the point-buy cost function and are
+comma-grouped in threes from the right once they exceed three characters (four with a sign
+character). — TEXT-082
+
+## Map-selection list
+
+Over the first 300 pixels of a row the hover text is the map's description. Over the three
+columns that follow it is `dialogs.txt[134]`, `[135]` or `[136]`, chosen only by the pointer's
+x position and so independent of the map. The columns display the map size and two dwords of the
+`.alm` metadata (payload `+0x70` and `+0x74`). The loader returns success only for a map whose
+first dword is above 1. — TEXT-083
+
+## Inherited hint binding
+
+A control's inherited hint is a CString filled when it is constructed, from a text parameter of
+one of two base constructors, or later by the base setter. Of 172 constructor call sites
+that forward a text parameter, 63 pass null, 51 pass the address of a zero-initialised data
+cell, three pass an executable literal, 52 read `dialogs.txt` and three read `patch.txt` entries
+52..54. Seventeen final classes of the 69 inherited-getter tables are reached; the rest of the
+population is not traced. Eight setter calls in one routine pass `dialogs.txt[23]` and `[75]`.
+— TEXT-084, TEXT-085
 
 ## Presentation
 

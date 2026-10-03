@@ -27,7 +27,9 @@ id     1  2  3  4  5 23 24 16 15 14 13 12  6  7  8  9 10 25 26 22 21 20 19 18
 
 **Ids 11, 17, 27 and 28 — `drain_life`, `darkness`, `curse`, `slow` — are absent**, so four spells
 have no cell in this book. `main.res::text/spell.txt` is 28 lines keyed by id;
-`main.res::text/spells.txt` is 24 lines keyed by slot and is the tooltip text.
+`main.res::text/spells.txt` is 24 lines keyed by slot; each line is the first line of that
+cell's hover text, to which the hover getter adds the live values of the selected actors
+(TEXT-080, TEXT-081).
 
 The current spell and quick binding are zero-based cells. A normal book
 command carries `cell+1`, not the intrinsic ID. Dispatcher005c2328-based

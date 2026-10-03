@@ -1113,6 +1113,12 @@ retained routine, and the line pairs are reproduced byte for byte from both root
 | TEXT-HOVERROOM-051 | The same delayed route serves room hotspots, navigation and inventory areas. | High | ● active | [EXP-0361](../experiments/EXP-0361-hover-tooltips/) |
 | TEXT-HOVERTEXT-052 | Hover content is a mixture of installed prose and formatted live information, not a single ready-made string per icon. | High | ● active | [EXP-0361](../experiments/EXP-0361-hover-tooltips/) |
 | TEXT-HOVERPAINT-053 | Normal hover help preserves source-authored line breaks and has its own layout, separate from introductory tips. | High | ● active | [EXP-0361](../experiments/EXP-0361-hover-tooltips/) |
+| TEXT-080 | Spellbook hover getter `004b0350` joins a name and mana line with damage, range and duration lines and at most one caption of `main[182..187,217]`; the last caption with a value replaces earlier ones. | High | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-081 | Spellbook values come from fold `004190f0` over the selected actors: per cell, sums or minima and maxima of spell-record fields; captions follow level formulas for ten spell ids; in the spellbook, ids 17, 27 and 28 never fill a caption. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-082 | Generator attribute hover `0042ca00` tests five rectangles per attribute row: `main[155+i]`, `main[273]`, `%s = %d`, then `%+d` of the next-point cost and of the refund, the last two comma-grouped. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-083 | Map-list hover `00444cd8` chooses by cursor x alone: the row's description left of 300 px, then `dialogs.txt[134]`, `[135]`, `[136]` per column; no map field selects 135 or 136. | High | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-084 | The inherited hover hint at `+0x3c` has writers found by the traced pattern in three base constructors and setter `004bd615`; 252 vslot-6 call sites exist, of which 8 pass a `dialogs.txt` lookup. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-085 | The 172 hint-forwarding constructor call sites pass null (63), a static address (54) or a text-table entry (55, in `dialogs.txt` and `patch.txt`); 17 final classes inherit the getter. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
 
 ### TEXT-HOVER-048
 
@@ -1203,6 +1209,204 @@ preference
 
 **Confidence.** **High for the complete normal layout routines and separate gates.** Native pixels,
 all redraw/focus paths and oversized/corrupt authored lines remain unproved
+
+### TEXT-080
+
+Getter `004b0350` converts the cursor (`005cd7a0`, `005cd7a4`) with `004b0bf0` to a cell index, which is -1
+when x < 0, y < 0, y >= 75 or x > 0x1c7. It reads the object at the singleton view's `+0xd0` and returns null
+unless the cell is not negative and bit `cell` of that object's dword `+0x148` is set. Five CStrings are built; each `0056f3d4` call is
+MFC-style `FormatV` (`0056f12e`: `GetBuffer`, `vsprintf`, `ReleaseBuffer(-1)`) and replaces its destination.
+
+| Slot | Content | Template |
+|---|---|---|
+| A | `spells.txt[cell]` (object `005eb3c0`), `main[117]`, dword `+0x2cc+4*cell` | `%s#%s: %d` |
+| B | `main[118]`, pair `+0x14c`/`+0x1ac` | `#%s: %d` or `#%s: %d-%d` |
+| C | `main[123]`, pair `+0x20c`/`+0x26c` | same |
+| D | `main[124]`, pair `+0x38c`/`+0x3ec`, each value times 0.0625 | `#%s: %5.1f` or `#%s: %5.1f-%5.1f` |
+| E | one caption block, below | below |
+
+Slots B..D are skipped when the pair's max is 0; an equal pair formats one value, otherwise the range. The
+seven caption blocks run in code order 182, 183, 184, 185, 187, 186, 217 and all write slot E, so the last
+block with a value wins. A block runs when its max exceeds -65535 (182, 184) or is nonzero (the rest). Each
+caption's label is `main[N]` for its own number. The pairs and templates, equal value then range, are:
+
+| Caption | Pair (min/max) | Templates |
+|---|---|---|
+| 182 | `+0x44c`/`+0x4ac` | `#%s: %d`, `#%s: %d...%d` |
+| 183 | `+0x50c`/`+0x56c` | `#%s: +%d`, `#%s: +%d...+%d` |
+| 184 | `+0x5cc`/`+0x62c` | `#%s: %d`, `#%s: %d...%d` |
+| 185 | `+0x68c`/`+0x6ec` | `#%s: +%d%%`, `#%s: +%d...+%d%%` |
+| 187 | `+0x74c`/`+0x7ac` | as 185 |
+| 186 | `+0x80c`/`+0x86c` | `#%s: %d`, `#%s: %d-%d` |
+| 217 | `+0x8cc`/`+0x92c` | as 186 |
+
+The result is `%s%s%s%s%s` of A, B, C, D, E into static buffer `005f1cb8`, so the lines are `#`-separated
+(TEXT-HOVERPAINT-053). The two roots run the same executable bytes (SHA-256 `942e9b72...7d03`).
+
+**Confidence.** **High.** The routine `004b0350..004b08a4` is read whole: every Format call, its destination
+frame slot, template address and operand displacement is in the evidence, and the instruction facts listed
+there are checked against the decoded listing. The single-caption rule follows from all seven blocks writing
+one slot before one join.
+
+**Unknown.** Which object sits at the singleton's `+0xd0` at run time is bounded by TEXT-081; the cell
+geometry behind `004b0bf0` beyond the bounds above was not decoded.
+
+### TEXT-081
+
+Fold `004190f0` (30 call sites) clears, on its `this`, the unit count (`+0x140`), flags (`+0x144`) and spell
+mask (`+0x148`), then initialises per-cell arrays of 24 dwords: sums `+0x14c`, `+0x1ac` to 0; minima
+`+0x20c`, `+0x2cc`, `+0x38c`, `+0x44c`, `+0x50c`, `+0x5cc`, `+0x68c`, `+0x74c`, `+0x80c`, `+0x8cc` to 0xffff;
+maxima `+0x26c`, `+0x32c`, `+0x3ec`, `+0x56c`, `+0x6ec`, `+0x7ac`, `+0x86c`, `+0x92c` to 0; maxima `+0x4ac`
+and `+0x62c` to 0xffff0001. It walks the selection map at `+0x9b8` when `+0x9c4` is nonzero.
+
+An actor with a zero `+0x7c` is skipped silently. Otherwise the unit count `+0x140` is incremented and the
+mask `+0x148` ORs the actor's `+0x18` (`004193e8..0041940f`). Then, if the singleton view's `+0x3dc` is not 1
+and lacks bit 2, flags become 8 and only the per-cell fold is skipped. For such an actor the getter's mask test
+can pass while the mana dword stays at 0xffff, so no value lines show. The actor's class string must equal
+`CUnit` for the spell loop; its `+0x20` must be 0x17 or 0x18 and its `+0x18` nonzero. For each set bit `b` of
+`+0x18` (0..23) the spell id is the byte at `005c232c+4*b`, and `004fdd96(id)` builds a record. The skill byte
+is the actor's byte at `+0x14a` plus the index `[[record+4]+0xc]+8`, the stat byte is at `+0x139`,
+`004fe1cf(skill, stat)` fills the record, and level `L` is skill plus stat minus 30, clamped to 0..100.
+
+Per cell: record byte `+0xe` is summed into `+0x14c`, bytes `+0xe` and `+0xf` into `+0x1ac`; the word at
+record `+0xc` is stored, not folded, into `+0x2cc` and `+0x32c`, so the last actor visited sets the mana value
+shown; min and max of record byte `+0x9` and of word `+0x10` fill the 123 and 124 pairs. The seven accessors
+take `L` and return a value only for their spell ids, else 0:
+
+| Caption | Accessor | Spell ids | Value for level L |
+|---|---|---|---|
+| 182 | `004fe670` | 24; 7, 28 | L/15+1; -(L/15+1) |
+| 183 | `004fe5a9` | 5, 16, 10, 22 | L/2 |
+| 184 | `004fe62c` | 12, 17 | -(L/30+1) |
+| 185 | `004fe541` | 23 | 4L/5+20 |
+| 187 | `004fe575` | 27 | 4L/5+20 |
+| 186 | `004fe4ed` | 14 | min(L/20+2, 7) |
+| 217 | `004fe5fb` | 18 | L/10+3 |
+
+The id table holds ids 1..10, 12..16 and 18..26 in 24 cells; ids 17, 27 and 28 are not in it. Caption 187
+therefore cannot receive a value from this fold, and 182 and 184 receive none for ids 28 and 17. Cells
+carrying captions: 182 cells 6 and 13; 183 cells 4, 7, 16, 19; 184 cell 11; 185 cell 5; 186 cell 9;
+217 cell 23.
+
+**Confidence.** **High** for the arrays, accessors, formulas, id table and cell mapping, read at instruction
+level. **Medium** that the fold's `this` is the object the getter reads at the singleton's `+0xd0`: both use
+the same field displacements, but the 30 callers were not all traced. Which spell each id names was not
+re-derived.
+
+**Unknown.** What `+0x20` values 0x17 and 0x18 and the `+0x3dc` bits name; the callers' firing times; whether
+any state yields an actor counted and masked that fails the `+0x3dc` test; the meaning of record bytes `+0x9`,
+`+0xe`, `+0xf` and word `+0x10` beyond their use here. A second consumer of the accessors exists: twelve
+calls at `00484548..00484682`, in the item formatter family (TEXT-HOVERTEXT-052), call six of the seven
+accessors, including `004fe575`, and format `main[182..187]`; what it shows for ids outside the book was not
+read. Stores to `+0x74c` and `+0x7ac` occur only at `004192af`, `004192c0`, `00419aac` and `00419b0b`, all in
+the fold (store-pattern scan of the code map).
+
+### TEXT-082
+
+Getter `0042ca00` returns null unless `[[view+0x5c]+0x104]` is nonzero. For attribute row `i` = 0..3 it
+point-tests five rectangles, advancing a rectangle-table pointer by 0x30 and a second pointer by 0x10 per
+row, and returns at the first hit; after row 3 it returns null.
+
+| Rectangle | Returned text |
+|---|---|
+| 1 | `main[155+i]` |
+| 2 | `main[273]` |
+| 3 | `%s = %d`: the label CString `[view+0x1c0][i]` (set from `main[15..18]`), then the value dword `view+0x1d0+4*i` |
+| 4 | `%+d` of -(T(v+1)-T(v)), v the same value dword, from `0042d050` |
+| 5 | `%+d` of T(v)-T(v-1), from `0042d080` |
+
+`T` is `004d3718` (HERO-COST-002). Both signed texts go to static `005e4068` and then through `00468f60`,
+which keeps the string when its length is 3 or less, or 4 when the first character is `-` or `+`, and
+otherwise loops, taking the right three characters and joining them to the rest with `,`. Rectangles 1, 2
+and 3 return without grouping. The EN `main[155..158]` lines carry 2, 5, 3 and 4 `#` separators;
+`main[15..18]` and `main[273]` carry none.
+
+**Confidence.** **High** for the rectangle order, indices, templates, values read and the cost functions,
+read in the complete getter and callees. **Medium** for the grouping output shape: the loop and constants
+are read, but no output string was produced.
+
+**Unknown.** The rectangles' pixel positions were not measured; the owner of `[view+0x5c]+0x104` was not
+named.
+
+### TEXT-083
+
+Getter `00444cd8` reads the control's screen left `L` and cursor x `005cd7a0`. If x < L+0x12c it takes the row
+under the cursor, `[control+0x84]` plus the row from `004c179d(y)`, and returns its record's CString at `+8`
+(the description, below) when the vslot `+0x78` validity call accepts the row, else null. If x < L+0x186 it
+returns `dialogs.txt[134]`; if x < L+0x1a4, `dialogs.txt[135]`; otherwise `[136]`. No record field enters
+the test.
+
+The row text `%s#%dx%d#%d#%d` (at `00445937`) takes the record's name (`+4`), `+0x14` minus 16, `+0x18` minus
+16, `+0xc` and `+0x10`. The draw routine's column advances (0x1e plus 0x10e, 0x5a, 0x1e) equal the getter's
+thresholds, so 134, 135 and 136 caption the size, `+0xc` and `+0x10` columns. The loader `00447211` fills
+the record from a `.alm`: it compares the tag with `M7R`, then width and height go to `+0x14` and `+0x18`,
+a 40-byte seek follows, then the 64-byte name (payload `+0x30`) to `+4`, two dwords (payload `+0x70`, `+0x74`)
+to `+0xc` and `+0x10`, and a 512-byte block from payload `+0x78` whose line feeds become `#` before its leading
+C string is stored at `+8`. The reads run only when the `M7R` compare matches and a header dword is at least
+2 (`004472c5..004472cd`). The loader has one return-1 path, which tests `+0xc` > 1, and three return-0 paths;
+`00444742` drops a map whose loader returns 0.
+
+The EN `dialogs.txt[134..136]` lines are 11, 26 and 20 bytes, RU 12, 32 and 28, none with a `#`.
+
+**Confidence.** **High.** The getter and loader are read whole, the thresholds equal the drawn column advances,
+and both roots share the executable. The column-to-field pairing follows draw order and arguments, not a
+label.
+
+**Unknown.** What values
+`+0x74` takes beyond ALM-META-026 is outside this read.
+
+### TEXT-084
+
+Three base constructors, `004bc770`, `004bc880` (three stack parameters) and `004bc98f` (six), construct the
+CString at `+0x3c` and set flags `+0x18` to 1. The latter two call `CString::operator=(LPCSTR)` when their
+text parameter (the third, respectively sixth) is nonzero; `004bc770` assigns the static `005f2120`.
+Setter `004bd615` (vslot 6 in all 96 widget tables) assigns its argument to `+0x3c`; getter `004bd631`
+returns it unless flag 0x20 is set (TEXT-HOVERSET-049). The instrument's pattern finds ten CString
+construct, assign or copy calls on a `+0x3c` receiver: six in the three base constructors, one in the setter
+and three in other functions (`00429f70`, `004df385`, `005168e0`) whose receiver class was not resolved.
+
+The call `[reg+0x18]` occurs at 252 sites image-wide with unresolved receivers. Eight sit within one routine,
+`00438e87`: four pairs, each passing `dialogs.txt[23]` and then `[75]` to vslot 6. No other site has a
+text lookup within the 14 preceding instructions.
+
+**Confidence.** **High** for the constructors, setter, getter and the listed sites, read from the code map
+(11 788 entry points, 454 310 instructions). **Medium** for the absence of other writers: the 252 receivers
+and three other functions were not classified.
+
+**Unknown.** What the 244 other vslot-6 receivers are and what text they pass; whether a lookup stored in a
+local before the call is missed by the 14-instruction window.
+
+### TEXT-085
+
+From the two base constructors with a text parameter, the parameter was traced backwards through 24
+forwarding constructors to 172 call sites in 72 functions that call 23 distinct constructors, by the
+argument's source:
+
+| Source | Sites |
+|---|---|
+| null | 63 |
+| address of an uninitialised data cell | 51 |
+| address of a literal in initialised data | 3 |
+| `dialogs.txt` lookup | 52 |
+| `patch.txt` lookup | 3 |
+
+The 51 data cells are single addresses at four-byte strides, 50 in `005e4090..005e4168` and one at `005f2138`;
+no instruction other than the argument push references them, so they read as empty strings. The three
+literals (`005c1bb4`, `005c1bcc`, `005c1be8`; 18, 21, 20 bytes, not read from a text resource) are passed
+by `004c2353`. The 52 `dialogs.txt` sites use 51 distinct indices; the three `patch.txt` sites (object
+`005ea668`, from `patch.res`, 67 lines) use 52, 53 and 54, all in `0043d847`. One site (`0044457e`) resolves
+only by hand, to `dialogs.txt[117]`, because overlapping decodes hide its push. One site, `004450cc`, builds
+the map list with `dialogs.txt[118]`, and its class `005988c8` has its own getter `00444cd8` (TEXT-083).
+The other 171 sites construct 17 final classes, all carrying getter `004bd631`; 29 of the 171 sites construct
+the base class itself with null. These are 17 of the 69 inherited-getter tables; the other 52 are not reached
+by this trace.
+
+**Confidence.** **High** for the counts under the stated trace: the code map, table reader and operand facts
+are reproduced from both roots, the two roots share the executable, and the table lines exist in both.
+**Medium** that the uninitialised cells hold empty strings, since a pointer-based writer is not excluded.
+
+**Unknown.** The population of the 52 tables not reached; which constructed controls are ever shown; whether
+the literal-text controls are reachable in play.
 
 ## Character-generation labels
 

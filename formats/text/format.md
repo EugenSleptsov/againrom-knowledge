@@ -114,9 +114,12 @@ enumerated. — `TEXT-078`
 ## Resource string tables
 
 [Pointer-hover help](hover.md) describes the common delayed display route,
-control-specific sources, line layout and the bounds of the control inventory.
+control-specific sources, line layout and the bounds of the control inventory,
+including the composed spellbook caption, the character-generation attribute
+rows, the map-list columns and the binding of inherited hints.
 — TEXT-HOVER-048, TEXT-HOVERSET-049, TEXT-HOVERCHAR-050,
-TEXT-HOVERROOM-051, TEXT-HOVERTEXT-052, TEXT-HOVERPAINT-053
+TEXT-HOVERROOM-051, TEXT-HOVERTEXT-052, TEXT-HOVERPAINT-053, TEXT-080,
+TEXT-081, TEXT-082, TEXT-083, TEXT-084, TEXT-085
 
 The game loads multiple CRLF-delimited text resources into positional tables. Entries
 are addressed by table-local or global numeric indices depending on the consumer.
