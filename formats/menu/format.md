@@ -253,10 +253,13 @@ Unknown (`MENU-053`). The key reaches no other help channel in the searched popu
 The C key arms Cast only in a map session with no text entry open, a nonzero selection
 count and `view+0x144 & 0x24` clear; a second press while the spellbook popup exists is
 consumed (`MENU-054`). With no selection or `view+0x144 & 0x24` set, the key falls to a second
-dispatch that returns 0; what the caller does with that is Unknown (`MENU-054`). Cast mode is
+dispatch that returns 0; the frame handler discards that 0 and always calls the MFC default (`MENU-054`, `MENU-063`). Cast mode is
 armed only when a selected object set capability bit `0x200`; for a nonempty selection with
 the bit clear the key is consumed with no message, sound call or state change, and an armed
-Cast posts `0x408` to the right column and chooses no spell (`MENU-055`, `AI-SPELLCAP-288`).
+Cast posts `0x408` to the right column and chooses no spell (`MENU-055`, `AI-SPELLCAP-288`). The
+`0x408` shows no popup: it resets one field in three right-column panels, and the spellbook popup is
+the separate object `campaign+0xec`, opened by the key's own routine and never given a current spell
+by the C path (`MENU-064`, `MENU-065`).
 
 ## Settings shortcut and speed notices (`MENU-057`…`MENU-059`)
 
@@ -275,10 +278,30 @@ each is appended below the existing lines, the oldest is removed past the capaci
 list, and the toggle posts never drop a duplicate. A toggle needs the map screen word equal
 to 1, a closed text entry and the Ctrl latch, and the key handler tests no phase, player
 count, selection or option; the speed step also needs phase 2 (`MENU-059`,
-`MISSION-MSGLINE-057`). A frame route that forwards letter keys to another object is unread
-(`MENU-059`). The Pause panel's text is the separate modal-panel line, slot 119, and in the
+`MISSION-MSGLINE-057`). The frame forwards letter keys `A`..`Z` to the root as message `0x100` (`MENU-063`). The Pause panel's text is the separate modal-panel line, slot 119, and in the
 searched population no message-line line (`TEXT-094`, Medium). Slots 94..116 and
 218..220 have no other array reader in the searched population (`TEXT-095`, Medium).
+
+## F12, Backspace and the Alt band (`MENU-060`...`MENU-065`, `AI-378`)
+
+In a map session, with the state word 1 and the chat entry closed, F12 flips the static flag
+`0x005eb584`, which starts clear. While it is set the map view's frame routine draws a box in the
+box at an offset from `[view+0x10]` and a `%3.1f fps` line from a double it recomputes
+periodically; no other instruction references the flag (`MENU-060`, Medium for the box and the
+unit). Backspace empties the
+map message line by calling three routines with the arguments of `SetSize(0, -1)` on its text,
+colour and lifetime arrays and returns 0 (`MENU-061`).
+
+Alt plus a letter B..Y except S broadcasts one type `0x46` record with sub-selector `0x80` and the
+index letter minus `A`; Alt+S is the screenshot (`MENU-062`). The record's receiver arm is a debug
+console that acts only for a Player whose privilege byte exceeds `0x32`. A fresh Player holds 0, and the chat line
+`#Chicken` sets it to `0xff`. D toggles turn tracing, T script tracing, Q the AI admission override
+and prints its state, H prints a help, I the last-turn and average-turn AI statistics, U the
+mission unit experience; the other 17 keys do nothing (`AI-378`).
+
+The frame handler never reads the map key handler's return: it forwards the key, then always
+calls the MFC default, so a return of 0 only lets the root offer the key to its other children
+(`MENU-063`).
 
 <a id="open--not-established"></a>
 
@@ -298,9 +321,13 @@ searched population no message-line line (`TEXT-094`, Medium). Slots 94..116 and
 - Whether a click landing outside an Esc panel changes anything: the panel holds the root's mouse
   capture and the slots read drop the click (`MENU-INPUT-016`, partially retracted).
 - The help panel's text colour (the ramp `[0x005ba21c]` points to), the scroll bar's mouse handling,
-  whether the arrow and page keys scroll help from the keyboard, and the receiver of the Cast
-  key's `0x408` message, and the caller's handling of the C key's returned 0 (`MENU-052`,
-  `MENU-053`, `MENU-054`, `MENU-055`).
+  whether the arrow and page keys scroll help from the keyboard (`MENU-052`, `MENU-053`), what the
+  three right-column panels' fields set by `0x408` mean and whether the Cast popup's sound call
+  plays a sound (`MENU-064`).
+- The position of the F12 readout's text, the numerator of its rate (`MENU-060`), the body of the
+  message-line clear's second caller (`MENU-061`), whether a single-player session loops the Alt
+  record back (`MENU-062`), the readers of the two console trace flags and where a client shows the
+  console's chat lines (`AI-378`), and the other children's key routines (`MENU-063`).
 - Whether a phase-3 or networked session delivers the settings keys, the interval of the tick
   message that expires message-line lines, and the receiver's use of the `0x46` records
   (`MENU-057`, `MENU-059`).

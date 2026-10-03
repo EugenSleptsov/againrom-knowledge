@@ -172,8 +172,8 @@ unused**, none ever reissued. The next free `menu.md` id is therefore `MENU-CURS
 | MENU-051 | The campaign frame's key handler posts help message `0x434` on F1 in any state; the frame builds the help panel only when `campaign+0x3dc` equals exactly 1, so F1 is ignored in the town and over any panel that sets an overlay bit. | High | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
 | MENU-052 | Help is the Pause panel's class and constructor call with the help text in place of the pause line: id 1, rectangle 576x384 snapped to 488x360 and centred, one OK button, no title, scrolling body in font 1. | High / Medium | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
 | MENU-053 | Help stops the world through the Esc menus' idle gate and closes on the OK button or Esc; F1 over help is ignored; whether keys scroll the body depends on a focus rule not resolved here. | High / Medium / Unknown | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
-| MENU-054 | The C key reaches the Cast arm only in a map session with no text entry open, a nonzero selection count and `view+0x144 & 0x24` clear; otherwise it falls to a second dispatch whose C entry returns 0. It reaches nothing in the town. | High | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
-| MENU-055 | C arms Cast mode 5 only when a selected object set `view+0x144` bit `0x200`; for a nonempty selection with the bit clear the key is consumed with no message, sound call or state change. An armed Cast posts `0x408` and chooses no spell. | High / Medium / Unknown | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
+| MENU-054 | The C key reaches the Cast arm only in a map session with no text entry open, a nonzero selection count and `view+0x144 & 0x24` clear; otherwise it falls to a second dispatch whose C entry returns 0. It reaches nothing in the town. | High | ● active (amended) | [EXP-0437](../experiments/EXP-0437-f1-help/) |
+| MENU-055 | C arms Cast mode 5 only when a selected object set `view+0x144` bit `0x200`; for a nonempty selection with the bit clear the key is consumed with no message, sound call or state change. An armed Cast posts `0x408` and chooses no spell. | High / Medium / Unknown | ● active (amended) | [EXP-0437](../experiments/EXP-0437-f1-help/) |
 | MENU-056 | F1 in the campaign frame reaches no accelerator, help file or WinHelp call; its only path is the `text/help.txt` panel. The library `ID_HELP` machinery is in the image and untraced. Bounded to the population named. | Medium | ● active | [EXP-0437](../experiments/EXP-0437-f1-help/) |
 
 ### MENU-051
@@ -225,6 +225,8 @@ unused**, none ever reissued. The next free `menu.md` id is therefore `MENU-CURS
 
 **Unknown.** What the caller does with the returned 0 (whether the key is passed on and who consumes it). How the selection count and ownership bit behave for selections that mix owners: `AI-SPELLCAP-288` bounds the capability side only.
 
+**Amended.** `MENU-063` answers the Unknown about the caller of the returned 0: the frame handler never reads it and always calls the MFC default, so 0 only lets the root offer the key to its other children and its own key routine. The mixed-owner selection question stays Unknown.
+
 ### MENU-055
 
 - `FUN_0041b439(5)` computes the enable mask with `FUN_00419e7b`: `view+0x144 & 4` returns 0, otherwise `0xef`, plus `0x10` when `view+0x144 & 0x200` (`AI-PANEL-060`). Cast is mode 5, tested as `mask & (1 << 4)`, so it passes only when `0x200` is set. `0x200` is set when any accepted selected object is a `CUnit` whose `+0x20` is `0x17` or `0x18` and whose `+0x18` is nonzero (`AI-SPELLCAP-288`).
@@ -235,6 +237,8 @@ unused**, none ever reissued. The next free `menu.md` id is therefore `MENU-CURS
 **Confidence.** High for the mask test, the refusal path having no message or sound call and the armed-mode writes (`FUN_00419e7b` and `FUN_0041b439` read whole). Medium for the spellbook opening through `0x408`: the post is read but the receiver of `0x408` was not traced.
 
 **Unknown.** Whether anything preselects a spell after C when none was chosen earlier in the session (the initial value of the controller's current spell was not traced), what `0x408` shows in the right column, and whether `FUN_00453b08`, called inside `FUN_0041de5d`, plays a sound.
+
+**Amended.** `MENU-064` and `MENU-065` answer the Unknown: `0x408` is a refresh posted to the right-column container (three child panels write one field each) and shows no popup; the popup is `campaign+0xec`, and no code in the C path writes its current spell. Whether `FUN_00453b08` plays a sound stays Unknown.
 
 ### MENU-056
 
@@ -305,3 +309,84 @@ unused**, none ever reissued. The next free `menu.md` id is therefore `MENU-CURS
 **Confidence.** High for the surface, the lifetime, the ramp and the gates read from the listing. Medium for the dwell as wall-clock time and for the stacking timing: they inherit `MISSION-MSGLINE-057`'s Medium, since the interval of the `0x401` tick message was not measured.
 
 **Unknown.** The `0x401` interval. Whether a phase-3 or networked session delivers these keys to `FUN_0040f38e` at run time: no original was run.
+
+## F12, Backspace, Alt band and the Cast popup
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MENU-060 | In a map session F12 flips the static dword `0x005eb584`; while it is set `FUN_00407b1a` draws a box and a `%3.1f fps` line. No other instruction references the address. | High / Medium / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
+| MENU-061 | In a map session Backspace empties the map message line: `FUN_00401e40` on `view+0xa10` calls three routines with the arguments of `SetSize(0, -1)` on its text, colour and lifetime arrays and writes nothing else; the key returns 0. | High / Medium / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
+| MENU-062 | In a map session Alt plus a letter B..Y except S broadcasts a type `0x46` record with sub-selector `0x80` and index letter minus `A`; Alt+S is the screenshot. No local effect found in the handler. | High / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
+| MENU-063 | The map key handler's return 0 for C, Backspace and unmapped keys is dropped by the frame handler, which always calls the MFC default; 0 only lets the root offer the key to its other children and its own key routine. | High / Medium / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
+| MENU-064 | The Cast arm's `0x408` goes to the container `campaign+0xd4` and shows no popup; three child panels (Medium that they are all) write one field each. The spellbook popup is `campaign+0xec`, shown by `FUN_0041de5d`. | High / Medium / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
+| MENU-065 | In the spell-bar class the current slot `[+0x60]` is written by constructors, the `0x411`/`0x417` arms, the click routine and `-1` stores in `FUN_004b0fa0`/`FUN_004b1080`; `0x417` is pushed only by F5..F8; `FUN_0041b439(5)` is unread. | High / Medium / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
+
+### MENU-060
+
+- Route: the frame key handler `FUN_00472b80` sends F12 (`0x7b`, byte `0x12` at `0x472ee8 + 0x73`, entry 18 of the 21-dword table at `0x472e94`) to `00472e4b`, which forwards message `0x100` to the root `campaign+0xcc` through `vt+0x48`. The map view's key handler `FUN_0040f38e` reaches its F12 arm only after `campaign+0x3dc == 1` (`0040f3c8`) and with the chat entry `campaign+0xc0` closed (`0040f3d8`; an open entry takes the key, `MENU-054`).
+- Toggle: `0040f500` `XOR EDX,EDX` / `CMP [0x005eb584],0` / `SETZ DL` / `MOV [0x005eb584],EDX`, then `EAX = 1`. The cell lies past the raw `.data` bytes (image `.bss`), so it starts 0: the readout is off at load.
+- Readers: `EnumRefs refto:5eb584` gives 4 hits, 2 owners, 0 orphan: the toggle (`0040f502`, `0040f50c`) and two reads in `FUN_00407b1a`, the map view's `0x402` frame routine of `MISSION-MSGLINE-056` (`0040cb45`, `0040cce6`). Among direct references the F12 arm is the only writer (a computed or indirect access is not excluded). The cell is in no save record found in this population.
+- Effect (listing `rom-fps-draw.txt`): at `0040cb45` a set cell runs `FUN_0044f990` with five arguments (`[view+0x10]-0x78`, `0`, `[view+0x10]-0x1e`, `0x18`, a colour built from the pixel-format shifts at `0x5bcedc..0x5bcee4`), then `FUN_005545d0` (a `sprintf`) with the format `%3.1f fps` (`0x5b8274`) and the double at `view+0xd0`, then `FUN_00456b50` in font1 `[0x005e88b8]`. At `0040cce6` a set cell also calls `FUN_0044cda0` on a local rectangle. A clear cell skips both.
+- The double: `view+0xd0` is stored by `FSTP` after `FILD` / `FDIVP` at `0040cb03`..`0040cb11`, `view+0xc8` is reduced by `0x3e8` and `view+0xc4` cleared (`0040cb1d`..`0040cb3b`): a recomputation once per 1000 view-tick units; the unit of `view+0xc8` and `view+0xc4` is unread, so wall-clock time is not claimed.
+- Rejected: a gameplay switch (no direct reader outside the draw routine), a store with no reader, a grid or overlay (the only draw found is the number).
+
+**Confidence.** High for the route, the toggle, the reader set and the format string (arm and tables read whole, string dumped from its own address). Medium for the box geometry (`[view+0x10]` is taken as the view width, not confirmed) and for the value being a frame rate: the label says so, the numerator and denominator of the divide were not read.
+
+**Unknown.** Where the text lands inside the box, the unit of `view+0xc8` and `view+0xc4`, and the `FUN_0044cda0` rectangle's role. Whether a native run draws the box: no original was run.
+
+### MENU-061
+
+- Route: the frame handler's byte table sends Backspace (`0x08`, index 0) to `00472e4b`, the same forward as F12. In `FUN_0040f38e` the arm at `0040f66b` is `MOV ECX,[EBP-0x50]` / `ADD ECX,0xa10` / `CALL 0x00401e40` and then `JMP 0040fc47`, the exit of `MENU-054` with `EAX = 0`. Gate: `campaign+0x3dc == 1` and a closed chat entry.
+- Routine: `FUN_00401e40` pushes `-1`, `0` and calls `0x0056fc7a` on `this+0x04`, `0x0057011d` on `this+0x18` and `0x00570490` on `this+0x2c`: the arguments of an MFC `CArray::SetSize(0, -1)` (count 0, default grow) on each array. It writes no other field: the redraw flag `+0x5c`, the tick times `+0x40`, `+0x44` and the capacity `+0x48` are untouched.
+- Contents: the three arrays are the message line's text (`+0x04`), colour ramp (`+0x18`) and lifetime (`+0x2c`) of `MISSION-MSGLINE-056`, appended by `FUN_00401e70` and `FUN_00401fe0` (`MENU-059`). The next draw loops over count 0 and shows no line.
+- Other callers (`EnumRefs callto:401e40`: 3 hits, 3 owners, 0 orphan): the message line's destructor `FUN_00401d10` (`00401d3b`) and `FUN_00472800` (`0047286d`, not read).
+- Rejected: the chat text entry, the selection set, the order queue and the session record queue: the routine's only operand is `view+0xa10`.
+
+**Confidence.** High for the route, the three operands and the absence of other writes (routine read whole). Medium for the three callees being `SetSize` of the three array classes: their bodies were not read, the argument pair and the layout of `MISSION-MSGLINE-056` carry the identification.
+
+**Unknown.** What `FUN_00472800` does around `0047286d`. Whether the return of 0 lets a later sibling act on Backspace (`MENU-063`).
+
+### MENU-062
+
+- Route: `FUN_00472fb0` (the frame's `WM_SYSKEYDOWN` handler) tests the Alt context bit `lParam & 0x2000`, then in order: Alt+digit and Alt+numpad digit forward to the root (`AI-KEY-125`), `0x53` calls the screenshot routine `0x0044bdd0`, and a key in `0x42..0x59` with `campaign+0x3dc` bit 0 set calls `FUN_0041cde3(key - 0x41)` (`00473038`..`00473054`). Alt+A and Alt+Z fall out of the range test. After every path the handler calls the MFC default `0x0057638c`. `EnumRefs callto:41cde3`: 1 hit.
+- Record: `FUN_0041cde3` fills the static record `0x609c38`: `+9 = 0x46`, `+5` = the word at `[[view+0x9b4]+4]` (the local player's id), `+7 = 0`, `+0xa = 0x80` (a dword), `+0xe` = the index; then `FUN_004e74fe` on `0x5f22d0` sends it. A zero word at `+7` is the broadcast addressee of `SESS-CMD-015`.
+- Population: 23 keys (B..Y except S) post the same record shape; the index is the only difference. Receiver and effect: `AI-378`.
+- Sender-side effect: none found in the handler, which does not touch the state word, the latches or the message line. `FUN_004e74fe` and the trailing call `FUN_0042b900` (`00473065`) are unread.
+
+**Confidence.** High for the gate, the record fields and the single call site (handler and builder read whole, tables dumped).
+
+**Unknown.** Whether a single-player session loops the record back to `FUN_004d5dd8`: the path from `FUN_004e74fe` to the drain loop was not re-read here (`SESS-CMD-015`).
+
+### MENU-063
+
+- Frame: `FUN_00472b80` forwards the key with `PUSH key` / `PUSH 0x100` / `CALL [EDX+0x48]` on `campaign+0xcc` (`00472e4b`..`00472e5a`) and never reads `EAX`: the next instruction at `00472e5d` is `MOV ECX,ESI` / `CALL 0x0057638c` (the MFC default). It returns `RET 0xc` with no value. Every arm of its table ends at `00472e5d`. A C key (`0x43`) takes byte `0x14` at `0x472ee8 + 0x3b`, entry 20, `00472e41`, which forwards letters `0x41..0x5a`: the letter route `MENU-059` left unread.
+- Dispatcher: `FUN_004bd9dc` (root `vt+0x48`) for `0x100..0x102` calls the focus child `[this+0x38]` first when set, then the child walk `FUN_004bd87e`, then, when both returned 0, the object's own `vt+0x6c`, `+0x70` or `+0x74` (`004bdc6b`..`004bdc9f`); a nonzero result is returned at once. `FUN_004bd87e` stops on a nonzero child result and, for non-mouse messages, continues to the next child on 0 (`004bd9c0`..`004bd9ce`).
+- Map view: `FUN_0040f38e` is the own `vt+0x6c` of the map view `campaign+0xd0`. Its return 0 reaches the root's walk as that child's result, so the root offers the key to its remaining children and then to its own routine before returning 0 to the frame, which discards it. For C this is the fall-through of `MENU-054`: no selection, a set `0x24` bit, a state word other than 1 or an open chat entry.
+- Player-visible effect found: none. The key is neither consumed nor acted on by the frame beyond the default.
+
+**Confidence.** High for the frame never using the return and always calling the default, and for the dispatcher's order (all three routines read whole). Medium that the other children do nothing with C or Backspace: their key-down routines were not read.
+
+**Unknown.** The bodies of the root's own `vt+0x6c` and of the other children's key routines (the default stubs `FUN_00436e40`, `FUN_00436e50`), whether the focus child `[root+0x38]` is ever set in a map session, and the child order of the root's list at `+0x1c`.
+
+### MENU-064
+
+- Posting: `FUN_0041de5d` loads `campaign+0xec`, sizes it with `FUN_004bcba8` (a `FUN_004bd28f` child-3 test picks the height variant, and the overlay bit `0x2` adds a fixed `0x131,0x1e0,0x186` placement), attaches it with `FUN_004bccf4`, calls the sound routine `FUN_00453b08`, then `PUSH 0`, `PUSH 0`, `PUSH 0x408`, `CALL [vt+0x48]` on `campaign+0xd4` (`0041df7e`..`0041df97`) and `FUN_0041e06d`. The close routine `FUN_0041dfa6` posts the same `0x408` (`0041e045`).
+- Receivers: `FUN_004bd9dc` on the container walks its children on 0. Three child routines act on `0x408` (jump entries of message minus `0x402`, read from the PE): `FUN_0048ec10` sets `[this+0x6c] = -100` (`0048ecc0`); `FUN_00491080` sets `[this+0x60] = 1` (`004911e1`); `FUN_00492c80` sets `[this+0x5c] = 1` (`00492d0e`). `FUN_00490380` has no `0x408` entry (`004904c2`, its default).
+- Popup: `campaign+0xec` is built once by `FUN_004b02a0` (`FUN_00472070`, `004722fa`); it paints 24 cells from bits of `view+0x148` (`004b0a57`, `004b0ab4`), labels slots `F%d` (`0x5c0a44`) and highlights the cell equal to `[this+0x60]` (`FUN_004b08b0`); `FUN_004b0350` is its tooltip.
+- `0x408` is a general refresh: 29 immediates in 20 routines (`EnumRefs imm:408`, `rom-enum-imm.txt`); the Cast open and close are two of them.
+- Rejected: a `0x408` handler that creates or shows the popup (the three handlers write one field each).
+
+**Confidence.** High for the posting chain, the three field writes and the popup's identity as the spell bar (listings read whole; tables read from the PE). Medium for the container's children being exactly these routines: the child slots were taken from the construction in `FUN_00472070` read earlier, and are not committed beside this card.
+
+**Unknown.** What `+0x6c`, `+0x60` and `+0x5c` of the three panels mean (cursor, mode or redraw state). Whether `FUN_00453b08` plays a sound: it tests `[0x005e8430]`, walks an object list at `this+0x10`, and its arguments are `[0x005eb468]`, `0`, `0`, `0xdc`; the buffer chosen was not followed.
+
+### MENU-065
+
+- Writers of `[this+0x60]` in the spell-bar routines `FUN_004b0230`..`FUN_004b1080` (`EnumRefs disp:60`, `rom-enum-disp.txt`; a store through a pointer to `campaign+0xec` from another routine is outside this search): both constructors `FUN_004b0230` and `FUN_004b02a0` store `-1` (`004b024d`, `004b02da`); `FUN_004b0e40` stores `-1` for message `0x411` (`004b0f24`) and a slot value for `0x417` (`004b0f12`); `FUN_004b0f40`, the click routine, stores the hit cell when its bit in `view+0x148` is set (`004b0f84`); `FUN_004b0fa0` and `FUN_004b1080` store `-1` (`004b0fa0`, `004b1080`).
+- Senders: `EnumRefs imm:411` finds one push, `FUN_00472070` at `00472309` (construction); `imm:417` finds four, the F5..F8 arms of `FUN_0040f38e` (`0040f524`, `0040f578`, `0040f5cc`, `0040f620`; census `rom-enum-imm.txt`). The C path's own routines `FUN_0040f38e` (arm `0040f755`), `FUN_0041de5d` and `FUN_0041e06d` contain neither. `FUN_0041b439(5)` is not re-read in this experiment (`MENU-055` read it).
+- `FUN_0041e06d` writes `view+0x68`, clamps `view+0x60` (the view's field, not the popup's) and sets `view+0x74 = 1`.
+- So C leaves the popup's current spell as it was: `-1` until a quick-slot key, a click or an earlier assignment sets it (`AI-SPELLGUARD-289`, `AI-PANEL-123`).
+
+**Confidence.** High that the C path's routines read here select nothing (bounded to immediate pushes of `0x411` and `0x417` and to displacement stores to `+0x60` in the class's routines; `FUN_0041b439` is not re-read). Medium that no computed message id reaches `FUN_004b0e40`.
+
+**Unknown.** Whether closing the popup resets the current spell: `FUN_0041dfa6` contains no `0x411` push. The message arms of `FUN_004b0fa0` and `FUN_004b1080`. Whether the item-Cast route of `AI-PANEL-123` assigns a slot before the popup shows.
