@@ -1047,3 +1047,24 @@ combine these bytes with `SAV-CELLFAIL-583` and `MOVE-088` without a run, and fo
 **Unknown.** Whether any caller tests the return of 0. Whether each caller removes the actor in the tick in which
 it leaves the world. Whether two actors reach one cell in play and one of
 them is then removed. Native behaviour of the claim bits after the early return.
+
+## Walk step at order recovery
+
+Evidence is a static read of `rom.exe` (one image on both lawful installs) in Ghidra 12.1.2 headless; no process
+was run. `EXP-0451` was allocated ids `90`..`92` of `claims/move.md` and spent `MOVE-090`.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MOVE-090 | A fresh walk call of FUN_00548f70 writes a sub-cell step in that call only when the facing byte already equals the direction to the first path node; otherwise it turns and the step comes at the next call. | High / Medium / Unknown | ● active | [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md) |
+
+### MOVE-090
+
+- Entry: executor row 1 at `00531270` calls `FUN_00548f70(actor, ord+0x0a, 0)` at `0053129c`. `FUN_00545c30` is the centred test (both sub-offsets 0x80); a mover that is not centred stores progress 3.
+- A fresh walk forces a full search; the dynamic list is empty, so the near search `FUN_00549a90` runs and then the stepper `FUN_00549990`.
+- The stepper computes the facing to the head node with `FUN_00544300` into `mover+1`. When `mover+0` equals `mover+1` it calls `FUN_0054d210` (step vector `mover+0xb0` and `mover+0xb1`, count `mover+0xaa`) and `FUN_00548c60`, which writes the sub-cell position at `+4` and `+5` in that call. Otherwise `FUN_0054a210` turns only; it snaps the facing at once when the difference is under 0x21, and the step is written by the next call. An empty dynamic list calls `FUN_00548e20`, a turn only.
+
+**Confidence.** High for the control flow, each branch read from `rom-walk.txt`. Medium for the composed outcome at the recovery tick, since the facing at that tick is a run-time value.
+
+**Unknown.** The facing byte's usual value when a recovered actor was last stopped; whether the turn path has a second step in the same call under any condition not shown in the listed routines.
+
+**Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-walk.txt`, `evidence/listings/rom-row-callees.txt`

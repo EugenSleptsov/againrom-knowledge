@@ -222,4 +222,18 @@ every other order that has a "walk there, then do a thing" shape.
   state-3 prologue reads no list. Arm 3 was not read for list tests, and other callers of the state machine
   were not enumerated (`AI-374`).
 - Move stores `actor+0x50` = 1 and pickup 2; the executor tail reads that value when it consumes the
-  refusal flag. A pending walk installed when recovery reaches zero at T0 first calls the walk routine at T0+2; whether it writes a step is Unknown (`AI-375`).
+  refusal flag. A pending walk installed when recovery reaches zero at T0 first calls the walk routine at T0+2; that call writes a step only when the facing already equals the direction to the first node, otherwise it turns and the step follows at the next call (`AI-375`, `MOVE-090`).
+
+### Stop, pickup, group evaluation, pursuit thresholds and cadence
+
+- The stop routines clear the action word and neither the strike phase nor the progress byte; the strike
+  continues unless progress is cleared elsewhere (Medium; `AI-381`).
+- The first pickup pass stores action 2 and the same slot call runs the sack transfer; the second pass
+  carries only the completion stores (`AI-382`).
+- Group orders 3 and 5 branch per member on `ord+0x20` and `Player+0x28` without testing the pending order or
+  destination: both zero reaches the evaluation (pending order 0, or 8 on the heal path, `AI-349`), and
+  `Player+0x28` nonzero stores pending order 0xb (`AI-383`). Two routines on those branches are unread.
+- In the walk, stepper, near-search and search routines no counter gives up: `mover+9` and `mover+0x78` only
+  select a re-search against the `[Path Finding]` values, and the flag `mover+0x98` is set at three empty-list
+  sites (`AI-384`).
+- The AI pass that contains the group tail runs once per 16 ticks on both of its callers (`AI-385`).

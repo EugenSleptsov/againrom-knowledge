@@ -183,3 +183,8 @@ The selected frontend resume can bootstrap a server call, but earlier world,
 frontend, phase-dependent full-tick, command and world-object callbacks remain
 between LOAD and the selected actor consumer. Absolute first producer/read order,
 the byte at that read and native resume timing remain Unknown. — SAV-FIRSTMOVE-880
+
+## Walk step at order recovery
+
+A fresh call of the walk routine writes a sub-cell step in that call only when the facing byte already equals
+the direction to the first path node; otherwise it turns and the step follows at the next call (`MOVE-090`).

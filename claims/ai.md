@@ -2824,7 +2824,7 @@ sha256 `942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03`). No p
 | AI-372 | In the `+0x158` census the only reads of the order word `ord+0x50` are two compares in `FUN_00537510`, the group order 4 arm; if reached, a completed pickup leaves 1 there, which sends that arm to `FUN_0052e110`, not to a walk. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
 | AI-373 | In `FUN_005492a0` and `FUN_00549a90` the near search raises `mover+0x98` only when aimed at the final destination; an empty waypoint search retries next pass. Occupied ring cells unlabelled: Unknown. | High / Medium / Unknown | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
 | AI-374 | In state 3 `FUN_0052ce50` tests only the victim's action word; 0x10, set at health -10 or less, stands the member down to state 0xc before dispatch, so arm 3 is not entered; the prologue reads no list. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
-| AI-375 | Move stores `actor+0x50` = 1 and pickup 2; the executor tail reads that value when it consumes `mover+0x98`. A pending walk installed when recovery reaches zero at T0 first calls `FUN_00548f70` at T0+2; whether it writes a step is Unknown. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+| AI-375 | Move stores `actor+0x50` = 1 and pickup 2; the executor tail reads that value when it consumes `mover+0x98`. A pending walk installed when recovery reaches zero at T0 first calls `FUN_00548f70` at T0+2; whether it writes a step is Unknown. | High / Medium | ● active (amended) | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
 
 ### AI-370
 
@@ -3008,13 +3008,15 @@ assumes the pending walk is already installed.
 differs from `mover+0x01` (`FUN_0054a210` is reached from `FUN_00548f70` at `00549004` and `0054923d`),
 writers of `actor+0x50` outside the census population, and native reachability of the sequence.
 
+**Amended.** `MOVE-090` reads the first walk call: it writes a step in that call only when the facing byte already equals the direction to the first node, and otherwise turns, with the step at the next call. `AI-382` places the pickup transfer in the first pass.
+
 ## Slot draw: entry, gate and edge cases
 
 Evidence is a static read of `rom.exe` (identical on both lawful installs; capstone disassembly, direct `CALL rel32` cross-references and displacement sweeps, indirect calls not followed). Every instruction quoted is asserted on both editions (`evidence/asserts-en.txt`, `evidence/asserts-ru.txt`: 170 rows, 0 mismatches). The next free `ai.md` id is `AI-378`.
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| AI-376 | The engage selector reads no cast-state field of its own actor, so a pending cast does not stop a draw; a miss writes order kind 5 over the retained cast order, while the in-flight cast runs from actor fields. | High / Medium | ✔ promoted | [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md) |
+| AI-376 | The engage selector reads no cast-state field of its own actor, so a pending cast does not stop a draw; a miss writes order kind 5 over the retained cast order, while the in-flight cast runs from actor fields. | High / Medium | ✔ promoted (amended) | [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md) |
 | AI-377 | The slot draw skips a zero slot id before `rand()`, never matches a zero threshold, and has no owner test in its body; only a mage-bit actor with reach below 2 and `Player+0x28 == 0` is diverted. | High / Medium | ✔ promoted | [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md) |
 | AI-378 | The Alt+letter record's receiver is the debug console `FUN_0053cdc0`, which acts only for a Player with `+0x68` above `0x32`; six keys act (D, H, I, Q, T, U), 17 do nothing; `#Chicken` in chat sets `+0x68` to `0xff`. | High / Medium / Unknown | ● active | [EXP-0450](../experiments/EXP-0450-keyboard-remainder/) |
 
@@ -3029,6 +3031,8 @@ A draw that matches no slot writes the default engage order, `ord+8 = 5`, `ord+0
 **Confidence.** High for the absence of a cast-state read in the selector and in the routines swept, and for the default engage writes (complete-body reads). Medium for "does not stop a draw" as a runtime statement: the entry gates of the 14 callers were read only partly, and a gate outside the swept routines could still keep a casting actor from reaching the selector.
 
 **Unknown.** The cadence of the AI-slot driver `FUN_004d214b` and the gate on its call to `FUN_005336a0` at `004d245c` were not established; `AI-371` places the slot before the executor passes. Whether the apply routine `FUN_004feadb` reads the order block was not read. The unguarded call site `0052d00c` was not traced to the writer of `ord+0xc`.
+
+**Amended.** `AI-385` reads the cadence: `FUN_005336a0` runs once per 16 ticks on both of its callers, `FUN_004d2551` and the thread loop `FUN_004d214b`.
 
 **Evidence.** [EXP-0444](../experiments/EXP-0444-creature-books/EXP-0444.md), `evidence/fieldreads-engage.txt`, `evidence/xref-engage.txt`, `evidence/asserts-en.txt`
 
@@ -3057,3 +3061,84 @@ Cast admission: `FUN_004fe6d3` refuses only a caster with the mage bit, no item 
 **Confidence.** High for the receiver, the gate, the two tables and each arm's flag write or print (read whole, strings dumped). Medium for how `FUN_004d4e18` compares the typed line to `#Chicken` (whole line or prefix), for the demotion arm at `004d5805`, for `FUN_004faa81` being the constructor, and for the AI effect of Q (an inference).
 
 **Unknown.** The readers of the two trace flags, everything `FUN_0053d1d0` and `FUN_0053d530` print beyond the strings named, where a client displays the `0x91` lines, and whether the save loader writes `+0x68`: only `004fab67` and `FUN_0051b240` store the byte by displacement, so a loaded privileged state would need a wider store.
+
+## Attack cycle, pickup pass and pursuit thresholds
+
+Evidence for this section is a static read of `rom.exe` (one image on both lawful installs,
+sha256 `942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03`) in Ghidra 12.1.2 headless; no
+process was run. `ord` is the order block at `actor+0x158`; `mover` is the block at `actor+0x154`. `EXP-0451` was
+allocated ids `381`..`386` of `claims/ai.md` and spent `AI-381`..`AI-385`.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-381 | The stop routines store `actor+0x54 = 0` and clear neither the strike phase nor the progress byte; the strike continues unless progress is cleared elsewhere (Medium). | High / Medium | ● active | [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md) |
+| AI-382 | The first pickup pass stores action 2 and the action 2 arm runs the whole sack transfer in that slot call; the second pass carries only completion stores. | High / Medium | ● active | [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md) |
+| AI-383 | Group orders 3 and 5 branch per member on `ord+0x20` and `Player+0x28` without testing `ord+0x08` or `ord+0x0a`: a member with both zero reaches `FUN_0052eb60` (stores 0 or 8, `AI-349`), one with `Player+0x28` nonzero gets `ord+0x08 = 0xb`. | High / Medium | ● active | [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md) |
+| AI-384 | In `FUN_00548f70`, `FUN_005492a0`, `FUN_00549a90` and the search routine, no counter gives up: `mover+9` and `mover+0x78` only select a re-search, and `mover+0x98` is set at three empty-list sites. | High / Medium | ● active | [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md) |
+| AI-385 | `FUN_005336a0`, the AI pass that contains the group tail, runs once per 16 ticks on both of its callers: `FUN_004d2551` when the tick counter and `0xf` equal 6, and the thread loop `FUN_004d214b` once before each block of 16 ticks. | High / Medium / Unknown | ● active | [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md) |
+
+### AI-381
+
+- Stop routines: `FUN_0052fd40` stores `actor+0x54 = 0`, `actor+0x50 = 0xc`, the post word at `ord+0x00`, `ord+0x08 = 0`, `ord+0x14`, `ord+0x60`, `mover+0x7c` and `ord+0x50`. `FUN_005306e0` stores `actor+0x54 = 0`. Neither routine contains a store to `actor+0x58`, `ord+0x09`, `ord+0x15` or `actor+0x136` (`rom-stop-executor.txt`).
+- Executor: `FUN_005310e0` keeps the action word only when it is 2 or 0xf and stores 0 otherwise (`00531136`..`00531147`); progress 1 restores action 3, progress 2 restores 0xd or 0xe from `ord+0x5c`, progress 3 gives 1 and progress 4, 5 or any other value gives 0x1a. It clears progress only when `ord+0x15 > 2` and `actor+0x136` is set.
+- Slot: the actor slot `FUN_004f37be` calls the executor at `004f398c` unless `FUN_00523360` returns nonzero (the test `actor+0x3c == 0`), then dispatches on `actor+0x54` at `004f3994` through the byte table `0x4f41d9` and the dword table `0x4f41c1`: action 1 to `4f39bf`, 2 to `4f3e76`, 3, 0xd and 0xe to `4f39e8`, 0xf to `4f3ec5`, others to `4f41b3` (`rom-tables.txt`). The arm at `4f39e8` reads `actor+0x58` for its phases 0, 5 and 7 (`rom-strike-arm.txt`).
+- Progress clear: the executor clears progress only when `ord+0x15 > 2` and `actor+0x136` is set (`005311d1`..`005311e3`); the stops write neither, so with the counter at 2 or less or the flag clear the progress byte survives the stop.
+- Inference: a stop that clears `actor+0x54` while `actor+0x58` is loaded leaves the phase in place; the next executor pass rebuilds the action word from progress and not from the phase. Whether the strike then completes depends on the progress byte, which the stop does not clear and the executor clears only under the condition above.
+
+**Confidence.** High for the stores, the tables and the executor mapping, each read from the listing and the PE bytes. Medium for the run-time outcome that the strike continues, a composition of the arm and the executor without a run, conditional on progress not being cleared elsewhere.
+
+**Unknown.** What `actor+0x3c` holds, so which actors the executor skip applies to; other readers of `actor+0x54`, such as animation; and the outcome of a stop issued on the tick the skip applies.
+
+**Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-stop-executor.txt`, `evidence/listings/rom-strike-arm.txt`, `evidence/listings/rom-tables.txt`
+
+### AI-382
+
+- First pass: executor row 7 at `005314df` stores action 2 at `005314e4`. The arm for action 2 at `004f3e76` calls `FUN_00547c60` (cell record lookup, returns the sack pointer), `FUN_005479b0`, `00519960` and `FUN_004f4e3e` (`rom-pickup-arm.txt`, `rom-pickup-callees.txt`).
+- Transfer: by `ITEM-PICK-009` `FUN_004f4e3e` credits `sack+0x3c` to `Player+0x38` through `FUN_004faff7` (message 0x67) and moves the whole container into `actor+0x7c` with `FUN_0050eaaf`; it recomputes the load with `FUN_004f36f7`, nulls `sack+0x40` and deletes the sack.
+- Second pass: `FUN_005306e0` clears the action word and the completion stores follow (`actor+0x50 = 0xc`, `ord+0x08 = 0`, `ord+0x50 = 1`).
+
+**Confidence.** High for the call sequence, which is read from the listing. Medium for the combined outcome that the transfer needs no second pass, since it relies on `ITEM-PICK-009` for the contents of `FUN_004f4e3e`.
+
+**Unknown.** Whether the arm for action 2 is reached on every tick that the action word equals 2, and what the sack lookup returns for a cell whose record is already deleted.
+
+**Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-pickup-arm.txt`, `evidence/listings/rom-pickup-callees.txt`
+
+### AI-383
+
+- Order 3 arm: `00533b99`..`00533c0f` in `FUN_00533ae0`. Order 5: `FUN_005371e0`, gated by `[EDI+0xbb4]`. Both call `FUN_0052eb60` for a member with `ord+0x20 == 0` and `Player+0x28 == 0`; neither reads `ord+0x08` or `ord+0x0a` before the call (`rom-group-dispatch.txt`, `rom-order5-eval.txt`).
+- Branches: a member with `ord+0x20` nonzero goes to `FUN_0052e940` (`00533bd5`, `00537232`), which was not read. A member with `ord+0x20 == 0` and `Player+0x28` nonzero gets `ord+0x08 = 0xb` (`00533be6`, `00537243`) and, when a mask test on `actor+0x4c` passes, `FUN_0052ed30` (`00533bf4`, `00537251`), also not read. A member with both zero reaches `FUN_0052eb60` (`00533bfe`).
+- Stores of `FUN_0052eb60`, published in `AI-349`: `ord+0x08 = 0` at `0052ed17` on five paths (`actor+0x140 == 0`, the word at `+0x9a` equal to 0, `+0x9a <= +0xa0`, a null `FUN_00500a4a(+0x140, 6)`, and a best ally at or above 1.0) and 8 through `FUN_0052eea0` on the heal path. Those stores apply to the `ord+0x20 == 0` and `Player+0x28 == 0` branch only; `FUN_0052eea0` has no listing in this experiment.
+- Tail: the group tail (`FUN_0052f200`, `FUN_0052f090`, `FUN_0052f260`, `FUN_0052f3e0`) is the withdrawal logic of `AI-RETREAT-274`, `AI-WITHDRAW-026` and `AI-WITHDRAW-027`; `FUN_0052f090` stores `ord+0x08 = 1` with a flee cell.
+
+**Confidence.** High for the missing tests, the branches and the 0xb store, each an instruction in the listing. Medium for the consequence on a member holding a destination, which composes the arm with the meaning of `Player+0x28`, itself Unknown.
+
+**Unknown.** The bodies of `FUN_0052e940` and `FUN_0052ed30`; which Player value `Player+0x28` takes for each controller; whether the evaluation also runs for a member that already stands; the order 4 arm after a completed pickup.
+
+**Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-group-dispatch.txt`, `evidence/listings/rom-order5-eval.txt`, `evidence/listings/rom-group-tail.txt`
+
+### AI-384
+
+- Values: `FUN_00547eb0` reads `[Path Finding]` through `FUN_004ccc20`; `MOVE-PARAM-006` gives the shipped values equal to the defaults: StaticScanAhead 5 (`+0x585b4`), DynamicScanAhead 3 (`+0x585b8`), StaticRefreshRate 16 (`+0x585bc`), DynamicRefreshRate 32 (`+0x585c0`), DynamicByStaticLookup 3 (`+0x585c4`), StaticIsntNeeded 5 (`+0x585c8`).
+- Counters: `mover+9` is incremented at `0054955e`, `005495d2` and `00549275`, and `mover+0x78` at `0054901c`; both are per-pass counters that trigger a re-search, and neither ends the walk. The give-up here means the flag `mover+0x98`.
+- `FUN_00548f70` re-searches when the target changed or `mover+9 > 16` (`00549025`..`00549038`) and runs the near search when the dynamic list is empty or `mover+0x78 > 32` (`0054912d`..`0054913a`).
+- `FUN_005492a0` does a full search when `mover+9 > N/3 + 1` (N is the static count `actor+0x168`; `005493a0`..`005493b6`) and the previous length `mover+0x8a` is above 5; at length 5 or less it rebuilds the single destination node. It sets `mover+0x98 = 1` when the static count is 0 after the search (`005494a4`). `FUN_00548f70` also sets it at `00549092`, where the list is empty.
+- `FUN_00549a90` picks kind 1 (destination) when N is 5 or less, kind 2 (head) when the head is farther than 3, otherwise kind 3 (the node three hops after the head); it sets `mover+0x98 = 1` only when the dynamic count is 0 and the kind is 1 (`00549b76`..`00549b8d`).
+- Search budget: d plus the larger of the scan-ahead value and d/4; static uses `+0x585b4` (`005422d7`..`005422fa`), dynamic `+0x585b8` (`00542c89`..`00542cc1`). The label plane is `ctx+0x30000`, initialised to 0xffff (`00541f8d`); by `MOVE-PLANE-005` the dynamic search reads the occupancy plane, so an occupied cell is not expanded and keeps 0xffff.
+
+**Confidence.** High for each threshold and its comparison, read from the listing, and for the absence of a give-up counter in the four routines named above; other routines were not searched. Medium for the occupied-cell outcome, a composition with `MOVE-PLANE-005`.
+
+**Unknown.** Readers of `mover+0x98` outside the executor tail already described by `AI-375`; the effect of `FUN_005456d0` on occupancy labels; any give-up held outside the searched routines (`rom-pursuit.txt`, `rom-walk.txt`, `rom-search.txt`).
+
+**Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-pursuit.txt`, `evidence/listings/rom-pathcfg.txt`, `evidence/listings/rom-search.txt`, `evidence/listings/rom-census-54-94.txt`
+
+### AI-385
+
+- `FUN_004d2551` calls `FUN_005336a0` when the tick counter `[obj+4]` and `0xf` equal 6 (`004d257c`..`004d2595`), before `FUN_004d891a`; it has 4 direct callers (`00475280`, `004753c0`, `00475550`, `00477c00`).
+- `FUN_004d214b` is a thread loop: one call of the AI pass at `004d245c`, then 16 calls of `FUN_004d891a` (`004d24b2`, loop to 0x10) on a 0x3e ms schedule. It is the body of the thread procedure `FUN_004d0c2e`, which the launcher `FUN_004d0c3b` pushes (`004d0c70`) and creates through `FUN_005571e0` when `obj+0x2c` is nonzero. `FUN_004d2551` returns early when `obj+0x2c` is zero (`004d255d`..`004d2563`), the flag the launcher tests.
+- Both routes give a period of 16 ticks. Retreat admission is `AI-RETREAT-274`, `AI-WITHDRAW-026` and `AI-WITHDRAW-027`; no new claim is made for it.
+
+**Confidence.** High for the period on each route, read from the listing. Medium for the two callers sharing the `obj+0x2c` gate; whether both routes run in one session is Unknown.
+
+**Unknown.** Whether the launcher `FUN_004d0c3b` is reachable: it has no direct call, no reference and no raw dword hit in the PE (`rom-enum-cadence.txt`, `rom-tables.txt`; the one hit for `0x4d0c2e` is the launcher's own push at `004d0c70`); whether both routes run in one session; and which route a given session mode uses.
+
+**Evidence.** [EXP-0451](../experiments/EXP-0451-attack-cycle/EXP-0451.md), `evidence/listings/rom-cadence.txt`, `evidence/listings/rom-enum-cadence.txt`, `evidence/listings/rom-tables.txt`
