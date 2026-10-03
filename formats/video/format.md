@@ -110,6 +110,29 @@ state and user interruption operate around this boundary. The sidecar is a
 — VIDEO-045 (its allocation-selector clause is retracted), VIDEO-046,
 VIDEO-047, VIDEO-048, VIDEO-049, VIDEO-050, VIDEO-051
 
+## Cutscene presentation
+
+Each frame step waits, checks that the output buffer is focused, arms and
+applies the sidecar fade to the decoder palette, decodes, blits and advances.
+The sidecar start and every pan step move the blit source origin, never the
+destination; a fade scales the palette by a per-frame factor and reaches its
+end value, within float accumulation, on the frame before its end frame. Records are consumed in index
+order. — VIDEO-071
+
+A movie is drawn doubled when twice its width fits the 640 wide output region
+or twice its height fits the 360 high region; a 480 high movie takes its own
+size as the blit region. The display size changes only the origin of the output.
+The shipped doubled movies are the 320x180 ones. — VIDEO-072
+
+The frame wait uses the sound playback position when an audio track is open and
+on, and a timer in 10 microsecond units from the header interval otherwise.
+Positive intervals are milliseconds, negative ones are the magnitude, zero
+means no wait, and the player adds no floor or ceiling. — VIDEO-073
+
+Both roots hold 33 shipped movies with header flags 0, one 16-bit 22050 Hz
+audio track with the compression flag set, mono or stereo, and intervals from -4000 to
+-8333. — VIDEO-074
+
 <a id="a-namespace-that-is-not-a-cutscene-surface"></a>
 
 ## School training pictures
