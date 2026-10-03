@@ -203,3 +203,23 @@ Worked example — the sack pick-up, which is the whole chain in one order:
 
 So a unit told to pick something up ends the order **hunting**, not idle. The same relay carries
 every other order that has a "walk there, then do a thing" shape.
+
+### Setter origins, tick order and route refusal
+
+- The script Stand Ground sub-command is its own arm: it stands each member through `FUN_0052fd40` and
+  stores group order 3 itself, calling neither `FUN_00534cb0` nor `FUN_00535920` (`AI-370`).
+- Within one tick the AI slot and the command-queue drain run before every member's executor pass; a
+  spell application inside the actor body can run a setter after it. A setter between a pickup's two passes
+  writes action 0 and pending 0, so the completion pass finds no row. Callers `FUN_004f164c`, `FUN_004d403c`,
+  `FUN_004d8fcd` and `FUN_004e3591` are not placed in the tick (`AI-371`).
+- The order word `ord+0x50` is read only by the group order 4 arm in the `+0x158` census. If reached, a
+  completed pickup leaves 1, which sends that arm to the state 0xc acquire routine instead of a walk
+  (`AI-372`).
+- In `FUN_005492a0` and `FUN_00549a90` the route refusal flag is raised only by a full search that leaves
+  the path list empty or by a near search aimed at the final destination; `FUN_00548f70` also stores it. An empty waypoint search retries on the next pass. Whether
+  another unit's cell blocks the contact ring is Unknown (`AI-373`).
+- In state 3 a victim whose action word is 0x10 stands the member down to state 0xc before dispatch; the
+  state-3 prologue reads no list. Arm 3 was not read for list tests, and other callers of the state machine
+  were not enumerated (`AI-374`).
+- Move stores `actor+0x50` = 1 and pickup 2; the executor tail reads that value when it consumes the
+  refusal flag. A pending walk installed when recovery reaches zero at T0 first calls the walk routine at T0+2; whether it writes a step is Unknown (`AI-375`).

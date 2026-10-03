@@ -2808,3 +2808,200 @@ that with the `AI-366` replay.
 
 **Unknown.** What a later AI tick does to owner 5's group; this pass reads no
 AI tick.
+
+## Order setters, tick order and route refusal
+
+Evidence for this section is a static read of `rom.exe` (one image on both lawful installs,
+sha256 `942e9b72610eeba2f3d74930ee47cbc4476b85a942c14348f874ec7b7d367d03`). No process was run.
+`ord` is the order block at `actor+0x158`; `mover` is the block at `actor+0x154`.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| AI-370 | Script group sub-command 3 (Stand Ground) is the arm at `0053c0e1` in `FUN_0053c030`; it calls neither `FUN_00534cb0` nor `FUN_00535920`, stands each member through `FUN_0052fd40` and stores group order 3 itself at `0053c147`. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+| AI-371 | In one tick the AI slot and queue drain precede every member's executor pass; a spell application in the actor body can run a setter after it. `FUN_004f164c`, `FUN_004d403c`, `FUN_004d8fcd`, `FUN_004e3591` are unplaced. | High / Medium / Unknown | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+| AI-372 | In the `+0x158` census the only reads of the order word `ord+0x50` are two compares in `FUN_00537510`, the group order 4 arm; if reached, a completed pickup leaves 1 there, which sends that arm to `FUN_0052e110`, not to a walk. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+| AI-373 | In `FUN_005492a0` and `FUN_00549a90` the near search raises `mover+0x98` only when aimed at the final destination; an empty waypoint search retries next pass. Occupied ring cells unlabelled: Unknown. | High / Medium / Unknown | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+| AI-374 | In state 3 `FUN_0052ce50` tests only the victim's action word; 0x10, set at health -10 or less, stands the member down to state 0xc before dispatch, so arm 3 is not entered; the prologue reads no list. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+| AI-375 | Move stores `actor+0x50` = 1 and pickup 2; the executor tail reads that value when it consumes `mover+0x98`. A pending walk installed when recovery reaches zero at T0 first calls `FUN_00548f70` at T0+2; whether it writes a step is Unknown. | High / Medium | ● active | [EXP-0440](../experiments/EXP-0440-order-pursuit/) |
+
+### AI-370
+
+- `FUN_0053c030` indexes the table at `0x0053c37c` by `rec+0x08 - 1` (`AI-367`). Sub-command 3 is entry 2,
+  `0053c0e1`..`0053c152`.
+- The arm walks the member list once, calling `FUN_005306e0` per member and storing `ord+0x50 = 0` and
+  `ord+0x38 = 0` (`0053c0f6`..`0053c10d`). It stores `grpAI+0x20 = 0` (`0053c120`), walks the list again
+  calling `FUN_0052fd40` (`0053c131`), and stores `grpAI+0x20 = 3` (`0053c147`).
+- `FUN_0052fd40` per member stores `ord+0x14`, `ord+0x60 = 0`, `mover+0x7c = 0`, `actor+0x54 = 0`,
+  `ord+0x50 = 0`, `actor+0x50 = 0xc` (`0052fdcb`), the post word and `ord+0x08 = 0` (`AI-352`).
+- `callto:534cb0` returns 2 hits: `004d60e3` in `FUN_004d5dd8` (queued opcode 0x18) and `004f1b1f` in
+  `FUN_004f164c`. `callto:535920` returns 6 hits over 5 functions: `FUN_004d1e14`, `FUN_004d403c`,
+  `FUN_004d8fcd`, `FUN_004e3591` and `FUN_004feadb`. None of the 8 sites lies in `FUN_0053c030`, whose one
+  caller is `FUN_00539be0` at `00539d23`.
+- `callto:52fd40` returns 4 call sites in 3 functions: `FUN_005310e0` (`0053162d`), `FUN_00537510`
+  (`005375fa`) and `FUN_0053c030` (`0053c131`, `0053c21e`).
+
+**Confidence.** High that the sub-command 3 arm contains no call to either setter and writes group order 3
+itself: the arm is read instruction by instruction and the two enumerations list every direct call site in the
+image. Medium that no callee of the arm reaches either setter: `FUN_005306e0` and `FUN_0053eb80` were not
+read whole, but the enumerated callers of the two setters exclude them.
+
+**Unknown.** The other `FUN_0053c030` arms (the table has 17 entries) were not read here.
+
+### AI-371
+
+- Both tick drivers run the AI slot first. `FUN_004d2551` calls `FUN_005336a0` at `004d2595` and
+  `FUN_004d891a` at `004d25df`; `FUN_004d214b` calls them at `004d245c` and `004d24b2`
+  (`callto:4d891a` 2 hits, `callto:5336a0` 2 hits, `callto:50fca9` 1 hit, `callto:4d1d86` 1 hit).
+- `FUN_004d891a` increments the tick counter, drains the command queue through `FUN_004d88bf` and
+  `FUN_004d5dd8` (`004d88e2`), calls `FUN_004d1d86` (`004d893e`), then `FUN_0050fca9` (`004d8949`), which
+  calls each actor's slot through the virtual call `CALL [EDX + 0x18]` (`0050fd1b`). The AI slot runs on a phase test of the pre-increment tick counter, `& 0xf == 6`. The slot `FUN_004f37be` calls the executor `FUN_005310e0`
+  at `004f398c` unless `FUN_00523360` returns nonzero (`004f3980`), and dispatches on `actor+0x54` after it
+  (`004f3994`).
+- Script origin: `FUN_005336a0` reaches `FUN_00539900` (`00533774`), `FUN_00539be0` (`00539b68`) and
+  `FUN_0053c030` (`00539d23`); `FUN_00539be0` also reaches `FUN_004d1e14` (`00539ede`, `00539f0d`), which
+  calls `FUN_00535920` (`004d1ee3`). Queue origin: opcode 0x18 calls `FUN_00534cb0` at `004d60e3` (dispatch
+  table `0x4d86ae`, index opcode - 0x14 = 4).
+- Actor-body origin: the arm at `004f3c1b` calls `FUN_004feadb`, which calls `FUN_00535920` at `004ff86e`.
+  That call lies after `004f398c` in the same slot invocation.
+- Pickup (`AI-356`): row 7 at progress 0 writes action 2 on its first pass (`005314e4`) and the actor body
+  for action 2 runs in that slot invocation. The completion pass is the member's next executor pass, which
+  keeps action 2 (`0053113e`..`00531147`). The queue drain and the AI slot of that next tick run before it.
+  A Stand Ground setter reaching the member in between writes action 0 and `ord+0x08 = 0` (`AI-352`), so
+  row 7 is not reached.
+- Not placed in the tick: `FUN_004f164c` (called from `FUN_004f1d54`), `FUN_004d403c` (3 callers),
+  `FUN_004d8fcd` (called from `FUN_004d4e18` and `FUN_004d5dd8`), `FUN_004e3591` (called from `FUN_004d0cb7`
+  and `FUN_004e1924`) and the other callers of `FUN_00539be0`, `FUN_004e1f7f` and `FUN_00504da1`.
+  `FUN_005310e0` has a second caller, `FUN_00531070` (`0053109b`), which has no direct caller.
+
+**Confidence.** High for the order of the AI slot, the queue drain and the executor within one tick, and for
+the actor-body origin following the executor. Medium that a setter running between a pickup's two passes
+prevents completion: the writes are cited and the pass order is read from code, but no run was observed.
+
+**Unknown.** The tick position of the unplaced callers above, which spell arm reaches `004f3c1b`, whether
+the sack transfer already finished on the first pickup pass, and the AI slot period beyond its phase test.
+
+### AI-372
+
+- Census instrument: `OrderBlockFieldCensus` over every instruction of the image (inside functions and
+  orphan runs) with displacement 0x50 and the base register loaded from `[x + 0x158]` within 12 instructions
+  (class ORD). It finds 91 ORD hits, 89 writes and 2 reads, and 422 other-base hits. Displacements 0x4d,
+  0x4e, 0x4f, 0x51, 0x52 and 0x53 give 0 ORD hits.
+- The two ORD reads are `00537569` and `005376a9` in `FUN_00537510`, called from `FUN_00533ae0` at
+  `00533c1b` (group-order table `0x533cb8`, entry 4) and, as its second caller, from `FUN_005371e0` at
+  `0053729c`. The first runs
+  the stand-down sequence for a member at its queued cell and cell centre only when `ord+0x50` is 0. The
+  second chooses `FUN_0052e110` when the word is nonzero and `ord+0x08 = 1` with the queued cell kept when it
+  is 0.
+- A completed pickup stores `ord+0x50 = 1` (`0053153f`, `AI-356`). Stand-down sequences store 0 and then 1
+  the same way (`0052cec9`, `00537690`). `FUN_0052e110` is the state 0xc acquire routine (`AI-CMD-054`).
+- The other-base reads in functions that load `+0x158` include actor-state reads (`FUN_0052ce50` four,
+  `FUN_005310e0` one at `00531679`) and stack slots; `FUN_00541e80`, `FUN_00539500` and `FUN_00539be0` hit
+  `[ESP + 0x50]`.
+
+**Confidence.** High for the two reads and their branches. Medium that no other routine reads the word:
+the census does not see indexed operands, a base reached through a copy chain longer than 12 instructions,
+a call return or a stack slot, a bulk copy such as the serializer `FUN_005390c0`, or bytes Ghidra never
+disassembled.
+
+**Unknown.** Readers through those blind spots; the 5 other-base reads in `FUN_00489580` (`004895bd`,
+`0048963e`, `0048968a`, `004896d2`, `004896fc`) and the orphan runs `00562580`, `005625f9`, `00581848` and
+`0058194f`, which load `+0x158` and were not classified; and whether the group order 4 arm is reached for a
+member whose pickup just completed.
+
+### AI-373
+
+- `FUN_005492a0(actor, victim, stop)` returns early when the position offset bytes are not both 0x80
+  (`005492cf`..`005492e8`) and stands and turns when the edge distance is within `stop`
+  (`005492eb`..`005492fe`). Otherwise it increments `mover+0x78`. A changed `mover+0x7c` clears the static
+  list and sets `mover+0x09 = 0xff` (`00549328`..`00549388`).
+- It runs the full search `FUN_00541e80(..., flag 1)` (`00549450`) when `mover+0x09` exceeds count/3 + 1
+  (`005493b6`) and the previous length `mover+0x8a` exceeds `ctx+0x585c8` (`005493cf`); with a shorter
+  previous length it rebuilds the list as the single destination cell (`00549401`..`00549434`). It sets
+  `mover+0x98 = 1` when the static list is empty afterwards (`005494a4`), then stores `mover+0x7c = victim`
+  and `mover+0x09 = 0` (`005494db`..`005494e6`).
+- Each later pass runs the near search `FUN_00549a90` (`0054959c`) when the dynamic list is empty
+  (`0054957a`) or `mover+0x78` exceeds `ctx+0x585c0`, and `mover+0x00 == mover+0x01` (`0054958b`..`00549592`).
+  It then stores `mover+0x94`, `mover+0x96`, increments `mover+0x09`, clears `mover+0x78`
+  (`005495ac`..`005495db`) and calls the stepper `FUN_00549990` (`005495e1`).
+- `FUN_00549a90` picks a target by the static list count N: the destination `mover+0x76` (kind 1) when N
+  is at most `ctx+0x585c8`, the head node (kind 2) when the head is farther than `ctx+0x585c4`, otherwise a
+  later node (kind 3). It calls `FUN_00541e80(..., flag 0)` (`00549b71`). It sets `mover+0x98 = 1` only when
+  the dynamic list count at `actor+0x184` is 0 and the kind is 1 (`00549b76`..`00549b8d`). When N is nonzero
+  and the head is within `ctx+0x585c4` cells it then removes the head node (`00549bb2`..`00549c1f`).
+- The search labels cells in a word plane initialised to 0xffff (`00541f8d`). A goal label of 0xffff sends
+  the full search to Picker A `FUN_0054bac0` (`00542f4c`), and the flag-0 search to Picker B `FUN_0054b420`
+  when the victim argument is nonzero (`00543011`), else to Picker A with radius 8 (`00543028`).
+  Picker B scans the ring of cells around the victim, up to 8 rings (`0054b6b8`), keeps the cell with the
+  smallest label below 0xffff and returns 0 when none has one (`0054ba2a`); on a 0 return the search builds
+  no list (`00543030`).
+- Composition, read from code: when Picker B returns 0 on a kind-1 near search the dynamic list is empty,
+  `mover+0x98` becomes 1 and the tail of the same executor pass consumes it. For `actor+0x50` = 3 that
+  stores `ord+0x08 = 0` and calls `FUN_005327d0`, whose stores `AI-350` lists (`AI-ROUTE-045`); the next pass
+  runs whatever order it stored. A kind-2 or kind-3 search that returns empty leaves the flag clear. The next
+  pass reaches `0054957a` with the dynamic count 0, so the refresh counter is not tested; with the facing
+  settled it runs the near search again, or the full search once `mover+0x09`, incremented at `005495d2`,
+  exceeds count/3 + 1. With the facing unsettled it runs only the stepper.
+
+**Confidence.** High for the near-search statement and the control flow cited above, read in
+`FUN_005492a0` and `FUN_00549a90` and as branch structure in `FUN_00541e80` and `FUN_0054b420`. Medium for
+"only" in the headline: it covers those two routines, and `FUN_00548f70` stores `mover+0x98 = 1` at
+`00549092`, a third setter not analysed here. Medium for the composed outcome of a fully occupied ring.
+Unknown for whether a cell holding another unit carries label 0xffff.
+
+**Unknown.** How unit occupancy enters the label plane (the plane is tested against the mover byte
+`mover+0x05` at `00542342` and similar sites; no unit-occupancy write was traced), what `FUN_00549990` does
+with an empty dynamic list, what `FUN_0054b2c0` computes, and the values of `ctx+0x585c0`, `ctx+0x585c4`
+and `ctx+0x585c8`.
+
+### AI-374
+
+- `FUN_0052ce50` reads `actor+0x50` first (`0052ce5a`). For 3 it loads `ord+0x0c`; if that is nonzero and
+  `[ord+0x0c + 0x54] == 0x10` (`0052ce71`) it runs the stand-down: three `FUN_005306e0` calls,
+  `ord+0x50 = 0`, `actor+0x50 = 0xc` (`0052cea9`), `ord+0x00` = own cell word, `ord+0x08 = 0`
+  (`0052cec0`) and `ord+0x50 = 1` (`0052cec9`). It stores nothing to `ord+0x0c`.
+- It then re-reads `actor+0x50` (`0052ced7`) and dispatches through the table at `0x52d27c` with 0xc, not
+  entry 3 (`0052cfff`, `FUN_0052e940`).
+- Action 0x10 is stored by `FUN_004f4f5d` (`004f4f7f`), called from `FUN_004f37be` at `004f392c` when health
+  is -10 or less (`004f391a`), and directly at `004f3922`. In the same pass `FUN_0050fca9` removes the actor from the world list
+  (`0050fd44`) and adds it to the dead list (`0050fd59`). The state-3 prologue reads the victim object
+  through the stored pointer and reads neither list.
+- `FUN_0052ce50` is called from the group order 0 arm of `FUN_00533ae0` (`00533b43`, `AI-355`), whose only
+  caller is `FUN_005336a0` (`00533849`). The stand-down therefore happens at the first AI slot after the
+  victim's action word is 0x10.
+
+**Confidence.** High for the prologue, its stores and the dispatch. Medium for the timing, which composes the
+slot placement of `AI-371` with the cited health test and does not enumerate other callers of
+`FUN_0052ce50` (no `callto:52ce50` was run). The question's "state-3 arm" is read as `actor+0x50 == 3`
+in `FUN_0052ce50`.
+
+**Unknown.** Arm 3 itself (`FUN_0052e940` and its callees) was not read for list or liveness tests. A victim
+that leaves the world list by a route other than action 0x10 is unanswered. What a victim object that is freed before the next AI slot holds at `+0x54`; this read does not
+show when the dead list releases it.
+
+### AI-375
+
+- Move, queued opcode 0x16, calls `FUN_005340a0` (`004d605f`, table `0x4d86ae` entry 2). Per member
+  `FUN_0052f4f0` stores `actor+0x54 = 0`, `ord+0x50 = 0` (`0052f57a`), `ord+0x08 = 1` (`0052f5eb`), the
+  queued cell `ord+0x0a`, `mover+0x90 = 0` and `actor+0x50 = 1` (`0052f5d0`, from `MOV EAX,1` at `0052f5ca`).
+- Pickup `FUN_005308a0` stores `actor+0x50 = 2` (`0053093b`, `AI-356`).
+- `FUN_005310e0` stores `actor+0x50` only at `0053151b` (pickup completion, 0xc) and `005316ae` (teardown,
+  0xc, after the consumption test). The tail reads `actor+0x50` at `00531679`: 1 tears down to 0xc, 0xa and
+  0x17 have their own arms, and any other value, 2 included, stores `ord+0x08 = 0` and calls `FUN_005327d0`
+  (`AI-350`).
+- The census (`OrderBlockFieldCensus`, displacement 0x50) lists in `FUN_0052ce50` four stores to
+  `actor+0x50`: `0052cea9`, `0052cf20` and `0052cf9c` of 0xc and `0052d17e` of 4. That routine runs at the AI
+  slot (`AI-374`).
+- Walk timing: the executor runs before the actor body in `FUN_004f37be` (`004f398c`, then `004f3994`).
+  The body applies recovery zero on tick T0 after the executor ran. At T0+1 the strike or cast progress arm
+  counts `ord+0x15` and clears progress and action only when `ord+0x15 > 2` (`005311c8`, `JBE`) and
+  `actor+0x136` is set (`005311d1`..`005311df`), then ends at the tail. At T0+2 progress is 0, row 1 runs and calls `FUN_00548f70` (`0053129c`) (`AI-350`, `AI-354`,
+  `AI-355`).
+
+**Confidence.** High for the Move and pickup stores and the executor's own stores. Medium for the value at
+consumption: it is the setter's value unless an AI-slot evaluation or another writer outside the census
+population intervened. Medium for T0+2 as the tick of the first `FUN_00548f70` call, which composes cited gates and
+assumes the pending walk is already installed.
+
+**Unknown.** That `ord+0x15 > 2` and `actor+0x136` hold at T0+1 was not shown. Whether the first row 1 invocation writes a position step or only turns when `mover+0x00`
+differs from `mover+0x01` (`FUN_0054a210` is reached from `FUN_00548f70` at `00549004` and `0054923d`),
+writers of `actor+0x50` outside the census population, and native reachability of the sequence.
