@@ -390,3 +390,68 @@ unused**, none ever reissued. The next free `menu.md` id is therefore `MENU-CURS
 **Confidence.** High that the C path's routines read here select nothing (bounded to immediate pushes of `0x411` and `0x417` and to displacement stores to `+0x60` in the class's routines; `FUN_0041b439` is not re-read). Medium that no computed message id reaches `FUN_004b0e40`.
 
 **Unknown.** Whether closing the popup resets the current spell: `FUN_0041dfa6` contains no `0x411` push. The message arms of `FUN_004b0fa0` and `FUN_004b1080`. Whether the item-Cast route of `AI-PANEL-123` assigns a slot before the popup shows.
+
+## Hover help bindings and rectangles
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MENU-066 | Attribute-row hover rectangles are panel-relative: value x 82..102, cost 107..127, refund 132..152, y 54+32i..74+32i for rows i 0..3; one shared pool rectangle (46,181,123,203); the gate dword is 1 only while the owner screen runs. | High / Medium | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
+| MENU-067 | In a map-list record `+0x14` and `+0x18` are the map file's first two header dwords, its width and height; the list row prints each minus 16 and the `.alm` loader seeks 0x28 bytes after reading them. | High / Medium | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
+| MENU-068 | `dialogs.txt` 23 and 75 reach four Sound Options controls through the vslot 6 setter, `dialogs.txt` 117 reaches a text edit box through its constructor, and `patch.txt` 52..54 reach three Game Options controls as hint and caption. | High / Medium | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
+| MENU-069 | Of the 52 inherited-getter widget tables not reached by the traced hint sites, 46 are built with a null hint text and 6 differ; of the 9 of 252 vslot-6 receivers that resolve, none is one of the 52. | High / Unknown | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
+
+### MENU-066
+
+The initialiser `0042bca0` writes the rectangles into the panel (vtable `0x00597550`) in panel coordinates; the getter `0042ca00` copies each, offsets it by the panel origin (`004bcc23`: the panel's `(+8, +0xc)` plus the same pair of every ancestor on the `+0x30` chain, added by `004c7c90`) and tests it with `PtInRect`, which is half-open: left <= x < right and top <= y < bottom. Tests run per row in the order label, pool, value, cost, refund (TEXT-082): five tests per row over 17 distinct rectangles (4 label, 12 value, cost and refund, 1 pool).
+
+| Rectangle | Panel offset | left | top | right | bottom |
+|---|---|---|---|---|---|
+| value, row i | `+0xb4 + 0x30 i` | 82 | 54 + 32 i | 102 | 74 + 32 i |
+| cost, row i | `+0xc4 + 0x30 i` | 107 | 54 + 32 i | 127 | 74 + 32 i |
+| refund, row i | `+0xd4 + 0x30 i` | 132 | 54 + 32 i | 152 | 74 + 32 i |
+| label, row i | `+0x64 + 0x10 i` | 16 | 57 + 33 i | 16 + W | 57 + 33 i + H |
+| pool | `+0xa4` | 46 | 181 | 123 | 203 |
+
+Rows i are 0..3. `W` is the glyph-advance sum of the row label on the font object `[0x5e9bc0]` (`00456320`) and `H` the vslot `+0x24` result of that object, both runtime values. The pool rectangle is one record tested on every row, so TEXT-082's second rectangle is the same on all rows; its y range lies below the value, cost and refund rectangles (last bottom 170).
+
+The gate `[[view+0x5c]+0x104]` is a dword of the panel's owner object `A`, which the panel constructor `0042bbb0` receives as its last stack argument from `A`'s build routine `0042f330`. Within `A`'s methods three stores write it: 0 in the build routine (`0042f4c2`), 1 at the end of the start routine (`0042f9be`), 0 in the teardown routine (`0042fa5d`). Readers through `[this+0x5c]` are `0042ca00`, `0042f0b0` and `0042f120`. By these stores the hover answers only between the start and teardown of that screen.
+
+**Confidence.** **High** for the rectangle immediates, strides, order and the three stores (instruction rows reproduced from both roots). **Medium** for the owner role and for "only between start and teardown": a whole-image scan for operands `0x104` (`scan104.txt`, 131 rows, displacement or immediate) was matched to `A`'s methods by owner routine, and stores in routines of other classes were taken to be other objects, not traced.
+
+**Unknown.** `W` and `H` in pixels (font data not read), and so whether a label rectangle (bottom 156 + H for the last row) reaches the pool's top 181. The screen `A` implements, and whether anything besides start and teardown changes the dword. The panel origin's absolute value.
+
+### MENU-067
+
+The loader `00447211` reads 4 bytes into record `+0x14` (`00447377`, `00447383`) and 4 bytes into `+0x18` (`0044738b`, `00447397`), then seeks 0x28 (`0044739c`). These are the type-0 payload `+0` and `+4` dwords that ALM-META-091 stores as `M+0` and `M+4`. The row text routine pushes `+0x18 - 0x10` and `+0x14 - 0x10` (`0044591d`, `00445927`) for the `%dx%d` columns of TEXT-083, so the shown size is the raw size minus 16. The record constructor `004482f0` initialises only the three CStrings at `+0`, `+4` and `+8` (allocation 0x1c); the loader fills the numbers. The shown size equals the playable rectangle `(8, 8, W-9, H-9)` of TERR-SIGHT-116, which has width `W - 16`.
+
+**Confidence.** **High** that the two fields are the raw dwords and that the display subtracts 16 (named instructions). **Medium** that the 16 is the 8-cell border on each side: the match with TERR-SIGHT-116 is arithmetic, and no instruction ties the two.
+
+**Unknown.** Whether the first two header dwords are width and height in every shipped map (the loader does not name them).
+
+### MENU-068
+
+- `dialogs.txt` 23 and 75, builder `00438e87` (the Sound Options dialog, VIDEO-SFX-053): four setter pairs, each `PUSH 0x17` then `CALL [reg+0x18]` and `PUSH 0x4b` then `CALL [reg+0x18]` (`00439134`/`00439174`, `0043959e`/`004395de`, `004396b9`/`004396f9`, `00439978`/`004399b8`). The receivers, by the construction before each pair: a control of constructor `00448cb0` (`004390d4`, class `00598d18`), two of `004be6e3` (`00439538`, `00439653`; class `0059b308`) and one of `004c35cd` (`004398aa`; class `0059b598`). All three classes carry the inherited getter `004bd631` and their constructors take a hint at construction (`dialogs.txt` 10, 13, 15 and 19 respectively for the four controls, the first-pushed argument), so the setter replaces it later.
+- `dialogs.txt` 117: pushed at `00444542` as the last argument of constructor `004bf28e` (`0044457e`, class `0059b380`, a text edit box), in the routine at `00444507`. It is a constructor hint.
+- `patch.txt` 52, 53 and 54 (object `0x5ea668`), builder `0043d847` (the Game Options dialog, TOWN-OPTIONS-457): each is pushed as the last constructor argument of a `00448cb0` control (`0043dc18`/`0043dc6c`, `0043dd09`/`0043dd60`, `0043ddfd`/`0043de57`) and again to caption setter `00448c90` of the same control (`0043dc9f`..`0043dcaf` and the two following ones), which forwards to `this+0x64`. The same dialog also reads `dialogs.txt` 52, 53 and 54 for other controls.
+
+**Confidence.** **High** for the push, constructor and setter addresses. **Medium** that the setter receivers are exactly those four controls: they come from the nearest constructor call before each pair, not a data-flow proof; **Medium** that the last constructor argument of `00448cb0`, `004be6e3` and `004bf28e` is the hint text, which follows the TEXT-085 trace.
+
+**Unknown.** The other 243 vslot-6 receivers (a backward trace resolves 9 of 252; one resolved site is a constructor, `00518160`, with no widget table). What `00448c90`'s `this+0x64` object draws.
+
+### MENU-069
+
+The `00597ac0`..`0059ba18` population is the 69 widget tables whose `+0x14` getter is `004bd631` (TEXT-HOVERSET-049); TEXT-085 reaches 17 by the hint-forwarding sites and the other 52 are classified here from the constructor that stores each table's vtable address, followed through its base-constructor chain to the text parameter of `004bc98f`, `004bc880` or `004bc770`.
+
+| Traced text of the 52 | Tables |
+|---|---|
+| null constant | 46 |
+| no constructor in the code map | 2 (`00597c60`, `005983d8`) |
+| forwards a parameter, base of a reached class | 2 (`0059b910`, `0059b9a0`) |
+| static address plus a parameter | 1 (`0059b3f8`, base of two reached classes) |
+| null and static in different constructors | 1 (`0059b688`) |
+
+Null text means the base constructor assigns no hint and the hint is empty until a setter writes it; hover raises only a nonempty string (TEXT-HOVER-048). By direct callers of the storing constructors, 44 of the 52 have a builder caller, 5 only a derived constructor and 3 none in the code map. Of the 9 vslot-6 sites whose receiver resolves (of 252), 8 target reached classes (MENU-068) and 1 is a constructor with no widget table (`00518160`); none is one of the 52. The other 243 are unresolved.
+
+**Confidence.** **High** for the table classification under the stated trace and for the 9 resolved receivers. **Unknown** whether any of the 52 shows a hint: a hint can arrive through any of the 243 unresolved vslot-6 receivers or a derived constructor passing text the trace read as null.
+
+**Unknown.** Which of the 52 controls appear in play, and which of the 243 unresolved vslot-6 sites are widget setters. The three `+0x3c` writers outside the base constructors: `00429f80` constructs class `0x5974e0` (not one of the 96 tables) and `005168e0` class `0x59be78`; the receiver class of the one in `004df385` is unresolved.

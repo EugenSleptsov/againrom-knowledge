@@ -60,9 +60,10 @@ Spell        0x14 bytes, vtable 0x0059c670
   +0x0c  u16  Mana Cost
   +0x0e  u8   per-cast scratch: damage base
   +0x0f  u8   per-cast scratch: damage spread
-  +0x10  u16  per-cast scratch: duration in ticks -- WRITTEN AND NEVER READ. Every arm that
-              needs a duration recomputes it from the column; over the twelve routines that
-              take a Spell* the only `word ptr [reg + 0x10]` is a stack argument.
+  +0x10  u16  per-cast scratch: duration times 16 -- no routine that takes a Spell* reads it
+              (each arm that needs a duration recomputes it from the column; over those
+              twelve routines the only `word ptr [reg + 0x10]` is a stack argument); the
+              spellbook hover fold reads it from a record (TEXT-096).
 Serialize stores +0x08, +0x09, +0x0a as bytes and +0x0c as a word. Nothing else.
 
 Spellbook    0x1c bytes, at actor+0x140

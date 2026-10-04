@@ -88,14 +88,30 @@ the spell id, defined for ten ids; ids 17, 27 and 28 are not in the book's 24-ce
 the spellbook getter and its fold never fill caption 187; the item formatter also
 formats `main.txt[182..187]` and was not read for it. — TEXT-081
 
+An actor whose `+0x7c` is zero is skipped before it is counted. When the session's `+0x3dc` is not
+1 and lacks bit 2, a counted actor sets the flags to 8 and the class tests and the per-cell fold
+are skipped, so no value lines appear. The spell record's level is computed in byte arithmetic and
+is a byte: it uses 100 when skill plus stat is below 30 and wraps again at 286 and above, unlike
+the caption level. — TEXT-097
+
+The record fields behind the value lines: byte `+9` is the Max Range column plus power/30
+(power/3 for id 26), `+0xe` and `+0xf` the damage minimum and spread times power/30 + 1, and word
+`+0x10` a duration in sixteenths from the Spell Duration or Area Effect Duration column. — TEXT-096
+
 ## Attribute rows in character generation
 
-Each of the four attribute rows has five hit rectangles. The first returns `main.txt[155+i]`,
+Each of the four attribute rows is tested against five rectangles in order (17 distinct rectangles). The first returns `main.txt[155+i]`,
 the second `[273]`, the third the attribute label and value as `label = value`, the fourth a
 signed cost of the next point as a negative number and the fifth a signed refund of the current
 point as a positive number. The two signed numbers use the point-buy cost function and are
 comma-grouped in threes from the right once they exceed three characters (four with a sign
-character). — TEXT-082
+character): `-1234` becomes `-1,234`. — TEXT-082, TEXT-098
+
+Rectangles are panel-relative and half-open. The value, cost and refund rectangles are 20 pixels
+high at x 82..102, 107..127 and 132..152, with row tops 54, 86, 118 and 150. The second test is
+one rectangle (46,181)..(123,203) shared by all rows, below the value, cost and refund rectangles. The label rectangle starts at x 16 and its
+right and bottom edges follow font metrics. By the traced stores the hover answers only between
+the start and the teardown of the owning screen. — MENU-066
 
 ## Map-selection list
 
@@ -104,6 +120,8 @@ columns that follow it is `dialogs.txt[134]`, `[135]` or `[136]`, chosen only by
 x position and so independent of the map. The columns display the map size and two dwords of the
 `.alm` metadata (payload `+0x70` and `+0x74`). The loader returns success only for a map whose
 first dword is above 1. — TEXT-083
+
+The size column prints the map's first two header dwords, width and height, each minus 16. — MENU-067
 
 ## Inherited hint binding
 
@@ -114,6 +132,13 @@ cell, three pass an executable literal, 52 read `dialogs.txt` and three read `pa
 52..54. Seventeen final classes of the 69 inherited-getter tables are reached; the rest of the
 population is not traced. Eight setter calls in one routine pass `dialogs.txt[23]` and `[75]`.
 — TEXT-084, TEXT-085
+
+The eight setter calls are on the four controls of the Sound Options dialog. `dialogs.txt[117]`
+is the hint of a text edit box and `patch.txt` 52..54 are the hint and caption of three Game
+Options controls. — MENU-068
+
+Of the 52 inherited-getter tables not reached, 46 are built with a null hint; none is among the
+9 of 252 setter receivers that resolve, and whether any shows help is not established. — MENU-069
 
 ## Presentation
 

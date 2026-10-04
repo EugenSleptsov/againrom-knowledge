@@ -1114,11 +1114,14 @@ retained routine, and the line pairs are reproduced byte for byte from both root
 | TEXT-HOVERTEXT-052 | Hover content is a mixture of installed prose and formatted live information, not a single ready-made string per icon. | High | ● active | [EXP-0361](../experiments/EXP-0361-hover-tooltips/) |
 | TEXT-HOVERPAINT-053 | Normal hover help preserves source-authored line breaks and has its own layout, separate from introductory tips. | High | ● active | [EXP-0361](../experiments/EXP-0361-hover-tooltips/) |
 | TEXT-080 | Spellbook hover getter `004b0350` joins a name and mana line with damage, range and duration lines and at most one caption of `main[182..187,217]`; the last caption with a value replaces earlier ones. | High | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
-| TEXT-081 | Spellbook values come from fold `004190f0` over the selected actors: per cell, sums or minima and maxima of spell-record fields; captions follow level formulas for ten spell ids; in the spellbook, ids 17, 27 and 28 never fill a caption. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
-| TEXT-082 | Generator attribute hover `0042ca00` tests five rectangles per attribute row: `main[155+i]`, `main[273]`, `%s = %d`, then `%+d` of the next-point cost and of the refund, the last two comma-grouped. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-081 | Spellbook values come from fold `004190f0` over the selected actors: per cell, sums or minima and maxima of spell-record fields; captions follow level formulas for ten spell ids; in the spellbook, ids 17, 27 and 28 never fill a caption. | High / Medium | ● active (amended) | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-082 | Generator attribute hover `0042ca00` tests five rectangles per attribute row: `main[155+i]`, `main[273]`, `%s = %d`, then `%+d` of the next-point cost and of the refund, the last two comma-grouped. | High / Medium | ● active (amended) | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
 | TEXT-083 | Map-list hover `00444cd8` chooses by cursor x alone: the row's description left of 300 px, then `dialogs.txt[134]`, `[135]`, `[136]` per column; no map field selects 135 or 136. | High | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
-| TEXT-084 | The inherited hover hint at `+0x3c` has writers found by the traced pattern in three base constructors and setter `004bd615`; 252 vslot-6 call sites exist, of which 8 pass a `dialogs.txt` lookup. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
-| TEXT-085 | The 172 hint-forwarding constructor call sites pass null (63), a static address (54) or a text-table entry (55, in `dialogs.txt` and `patch.txt`); 17 final classes inherit the getter. | High / Medium | ● active | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-084 | The inherited hover hint at `+0x3c` has writers found by the traced pattern in three base constructors and setter `004bd615`; 252 vslot-6 call sites exist, of which 8 pass a `dialogs.txt` lookup. | High / Medium | ● active (amended) | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-085 | The 172 hint-forwarding constructor call sites pass null (63), a static address (54) or a text-table entry (55, in `dialogs.txt` and `patch.txt`); 17 final classes inherit the getter. | High / Medium | ● active (amended) | [EXP-0435](../experiments/EXP-0435-tooltip-sources/) |
+| TEXT-096 | Spell record byte +9 is Max Range plus a power term, bytes +0xe and +0xf are the damage minimum and spread scaled by power/30 + 1, and word +0x10 is a duration in sixteenths; `004fe25d` fills all four from Data.bin spell columns. | High | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
+| TEXT-097 | In fold `004190f0` an actor with +0x7c zero is skipped before it is counted; with +0x3dc not 1 and bit 2 clear a counted actor sets flags 8 and skips the cell fold; the record level wraps as a byte (sum below 30, or 286 and up). | High | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
+| TEXT-098 | Routine `00468f60` groups a decimal string in threes from the right with commas and keeps a leading sign with the first group: `-123` is unchanged, `-1234` becomes `-1,234` and `+1234567` becomes `+1,234,567`. | Medium | ● active | [EXP-0454](../experiments/EXP-0454-hover-help/) |
 
 ### TEXT-HOVER-048
 
@@ -1301,6 +1304,8 @@ accessors, including `004fe575`, and format `main[182..187]`; what it shows for 
 read. Stores to `+0x74c` and `+0x7ac` occur only at `004192af`, `004192c0`, `00419aac` and `00419b0b`, all in
 the fold (store-pattern scan of the code map).
 
+**Amended.** `TEXT-097` corrects two clauses: in the `+0x3dc` arm the flags are assigned 8 (not ORed) and the class-name tests are skipped as well as the per-cell fold; the level of the caption formulas is the signed 0..100 clamp, while the record fill wraps below skill plus stat 30. `TEXT-096` states what record bytes `+0x9`, `+0xe`, `+0xf` and word `+0x10` hold.
+
 ### TEXT-082
 
 Getter `0042ca00` returns null unless `[[view+0x5c]+0x104]` is nonzero. For attribute row `i` = 0..3 it
@@ -1327,6 +1332,8 @@ are read, but no output string was produced.
 
 **Unknown.** The rectangles' pixel positions were not measured; the owner of `[view+0x5c]+0x104` was not
 named.
+
+**Amended.** `MENU-066` gives the rectangle positions, shows that the second rectangle is one record shared by the four rows, and names the owner of `[view+0x5c]+0x104`; `TEXT-098` states the grouped output. The five tests per row stand.
 
 ### TEXT-083
 
@@ -1376,6 +1383,8 @@ and three other functions were not classified.
 **Unknown.** What the 244 other vslot-6 receivers are and what text they pass; whether a lookup stored in a
 local before the call is missed by the 14-instruction window.
 
+**Amended.** `MENU-068` names the controls behind the eight setter sites, and `MENU-069` the population of vslot-6 receivers: a backward trace resolves 9 of the 252: 8 in reached classes and 1 constructing a class with no widget table. The function the instrument names `00429f70` has its entry at `00429f80` and constructs class `0x5974e0`, outside the 96 tables; `005168e0` constructs class `0x59be78`.
+
 ### TEXT-085
 
 From the two base constructors with a text parameter, the parameter was traced backwards through 24
@@ -1407,6 +1416,48 @@ are reproduced from both roots, the two roots share the executable, and the tabl
 
 **Unknown.** The population of the 52 tables not reached; which constructed controls are ever shown; whether
 the literal-text controls are reachable in play.
+
+**Amended.** `MENU-068` names the controls behind the `patch.txt` 52..54 and `dialogs.txt[117]` sites, and `MENU-069` classifies the 52 tables this trace does not reach.
+
+### TEXT-096
+
+`004fe25d(power)` runs on the record built by `004fdd96`/`004fdf57` (MAGIC-SPELL-001) and takes the power as a byte (`ebp+8 & 0xff`). Parameter `p` is the Data.bin spell column at schema title `p+1`: 6 is Max Range, 11 Area Effect Duaration, 14 Spell Duration, 16 damageMin, 17 damageMax, 18 Defensive.
+
+- `+9`: low byte of parameter 6 (`004fe27c`). Id `0x1a` then adds `power / 3` (`004fe29a`); any other id adds `power / 30` when `+9` is nonzero (`004fe2c1`), so a Max Range of 0 stays 0.
+- `f = power / 30 + 1` as a double (`004fe2e4`, `004fe2ea`; constants `[0x59bc88]` = 30.0 and `[0x59bc80]` = 1.0).
+- `+0xe`: parameter 16 above 0 gives the low byte of `ftol(p16 * f)` (`004fe325`), else 0 (`004fe32d`). `+0xf`: parameter 17 above 0 gives the low byte of `ftol(p17 * f - byte(+0xe))` (`004fe373`), else 0 (`004fe37b`). `+0xe` is the minimum and `+0xe + +0xf` the maximum the fold sums (TEXT-081).
+- `+0x10` (word), in sixteenths of the Spell Duration unit: parameter 14 above 0 and id `0xf`: `1.05^power * 3.0 * 16.0` when below 65000.0, else 65000 (`004fe3c0`..`004fe43c`; the power helper is `pow` with the base first and `0055458c` the truncating conversion, HERO-COST-002; constants `[0x59bcc8]` = 3.0, `[0x59bcd0]` = 16.0, `[0x59bcd8]` = 65000.0). Parameter 14 above 0, other ids: `ftol(1.025^power * p14 * 16.0)` (`004fe46c`..`004fe48f`). Otherwise parameter 11 above 0: `(p11 << 4) + ((power << 4) / 10)` in integers (`004fe4bc`..`004fe4d7`). Otherwise 0 (`004fe4e0`). The hover prints it times 0.0625 (TEXT-080).
+- `004fe13b` (the cast path) clamps the signed power to 0..100 before the call; `004fe1cf` (the fold's path) does not (TEXT-097).
+
+Data.bin spell rows, parsed with `tools/placedb` from both roots (the 28-row tables are identical): the base of `+9` is nonzero for 26 ids and 0 for ids 4 and 18. `+0xe` and `+0xf` are nonzero at power 0 for ids 1, 2, 3, 6, 9, 11, 13, 14 and 21 and 0 for the other 19; parameter 17 exceeds parameter 16 in all nine. `+0x10` takes the parameter 14 path for ids 5, 8, 10, 15, 16, 18, 20, 22, 23, 24, 27 and 28, the parameter 11 path for ids 3, 7, 12, 17, 19 and 21 and 0 for ids 1, 2, 4, 6, 9, 11, 13, 14, 25 and 26.
+
+The fold `004190f0` reads `+9` and word `+0x10` for the Range and Duration pairs (TEXT-081); `+0xe` and `+0xf` feed the damage sums. The hover value for a spell is therefore the per-cast value at the actor's own power, not the Data.bin column.
+
+**Confidence.** **High** for every branch, formula and constant: the whole of `004fdd96`, `004fdf57`, `004fe13b`, `004fe1cf` and `004fe25d` is listed and the sites are reproduced from both roots, which share one executable. The row populations are exact applications of the branch conditions to the parsed table.
+
+**Unknown.** The per-id parameter values behind the two `+0x10` paths are in the private evidence only. Whether `+0x10` has a reader outside the spellbook fold in a routine that takes no `Spell*`.
+
+### TEXT-097
+
+The session object (`CALL 0x573196`, then its vslot `+0x7c`) is read once at `0041913c` into `[ebp-0x18]`; the +0x3dc test uses that one value for every actor of a fold call.
+
+- Actor `+0x7c` equal to 0 (`004193d8`, `004193de`, `004193e2`): jump to `00419d2d`, back to the loop head. The actor is not counted (`+0x140`), not ORed into the mask (`+0x148`), not stored as the first actor (`+0x138`, `+0x13c`), sets no flag bit and runs no spell loop.
+- Otherwise the actor is counted (`004193eb`), its `+0x18` is ORed into the mask (`00419409`) and the first such actor is stored (`00419421`).
+- Session `+0x3dc` not equal to 1 and `(+0x3dc & 2) == 0` (`0041943d`..`00419454`): jump to `00419d20`, which assigns flags `+0x144` = 8 (`00419d23`) and returns to the loop. For that actor the class-name tests that set flag bits 1, 2, 0x20 and 0x200 and the `+0x18c & 1` bit 8 do not run, nor does the per-cell fold. The mana dword and cell arrays keep their initial values.
+- Tail: flag 4 is ORed when the first actor's `+0x14` differs from `[view+0x9b4]` (`00419d4d`..`00419d5e`). A count of 0 or `flags & 0x24` posts message `0x40a` (`00419d8a`); otherwise `0x409` is posted with the `00419e7b` value (`00419db3`).
+- Record fill versus caption level: the fold calls `004fe1cf(skill, stat)` for the record (`00419555`), which adds in byte arithmetic (`004fe1e0`..`004fe1e8`: `skill + (stat - 30)` kept in a byte) before the compare with 100 (`004fe1f4`). A sum below 30 wraps to 226..255 and is clamped to 100; a sum of 286 or more keeps only its low eight bits, so the level is (sum - 30) modulo 256 before the clamp, for example sum - 286 for 286 to 386; the compare with 0 at `004fe20d` tests an unsigned byte and never fires. The caption accessors take a separate 32-bit signed level (`00419568`..`0041959d`: `skill + stat - 30` clamped to 0..100). The cast path `004fe13b` clamps signed.
+
+**Confidence.** **High**: every cited address is an instruction row reproduced from both roots, and the session value is stored once before the loop.
+
+**Unknown.** What actor `+0x7c` and the `+0x3dc` bits mean. Whether any shipped character has skill plus Mind below 30 (record power 100) or at 286 or more (record power wrapped). How the single-actor branch at `00419e12` (count 1 and flag 8) uses the first actor.
+
+### TEXT-098
+
+The routine takes a `CString` by reference and replaces it. With `S` a copy of the argument and `R` empty, it loops while the length of `S` is above 3 and not (length 4 with first character `-` or `+`) (`00468f9f`, `00468fae`, `00468fb5`, `00468fbd`): `R = ',' + Right(S, 3) + R` (`00468fd0`, `00468fe2`, `00468ff2`), then `S = Left(S, len - 3)` (`0046902d`, `0046903a`); the result is `S + R` (`00469077`). The helpers are identified by their shapes: `0056efa6` Right, `0056f023` Left, `0056ee96` character plus string, `00572bfb` string plus string, `00572b03` assign.
+
+A model of the loop (`group.py`) equals thousands grouping with the sign kept in front of the first group for every `%+d` and `%d` text from -1000000 to 1000000 (0 mismatches over 4000002 strings), and the table in the evidence lists `-5`, `+999`, `-999`, `1000`, `-1000`, `-1234`, `-100000` and `+1234567`. The two signed numbers of the attribute hover (TEXT-082) pass through it.
+
+**Confidence.** **High** for the loop shape and the exit test, read in the whole routine. **Medium** for the string helpers' identities and so for the output text: the model transcribes the listing and no output was produced by running the original.
 
 ## Character-generation labels
 
