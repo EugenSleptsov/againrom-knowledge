@@ -2,13 +2,13 @@
 
 ## Snapshot
 
-Snapshot k137, exported from the private research repository at commit
-`fd7c4b7280a15d50858b50b531fc0dbebe7e6622`.
+Snapshot k138, exported from the private research repository at commit
+`7ab9895bbedd072c80e5bab594b68fd268f1151d`.
 
 | Field | Count |
 |---|---:|
-| Claim ids | 2679 |
-| Retracted ids | 447 |
+| Claim ids | 2688 |
+| Retracted ids | 448 |
 | Format pages | 118 |
 
 Each count is recomputed from this snapshot's own exported ledgers, not carried

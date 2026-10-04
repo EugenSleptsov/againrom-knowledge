@@ -1605,7 +1605,7 @@ The dispatcher clears `grpAI+0x20`, walks the referenced group, and calls `FUN_0
 
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
-| AI-MINIMAP-156 | `FUN_0048f470`, the minimap's own paint routine (`TOWN-091`, `AI-MINIMAP-062`), is read here to its own terminator, `RET` at `0048fb7f`… | High | ● active | [EXP-0211](../experiments/EXP-0211-column-controls/) |
+| AI-MINIMAP-156 | `FUN_0048f470`, the minimap's own paint routine (`TOWN-091`, `AI-MINIMAP-062`), is read here to its own terminator, `RET` at `0048fb7f`… | High | ● active (amended, partially retracted) | [EXP-0211](../experiments/EXP-0211-column-controls/) |
 | AI-MINIMAP-157 | Widget 5 of the right-column container (`TOWN-086`, `TOWN-091`) and the minimap object of `AI-MINIMAP-062`/`AI-MINIMAP-124`/`SESS-VIEW-031` are the same object. | High | ● active | [EXP-0211](../experiments/EXP-0211-column-controls/) |
 | AI-PANEL-158 | The command panel's own mouse-hit-test routine, `FUN_00490500`, is a distinct routine from `FUN_0041b439`, the order-arming routine `AI-PANEL-053` calls "the command-panel handler." | High / Unknown | ● active | [EXP-0211](../experiments/EXP-0211-column-controls/) |
 
@@ -1616,6 +1616,8 @@ The dispatcher clears `grpAI+0x20`, walks the referenced group, and calls `FUN_0
 The masked pixel loop `TOWN-091` describes runs afterward, reading a raw buffer at `[0x005e43bc]` with stride `[0x005e43a4]`, and is additional to the blit calls, not a replacement for them. Past line 210: at `0048f93f`-`0048f9dc` the routine walks a count-and-pointer pair on the widget itself, `[this+0x9c0]` entries at `[this+0x9bc]`, and for the first entry whose own first dword is non-null it calls `entry->vt+0x34` with a destination point built from `this+0x60`/`this+0x64`/`this+0x68` and the caller-supplied scale — the same external-object `vt+0x34` sub-rect blit convention, on an array this experiment did not identify beyond "count and pointer fields on the minimap widget." At `0048f9e6` the routine forks on a local flag into one of two structurally symmetric closing arms, `0048f9f0`-`0048fab5` and `0048fab6`-`0048fb7f`; each computes a rectangle from `this+0x60`/`0x64`/`0x68` and calls `FUN_0044fef0` once, then `FUN_0044c410`, then returns. Neither arm performs any further blit.
 
 **Confidence.** High for every cited instruction and control-flow edge (the routine reaches its own `RET`, 623 lines, and every branch target is walked). The identity of the `this+0x9bc` array (candidate: per-unit map icons) is Unknown; the loop's mechanism and blit convention are established, its semantic content is not
+
+**Amended.** The clauses that the `this+0x9bc` array is a widget field and that the walk takes the first non-null entry are retracted ([`retracted.md`](retracted.md)); `MISSION-063` (EXP-0455) identifies the array as the bucket array of the map view's object map, walked node by node.
 
 ### AI-MINIMAP-157
 

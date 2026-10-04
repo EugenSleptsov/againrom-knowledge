@@ -455,3 +455,48 @@ Null text means the base constructor assigns no hint and the hint is empty until
 **Confidence.** **High** for the table classification under the stated trace and for the 9 resolved receivers. **Unknown** whether any of the 52 shows a hint: a hint can arrive through any of the 243 unresolved vslot-6 receivers or a derived constructor passing text the trace read as null.
 
 **Unknown.** Which of the 52 controls appear in play, and which of the 243 unresolved vslot-6 sites are widget setters. The three `+0x3c` writers outside the base constructors: `00429f80` constructs class `0x5974e0` (not one of the 96 tables) and `005168e0` class `0x59be78`; the receiver class of the one in `004df385` is unresolved.
+
+## Mission-screen readout widget
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MENU-070 | Widget 8 shows the hovered object when a hover id resolves and no item is held, else the single selected object, and draws its readout only for a `CStructure` (or a class derived from it); other classes go to `FUN_00460480`. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+| MENU-071 | Widget 8's three structure lines are the `building.txt` name of class id minus one, string 19 (`Health`) and `%d/%d`, in font `[0x5e92f8]` at right edge minus 88; the first two use ramp `0x5e9b88`, the ratio `0x5e9b68`. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+| MENU-072 | The ratio is the drawable's current health `+0xfc` over `+0x100`: the first is message word `+0x12`, the second a signed word of a class table, replaced by 1000 when zero; neither store reads the object's class record. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+
+### MENU-070
+
+- `FUN_004929d0` (`0x4929d0`..`0x492c67`, `evidence/disasm-widget8-paint-4929d0.txt`) draws only when `[sess+0x3dc] == 1` (`0x492a06`); the height gate and the resolution limit are `TOWN-093`'s.
+- Hover: when the word `view+0x990` is non-zero (`0x492a7f`) and the session dword `+0x3cc` is zero (`0x492a91`), the routine looks the id up in the object map `view+0x9b8` (`0x492a9b`..`0x492acc`): bucket `(id >> 4) mod [view+0x9c0]` in the array `[view+0x9bc]`, chain compared on the word at node `+8`, value at node `+0xc` (the layout is `AI-SELECT-065`'s). A found value is taken at `0x492c68`.
+- Selected: without a found hover value the routine tests `view+0x140 == 1` (`0x492af9`) and takes `view+0x138`. The hovered object therefore wins whenever it resolves; the selection is read only when no hover id resolves or an item is held.
+- Class: the object is tested with `FUN_0057272f` against the runtime-class record `0x599190` (name `CStructure`, `evidence/dwords-crtc-gameobject-family-599178.txt`). A match selects the structure arm; a miss passes the object and the screen rect to `FUN_00460480` (`0x492be6`). The records of `CBridge`, `CVerticalWoodenBridge` and `CHorisontalWoodenBridge` name `CStructure` or `CBridge` as base, so they take the structure arm; `CBackPack`, `CUnit` and `CProjectile` name `CGameObject` and `CAirUnit` names `CUnit`; none of the four derives from `CStructure`, so none takes the structure arm.
+
+**Confidence.** High for the gate, the two object sources, their precedence and the class record (all instructions read). Medium that `IsKindOf` on this record admits exactly the four structure classes: the base chain is read from the five records, not from `FUN_0057272f`'s body. Population: EN `rom.exe`; the RU image has the same SHA-256 (`evidence/image-hashes.txt`).
+
+**Unknown.** What `FUN_00460480` draws and for which classes; it is read only to its call here.
+
+### MENU-071
+
+- The screen rect comes from `FUN_004bccb3` applied to the widget rect at `esi+8` (`0x492a1e`); right and top below are its fields `+8` and `+4` of the output (`[esp+0x28]`, `[esp+0x24]`).
+- Each line is one call of `FUN_00456b50(x, y, text, 2, ramp, 1)` on the font object `[0x5e92f8]`: flag 2 and shadow offset 1 (`0x492b5b`, `0x492b89`, `0x492bd4`).
+- Line 1: x = right − 0x58, y = top + 0x1c, text `FUN_004687f0(0x5eb440, objectClassId − 1)`: `[0x5eb3d4][[0x5eb440+0xc] + id − 1]`. The object `0x5eb440` is the `building.txt` text object (`evidence/disasm-building-text-load-471205.txt`); with base 649 (`TEXT-STRTAB-023`) EN gives `Shop` for ids 34 and 35, `Grave` for 39 and 40 and `Church` for 66, RU `Лавка`, `Могила` and `Ратуша`. The six rows are in `evidence/uitext-targets.txt`, read from both installs.
+- Line 2: x = right − 0x58, y = top + 0x2c, text `[0x5eb3d4][0x4c / 4]`, global string 19: `Health` (EN), `Жизнь` (RU), `main.txt` line 19.
+- Line 3: x = right − 0x58, y = top + 0x36, `sprintf("%d/%d", (i16)obj+0xfc, (i16)obj+0x100)` with format `0x5bcbec`.
+- Ramps (`evidence/ramps.txt`, `FUN_00457c40` run on the emulator over synthetic memory, 8-bit channels at shift 0): line 1 and line 2 use `0x5e9b88`, whose entry 15 is (185,159,73); line 3 uses `0x5e9b68`, entry 15 (107,154,120). The shadow pass of `FUN_00456b50` uses the flat ramp `0x5e9be8` (`MISSION-MSGLINE-056`).
+- The routine contains no owner text and no player-name read, so `TOWN-093`'s "name/owner label" is a name and the word `Health`.
+
+**Confidence.** High for the arguments, offsets, text objects and ramp values. Medium for which ramp entry draws the glyph body: `FUN_00456b50` was not re-read, the entry-15 reading follows `MISSION-MSGLINE-056`. Medium for the base 649, carried from `TEXT-STRTAB-023` rather than measured here.
+
+**Unknown.** The font object's glyph cell height and whether the three lines overlap at 1024x768; the colours after the display's quantisation.
+
+
+### MENU-072
+
+- `+0xfc` is written at `0x412b67` from message word `+0x12` in the client arm `0x82` (`evidence/disasm-client-arm-0x82-hp-store-412b40.txt`); `TERR-STRUCT-102` already reads it as the current health.
+- `+0x100` is written at `0x412b98` from the signed word at byte `+0xc` of the array behind `[0x609be4] + messageByte+0x11 × 0x1c + 0xc`, index 3, and replaced by `0x3e8` (1000) when that word is zero (`0x412ba5`..`0x412bb6`). Neither value is read from the object class record `[0x5eb62c][obj+0x20]`.
+- The simulation side of message `0x82` is `UNIT-STRUCTCONT-078`: it sends the object's HP word, or the literal 1000 when its own maximum is zero.
+- `Indestructible` classes 15, 16, 34, 35, 39, 40 and 66 are all `Usable` (`EXP-0037`'s `structures.reg` rows). A readout for them shows the message value over the table word or 1000.
+
+**Confidence.** High for the two stores, their sources and the 1000 fallback (instructions read). Medium that table index 3 is the class maximum health: the table identity at `0x609be4` is not named in this experiment.
+
+**Unknown.** The value the table holds for classes 34, 35, 39, 40 and 66 and so the exact readout (`1000/1000` if both sources fall back); the table was not read from the install here. The RU `structures.reg` rows and the RU copy of that table were not compared; RU coverage of this claim is the image hash (the code) and, for `MENU-071`, the RU text rows.

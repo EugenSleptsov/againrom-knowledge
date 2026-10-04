@@ -5,7 +5,7 @@
 ## Information-display state
 
 `FUN_0045f850` (`CUnit`, one caller) copies **25 stores** off the prototype actor in one fixed
-order (`UNIT-PANEL-010`). In order: the four stats, health and
+order (`UNIT-PANEL-010`, superseded only in its scope: the copy map and arithmetic stand). In order: the four stats, health and
 its maximum, mana and its maximum, toHit, defence, absorption, the damage pair, speed, sight, the
 five damage-kind resistances, the five elemental protections, and a derived byte
 (`2` when the typeID is `0x49`, else `0`).

@@ -849,11 +849,11 @@ The paint routine, read to line ~210 of an estimated 300+ (no string operands pe
 
 Within the same first ~210 lines this row already read, the routine calls `[0x005ef8dc]->vt+0x18` once, confirmed, at `0048f5e0`; a second `vt+0x18` call follows at `0048f637`, on a distinct object reached through `this+0x60`/`this+0x64` whose identity was not established; and, past line 210, `[0x005ef8dc]->vt+0x20`/`vt+0x24` (`0048f664`, `0048f6df`), confirmed; the masked pixel loop this row describes is additional to those calls, not a replacement for them (`AI-MINIMAP-156`). The routine is read to its own terminator, `RET` at `0048fb7f`, 623 lines, and its remaining structure — an unidentified icon-array walk and two symmetric closing arms calling the shared rectangle-outline primitive — is also `AI-MINIMAP-156`.
 
-Widget 5's functional identity, left open by this row, is closed by `AI-MINIMAP-157`: its own vtable at `0x0059a678` also carries `AI-MINIMAP-062`'s cited left-down handler at `vt+0x54`, so widget 5 is the minimap `AI-MINIMAP-062`/`AI-MINIMAP-124` documents by its interactive behaviour. The masked-pixel-loop and buffer-identity findings of this row are not contested and stand.*
+Widget 5's functional identity, left open by this row, is closed by `AI-MINIMAP-157`: its own vtable at `0x0059a678` also carries `AI-MINIMAP-062`'s cited left-down handler at `vt+0x54`, so widget 5 is the minimap `AI-MINIMAP-062`/`AI-MINIMAP-124` documents by its interactive behaviour. The masked-pixel-loop description is narrowed by `MISSION-064` (the unit is a fog block with three cases, not a fixed 2x2 block); the buffer-identity finding is not contested.*
 
 **Confidence.** Medium (the routine's shape and its point of divergence from every sibling widget's blit-call pattern are read directly; the buffer's content and the widget's gameplay meaning are not established, so the "which widget" question is closed and the "what does it show" question is not) — *the "point of divergence" clause is retracted by [EXP-0211]'s correction above; the routine's overall shape and the buffer/pixel-loop portion remain High-supported by direct reading*
 
-**Amended.** corrected. [`retracted.md`](retracted.md) holds an entry for this claim (refuted).
+**Amended.** corrected. [`retracted.md`](retracted.md) holds an entry for this claim (refuted). `MISSION-063` and `MISSION-064` (EXP-0455) narrow this row's account of the paint loop: it is a three-case fog block loop, and the object walk calls every node's slot `+0x34`.
 
 ### TOWN-092
 
@@ -873,7 +873,7 @@ When the readout text draws, it hash-looks-up a map object by `*(mapview+0x990)`
 
 **Confidence.** High (single routine decoded to its own terminator, both blit gates, both bitmap globals and the panel-height arithmetic read directly) for the shape and the visibility/blit conditions / Unknown for the `+0xfc`/`+0x100` field semantics
 
-**Amended.** [`retracted.md`](retracted.md) holds an entry for this claim (refuted).
+**Amended.** [`retracted.md`](retracted.md) holds an entry for this claim (refuted). `MENU-070`, `MENU-071` and `MENU-072` (EXP-0455) read the structure arm: the two lines are the `building.txt` name and the word `Health`, with no owner line in that arm, and the pair is current health over a maximum read from a class table (Medium). The non-structure arm `FUN_00460480` is unread, so an owner line there is not excluded.
 
 ### TOWN-094
 

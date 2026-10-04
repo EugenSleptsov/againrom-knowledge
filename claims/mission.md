@@ -1438,3 +1438,58 @@ values, which are inferred from `MISSION-STOP-016` and `VIDEO-MUSIC-062`, not re
 
 **Unknown.** What a zero return means for the session object left behind, and whether the
 original shows an error before the menu.
+
+## Minimap paint, structure selection and cursor surfaces
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MISSION-063 | `[view+0x9bc]` in the minimap paint is the bucket array of the map view's object map; the paint calls every node's slot `+0x34`: structures, bridges, units and air units draw a one-colour rectangle, three classes nothing. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+| MISSION-064 | The minimap's masked pixel loop works per fog block: four tile words with no bit in `0xc000` replace the block from a second pixel buffer, an OR of `0x8000` averages it with that buffer, any other value leaves it. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+| MISSION-065 | A structure with `Indestructible` clear is selected by a plain click, never by a rectangle, through the ordinary `+0x7c` flag write (`FUN_00425430`); hit-mask bit `0x20` is read at four sites, all in `FUN_0040d1f1`. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+| MISSION-066 | No direct load applies cursor slot 25 `dice`; its one non-registry read is a default-or-`dice` guard, slot `+0x2c` of the view at `campaign+0x358`. Slot 26 `wait` is loaded in 12 campaign view entries, 11 of which also load default. | High / Medium / Unknown | ● active | [EXP-0455](../experiments/EXP-0455-mission-screen/) |
+
+### MISSION-063
+
+- `FUN_0048f470` (`evidence/disasm-minimap-paint-48f470.txt`) reads the map view through `[this+0x5c]` (`0x48f47e`). Its displacements `+0x80` (tile plane), `+0x9bc`, `+0x9c0`, `+0x9c4` and `+0xa70` match the view layout of `AI-SELECT-065`, `AI-CURSOR-231` and `AI-CURSOR-202`. The array is therefore the bucket array of the object map `view+0x9b8` (count `+0x9c0`), not a field of the widget.
+- The walk at `0x48f93f`..`0x48f9dc` is the `GetNextAssoc` bucket scan of that map: for every node it calls `[[node+0xc]]+0x34` with a destination point from `this+0x60`/`+0x64`/`+0x68` and the scale `this+0x68`, then loops back (`JNE 0x48f962`). `AI-MINIMAP-156` took the first non-empty entry only and left the array's identity open.
+- Slot `+0x34` per class (`evidence/dwords-vtables-slot34.txt`, `evidence/disasm-getruntimeclass-4589c0.txt`): `FUN_0045a800` for `CStructure`, `CBridge` and both wooden bridges; `FUN_0045ce00` for `CUnit` and `CAirUnit`; `FUN_00462ef0` (`RET 0xc`, no code) for `CGameObject`, `CBackPack` and `CProjectile`.
+- `FUN_0045a800` ORs the fog words of the four cells at the object's position (object fields `+8` and `+0xc`, each shifted right by 8) and draws only when the OR masked with `0xc000` equals `0xc000`; `FUN_0045ce00` adds two conditions, byte `+0x15a` at most 1 and `+0x18c` bit `0x80` clear. Both call `FUN_0044f990(x0, y0, x1, y1, colour)`, a clipped solid fill of a 16-bit rectangle in the surface `[0x5e43bc]`. The colour is the word at `+0x1148` of the owner's player record, found through `[0x5eb65c][[obj+0x14]+8]` and `[record+8]`.
+- After the walk one of two closing arms draws the viewport rectangle through the same fill with a white colour built from the channel masks (`0x48f9f0`..`0x48fab5`, `0x48fab6`..`0x48fb7f`).
+
+**Confidence.** High for the walk, the three slot targets, the conditions and the fill arguments (instructions read). Medium that `this+0x5c` is the `CMapView` itself: five displacements agree with that view's layout, but the store of `this+0x5c` is not read here. The fog reading of `0xc000` as visible is `TERR-FOG-082`'s, Medium.
+
+**Unknown.** The size of a blip in map cells (the extent arguments come from the object's slots `+0x20` and `+0x24`, not read); whether `+0x1148` is the player's chosen colour.
+
+
+### MISSION-064
+
+- Per fog block (`0x48f711`..`0x48f93f`) the loop ORs `& 0xc000` of four neighbouring tile words of `[view+0x80]`'s plane (`0x48f755`..`0x48f78f`). Zero: `REP MOVSW` copies the block's rows from the second buffer into the surface `[0x5e43bc]` (`0x48f7a1`..`0x48f7cc`). `0x8000`: each destination word becomes `((src >> 1) & m) + ((dst >> 1) & m)` with `m` built from the channel bit counts (`[ebp-0x54]`, `0x48f50b`..`0x48f56b`), a 50 per cent average per channel (`0x48f7ce`..`0x48f826`). Other values, including `0xc000`: untouched.
+- The second buffer is the pixel data of the object at global `0x5ef8dc`, `[obj+0x10] + 8` (`0x48f661`); the paint blits that same object first (`0x48f5e0`, slot `+0x18`).
+- `TOWN-091` calls the unit a masked 2x2 block; it is a fog block of side `[ebp-0x14]` pixels.
+- The routine returns at once when `[sess+0x3dc]` bit `0x2` is set (`0x48f4a5`) and repaints only when `[this+0x6c]` differs from `[view+0xa70]` by at least 11 (`0x48f4b2`..`0x48f4c5`).
+
+**Confidence.** High for the three branches and the arithmetic. Medium for the fog reading: this loop shows that `0x8000` is a distinct third case, and the meaning of the three cases rests on `TERR-FOG-082`'s state mapping.
+
+**Unknown.** Which picture the object `0x5ef8dc` holds; whether the second buffer is a shroud, so that the three cases draw unseen, explored and visible cells.
+
+
+### MISSION-065
+
+- Plain click and rectangle: `AI-SELECT-122` (a plain click selects a structure only when its class `+0x64` is zero). The rectangle path skips every structure: `FUN_0041a2d5` tests each candidate with `FUN_0057272f` against `0x599190` and a hit leaves its accept flag unset (`0x41a4c3`..`0x41a4d4`, `evidence/disasm-box-select-structure-skip-41a43a.txt`).
+- The select method for `CStructure`, `CBridge`, both wooden bridges, `CGameObject`, `CBackPack` and `CProjectile` is `FUN_00425430` (vtable `+0x14`; the seven vtable slots that hold it are listed by a whole-image dword search over the EN image): it stores its argument in `+0x7c` and `1` in `+0x10c`. `CUnit` and `CAirUnit` bind another routine. The selection rebuild counts the objects with `+0x7c` set (`AI-CURSOR-202`), so a selected structure gives `view+0x140 == 1` and `view+0x138` its object, which is what widget 8 reads (`MENU-070`).
+- Bit `0x20` of the hover hit mask is set for every hit `CStructure` (`AI-CURSOR-231`). `FUN_0041ab8e` has six direct callers, all in `FUN_0040d1f1`. The sites that test bit `0x20`: `0x40d86d` and `0x40d8a2` (`AND 0x23`, no selection or a selection with summary bits `0x24`) choose slot `select` `[0x5ef9c8]`; `0x40d9df` (`AND 0x20`, under mask bit `0x4` and a zero gate) chooses `select` when set, else slot `attack` `[0x5ef9c0]`; `0x40da01` (`AND 0x23`) belongs to the same cascade without bit `0x4`.
+- `FUN_00419ec1`'s selection and order arms read `view+0x98c` and `+0x990`, not the mask (`evidence/disasm-click-dispatch-town-419f8d.txt`).
+
+**Confidence.** High for the box skip, the select method, the six callers and the four test sites (listings read). Medium that no other routine receives the mask: the callers are direct `E8` calls and an indirect call is outside the search (`AI-CURSOR-231`'s bound).
+
+**Unknown.** What mask bit `0x4` means (`AI-CURSOR-231` lists it without a name); the click path that calls `vt+0x14` for a single structure click was not read to its call.
+
+### MISSION-066
+
+- Slot 25 `dice`, `0x5efa18` (`evidence/scan-cursor-slots.txt`, direct displacement loads over the EN image): three references. The registry store (`0x46da22`) and the registry teardown (`0x46dc69`, a `vt+4` delete) belong to the registry. The third, `0x42fcc3` in `FUN_0042fcb0`, loads the slot's `+4` and compares it with the current cursor `[0x5cd794]`: if the current cursor is neither slot 0 `default` nor `dice`, it calls `FUN_0046d3d0` with the default slot, then `FUN_004c4d63`.
+- `FUN_0042fcb0` is slot `+0x2c` of vtable `0x597730` (`evidence/dwords-vtable-597730.txt`), whose constructors are `FUN_0042f190` and `FUN_0042f220`. `FUN_0042f220` is called at `0x4725f6` in the campaign screen constructor with id `0x456` and stored in `campaign+0x358` (`0x472608`, `evidence/disasm-view-construction-4725c0.txt`); `TOWN-140` names it as the fourth view of the gate `0x226` and `TOWN-242` as the final or detailed character-generation view.
+- Slot 26 `wait`, `0x5efa1c`: 14 references, the registry's two and 12 loads, in `FUN_00476510`, `00476640`, `004766b0`, `00476710`, `004768c0`, `004769c0`, `00476ed0`, `00476ff0`, `00477130`, `00477c00`, `00479ea0` and `00479f50`. Each load is followed by `FUN_0046d3d0` early in the routine and by the build of one campaign view; `00476510`, `00476ed0`, `00476ff0` and `00479ea0` set `[sess+0x3dc]` bits `0x2`, `0x4`, `0x20` and `0x200` (`TOWN-140`). Eleven of the 12 also load slot 0 `default` later in the same routine (the call after it was read in four, see Confidence) (`evidence/scan-cursor-slots.txt`); `004769c0` does not.
+
+**Confidence.** The clauses carry their own grades. `dice`: High for the reference census (three direct displacement loads in the EN image), the compare in `FUN_0042fcb0` and the construction chain; Medium that slot `+0x2c` is called as the view's cursor hook, since the slot is read from the table and its caller was not searched; Unknown for the applier. `wait`: High that 12 routines load the slot and that 11 also load slot 0; the call that follows the slot-0 load (`FUN_0046d3d0`) is read in four of them (`00476640`, `004766b0`, `00476710`, `00479ea0`), so "restores default" is established for those four only. Medium that all 12 are view entries: the first lines of each were read, the bodies of `004769c0`, `00477130`, `00477c00` and `00479f50` only partly.
+
+**Unknown.** Which instruction applies the `dice` cursor: no direct slot load does, so the one reader is a guard, not an applier, and the five set sites with no static slot load (`AI-CURSOR-175`) are not excluded. Whether any entry draws a wait picture of its own: only the cursor slot was searched.
