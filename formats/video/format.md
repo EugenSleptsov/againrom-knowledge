@@ -149,6 +149,22 @@ make no direct sound request. — TOWN-434
 
 <a id="unknown--bounded-areas"></a>
 
+## Cutscene list, music lists and stored options (`VIDEO-075`...`VIDEO-077`)
+
+The cutscene list is the only list dialog that reads a movie table. It shows the titles of
+`cutscene.txt` rows 0 to N, where N is a registry dword with a floor of 2 that a played mission
+movie is read to raise to its own `cutpaths.txt` row (the callers were not traced). OK plays the numbered parts of that row's directory
+in order (`VIDEO-075`).
+
+The 21 music tracks come from nine literal request lists in nine owner routines. The mission
+owner's 12-entry list is shared by every mission; among those nine owners and the markup
+selector no per-mission list exists. No direct reference copies the registry random-order value
+to the player at start (`VIDEO-076`).
+
+Shadows, Dynamic lighting, Object animations and Smoothing are 0 or 1, default 1, and persist in
+the registry with nine other option values and five sound values. Command-line switches clear the
+graphics flags before the registry load, which then replaces them (`VIDEO-077`).
+
 ## Unknowns
 
 All OS/decoder error paths, arbitrary malformed media, hardware/driver timing,

@@ -264,6 +264,13 @@ panel wraps it with the dialogue splitter and wrapper at the body width, rewraps
 scroll bar, and scrolls it; it is not paged (`TEXT-088`). Its one doubled tilde draws a
 literal tilde glyph (`TEXT-089`).
 
+## Settings dialog strings (`TEXT-099`, `TEXT-100`)
+
+Game Options reads 28 `dialogs.txt` rows and `patch.txt` rows 52 to 54; Sound Options reads 20
+`dialogs.txt` rows. Every row exists on both roots (`TEXT-099`). `tunes.txt` has 21 `name.wav`
+keys with titles, identical keys on both roots; `cutscene.txt` and `cutpaths.txt` have 14 rows
+each, and the `cutpaths.txt` rows are identical on both roots (`TEXT-100`).
+
 ## Unknown / bounded areas
 
 The published rules do not establish:

@@ -2200,3 +2200,29 @@ book card has lines beyond the fragment.
 **Confidence.** Medium: the nine arm loads are named instructions; the exclusion of the other hits rests on the owner rule, operand shape and two earlier claims.
 
 **Unknown.** The base register of the four indexed loads in `FUN_004b0350` and `FUN_0042ca00`, and any array read with a computed index outside the swept displacements.
+
+
+## Settings dialog strings
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TEXT-099 | Game Options reads 28 `dialogs.txt` rows and `patch.txt` rows 52 to 54, and Sound Options reads 20 `dialogs.txt` rows; every cited row exists on both roots. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| TEXT-100 | `tunes.txt` has 21 lowercase `name.wav` keys with titles, identical on both roots; `cutscene.txt` and `cutpaths.txt` have 14 rows each, and the `cutpaths.txt` rows are identical on both roots. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+
+### TEXT-099
+
+Game Options (MENU-073) reads these `dialogs.txt` local rows: 0, 1, 50 to 59, 60 to 67, 78, 150, 156, 159 to 162 and 164 (28 distinct rows), and `patch.txt` rows 52, 53, 54. Sound Options (MENU-075) reads rows 0, 7 to 21, 23, 75, 143 and 165 (20 distinct rows). Row 0 is the OK caption and row 1 the Cancel caption. The rows come from the text accessor `004687f0` on the dialogs object `0x5ea678` and the patch object `0x5ea668`.
+
+Both roots hold 166 `dialogs.txt` rows and 67 `patch.txt` rows, and every cited slot is present in both. Per-slot byte lengths differ by language (for example row 0 is 2 bytes on EN and 7 on RU), so the controls are sized by rectangle, not by text. Slot and byte-length rows are in `textrows.txt` of the experiment evidence.
+
+**Confidence.** **High** for the slot indices and the presence on both roots (the instruction pushes and the string tables of both roots were compared by index and length). **Medium** for the hint-versus-caption order of each pair, which follows the constructor-argument order of the control classes (MENU-068).
+
+**Unknown.** The text of the rows is not compared between languages beyond length; several hint and caption pairs have equal lengths on each root and may be the same string.
+
+### TEXT-100
+
+`main/text/tunes.txt` holds one `key=title` row per music track: 21 rows on each root, the keys lowercase and ending `.wav`, identical on EN and RU, every row with a nonempty title. The Sound Options list resolves each candidate name of the player's bank, without its six-character `music\` prefix, to a title through a dictionary built from this table (VIDEO-OPTIONS-057, VIDEO-076). `cutscene.txt` holds the 14 cutscene titles shown in the cutscene list and `cutpaths.txt` the 14 directory names of the movie parts; the latter is not localised (identical rows on both roots, lengths 3 to 7 bytes) and the former has 14 nonempty rows on both. Both are loaded at start (`00471246`, `0047125a`) into objects `0x5eb430` and `0x5eb480` (VIDEO-075). The three tables sit in global string order after `npcnames.txt`, at global bases 1245, 1259 and 1273.
+
+**Confidence.** **High** for the row counts, key identity and the load calls. **Medium** that the key lookup is case-folded, which rests on the identity of the lowercase routine and was not traced.
+
+**Unknown.** Behaviour for a candidate with no dictionary row; whether the lookup compares case-sensitively.

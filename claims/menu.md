@@ -500,3 +500,138 @@ Null text means the base constructor assigns no hint and the hint is empty until
 **Confidence.** High for the two stores, their sources and the 1000 fallback (instructions read). Medium that table index 3 is the class maximum health: the table identity at `0x609be4` is not named in this experiment.
 
 **Unknown.** The value the table holds for classes 34, 35, 39, 40 and 66 and so the exact readout (`1000/1000` if both sources fall back); the table was not read from the install here. The RU `structures.reg` rows and the RU copy of that table were not compared; RU coverage of this claim is the image hash (the code) and, for `MENU-071`, the RU text rows.
+
+
+## Settings dialogs
+
+Both dialogs are modal children of the campaign window. Rectangles are dialog-local pixels at the snapped width `W = 488`, read by hand from the constructor argument pushes of each control in its builder listing; they are not post-layout rectangles. `d<N>` and `p<N>` name local rows of `dialogs.txt` and `patch.txt` (TEXT-099). The options object at `0x5eb510`, its stored values and their persistence are in VIDEO-077; the sound configuration at `0x5eb458` is in MENU-076 and VIDEO-076.
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| MENU-073 | The Game Options dialog holds 19 controls: 5 labels, a 0..8 speed slider, 8 checkboxes, 3 radio groups, OK and Cancel; each non-label control id imports and exports one stored option. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| MENU-074 | Game Options writes its options only on OK, in a fixed order with Animation 0 forcing Lighting 0, then sends three party commands; Cancel and Esc forward the close with no export; the dialog's own code restores nothing. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| MENU-075 | The Sound Options dialog holds 15 controls (track list with scrollbar, Play, Stop, Random Order, Acknowledgments, three volume sliders, OK, 5 labels) and has no Cancel button. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| MENU-076 | In Sound Options every control but Acknowledgments applies at the click or slider move; Acknowledgments is exported by OK only; OK and Esc both close and neither restores the earlier values. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| MENU-077 | Game Options, Sound Options and the cutscene list share the dialog base: size snaps to `96k+8` by `64k+104`, centred, drawn as the `lm.256` nine-piece frame with an 8 px shadow; title and buttons are builder controls. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+
+### MENU-073
+
+Class vtable `005981a0`, constructor `0043d810`, builder (vtable `+0x78`) `0043d847`, message handler (vtable `+0x48`) `0043e962`. The campaign arm `00473780` creates it for message `0x41b`, only when campaign `+0x3dc` equals 1 (a map session). The Esc menu button of id 3 posts that message (`0043c424`). The town Esc menu `0043c90b` posts neither Game Options nor Sound Options (MENU-ESC-010 covers the menus). Constructor arguments are `(1, 40, 0, 600, 480, 0)`, a 560 by 480 rectangle that the base snaps to 488 by 424 at (76,28) on a 640 by 480 screen (MENU-077).
+
+All controls are built with `(id, left, top, right, bottom, ...)`. Text is `d<N>` hint then caption unless noted.
+
+| id | kind | rect | text | bound storage |
+|---|---|---|---|---|
+| -1 | title label, centred | 40,20,W-40,40 | d150 | none |
+| 1 | label | 40,56,232,80 | d50 | none |
+| 2 | slider, max 8 | 40,84,232,108 | hint d51 | campaign `+0x3f4` (speed level) |
+| 0xc | checkbox | 40,120,232,144 | d54, d55 | `0x5eb528` |
+| 3 | checkbox | 40,148,232,172 | d52, d53 | `0x5eb520` |
+| 0x1f | checkbox | 40,176,232,200 | p52 | `0x5bceec` |
+| 0x20 | checkbox | 40,204,232,228 | p53 | `0x5bcef4` |
+| 0x21 | checkbox | 40,232,232,256 | p54 | `0x5bcef0` |
+| 4 | checkbox | 256,56,472,80 | d56, d57 | `[0x5eb51c]` |
+| 5 | checkbox | 256,84,472,108 | caption d78 | `[0x5eb524]` |
+| 0xd | checkbox | 256,112,472,136 | caption d156 | `0x5eb52c` |
+| 0xf | label | 256,152,448,176 | d159 | none |
+| 0xe | 3-item radio | 256,180,448,252 | items d160..d162, hint d164 | `0x5eb534` |
+| 6 | label | 40,264,232,288 | d58 | none |
+| 7 | 3-item radio | 40,288,232,360 | items d60..d62, hint d59 | `[0x5eb514]` |
+| 8 | label | 256,264,424,288 | d63 | none |
+| 9 | 3-item radio | 256,288,424,360 | items d65..d67, hint d64 | `[0x5eb518]` |
+| 0xa | OK button, message `0x445` | W/7,368,3W/7,392 | d0 | none |
+| 0xb | Cancel button, message `0x446` | 4W/7,368,6W/7,392 | d1 | none |
+
+At `W = 488` the buttons span x 69..209 and 278..418 (integer division). The values bound by the pointer cells `[0x5eb514]`, `[0x5eb518]`, `[0x5eb51c]` and `[0x5eb524]` live in the party object `[campaign+0xd0]` at `+0xa98`, `+0xa9c`, `+0xaa0` and `+0xaa4` (options constructor `0043d5d1`, `0043d5f8`..`0043d634`); the meanings are formation mode, retreat (wimpy) mode, show-all-hit-points and flying damage numbers. Id 0xe is the autohealing mode (TOWN-AUTOHEAL-458). Ids 0x1f, 0x20 and 0x21 are Shadows, Dynamic lighting and Object animations (TOWN-GRAPHICS-459); id 3 is Smoothing (TOWN-SMOOTH-460); id 0xc is the Day/Night change flag; id 0xd is TipsMode (TOWN-186).
+
+A checkbox control (vtable `00598d18`) holds its value or bitmask at `+0x80`. Import (vtable `+0x44`, `00448d30`) copies the bound dword into `+0x80` when the dialog is built; export (vtable `+0x3c`, `00448d10`) writes `+0x80` back. A left click (`004c0a59`) toggles the bit and posts `0x46d` to the dialog (`004c0b0a`). None of these stores a pointer to the bound dword; the class code is in `rom-control-classes.txt`. The speed slider (vtable `0059b598`; import `004c8a80`, export `004c8a50`) holds `{position, max}` at `+0xc4`, `+0xc8` and has flag 1 (enabled) cleared when campaign `+0x6bc` is 0 or 1 (`0043d9dd`..`0043da0d`; SESS-PHASE-002 names phases 2 and 3).
+
+**Confidence.** **High** for the control ids, kinds, slot indices and bound addresses (instructions read; the EN and RU roots run one `rom.exe`). **Medium** for the pixel rectangles: they were read by hand from the constructor argument pushes of the builder in the committed listing, not computed, and a control constructor or the base could adjust a rectangle after construction.
+
+**Unknown.** The meaning of campaign `+0x6bc` values 0 and 1. Whether the Esc menu is the only poster of `0x41b`: the arm's posters were not swept image-wide.
+
+### MENU-074
+
+The handler `0043e962` acts only on message `0x445` (OK). Every message, including `0x445` after the exports, is then forwarded to the base handler `004c52f3`, which for `0x445` and `0x446` closes the dialog with the message as result code (`004c52b0`).
+
+On OK the handler exports, in this order:
+
+1. Slider id 2: `{position, max}`, then the campaign speed setter `00477370(position)`. It clamps to 0..8, stores campaign `+0x3f4`, sets the frame interval `+0x3f0` to 1000 divided by a rate that rises from 8 at level 0 to 32 at level 8, and re-reads the clock into two timer fields.
+2. Id 0xd to `0x5eb52c`, id 0xc to `0x5eb528`, id 3 to `0x5eb520`.
+3. Ids 0x1f, 0x20, 0x21 to `0x5bceec`, `0x5bcef4`, `0x5bcef0`. If Animation (`0x5bcef0`) is then 0, Lighting (`0x5bcef4`) is set to 0 (`0043ea52`, `0043ea5b`).
+4. Ids 4, 5, 7, 9 through the party pointer cells to the party object, then id 0xe to `0x5eb534`.
+5. Three party commands through `[campaign+0xd0]`: `0041cd88(formation % 3)`, `0041ccd2(retreat % 3)` and `0041cd2d(autocasting % 3)`, each a type-0x46 record posted to `004e74fe` with subtypes 2, 1 and 3 (MENU-057).
+
+The commands are sent on every OK, whether or not the value changed. A checkbox or radio click only changes the control's own copy: the handler does not act on `0x46d`, so no option is written before OK. Cancel (button message `0x446`) and Esc (`004c55d8` sends `0x446` to vtable `+0x48`) reach the base handler without any export, so every stored option keeps the value it had when the dialog opened and no restore code exists. A speed change takes effect inside the OK arm; the Smoothing, Shadows, Lighting and Animation flags take effect at their consumers (TOWN-GRAPHICS-459, TOWN-SMOOTH-460).
+
+**Confidence.** **High** for the export order, the Animation to Lighting coupling, the clamp and the absence of an export on `0x446` (instructions read; TOWN-OPTIONS-457 bounds the same arm by measurement). **Medium** that nothing outside the dialog restores a value on Cancel: the dialog's own code does not, the `0x44c` receiver `004757b0` was not read, and no other writer was swept.
+
+**Unknown.** What `0x44c`, sent by the base close routine after the dialog ends, does with the result code (`004757b0` not read; it compares the result against `0x445` in at least one arm). Which key a control uses for Enter: the base key handler `004c5369` does not handle it.
+
+### MENU-075
+
+Class vtable `00597ce8`, constructor `00438e45` (the extra field `+0x70` holds the sound configuration `0x5eb458`), builder `00438e87`, handler `00439d52`. The campaign arm `00473689` creates it for message `0x422` when campaign `+0x3dc` equals 1, or equals 0 with `[0x5cd758]` nonzero. Posting sites of `0x422` are `0043c488` (the mission Esc menu button of id 4), `0043ca40`, `00476c0a`, `00476c18`, `00476cc9`, `00476e93` and `004865a6`. Constructor arguments are `(1, 100, 30, 640, 450, 0)`, a 540 by 420 rectangle snapped to 488 by 360 at (76,60) (MENU-077). The dialog keeps the music player (campaign `+0xc8`) at `+0x68`, the selected row at `+0x6c` (initially 0) and the configuration at `+0x70`.
+
+| id | kind | rect | text | bound value |
+|---|---|---|---|---|
+| 0x22b | title label, centred | 40,20,W-40,45 | d7 | none |
+| 0x22d | label (Tracks) | 40,60,W-40,78 | d143 | none |
+| 3 | list box | 40,80,W-64,170 | hint d11 | selected row to dialog `+0x6c` |
+| 0xa | scrollbar on the list, 24 wide | right of the list | none | none |
+| 2 | checkbox (Random Order) | 40,190,252,214 | hint d10, caption d9 | `config+0` |
+| 0x28 | checkbox (Acknowledgments) | 40,223,252,247 | caption d165 | `0x5eb530` |
+| 4 | Play button, message `0x476` | 40,256,140,280 | d12, d13 | none |
+| 5 | Stop button, message `0x477` | 150,256,252,280 | d14, d15 | none |
+| 1 | OK button, message `0x475` | 40,290,252,314 | d0, hint d8 | none |
+| 0x1a | label (music volume) | 258,175,W-40,190 | d16 | none |
+| 6 | slider | 258,190,W-40,214 | hint d19 | `config+8`, range `config+0xc` |
+| 0x1b | label (sound effects volume) | 258,224,W-40,239 | d17 | none |
+| 7 | slider | 258,240,W-40,264 | hint d20 | `config+0x10`, range `config+0x14` |
+| 0x1c | label (speech volume) | 258,275,W-40,290 | d18 | none |
+| 8 | slider | 258,290,W-40,314 | hint d21 | `config+0x18`, range `config+0x1c` |
+
+The list shows the titles of the player's current candidate bank (VIDEO-OPTIONS-057, VIDEO-076). Ids 2, 4, 5 and 6 get flag 1 (enabled) cleared with hint d23 when `config+0x20` is 0 (`-nomusic`, VIDEO-077), and hint d75 when the candidate bank is empty. The builder ends by setting player `+0x68` to 1 (`00439d3f`). There is no Cancel button.
+
+**Confidence.** **High** for ids, kinds, text slots, bound values and the gate rules. **Medium** for the pixel rectangles (constructor arguments, as in MENU-073) and for the scrollbar geometry, which is read from one constructor call.
+
+**Unknown.** The consumer of player `+0x68` (set to 1 at build, 0 only by the OK arm). The poster identity of `0043ca40`.
+
+### MENU-076
+
+Handler `00439d52` indexes messages `0x466..0x477` through the byte table at `0043a08f`; messages outside that range, including `0x445` and `0x446`, go to the base handler `004c52f3` (`0043a059`).
+
+| message | effect |
+|---|---|
+| `0x46d`, id 2 | store `config+0` and call the player's shuffle setter `00453179(value)` (VIDEO-MUSIC-056) |
+| `0x46d`, id 3 | store the selected row at dialog `+0x6c` only |
+| `0x46d`, id 6 | volume `= 0045442f(position, config+0xc)`; if it differs from the player's gain, store `config+8` and, unless the player state is 2, apply it as gain through `00449e20` |
+| `0x46d`, id 7 / 8 | volume to `0x5eb468` / `0x5eb470`; id 7 also posts `0x484` to `[0x5eff48]` |
+| `0x46d`, ids 4, 5, 0x28 | none |
+| `0x473` (slider release), wParam 7 / 8 | play a test sound at `0x5eb468` / `0x5eb470` through `00453b08` |
+| `0x476` Play | `[0x5eb47c] = 1`; if the selected row equals the player's current row, set gain and start; otherwise stop, select the row (`0045332f`), set gain and start |
+| `0x477` Stop | player state 2: stop (`004530f3`); state 1: fade (`00452f2c(0x7d0, 0x1f40)`); then `[0x5eb47c] = 0` |
+| `0x475` OK | player `+0x68 = 0`, export Acknowledgments to `0x5eb530`, forward `0x445` (close) |
+
+The gain setter `00449e20` clamps to -10000..0. Slider positions map to volumes by `volume = trunc(-max * ((position - max) / max)^2)`; the inverse, used when the dialog is built, is `max - trunc(max * sqrt(-volume / max))` (`004543fa`, `0045442f`; truncation by `0055458c`).
+
+Volumes, Random Order and the row selection are therefore applied at the control event, and Esc, which has no export, leaves them as moved. Acknowledgments is the only control written by OK alone, so Esc discards its change. Esc and OK both close; only OK clears player `+0x68`.
+
+**Confidence.** **High** for the per-message arms, the slider formula and the closing paths (instructions read). **Medium** that the Play and Stop calls reach the music player as VIDEO-OPTIONS-057 states: the receivers are the dialog's player field, not an independent trace.
+
+**Unknown.** Whether Esc leaving player `+0x68` at 1 changes player behaviour. How registry persistence of the volumes is triggered after a slider move (VIDEO-077 names the save routine only).
+
+### MENU-077
+
+Base constructor `004c54d1` calls the panel constructor `004c4c93` (vtable `0059b710`) and then the snap routine `004c553f`: width `W' = ((W - 8) / 96) * 96 + 8`, height `H' = ((H - 104) / 64) * 64 + 104` with truncation toward zero, centred on the screen words `[0x5ea208]` and `[0x5ea20c]`. At 640 by 480:
+
+| dialog | argument rectangle | frame size | origin |
+|---|---|---|---|
+| Game Options | 560 by 480 | 488 by 424 | (76,28) |
+| Sound Options | 540 by 420 | 488 by 360 | (76,60) |
+| cutscene list (VIDEO-075) | 440 by 420 | 392 by 360 | (124,60) |
+
+The painter `004c4da2` draws the frame from the nine-piece `interface/lm.256` sprite (DLG-PANEL-035) with an 8 px shadow band; the body is `(W' - 8)` by `(H' - 8)`, tiles are 96 by 64, and the background-bitmap argument is 0 in all three. The frame draws no title and no button: the title label, OK and Cancel are controls added by each builder at the coordinates in MENU-073 and MENU-075. Esc is handled by the base (`004c55d8`, message `0x446`), so every dialog of the base closes on Esc.
+
+**Confidence.** **High** for the snap arithmetic, the painter and the Esc path; **Medium** for the 640 by 480 sizes, which assume the screen words hold 640 and 480 (other screen modes change the origin but not the snapped size).
+
+**Unknown.** Which screen-mode values `[0x5ea208]` and `[0x5ea20c]` take in the 800 by 600 and 1024 by 768 modes.

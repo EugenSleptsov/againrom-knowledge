@@ -305,6 +305,24 @@ calls the MFC default, so a return of 0 only lets the root offer the key to its 
 
 <a id="open--not-established"></a>
 
+## Game Options and Sound Options dialogs (`MENU-073`...`MENU-077`)
+
+Both dialogs are modal children of the campaign window and share one dialog base (`MENU-077`).
+The base snaps a requested rectangle to a width of `96k + 8` and a height of `64k + 104`, centres
+it, and paints a nine-piece frame with an 8 px shadow; the title and the buttons are controls the
+builder adds. Esc closes any dialog of the base with message `0x446`.
+
+Game Options has 19 controls: five labels, a speed slider, eight checkboxes, three radio groups
+and OK and Cancel (`MENU-073`). Each control keeps a local copy of its bound option. Only OK
+writes them: the speed level, the flags, Smoothing, the graphics flags, the party display values
+and the autohealing mode, in a fixed order, with Animation 0 forcing Lighting 0, and then three
+party commands. Cancel and Esc write nothing; the dialog's own code restores nothing, and the receiver of the follow-up close message was not read (`MENU-074`).
+
+Sound Options has 15 controls and no Cancel button (`MENU-075`). Random Order, the track
+selection, the three volume sliders, Play and Stop act when the control changes. OK exports only
+the Acknowledgments checkbox and closes; Esc closes without it and leaves the moved volumes in
+place (`MENU-076`).
+
 ## Unknowns
 
 - The `+0xe4` disable bits' source (which buttons start disabled) and the non-WM_CLOSE
@@ -331,3 +349,7 @@ calls the MFC default, so a return of 0 only lets the root offer the key to its 
 - Whether a phase-3 or networked session delivers the settings keys, the interval of the tick
   message that expires message-line lines, and the receiver's use of the `0x46` records
   (`MENU-057`, `MENU-059`).
+- Whether the Esc menu is the only poster of the Game Options message, the meaning of campaign
+  `+0x6bc` values 0 and 1, and what the base close routine's follow-up message does with the
+  result code (`MENU-073`, `MENU-074`); the consumer of the music player flag that the Sound
+  Options dialog sets to 1 at build and clears only on OK (`MENU-075`, `MENU-076`).

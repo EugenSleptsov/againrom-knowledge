@@ -810,3 +810,56 @@ Frame step `FUN_004ae9b0`, called by the player `FUN_0047a600` with argument 1, 
 - **Header.** Flags are 0 in 66 of 66 (no ring, no y-scale). Intervals: `-6666` in 30 EN and 29 RU, `-6673` (`M120/01`, both containers) in 2 on each root, `-4000` (`LOGOS/buka`) in 1 on each root, `-8333` (RU `LOGOS/1c`) in 1. Frames run 75 to 1309 and durations 5.0 to 87.3 s. No interval is zero or positive.
 
 **Confidence.** **High** for the census: every node of the named archives, parsed by `tools/smkcensus`. It does not cover movie files outside `Allods/VIDEO4.RES` and `Allods/VIDEO8.RES`, or the audio payload.
+
+
+## Settings, music lists and cutscene list
+
+Registry values named here sit under `HKLM\SOFTWARE\1C\Allods` (TOWN-186). The dialogs that edit them are MENU-073 to MENU-076.
+
+| ID | Public functional claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| VIDEO-075 | The cutscene list (message `0x436`, class `00598c00`) shows `cutscene.txt` rows 0..N, N the registry dword at `0x5bd028` (floor 2); OK plays that row's `cutpaths.txt` directory. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| VIDEO-076 | Among the nine request owners of the EXP-0229 census, the 21 music tracks form nine literal lists, one 12-entry list shared by every mission; no direct reference copies the registry `SoundRandom` value to the player. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+| VIDEO-077 | Shadows, Dynamic lighting, Object animations and Smoothing are 0/1 dwords defaulting to 1, cleared by command-line switches and replaced by a registry load that runs later; they persist with nine other option values. | High / Medium | ● active | [EXP-0457](../experiments/EXP-0457-settings/) |
+
+### VIDEO-075
+
+The campaign arm `00474c11` handles message `0x436`; the message is posted at `004738aa` by an arm whose own trigger was not traced. The arm does nothing when the byte `[0x5bcee8]` is 0. The byte's image initial value is 1, so the gate is open unless something clears it; the only store found by the 4-byte sweep is 1 at `00470f3a`, in the video-resource setup of the application start (`00470e61`..`00470f3a`).
+
+The arm fills a string array with `cutscene.txt` rows 0 to N inclusive, through accessor `004687f0` on the table object `0x5eb430` (loaded from that file at `00471246`). N is the dword `0x5bd028`. It is read from the registry value named `Using VxD` (`0043cdd9`), raised to 2 when lower (`0043cddf`, `0043cde8`), and written back at save (`0043ce9a`). The arm then builds the dialog `0044708c` (arguments `(0x11, 100, 30, 540, 450, ...)`, a 440 by 420 rectangle; MENU-077). The dialog's builder `004470d9` adds a list box (`004c168a`, id 2, initial row `[0x5eb598]`) and a scrollbar (`004c35cd`, id `0x29b`).
+
+On OK (`0x445`) the handler stores the selected row at `[0x5eb598]` (`0047611a`) and calls the cutscene routine `0047a2b0` with it. That routine saves the settings (`0047a303`), then forms the path `%s\%s\%02d.smk` from the video directory string `0x5f0050`, the row's `cutpaths.txt` text (object `0x5eb480`) and a part number from 1 to 99 (`0047a3bb`, `0047a46a`). A part that cannot be opened is skipped; a part whose playback routine `0047a600` returns 0 ends the sequence. When called with row -1, the routine builds `m%d` from the current mission number (campaign `+0x660`), compares it with each `cutpaths.txt` row (`00553d80`) and, on a match at row k, plays row k and raises `0x5bd028` to k when it is lower (`0047a378`..`0047a383`). **Medium:** N is then a high-water mark of the `cutpaths.txt` row of the mission movies played, with a floor of 2; the callers that pass -1 were not traced.
+
+The two tables have 14 rows each on both roots (TEXT-100). The video directory string is `video4` or `video8`; the `-8x` and `-4x` tests (`00470e8c`..`00470ee6`) choose between them, and the rule was not traced further. Archive contents are VIDEO-074.
+
+**Confidence.** **High** for the arm, the list source and bound, the floor, the persistence and the path format. **Medium** that the menu is the owner's media menu (it is the only list dialog that reads a movie table), and for the high-water-mark reading, because the callers that pass -1 were not traced.
+
+**Unknown.** The poster of `0x436`. The caller set of `0047a2b0`. What sets `[0x5bcee8]` besides `00470f3a`'s branch condition. Whether N can exceed 13: no clamp was found, and the scan raises it only to a matched row index.
+
+### VIDEO-076
+
+Request lists are literals in nine owner routines. The nine owners, their addresses and list sizes are taken from the EXP-0229 census (`request-sites.tsv`, one row per replace call), not recomputed by EXP-0457: the shop `00476510`, the map `004768c0`, the menu `004769c0`, the inn `00476ed0`, the school `00476ff0` (two tracks, order set by the school-state bit, VIDEO-MUSIC-008), the Town `00477130`, the second inn `00477250`, the character generator `00479f50` and the mission owner `0047cc00`. The eight screen owners hold one or two tracks each; the mission owner holds the 12 tracks `B00`..`B11`. These nine lists contain 21 tracks, the number of files in `MUSIC.RES` (VIDEO-MUSIC-001). Every owner honours the `-nomusic` gate (`config+0x20`).
+
+A mission therefore has one list, shared by all missions (VIDEO-MUSIC-064). The other selection path in the recovered code is the numeric music-candidate selector of text markup (VIDEO-MUSIC-009). The Sound Options list shows the player's current candidate bank (VIDEO-OPTIONS-057), so in a mission it shows the 12 mission tracks. Progression is VIDEO-MUSIC-007: ordinary mode plays a randomized order and advances at stream end, fixed-source mode repeats the chosen candidate. The player constructor sets ordinary mode (`+0x20 = 1`).
+
+The stored `SoundRandom` value is `config+0` (default 0). Only four instructions in the image reference `0x5eb458`: the registry load (`0043cd5c`), the registry save (`0043ce30`), the static initialiser (`004681d0`) and the Sound Options constructor call (`0047375f`). None copies `config+0` to the player, so the value changes the player only when the Random Order checkbox is clicked (MENU-076); the checkbox is built unchecked from the default 0 while the player starts in ordinary mode.
+
+**Confidence.** **High** for the nine owners and their list sizes as the EXP-0229 census states them, and for the four references of `0x5eb458` (`sweeps.py`: a 4-byte scan of the section bytes, plus the call-site scans for `00453179`, regenerated by `regen.sh`). **Medium** that no other per-mission selection exists: the claim is bounded by the nine owners and the markup selector. **Medium** for the unchecked-checkbox observation, which assumes no computed access to `config+0` (none was found among the direct references).
+
+**Unknown.** Case handling and the exact identity of the title lookup (`Mid(6)` then lowercase, then a dictionary at `0x5eb3e8`). The consumer of player `+0x68` (MENU-075).
+
+### VIDEO-077
+
+The 13 option dwords are read by `0043d661` and written by the mirrored save `0043ce09`, with `RegQueryValueEx` through the options object `0x5eb510`: GameSpeed (campaign `+0x3f4`), FormationMode, WimpyMode, ShowAllHitPoints, ShowFlyingHP (party object), Smoothing `0x5eb520`, ShowTimeFlow `0x5eb528`, TipsMode `0x5eb52c`, Acknowledgement `0x5eb530`, AutoCasting `0x5eb534`, Shadows `0x5bceec`, Lighting `0x5bcef4` and Animation `0x5bcef0`. The load has no range clamp and ignores a missing value, so the in-memory default stays.
+
+Defaults: the options constructor `0043d3fa` (static initialiser `00468220`) sets Smoothing, ShowTimeFlow, TipsMode, Acknowledgement and AutoCasting to 1; the data section holds 1 for Shadows, Lighting and Animation; the campaign constructor sets the speed level to 4 (`00471a0c`). A checkbox yields 0 or 1 (MENU-073); the consumers of the graphics flags are TOWN-GRAPHICS-459 and TOWN-SMOOTH-460.
+
+The command line is searched for substrings after the options object is built (`00470f5e`..`0047108a`). `-nodynamiclighting` clears Lighting, `-noshadows` clears Shadows, `-noanimation` clears Animation, `-detail2` clears Shadows, `-detail1` clears Shadows and Lighting, `-detail0` clears all three, and `-nomusic` clears `config+0x20`. The registry load runs later, at `004712fb`, so a stored value replaces a switch. The strings `-window`, `-safevideo`, `-640`, `-800`, `-1024`, `-8x` and `-4x` also exist; only `-8x` and `-4x` were traced (VIDEO-075), so no resolution or windowing option is claimed.
+
+The sound configuration `0x5eb458` (constructor `004693e0`, static initialiser `004681d0`) holds SoundRandom `+0` (0), music, effects and speech volumes `+8`, `+0x10`, `+0x18` (default -700 each), their ranges `+0xc`, `+0x14`, `+0x1c` (5000 each), the music-available gate `+0x20` (1) and MusicEnabled `+0x24` (1; `0x5eb47c` is the playback enable). Its registry values are SoundRandom, SoundMusPos, SoundSfxPos, SoundSpeechPos and MusicEnabled (`0043cd61`, `00438cf2`). The slider position at the default volume is 3130 by the inverse in MENU-076. Other values of the key are `Using VxD` (VIDEO-075), `phonebooksize`, `comportsettings`, `lastprotocol`, `lastip` and `CD`.
+
+The save runs in the campaign teardown (`00471f6c`) and before a cutscene (`0047a303`), so a changed option reaches the registry at the next of those, not at the click.
+
+**Confidence.** **High** for the name and storage pairing (the load pairs each name pointer with its destination), the defaults read from instructions and the switch effects. **Medium** that a registry value replaces a switch, which rests on the order of calls in one function, and for the save timing, whose two callers were read but not all paths into the teardown.
+
+**Unknown.** Whether the data-section initial values of `0x5bceec`, `0x5bcef4`, `0x5bcef0` are the only writers before the load. The effect of `-window`, `-safevideo`, `-640`, `-800` and `-1024`. The `004713fa` path that also clears `config+0x20`.
