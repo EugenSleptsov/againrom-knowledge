@@ -1256,3 +1256,44 @@ command's own acceptance rules in `0041c98f`, and the usability test.
 **Unknown.** The value of panel host `+0x140` during a shop visit; whether
 `0041c98f` accepts source code 4 into destination code 1; whether the
 rejection drop clears the cursor slot.
+
+## Shop grid, button panel, pack readout and speech presentation
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| SHOP-106 | The shop stock-grid painter draws quantity text in font 2 with flag 0 (left) and price text with flag 1 (right), both with ramp `0x5e9b88` and shadow 1; the purse cell goes through the quantity run, never the price run. | High | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+| SHOP-107 | The shop button panel redraws a pressed-and-hovered button's picture and both captions one pixel lower in the hover colour object `[0x5e9bbc]`; the final RGB of the two caption colour objects is Unknown. | High / Medium / Unknown | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+| SHOP-108 | The mission pack readout (class vtable `0x59a1a0`, `campaign+0xe8`) draws its purse figure and its stack counts with font 2, flag 0, shadow 1 and the gold ramp `0x5e9b88`, as the shop grid does. | High | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+| SHOP-109 | The shop speech is requested by tray slot `+0xa4` (`004a6380`) on a scaled 30 percent draw from held-item keys; no tavern routine requests a speech-prefixed file of its own (tavern sound requests are slot objects). | High / Medium | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+
+### SHOP-106
+
+The grid painter `004a2fe0` (vtable `0x59a988` slot `+0x2c`) holds exactly two calls of the shadow text wrapper `00456b50` (`this` = font 2 `[0x5e92f8]`; arguments x, y, text, flags, ramp, shadow offset). The quantity call (`004a32e1`) pushes shadow 1, ramp `0x5e9b88`, flags 0 and the grouped decimal text; flag 0 is left alignment (`004577f0`). It places x at cell left plus 10 and y at cell bottom minus 15, and runs when the element's `+0x10` exceeds 1 (`004a3258`). The price call (`004a3499`) pushes flags 1 (right, at the cell right edge less 6), the same ramp and shadow, and the same font; `ITEM-PRICETAG-144` already states its operands. For the purse element (`+6` equal to `0xffff`) the painter reloads `+0x10` from the player's purse (`004a312a`), so the purse figure is a quantity run: font 2, flag 0. The price run skips that element and skips quantity 0 (`004a3317`..`004a3326`). The two text runs of `SHOP-SCREEN-039` stand.
+
+**Confidence.** High: operands read at the call sites in `evidence/disasm-grid-paint-4a2fe0.txt` and the wrapper in `evidence/disasm-shadow-text-456b50.txt`. EN and RU share one `rom.exe` image hash (`evidence/image-hashes.txt`); the text rows were not compared, and no answer depends on them.
+
+**Unknown.** The price run's y slot (`[esp+0x3c]`, stored at `004a334e`) beyond `ITEM-PRICETAG-144`.
+
+### SHOP-107
+
+The shop button panel `004acb50` draws each button's two captions in its unconditional pass through the font-4 primitive `[0x5e9bc0]` (`vt+0x14`, flag `0xa`), choosing the colour object `[0x5e9bbc]` when the hovered index `+0xfc` equals the button and `[0x5e9cb8]` otherwise (`SHOP-050` holds the four rectangles). The pressed-and-hovered pass (`004ad188`..`004ad788`) runs only when `+0xf8` and `+0xfc` are both non-negative and equal. It re-blits the button child at `[this+idx*4+0x64]` through `vt+0x38` (`004ad246`), then redraws both captions in `[0x5e9bbc]` with the caption y one pixel lower (`+7` against `+6` from a quarter of the height; `-1` against `-2` from three quarters); x is unchanged. The two objects are built by `00457c40` through `00427df0` mode 4: 16 shade blocks of 256 words, and the captions read block 0 (`004ae200(obj, 0)`). The source tables hold 16 entries of three bytes (`evidence/colours.txt`): hover entry 15 holds (15, 15, 6) and normal entry 15 holds (10, 9, 4).
+
+**Confidence.** High for the pass condition, the picture re-blit, the object choice and the one-pixel offsets. Medium for the object roles: the hover and normal names follow the `+0xfc` comparison. Unknown for the displayed colour: block 0 scales the source by a shade term (`00428242`..`004282b3`) and maps it through the pixel format, which the probe sets to zero.
+
+**Unknown.** The displayed RGB of either caption colour object; the glyph index range that selects entries of the 256-word block.
+
+### SHOP-108
+
+The pack readout `00482e70` (vtable `0x59a1a0`, one `0x20ac` object built by `00482d20` at `004722ac` and stored at `campaign+0xe8`) formats the purse from `[[this+0xd0]+0x9b4]+0xc` with `"%d"` and the grouping routine, and draws it at `004832da` with `00456b50(x, y, text, 0, 0x5e9b88, 1)` in font 2. Stack counts above 1 use the same call form (`0048337b`). The empty-list readout uses flag `0xa` with the same ramp (`00483175`). `0x5e9b88` is the gold ramp whose entry 15 is (185, 159, 73) (`MISSION-MSGLINE-056`, `evidence/ramps.txt`). The coin picture is `[0x5ef998]` and the background `[0x5ef954]` (`SHOP-MONEY-048`).
+
+**Confidence.** High for the call operands and the ramp identity.
+
+**Unknown.** Which player screen displays the object at `campaign+0xe8` (`TOWN-469` left it unidentified); the empty-list text; the displayed colour after the pixel-format mapping.
+
+### SHOP-109
+
+The tray class (vtable `0x59abc8`, `view+0x70`) fills slot `+0xa4` with `004a6380`. It draws the scaled value `((rand() * 100) / 32767) % 100` (`004a63a0`..`004a63c9`, `rand` = `00554a60`, `AI-RAND-058`) and continues below 30 (`004a63cb`), reads the held element `[session+0x3cc]`, requires container code 5 to 8, and builds the file name: `speech\shop\effects\%.2d.wav` when `004840c0` is non-zero, `speech\shop\books\%.2d.wav` when tag `0x2a` is non-zero, else `speech\shop\s%.2di%.2dp%d.wav` with a variant 1..3 drawn the same way (`004a645d`..`004a6482`). It stores the object at `[this+0x20b0]` and `[this+0x20b4]` and requests it through `00453b08` at `004a6547` and `004a65a0`. The call sites of `[reg+0xa4]` in the shop range are `004a37c0`, `004a39c0`, `004a92cd` (receiver `view+0x70`, the tray), `004a9519`, `004a9531` and `004b0fe0`. The tavern has no `speech\` literal of its own. Its sound requests through `00453b08` in the read range are slot objects (`TAVERN-LINES-022`; sites `0047e3d8`, `0047e548`, `0047ec46`, `0047ed44`, `0047ed71`, `0047edf9`, `0047ef00`, `0048035a`, `00480a6f`, `00480f1f`, `00480f52`, `00480fc6` and `004810d1`, the last for the Talk.wav slot `+0xb4`; `evidence/scan-sound-request-callers.txt`). The tavern talk routine `00480fd0` builds the dialogue name `inn\NPC\npc%02dm%d` (`0x5bed8c`, `0048104a`, `0048108f`) and opens it through `004217be` (`DLG-RECT-037`); a dialogue's sound, if its node carries one, is played by the dialogue pager request at `004c5e30` (`DLG-SOUND-028`).
+
+**Confidence.** High for the routine, the file-name formats and the draw. Medium for the call-site list: the receiver classes of `004a37c0`, `004a39c0` and `004b0fe0` were not identified, so which of those sites reach `004a6380` is Unknown. Medium for the tavern clause: the image data holds `speech\` strings only at `0x5c0380`, `0x5c03a0`, `0x5c03bc`, `0x5c1a80` and `0x5c1c34` (`evidence/strings-speech.txt`), and the `00453b08` census lists no tavern request outside the slots above; a computed path would not appear.
+
+**Unknown.** Receiver classes of the three unattributed sites; the item word bits that fill `s%.2di%.2d`; the role of the sound manager `[0x5eb470]`; whether any tavern dialogue is voiced, which depends on the `main.res` text nodes (22 EN and 29 RU `inn\NPC` nodes, `DLG-RECT-037`) that this experiment did not read in either language.

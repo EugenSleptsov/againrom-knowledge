@@ -606,7 +606,7 @@ Established only by string presence in the `rom.exe` data section (`str-data.txt
 
 **Confidence.** Unknown (existence only; no reader traced)
 
-**Amended.** the four animation-family consumer Unknowns are resolved by `TOWN-427`..`TOWN-434`; the three `npc*` key formats remain Unknown. [`retracted.md`](retracted.md) holds an entry for this claim (resolved).
+**Amended.** the four animation-family consumer Unknowns are resolved by `TOWN-427`..`TOWN-434`; the two `training\npc33s%dl%d` and `training\npc34s%dl%d` key formats are resolved by `TOWN-502`, and the `training\npc34m%d` reader is the training-hall enter routine `004b7f20` (call site `004b8383`, `DLG-RECT-037`). [`retracted.md`](retracted.md) holds entries for this claim (resolved).
 
 ### TOWN-023
 
@@ -2707,3 +2707,44 @@ No sprite sheet, picture field or draw site is named for a crowd, and the crowd 
 **Confidence.** High for the census and slot table. Medium for the negative: it covers the painter route through two slots, not other windows or the 462 undisassembled bytes of the town range.
 
 **Unknown.** Draw calls through other object slots; the body of `004b4ea0`; the hook helper bodies `00447d70`, `004bccb3` and `004bd65c`; the tip popup child's content; crowd imagery inside `townmain.bmp`, `Town_add.bmp` or another named picture; owners reached by computed or indirect targets outside the town class.
+
+## School clock, state dwords, speech and pressed command
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| TOWN-499 | School global `0x5f20f0` is written and read only in school paint `004ba660`, which gates the column step at more than 83 ms; paint frequency is Unknown, with one idle-handler repaint request path found. | High / Unknown | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+| TOWN-500 | The ten school state dwords start at -1 and a hit test turns 2 into -1 and 3 into 1; the main loop skips -1 and `004bab50` paints the idle icon; the readers of the marker, timestamp and flag bit 3 are listed. | High / Medium | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+| TOWN-501 | A pressed-and-hovered school button draws its on picture and captions one pixel lower in the hover colour object; every other state draws the off picture in the object chosen by hover. | High / Medium | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+| TOWN-502 | The school mouse-up handler `004bbe70` requests the teacher speech `training\npc33s%dl%d` or `npc34s%dl%d` after a paid training step, once per latch, then posts `teach.wav`. | High / Medium | ● active (branch candidate) | [EXP-0456](../experiments/EXP-0456-shop-school/) |
+
+### TOWN-499
+
+An image-wide scan for displacement and immediate `0x5f20f0` finds three hits, all in `004ba660`, the school's own-surface paint (vtable `0x59b088` slot `+0x2c`): the first-paint write of now minus `0x64` (`004ba688`, flag byte `0x5f20d8` bit 0), the read `sub ebx,[0x5f20f0]` (`004ba823`) with `cmp ebx,0x53; jbe` (`004ba829`), and the write of now (`004ba834`). The gated block (`004ba829`..`004ba8d6`) steps the column pictures through `004b99e0`, `004b94f0`, `004b98b0` and `004b9780` and adds `[+0x320]` to `[+0x31c]`; it runs once more than 83 ms have passed since the last step. Other school timers are separate globals: `0x5f2108`, `0x5f2110`, `0x5f211c` (with `0x5c1110`, `0x5c1114`, flag `0x5f20d4`) in `004bab50`, and `0x5f210c` (flag `0x5f2100`) in `004bb160`. The message arm `0x402` of `004b9bc0` repaints through `vt+0x34` when `[session+0x3dc]` bit 3 is clear (`TOWN-063`), and the idle handler `00471600` posts `0x402` once per call on its repaint-only path to `[campaign+0xcc]`. The image imports no timer API for this (`SESS-TIMER-022`). One repaint request path is therefore identified: the idle handler's repaint-only arm, taken when `[session+0x3dc]` bit 0 is clear and `[esi+0xbc]` is non-zero, posts one `0x402` per call, and the school arm repaints unless `[session+0x3dc]` bit 3 is set. That the school paints once per idle iteration is an inference from this path alone (Medium); the idle handler's arm with bit 0 set (`00475280`, `004753c0`, `00475610`) was not read, and the delivery from `[campaign+0xcc]` to the school view was not traced.
+
+**Confidence.** High for the three-hit population and the gate. Unknown for paint frequency; Medium for the inference of one paint per idle iteration on the identified path (`TOWN-481` shows the town view receives `0x402` directly).
+
+**Unknown.** The paint frequency; the idle handler's bit-0-set arm; the root-to-room delivery of `0x402`; the idle-handler call rate.
+
+### TOWN-500
+
+The ten state dwords are the fighter slots at `view+0x2a4`..`0x2b4` and the mage slots at `view+0x2f4`..`0x304`. The constructor `004b7c40` and the enter routine `004b7f20` (loop `004b80ef`..`004b8103`) store -1 in all ten. The hit test `004b9ea0` visits every dword not equal to -1, clears bit 1, and stores -1 when the value is then 0: 2 becomes -1 and 3 becomes 1; `004b9dc0(slot, flag)` sets the target's bit 1. The main paint loop (`004ba9cb`..`004baa9a`) skips a -1 dword and picks the state picture by `[view+(state+3*slot)*4+0x264]` (fighter) or `+0x2b4` (mage). `004bab50` (called at `004baaa2`) paints the idle shine icon of the cycling slot: it advances `[0x5f211c]` modulo 5 every 500 ms or more while no slot has bit 1, and uses the shine picture (`+0x2bc` or `+0x26c`) for -1 or bit 0 clear and the shine-on picture (`+0x2c0`, `+0x270`) when bit 0 is set. Timestamp `view+0x340` is read only at `004ba6d7` (against `0xc8`) in the school range and written by paint, enter and the picker steps `004badf0` and `004baee0`; the class-change marker `view+0x348` is read only at `004ba6a6` and cleared at `004ba782`. The picker steps write -1 to all ten dwords, set `+0x340` to the time, and OR bit 3 into the new element's flag `+0x18c`; the enter routine ORs bit 3 into the hero element at `004b80e0`. Direct tests of element flag bit 3 are at `0047d68a`, `0047d6d5`, `00491e86` and `00491eac` (info-window builders). Other readers of the states are `004bafd0` (training quote) and `004bba00` (hover cursor).
+
+**Confidence.** High for the dword values, the hit test and the painter routines. Medium for the reader lists: the direct bit-3 tests were found at four sites in the list of 232 `+0x18c` accesses of all classes (`evidence/scan-element-flags-18c.txt`); indirect consumers (register copies, whole-dword copies and pushes such as `0045b066`, `004ed9d0`, `004ee2a5`, `004ee57f`, `004ef09f`) were not classified.
+
+**Unknown.** The mage branch of `004bab50` calls `004bb0e0` and then indexes by the cycle counter directly; its purpose was not resolved. The consumers of copied flag words.
+
+### TOWN-501
+
+The school button painter `004bc1b0` loops over rectangles `0x360`..`0x368` of the view. For rectangle i it picks the colour object `[0x5e9bbc]` when the hovered index `[this+0xb0]` equals i, else `[0x5e9cb8]` (the pair of `SHOP-107`). When `[this+0xb0]` is non-negative and `[this+0xac]`, `[this+0xb0]` and i are equal (pressed and hovered) it blits the on picture `[this+ebx-0x2ec]` (`004bc274`) and draws the caption at y offset `+9` and the value at `+1` (`004bc34d`); otherwise it blits the off picture `[this+ebx-0x2e4]` (`004bc37f`) with caption offset `+8` and value `+0` (`004bc445`..`004bc459`, no constant added). Both texts sit one pixel lower when pressed. Both texts go through `[0x5e9bc0]` `vt+0x14` with flag `0xa`; the value is the grouped quote `view+0x360` or the difference `view+0x364` (`004bb0a0`). The loader `004bc4d0` names the button pictures.
+
+**Confidence.** High for the branch condition, the pictures and the offsets. Medium for the on and off naming: it follows the picture slots read, not the loader's file names.
+
+**Unknown.** The RGB of the two colour objects (`SHOP-107`).
+
+### TOWN-502
+
+The mouse-up handler `004bbe70` (slot `0x59b168` of the button child) reads the pressed index `[this+0xac]` (0..2), confirms release by `004bc6a0`, and for button 0 runs the training step `004bb070`. If the purse and price fields (`+0x358`, `+0x354`) allow it, it sets `+0x264`, issues the command `0041fc50`, and reads the hero element `[0x5ea0c4][view+0x33c]`, the skill byte `[hero+slot+0x14a]` and flag `+0x18c` bit 1 (mage). The tier is 0 up to 20, 1 up to 50, else 2. A latch dword at `view+0x36c+4*(class + 6*slot0 + 2*tier)` must be non-zero, where class is 0 or 2; the latches are set to 1 by `004b7c10` and zeroed after the request (`004bc14d`). The key is `training\npc33s%dl%d` (fighter, `0x5c1aa0`, `004bbff9`) or `training\npc34s%dl%d` (mage, `0x5c1a88`, `004bc00d`), with slot code 1..5 and tier plus 1, prefixed `Speech\` and suffixed `.wav`; the sound object is built by `004534e4` and requested through `00453b08` (`004bc139`). Then `SFX\Town\School\teach.wav` is posted (`004bc161`). The three key literals each have one immediate reference, all in `004bbe70`.
+
+**Confidence.** High for the routine, the keys and the request. Medium for the latch index: the arithmetic gives the mage tier t and the fighter tier t plus 1 of one slot the same dword, and the next slot's first fighter tier follows the last mage tier; no run was made. The `training\npc34m%d` movie key belongs to the enter routine (`DLG-RECT-037`).
+
+**Unknown.** Who unlatches between visits (`004b7810` calls `004b7c10` twice); the role of `[0x5eb470]`.
