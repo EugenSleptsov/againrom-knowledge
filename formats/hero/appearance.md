@@ -75,7 +75,7 @@ this: that actor's drawn class is its `typeID` and nothing derives it.
 **Which `typeID` a placed human holds.** The `typeID` of the Humans row the placement resolves to,
 not the placement record's own class key (`ANIM-116`). No store reachable from the client unit dispatcher selects it again, because the
 derivation above returns unless drawable `+0x18c` bit 0 is set, and creation leaves that bit clear
-for every class below `0x1a` (`ANIM-117`). The swing sound is `Sound[0]` of the class held at the
+for every class below `0x1a` (`ANIM-117`, amended). A unit's bit is set only by the hero arm for an id in `[0x20,0x40)`, reached through a nonzero Humans constructor mode; of the 464 placements of the shipped maps 4 have such a mode, and the primary-hero and `AddHero` modes were not traced (`UNIT-140`). The swing sound is `Sound[0]` of the class held at the
 call (`ANIM-105`). A placed mage whose record names class 23 (`Unarmed Mage`, silent) and whose row
 names class 24 (`Human Mage`) holds 24 and the swing hook is passed slot 510 (`ANIM-118`).
 

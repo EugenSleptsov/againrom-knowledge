@@ -54,8 +54,8 @@ reading is retracted. The sprite can occupy less than the class canvas.
 
 ### `Z` selects the drawable class (`REG-UNITS-061`, registration scope amended)
 
-`FUN_004104e8` is the only site in `rom.exe` that allocates a `0x1b0` unit object, and it branches
-on `class+0x104` = **`Z`**:
+`FUN_004104e8` allocates `0x1b0` bytes at two sites and branches
+on `class+0x104` = **`Z`** (five sites in four routines allocate `0x1b0` bytes; the others build `CUnit`, `UNIT-141`; `REG-UNITS-061`, amended):
 
 ```
 0041152d  CMP dword ptr [ECX + 0x104],0x0     ; Z, on classes[DAT_005eb674][subscript]

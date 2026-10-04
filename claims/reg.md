@@ -1398,8 +1398,7 @@ section is read at all.
 
 ### REG-UNITS-061
 
-- `FUN_004104e8` is the only site in `rom.exe` that allocates a `0x1b0` unit
-  object, and it does so twice. `0041151f` loads the `units.reg` class array
+- `FUN_004104e8` allocates `0x1b0` unit objects at two sites. `0041151f` loads the `units.reg` class array
   `0x005eb674`, `0041152a` subscripts it, and
   `0041152d CMP dword ptr [ECX+0x104],0x0` tests `Z` (`class+0x104`,
   `REG-UNITS-049`). The branch chooses `CUnit` (`Z == 0`, `CALL 0045ae30`) or
@@ -1447,6 +1446,11 @@ by the selector destinations, the literal stage/flag predicate, the
 `CAirUnit` `+0x10` write and the non-blit helper stated above; common drawing
 bodies do not merge the populations. The `Z`/corpus and simulation-domain
 observations are not remeasured or upgraded.
+
+The clause "only site in `rom.exe` that allocates a `0x1b0` unit object" is withdrawn
+(`retracted.md`, `UNIT-141`): five sites in four routines allocate `0x1b0`, and the others
+build `CUnit`. The `CAirUnit` arm also requires the creation mask to lack the hero range
+(`UNIT-141`).
 
 ## Mission records, routing and town offers
 

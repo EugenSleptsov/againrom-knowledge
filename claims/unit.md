@@ -451,3 +451,29 @@ range stays retired; the next free `unit.md` id is therefore past it, at
 **Confidence.** High for the click chain at the cited addresses. Medium that the order's target is always the hover id: the other callers of `FUN_0041c796` were not searched. Unknown for whether any of the seven classes has a non-zero table word (`MENU-072`); the RU `structures.reg` rows were not compared, so RU coverage is the image hash only.
 
 **Unknown.** The table word and so the pool, for the seven classes.
+
+## Unit creation and the hero flag
+
+| ID | Claim | Confidence | Status | Evidence |
+|---|---|---|---|---|
+| UNIT-140 | Drawable `+0x18c` bit 0 is set on a unit only by the hero arm of `FUN_0045f850` for ids in `[0x20,0x40)`, reached through a nonzero Humans constructor mode; no table row reaches the arm. | High / Medium / Unknown | ● active | [EXP-0458](../experiments/EXP-0458-shadow-writers/) |
+| UNIT-141 | `CAirUnit` has one constructor site, guarded by the hero-id range and `Z`; the five `0x1b0` allocation sites build `CUnit` otherwise, and no other path fixes the shadow arm. | High / Medium | ● active | [EXP-0458](../experiments/EXP-0458-shadow-writers/) |
+
+### UNIT-140
+
+- Mechanism (`TERR-194`). Of the stores that set bit 0 on a drawable, the unit path has one, `0045f899`, in the `[0x20,0x40)` arm of `FUN_0045f850` (sole caller `00411755`, in the dispatcher's creation block). An id below `0x1a` takes the clearing arm; other ids make no store. The constructor, `Init` and the dispatcher's own stores never set it.
+- Which ids reach the arm. The Humans constructor `FUN_004f8e78` takes a mode; a nonzero mode overwrites `typeID` with `gender + 0x21` or `+ 0x23`, inside `[0x20,0x40)`. The census of the Humans table (215 rows) and of the Units table finds no `typeID` in `[32,64)`, so a table-driven unit never reaches the arm. This is the same on both roots, which differ only in rows with `typeID` 3 against 4.
+- Callers of the constructor (19 sites). Read: the four character-screen previews in `0047bf40` push 1 for the mode (`0047bfea MOV EBX,1`, `0047bff9 PUSH EBX`, call `0047c001`); the three tavern-hire sites push 0 for both extra arguments (`00504edf`, `00505613`, `0050595c`). The map spawner passes the placement's mode: 0 for the definition-id and type-key arms and the `Hero` flag's value for an npc arm (`PARTY-M20-031`); of 464 Humans-band placements in the shipped maps, 4 (npc arms carrying `Hero`) have mode 1 and 460 have mode 0. Not traced: the mode at the primary-hero command sites (`004d3755`), at `004d46aa`/`004d4707` (variable `[EBP-0x58]`), at the `AddHero` sites (`004d9099`, `004d90e4`, variable `[EBP+0x10]`) and at `004f186e`.
+- Loaded units. 93 of 161 saved Humans records hold a type word in `0x21..0x24` (`ANIM-106`); a load that rebuilds the unit through the creation path would reach the arm for those. Not observed.
+
+**Confidence.** High that the arm sets bit 0 only for an id in `[0x20,0x40)` and that no table row holds such an id. Medium for the modes read above. Unknown for the primary-hero and `AddHero` modes (not traced), for a summoned unit (no creation path was identified) and for a loaded unit (inferred from the saved type words). Inference, Medium: the speaker synthesizer's Hero store (`00422066`) and the character-screen stores build dialogue-speaker and preview drawables, which this experiment did not show are drawn by `FUN_0045bf00` or placed on the map, so they are not counted as units in play.
+
+### UNIT-141
+
+- The dispatcher `FUN_004104e8` allocates `0x1b0` bytes at `00411536` and `00411597`. `CAirUnit`'s constructor `00461560` has one caller, `0041155f`, taken only when the creation mask lacks the hero range (`[EBP-0xcc]` is 0) and `[class+0x104]` is nonzero (`REG-UNITS-061`). `CUnit`'s constructor `0045ae30` has six call sites: `00402397` (a static scratch object), the dispatcher (`004115c0`), `00421fb5`, `00461563` (the base call of the `CAirUnit` constructor), `0047af6a` and `0047b67b`.
+- Allocation sites of `0x1b0` bytes: five, `00411536`, `00411597`, `00421f95`, `0047af4f` and `0047b660`, in four routines (the dispatcher twice, the dialogue-speaker synthesizer, the character screen and its helper). The two pushes of `0x1b0` at `00472c12` and `00473a5b` are window-size arguments.
+- None of the non-dispatcher sites builds a `CAirUnit`, so no path outside the dispatcher fixes a drawable's shadow arm (`TERR-193`). The class in the dispatcher is read from a global that the creation mask's `0x4000` bit refreshes; when the bit is absent the global is stale, an edge not traced.
+
+**Confidence.** High for the constructor and allocation sites: whole-image sweep of calls and pushes, 0 orphan hits within the sweep. Medium for the dispatcher's class rule: the stale-global edge is untraced.
+
+**Unknown.** Which messages reach the dispatcher without mask `0x4000`.

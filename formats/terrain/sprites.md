@@ -52,7 +52,7 @@ subtracts — `dstX = col*32 + ftol(tan(theta)*((FullHeight-k)*32 - ShadowY))` �
 top. The two signs are both correct and neither may be copied onto the other path
 (`TERR-SHDW-131`).
 
-### Which silhouettes a unit's shadow draws, and through which arm (`TERR-191`, `TERR-192`, `TERR-193`)
+### Which silhouettes a unit's shadow draws, and through which arm (`TERR-191`, `TERR-192`, `TERR-193`, `TERR-194`, `TERR-195`, `TERR-196`)
 
 One routine, `FUN_0045bf00`, is `vt+0x2c` of both `CUnit` and `CAirUnit`. It draws one pair of
 sheets, each as a silhouette (`vt+0x3c` sheared, or `vt+0x1c` flat), at one frame index:
@@ -73,11 +73,12 @@ arm    = flat (vt+0x1c)    for an instance of CAirUnit, both main-pair silhouett
 The levels of the two cells by day band are `TERR-LIGHT-126`'s (amended): the second silhouette and an
 invisible owner's shadow are drawn at half the level of an ordinary first silhouette. The owner row
 bit marks the local player's own entry, so an invisible unit's shadow appears on its owner's client
-only. The hero pair has no flat arm. Both silhouettes recolour the pixels already on screen and
-there is no coverage buffer, so a pixel stamped by both is recoloured twice; the shipped sheared
-pairs (hero pairs and the main pairs of non-air units) do not overlap at equal frame size, and overlap at
-unequal frame size once the shear is non-zero. The flat-arm pairs of the two air-unit sheets (`Sonic Bat`,
-`Dragon`) were not measured (`TERR-192`).
+only. The hero pair has no flat arm. Both silhouettes recolour the pixels already on screen through two word writes in each of the eight cores,
+flat and sheared, with no coverage buffer, so a pixel stamped by both is recoloured twice (`TERR-196`); the shipped
+sheared pairs (hero pairs and the main pairs of non-air units) do not overlap at equal frame size, and overlap at
+unequal frame size once the shear is non-zero (`TERR-192`). The flat-arm pairs of the two air-unit sheets (`Sonic Bat`,
+`Dragon`) translate each sheet by its own size and do not overlap in any of their 273 frames (`TERR-195`). Of the 68
+displacement stores through `+0x18c`, 45 reach a drawable (receiver classes assigned by hand, Medium) and 5 of those set bit 0 (`TERR-194`).
 
 **Two altitude models per frame.** The terrain raster uses `+0xb4` — one *corner*, `r*32 − h`
 (`TERR-GEOM-031`). Everything standing on it uses `+0xc0` — the *mean of four corners*. A port must

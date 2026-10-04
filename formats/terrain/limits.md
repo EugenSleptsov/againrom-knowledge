@@ -38,7 +38,7 @@ withdrawn save-absence clause in `TERR-FOG-087`.
 - The object/unit shroud-level ratio's reason remains open (`TERR-LIGHT-126` (amended)); whether
   any consumer reads both cells in one frame is answered by `TERR-191`.
   The unit shadow routine's caller gates and the hero pair's frame guard field (`[sheet+0x4]`)
-  remain open (`TERR-191`, `TERR-192`).
+  remain open (`TERR-191`, `TERR-192`). The 68 displacement stores through drawable `+0x18c` are classified by receiver by hand, at Medium (`TERR-194`) and the flat-arm pairs of the two air-unit sheets do not overlap (`TERR-195`); variable-count copies of a containing structure remain unexamined (`TERR-194`).
   Sprite rectangle construction, the second `CMapView+0x9d4` dispatch and
   complete collection insertion/type population remain wider presentation
   questions. Registration storage and conditional cell/phase composition are

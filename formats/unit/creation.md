@@ -220,6 +220,21 @@ original dispatch chain; no particular installed placement or native first
 tick was observed reaching it. First-tick override survival, complete actor
 lifetime and later save persistence remain Unknown (`UNIT-PLACEFRONTIER-099`).
 
+## Client drawable creation
+
+The client builds a unit's drawable in the message dispatcher `FUN_004104e8`. It allocates `0x1b0`
+bytes and constructs a `CUnit`; it constructs a `CAirUnit` only when the creation mask lacks the hero
+range and the class record's `Z` is nonzero. Four other routines allocate or construct `CUnit` objects
+(the dialogue-speaker synthesizer, the character screen and its helper, a static scratch object);
+none constructs a `CAirUnit` (`UNIT-141`).
+
+Drawable flag word `+0x18c` bit 0 is set in play by one unit-path store: the hero arm of
+`FUN_0045f850` for an id in `[0x20,0x40)`. An id reaches the arm through a Humans constructor mode
+other than 0, which replaces `typeID` with `gender + 0x21` or `+ 0x23`. No Humans or Units row holds
+an id in `[32,64)`, so a table-driven unit cannot reach the arm. The character-screen previews pass mode 1, the
+three tavern-hire sites pass 0, and 4 of the 464 shipped map placements have mode 1. The modes of the primary-hero
+and `AddHero` sites were not traced; summoned and loaded units are not established (`UNIT-140`).
+
 ## Unknowns
 
 `FUN_0050d670`'s tier/material parse and the `{castSpell=…}` suffix; the six unread constructor

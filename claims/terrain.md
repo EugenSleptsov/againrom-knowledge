@@ -1871,8 +1871,11 @@ Landscape loader 00484c70 constructs a distinct 0x30-byte P with vtable 0059a270
 | ID | Claim | Confidence | Status | Evidence |
 |---|---|---|---|---|
 | TERR-191 | The unit shadow's first main-pair silhouette reads `[0x005eb49c]`, or `[0x005eb4a0]` while the unit holds effect key `0x26` and its owner row has bit 3; the second silhouette always reads `[0x005eb4a0]`. | High | ● active | [EXP-0449](../experiments/EXP-0449-shadow-arms/) |
-| TERR-192 | The hero sheet pair `+0x194`/`+0x198` replaces the main pair when drawable `+0x18c` bit 0 is set and always shears; two silhouettes recolour overlapping pixels twice, and shipped sheared pairs overlap only at unequal frame sizes. | High / Medium | ● active | [EXP-0449](../experiments/EXP-0449-shadow-arms/) |
-| TERR-193 | In `FUN_0045bf00` only the drawable's runtime class picks the flat arm: a `CAirUnit` instance draws both main-pair silhouettes through `vt+0x1c`; every other unit, and the hero pair, uses `vt+0x3c`. | High / Medium | ● active | [EXP-0449](../experiments/EXP-0449-shadow-arms/) |
+| TERR-192 | The hero sheet pair `+0x194`/`+0x198` replaces the main pair when drawable `+0x18c` bit 0 is set and always shears; two silhouettes recolour overlapping pixels twice, and shipped sheared pairs overlap only at unequal frame sizes. | High / Medium | ● active (amended) | [EXP-0449](../experiments/EXP-0449-shadow-arms/) |
+| TERR-193 | In `FUN_0045bf00` only the drawable's runtime class picks the flat arm: a `CAirUnit` instance draws both main-pair silhouettes through `vt+0x1c`; every other unit, and the hero pair, uses `vt+0x3c`. | High / Medium | ● active (amended) | [EXP-0449](../experiments/EXP-0449-shadow-arms/) |
+| TERR-194 | Of 68 displacement stores through `+0x18c` in `rom.exe`, 45 reach a drawable and 5 set bit 0; 23 reach other classes; the dispatcher holds six, not four; three more, via `ADD reg,0x18c`, preserve bit 0. | High / Medium | ● active | [EXP-0458](../experiments/EXP-0458-shadow-writers/) |
+| TERR-195 | A `Sonic Bat` or `Dragon` shadow translates each sheet by its own size and the two flat silhouettes do not overlap at the routine's placement in any frame of either sheet; a one-pixel shift would overlap them. | High / Medium | ● active | [EXP-0458](../experiments/EXP-0458-shadow-writers/) |
+| TERR-196 | All eight blit cores, flat and sheared, read the destination pixel and write its recolour back through two writes with no coverage buffer, so a pixel stamped by both silhouettes is recoloured twice. | High / Medium | ● active | [EXP-0458](../experiments/EXP-0458-shadow-writers/) |
 
 ### TERR-191
 
@@ -1913,7 +1916,9 @@ Population measured, `graphics.res` on both roots (identical results). The censu
 
 **Confidence.** High for the branch structure, the two exits, the gates and the absence of a flat arm in the hero branch. High for the recolour read-modify-write in the two listed cores; for the six unlisted cores it is the grade of `TERR-LIGHT-059` and `TERR-SHDW-135`, inherited and not re-read here. Medium to High for the equal-size zero and the exact-placement zero: both re-execute the placement formulas with swept class constants, with no run of the original, and the one-pixel shift control shows the probe sees overlap. Medium for the unequal-size overlap counts: they come from re-executing the placement formulas (`TERR-SHDW-129`, `TERR-SHDW-130`) over a swept class constant and angle, not from a run of the original.
 
-**Unknown.** Whether the flat-arm pairs (`Sonic Bat`, `Dragon`) overlap: the census has no flat-arm model and the flat placement (`TERR-SHDW-132`) was not run over their frames. Which frame indices and angles occur in play, so how often the unequal-size overlap is drawn; the class constants of the hero classes were not read (swept instead). Whether other writers set `+0x18c` bit 0 (`ANIM-117` leaves 68 store sites in 39 routines classified by routine, not by receiver).
+**Unknown.** Which frame indices and angles occur in play, so how often the unequal-size overlap is drawn; the class constants of the hero classes were not read (swept instead).
+
+**Amended.** Two Unknowns are answered. The flat-arm pairs were measured: the `Sonic Bat` and `Dragon` sheets do not overlap at the placement `TERR-195` states, and the six cores this card did not list recolour as the two it did (`TERR-196`). The stores that can set bit 0 were classified by receiver: five reach a drawable, none is a store this card's text omitted (`TERR-194`). The census and its sheared-arm counts stand. The sentence that the `Sonic Bat` and `Dragon` overlap is unmeasured is superseded by `TERR-195`.
 
 ### TERR-193
 
@@ -1928,3 +1933,49 @@ None of the other candidates reaches the slot. The hero pair has no flat arm (`T
 **Confidence.** High that the drawable's runtime class is the only selector inside `FUN_0045bf00` (the `Z` field selects it upstream, at creation): one writer, three readers, `FUN_0057272f` and `FUN_005727e6` read whole, the record read from the PE on both roots. Medium for the class population: the `Z`/class identity is `REG-UNITS-061`'s (34 classes on its framing) and no map-authored or scripted creation path other than `FUN_004104e8` was enumerated here. The no-derived-class clause rests on the raw scan, which would miss a base pointer assembled at run time.
 
 **Unknown.** No runtime observation of either arm.
+
+**Amended.** The creation population of `CAirUnit` is closed by `UNIT-141`: one constructor site, guarded by the hero-id range and the class record's `Z`. The `Medium` for the class population stands for the stale-global edge that claim names. The `0x599220` raw scan clause is unchanged.
+
+### TERR-194
+
+**(rom.exe)** Instrument: a capstone sweep of `rom.exe` (SHA-256 recorded in the experiment's input manifest; one binary on both roots, the RU sweep byte-identical) for every instruction whose memory operand has displacement `0x18c` and a write to it, 68 displacement stores in 38 routines (the sweep has 39 starts; `00417972`, a data word inside the dispatcher, is a false start), the population `ANIM-117` counted. Each store was assigned a receiver by hand from its routine's constructor, allocation or vtable store, not by the displacement.
+
+| receiver | stores | bit 0 |
+|---|---|---|
+| `CUnit` or `CAirUnit` drawable | 45 | 5 set, 5 cleared, 1 copied, 34 preserve it |
+| other classes with a member at `+0x18c` | 23 | not the drawable flag word |
+
+- Set. The hero arm of `FUN_0045f850` for an id in `[0x20,0x40)` (`0045f899`, `(old & 0x80) | 9`). The dialogue-speaker synthesizer `FUN_00421f46` (`00422066`) ORs 1 when the `npc.reg` Flags token `Hero` is true. The character screen: `FUN_0047aee0` stores `0x29` or `0x2b` (`0047b30b`, `0047b31c`) and `FUN_0047c590` ORs 9 (`0047c79f`).
+- Cleared. The constructor (`0045ae7c`), virtual `Init` (`0045b25b`), the speaker synthesizer's initial `0x48` (`00421fe5`), `FUN_0045f850` for an id below `0x1a` (`0045f8e4`) and `FUN_0047c590`'s zero (`0047c6f9`). The copy constructor `0045aed0` copies the word; its only caller is the `CAirUnit` copy constructor `004615b0`, which has no caller and no vtable slot.
+- Preserved. 34 of the 45 AND or OR a mask that excludes bit 0. Three further stores lie outside the 68 and the 34: `ADD EAX,0x18c` followed by `OR [EAX],8` on a drawable from lookup `004ae150` (`004a8296`, `004a8404`, `004a8f66`); they preserve bit 0, so 48 stores reach a drawable in all.
+- The client dispatcher `FUN_004104e8` holds six stores, all preserving bit 0: OR `0x20`, OR 8 three times, and OR `0x80` and AND `0x7f` at `004185b4` and `004185d0`. `ANIM-117`'s count of four was short by the last two.
+- Other classes (23): a class with vtable `0x597a20` (3), a member of a class with vtable `0x59a050` (2), a dword array (3), a vtable `0x597058` family (3), server handle objects (6), objects holding a free pointer at `+0x18c` (6). All eight `LEA` hits with displacement `0x18c` are `[ESP+0x18c]`; the five immediate `0x18c` operands are the three adds above, one allocation size and one stack adjustment.
+
+**Confidence.** High for the list of 68 displacement stores and for the five bit-0 setters: each was read with 12 instructions of context. Medium for the receiver classification (45 and 23): each class is a hand annotation, some by pattern across sibling routines, and the 23 are unnamed; the script checks only that every swept site has a row and that the store text matches. Medium for completeness: the sweep sees displacement stores and not `REP MOVS` with a variable count (of 592 `REP MOVS` sites, 4 have a constant count of at least `0x18d` bytes, none `0x1b0`), `memcpy` of a containing structure, or an address computed in a register from a non-immediate. The two `FUN_00421f46` and `FUN_0047aee0` drawables were not shown to reach `FUN_0045bf00`.
+
+**Unknown.** The class names of the 23 other receivers; whether a variable-count copy carries bit 0 into a drawable.
+
+### TERR-195
+
+**(rom.exe)** `Sonic Bat` (ID 70, node `units/monsters/bat/sprites.256`, canvas 128 by 128) and `Dragon` (ID 71, 160 by 160) are the only `units.reg` classes with `Z` nonzero, on both roots (`REG-UNITS-061`). Their two main-pair silhouettes go through the flat arm (`TERR-193`).
+
+- Placement. `TERR-SHDW-132`'s flat placement is applied to each sheet with that sheet's own width and height: `dstX = x - (floor(w/2) + class term) + shear/2000`, `dstY = y - (floor(h/2) + class term) - z`. The second silhouette's anchor is `0045c7e6`..`0045c85d` and its call `0045c8c9`; between the two blits the routine calls only the sheet loader, the size getters and `FUN_004599d0`. Both silhouettes use the one unit position and `z`, so a shared term cancels.
+- Overlap. Over 109 `Sonic Bat` and 164 `Dragon` frames, 134 of them with unequal sheet sizes, the second sheet's opaque pixels never fall on the first sheet's pixel at the routine's placement. The first and second sheets hold about 13.8 thousand and 3.9 thousand pixels for `Sonic Bat`, and about 385 thousand and 28 thousand for `Dragon`. A mirrored frame reflects each sheet inside its own box (`EDI` starts at the box's right end, `STD`), and the mirrored overlap at zero shift is also 0.
+- Control. Shifting the second sheet one pixel left or right overlaps it on over 1,400 pixels of the `Sonic Bat` sheets and over 11,000 of the `Dragon` sheets, so the probe sees overlap.
+- Both roots give identical counts. Frames are decoded with the cores' control-byte grammar; no stream is left unconsumed.
+
+**Confidence.** High that no stamp is double-covered at the placement the formula gives, over this population (two classes, 273 frames, both roots), with the shift control. Medium for the placement itself: it re-executes `TERR-SHDW-132` and the anchors listed and was not observed in a run of the original.
+
+**Unknown.** Which frames occur in play; the shadow's pixels as drawn.
+
+### TERR-196
+
+**(rom.exe)** The flat arm (thunk `00429040`, `vt+0x1c`) calls cores `0044e010`, `0044e240`, `0044eef0` and `0044f140`. The sheared arm (thunk `00429100`, `vt+0x3c`) calls `0044e460`, `0044e750`, `0044f380` and `0044f690`. `TERR-192` listed two of the eight and left six to `TERR-LIGHT-059` and `TERR-SHDW-135`.
+
+- Each core reads its control bytes with the mask `0xc03f`, tests `AH` against `0x40`, and recolours: it reads the destination pixel `[EDI]`, looks it up in `[0x005e8420] + level * [0x005e42f0] * 2`, and writes the result back. The index is the pixel shifted right by 3 in some paths and the pixel itself in others.
+- Each core has exactly two writes to a destination through `EDI`, both `MOV word ptr [EDI...],AX` (the fast and the clipped path). None writes a byte, repeats a store or addresses a coverage buffer.
+- A pixel covered by both silhouettes is therefore recoloured twice. For the flat pairs `TERR-195` finds no such pixel; for the sheared pairs `TERR-192` counts them.
+
+**Confidence.** High that all eight cores recolour in place with two word writes and keep no coverage buffer: each core's whole range was scanned for memory writes. Medium for the recolour's value equivalence between cores (the index shift differs between paths; no table value was compared).
+
+**Unknown.** The pixel values the original draws.

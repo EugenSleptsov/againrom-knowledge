@@ -33,7 +33,7 @@ Two vocabularies meet here and are kept apart.
 |---|---|---|---|---|
 | PARTY-OWN-001 | Ownership is one pointer, `actor+0x14`, to a `Player`; the `Player` carries two identities, its slot `+0x04` and the map's type-5 id word `+0x08`. | High | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 | PARTY-ROSTER-002 | There is no party object and no member list: the roster is `Player` → group collection → group → the group's own actor list, and membership is containment. | High / Medium / Unknown | ● active (amended, superseded) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
-| PARTY-FLAG-003 | On the client, side membership is the dword flag word `CUnit+0x18c`: the end-of-mission cull keeps bit 0, the tavern tally reads bit 4 (mercenary), and bit 1 splits that bucket. | High / Medium / Unknown | ● active (amended) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
+| PARTY-FLAG-003 | On the client, side membership is the dword flag word `CUnit+0x18c`: the end-of-mission cull keeps bit 0, the tavern tally reads bit 4 (mercenary), and bit 1 splits that bucket. | High / Medium / Unknown | ● active (amended, partially retracted) | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 | PARTY-CULL-004 | At the end of every mission the client document is cut down to one player and its own surviving player characters; everything else is destroyed. | High | ● active | [EXP-0077](../experiments/EXP-0077-party-and-save/) |
 
 ### PARTY-OWN-001
@@ -122,12 +122,13 @@ construction are untouched.
   out of a character record it has just read with eighteen `CFile::Read`
   calls.
 - Bits 2, 3 and 7 are `OR`ed in at other sites (`0047b332`, `00411f14`,
-  `004185ac`). Bit 5 is set only by those two literals.
+  `004185ac`). Bit 5 is also set by the dispatcher's `OR 0x20` (`00411798`..`004117b3`, `TERR-194`).
 - Instrument: `EnumRefs disp:18c`, whole image, 232 hits over 81 owners, 0 in
   orphan or undisassembled code. Its blind spot applies here: the word is
-  copied wholesale from one drawable to another at eight sites in
-  `FUN_00421f46` and three in `FUN_0047c590`, and any `REP MOVSD` of a
-  containing struct would carry no displacement at all and be invisible.
+  not copied wholesale at the eleven sites in `FUN_00421f46` and
+  `FUN_0047c590` (they OR single bits or the constant 9, `TERR-194`), and any
+  `REP MOVSD` of a containing struct would carry no displacement at all and be
+  invisible.
 
 **Confidence.** High for what the three bits do: each of the five tests above
 is a named instruction, and the bucket-to-consumer binding is fixed by the two
@@ -141,6 +142,9 @@ counterpart field at all: none was looked for.
 **Amended.** `PARTY-ENDCULL-026` reads the server's end-of-mission cull. There
 is no counterpart flag word: the server's membership predicate at a mission
 boundary is a range test on the actor's typeID `word+0x0e`.
+Two clauses are withdrawn (`retracted.md`, `TERR-194`): bit 5 has a third setter in the
+dispatcher, and the eleven `FUN_00421f46` and `FUN_0047c590` sites are masked-bit ORs and
+constant stores, not wholesale copies.
 
 ### PARTY-CULL-004
 
